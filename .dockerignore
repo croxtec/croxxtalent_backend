@@ -1,0 +1,13 @@
+.git
+.idea
+.env
+.env.production
+node_modules
+vendor
+storage/framework/cache/**
+storage/framework/sessions/**
+storage/framework/views/**
+
+docker-compose/php/*
+docker-compose/nginx/*
+docker-compose/mysql/*

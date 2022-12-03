@@ -1,0 +1,58 @@
+/* src/assets/scss/_mixins.scss */
+@mixin button-direct {
+    background-color: $sub-color;
+    color: $primary-color;
+    letter-spacing: 1px;
+    box-shadow: 0 .2rem .5rem rgba(103,110,144,.4),0 0 0 .1rem rgba(103,110,144,.05);
+    font-weight: 400;
+    margin-right: 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    &:hover{
+    box-shadow: 0 .4rem .7rem rgba(103,110,144,.4),0 0 0 .2rem rgba(103,110,144,.05);
+    color: $primary-color;
+    }
+}
+@mixin button-inverse {
+    color: $sub-color;
+    background-color: $primary-color;
+    letter-spacing: 1px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow:  0 .1rem .1rem rgba(0,0,0,.3);
+    border-radius: 6px;
+    &:hover{
+    opacity: 0.9;
+    box-shadow:  0 .2rem .2rem rgba(0,0,0,.3);
+    color: #ffffff;
+    }
+}
+@mixin slide-content {
+    text-align: left;
+    position: absolute;
+    top: 80px;
+    bottom: 80px;
+    padding: 0px;
+    margin-top: 150px;
+    width: 40%;
+    h1{
+        color: #464444;
+        font-family: 'Tauri', sans-serif;
+        letter-spacing: 2px;
+        font-size: 50px;
+        margin-bottom: 50px;
+    }
+    p{
+        font-size: 18px;
+    }
+    .btn-green{
+        @include button-direct;
+        background-color: $secondary-color !important;
+        color: #ffffff !important;
+        font-size: 15px;
+    }
+    .btn-blue{
+        @include button-inverse;
+        font-size: 15px;
+    }
+}
