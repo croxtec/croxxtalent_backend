@@ -38,6 +38,7 @@ class RegisterRequest extends FormRequest
             case 'GET':
                 return [];
             case 'POST':
+                // info($this);
                 return [
                     'type' => 'required|in:talent,employer,affiliate', // optional for admin
                     'first_name' => 'required|max:30',
@@ -54,7 +55,7 @@ class RegisterRequest extends FormRequest
                 return [];
             default:break;
         }
-        
+
     }
 
     /**

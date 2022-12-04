@@ -59,23 +59,23 @@ Route::get('/terms', function (Request $request) {
 
 Route::get('/privacy', function (Request $request) {
     return view('privacy');
-})->name('privacy');
+})->name('privacy'); 
 
 
 //
-Route::get('/app/{path}', function (Request $request) {
-    return \File::get(public_path() . '/app/index.html');
-    return view('app');
-})->where('path','([A-z\d\/\-_.]+)?');
+// Route::get('/app/{path}', function (Request $request) {
+//     return \File::get(public_path() . '/app/index.html');
+//     return view('app');
+// })->where('path','([A-z\d\/\-_.]+)?');
 
-Route::get('/login', function (Request $request) {
-    return redirect('/app/login');
-})->name('login');
+// Route::get('/login', function (Request $request) {
+//     return 
+// })->name('login');
 
-Route::get('/register', function (Request $request) {
-    return redirect('/app/register');
-})->name('register');
+// Route::get('/register', function (Request $request) {
+//     return redirect('/app/register');
+// })->name('register');
 
-Route::get('/dashboard', function (Request $request) {
-    return redirect('/app/dashboard');
-})->name('dashboard');
+// Route::get('/dashboard', function (Request $request) {
+//     return redirect('/app/dashboard');
+// })->name('dashboard');
