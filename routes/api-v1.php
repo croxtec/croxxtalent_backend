@@ -17,6 +17,25 @@ use Illuminate\Support\Facades\Route;
 
 
 // Direct publicly accessible routes (No API Key)
+
+Route::any('/', function (Request $request) {
+    return response()->json([
+        'status' => true,
+        'message' => "V1  If you're not sure you know what you are doing, you probably shouldn't be using this API.",
+        'data' => [
+            'service' => 'croxxtalent-api',
+            'version' => '1.0',
+        ]
+    ], 200);
+});
+
+
+Route::prefix('croxtec')->middleware('web')->name('api.croxtec.')->group( function () {
+    Route::get('/contact-us', 'Api\v1\GeneralController@postContact');
+    Route::get('/newsletter', 'Api\v1\GeneralController@newsletter');
+});
+
+
 Route::prefix('links')->middleware('web')->name('api.links.')->group( function () {
     // Verifications
     Route::prefix('verifications')->name('verifications.')->group( function () {
@@ -49,20 +68,9 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
 });
 
 
-
 // Below API routes secured with API Key
 // Route::middleware('auth.apikey')->group( function () {
 
-    Route::any('/', function (Request $request) {
-        return response()->json([
-            'status' => true,
-            'message' => "V1  If you're not sure you know what you are doing, you probably shouldn't be using this API.",
-            'data' => [
-                'service' => 'croxxtalent-api',
-                'version' => '1.0',
-            ]
-        ], 200);
-    });
     // Route::post('users/photo', 'Api\v1\UserController@picture');
 
     // Route::get('/ok', 'Api\v1\AuthController@testAuth');
