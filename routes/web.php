@@ -34,7 +34,7 @@ use Illuminate\Support\Facades\Route;
 // Landing Pages Route
 Route::get('/', function (Request $request) {
     // return \File::get(public_path() . '/landing/index.html');
-    return null;
+    // return null;
     return view('welcome');
 })->name('home');
 
@@ -68,13 +68,13 @@ Route::get('/privacy', function (Request $request) {
 //     return view('app');
 // })->where('path','([A-z\d\/\-_.]+)?');
 
-// Route::get('/login', function (Request $request) {
-//     return 
-// })->name('login');
+Route::get('/login', function (Request $request) {
+    return ;
+})->name('login');
 
-// Route::get('/register', function (Request $request) {
-//     return redirect('/app/register');
-// })->name('register');
+Route::get('/register', function (Request $request) {
+    return redirect('/app/register');
+})->name('register');
 
 // Route::get('/dashboard', function (Request $request) {
 //     return redirect('/app/dashboard');

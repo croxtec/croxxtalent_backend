@@ -31,8 +31,8 @@ Route::any('/', function (Request $request) {
 
 
 Route::prefix('croxtec')->middleware('web')->name('api.croxtec.')->group( function () {
-    Route::post('/contact-us', 'Api\v1\GeneralController@postContact');
-    Route::post('/newsletter', 'Api\v1\GeneralController@newsletter');
+    Route::post('/contact', 'Api\v2\GeneralController@contact')->name('contact');
+    Route::post('/newsletter', 'Api\v2\GeneralController@newsletter')->name('newsletter');
 });
 
 
