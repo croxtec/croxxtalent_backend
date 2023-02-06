@@ -44,8 +44,10 @@ class RouteServiceProvider extends ServiceProvider
     {
         $this->mapApiV1Routes();
 
+        $this->mapApiV2Routes();
+
         $this->mapApiRoutes();
-        
+
         $this->mapApiSubdomainRoutes();
 
         $this->mapWebRoutes();
@@ -98,5 +100,16 @@ class RouteServiceProvider extends ServiceProvider
             ->middleware('api')
             ->namespace($this->namespace)
             ->group(base_path('routes/api-v1.php'));
+    }
+
+
+    protected function mapApiV2Routes()
+    {
+        //Route::domain(config('myapp.api_domain'))
+            //  ->prefix('v1')
+            Route::prefix('api/v2')
+                ->middleware('api')
+                ->namespace($this->namespace)
+                ->group(base_path('routes/api-v2.php'));
     }
 }
