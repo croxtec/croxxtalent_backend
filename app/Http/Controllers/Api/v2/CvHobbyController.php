@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1;
+namespace App\Http\Controllers\Api\v2;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
@@ -20,9 +20,10 @@ class CvHobbyController extends Controller
      * @param  string  $cv_id
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request, $cv_id)
+    public function index(Request $request)
     {
-        $cv = Cv::findOrFail($cv_id);
+       $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
 
         $this->authorize('view-any', Cv::class);
 
@@ -43,9 +44,9 @@ class CvHobbyController extends Controller
         } else {
             $cvHobbies = $cvHobbies->paginate($per_page);
         }
-        
+
         $response = collect([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful."
         ])->merge($cvHobbies)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
@@ -58,28 +59,29 @@ class CvHobbyController extends Controller
      * @param  string  $cv_id
      * @return \Illuminate\Http\Response
      */
-    public function store(CvHobbyRequest $request, $cv_id)
+    public function store(CvHobbyRequest $request)
     {
-        $cv = Cv::findOrFail($cv_id);
+       $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
 
         // Authorization was declared in the Form Request
 
         // Retrieve the validated input data...
-        $validatedData = $request->validated(); 
+        $validatedData = $request->validated();
         $validatedData['cv_id'] = $cv->id;
         $cvHobby = CvHobby::create($validatedData);
         if ($cvHobby) {
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Hobby created successfully.",
                 'data' => $cvHobby
             ], 201);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Could not complete request.",
             ], 400);
-        }        
+        }
     }
 
     /**
@@ -89,18 +91,19 @@ class CvHobbyController extends Controller
      * @param  string  $cv_skill_id
      * @return \Illuminate\Http\Response
      */
-    public function show($cv_id, $cv_skill_id)
+    public function show($cv_skill_id)
     {
-        $cv = Cv::findOrFail($cv_id);
+       $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
         $cvHobby = CvHobby::findOrFail($cv_skill_id);
         if ($cv->id != $cvHobby->cv_id) {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Unrelated request.",
             ], 400);
         }
         $this->authorize('view', [Cv::class, $cv]);
-        
+
         return response()->json([
             'status' => true,
             'message' => "Successful.",
@@ -116,13 +119,14 @@ class CvHobbyController extends Controller
      * @param  string  $cv_skill_id
      * @return \Illuminate\Http\Response
      */
-    public function update(CvHobbyRequest $request, $cv_id, $cv_skill_id)
+    public function update(CvHobbyRequest $request, $cv_skill_id)
     {
-        $cv = Cv::findOrFail($cv_id);
+       $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
         $cvHobby = CvHobby::findOrFail($cv_skill_id);
         if ($cv->id != $cvHobby->cv_id) {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Unrelated request.",
             ], 400);
         }
@@ -133,7 +137,7 @@ class CvHobbyController extends Controller
         $validatedData = $request->validated();
         $cvHobby->update($validatedData);
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Hobby updated successfully.",
             'data' => CvHobby::findOrFail($cvHobby->id)
         ], 200);
@@ -146,13 +150,14 @@ class CvHobbyController extends Controller
      * @param  string  $cv_skill_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($cv_id, $cv_skill_id)
+    public function destroy($cv_skill_id)
     {
-        $cv = Cv::findOrFail($cv_id);
+       $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
         $cvHobby = CvHobby::findOrFail($cv_skill_id);
         if ($cv->id != $cvHobby->cv_id) {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Unrelated request.",
             ], 400);
         }
@@ -161,8 +166,8 @@ class CvHobbyController extends Controller
 
         $cvHobby->delete();
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Hobby deleted successfully.",
-        ], 200);              
+        ], 200);
     }
 }

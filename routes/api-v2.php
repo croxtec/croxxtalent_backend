@@ -86,13 +86,90 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
 // Below API routes secured with API Key
 // Route::middleware('auth.apikey')->group( function () {
 
-    // Route::post('users/photo', 'Api\v2\UserController@picture');
-
-    // Route::get('/ok', 'Api\v2\AuthController@testAuth');
-    // Auth API
-
     // Authenticated requests API
     Route::middleware('auth:sanctum')->name('api.')->group( function () {
+
+        Route::prefix('talent')->name('cvs.work_experience.')->group( function () {
+            // Resume
+            Route::get('resume', 'Api\v2\TalentCVController@index')->name('resume.index');
+
+            // CV Work Experiences
+            Route::prefix('resume/work-experiences')->name('cvs.work_experience.')->group( function () {
+                Route::get('/', 'Api\v2\CvWorkExperienceController@index')->name('index');
+                Route::post('/', 'Api\v2\CvWorkExperienceController@store')->name('store');
+                Route::get('/{cv_work_experience_id}', 'Api\v2\CvWorkExperienceController@show')->name('show');
+                Route::put('/{cv_work_experience_id}', 'Api\v2\CvWorkExperienceController@update')->name('update');
+                Route::delete('/{cv_work_experience_id}', 'Api\v2\CvWorkExperienceController@destroy')->name('destroy');
+            });
+
+            // CV Educations
+            Route::prefix('resume/educations')->name('cvs.educations.')->group( function () {
+                Route::get('/', 'Api\v2\CvEducationController@index')->name('index');
+                Route::get('/{cv_education_id}', 'Api\v2\CvEducationController@show')->name('show');
+                Route::post('/', 'Api\v2\CvEducationController@store')->name('store');
+                Route::put('/{cv_education_id}', 'Api\v2\CvEducationController@update')->name('update');
+                Route::delete('/{cv_education_id}', 'Api\v2\CvEducationController@destroy')->name('destroy');
+            });
+            // CV Certifications
+            Route::prefix('resume/certifications')->name('cvs.certifications.')->group( function () {
+                Route::get('/', 'Api\v2\CvCertificationController@index')->name('index');
+                Route::get('/{cv_certification_id}', 'Api\v2\CvCertificationController@show')->name('show');
+                Route::post('/', 'Api\v2\CvCertificationController@store')->name('store');
+                Route::put('/{cv_certification_id}', 'Api\v2\CvCertificationController@update')->name('update');
+                Route::delete('/{cv_certification_id}', 'Api\v2\CvCertificationController@destroy')->name('destroy');
+            });
+            // CV Skills
+            Route::prefix('resume/skills')->name('cvs.skills.')->group( function () {
+                Route::get('/', 'Api\v2\CvSkillController@index')->name('index');
+                Route::get('/{cv_skill_id}', 'Api\v2\CvSkillController@show')->name('show');
+                Route::post('/', 'Api\v2\CvSkillController@store')->name('store');
+                Route::put('/{cv_skill_id}', 'Api\v2\CvSkillController@update')->name('update');
+                Route::delete('/{cv_skill_id}', 'Api\v2\CvSkillController@destroy')->name('destroy');
+            });
+            // CV Hobbies
+            Route::prefix('resume/hobbies')->name('cvs.hobbies.')->group( function () {
+                Route::get('/', 'Api\v2\CvHobbyController@index')->name('index');
+                Route::get('/{cv_hobby_id}', 'Api\v2\CvHobbyController@show')->name('show');
+                Route::post('/', 'Api\v2\CvHobbyController@store')->name('store');
+                Route::put('/{cv_hobby_id}', 'Api\v2\CvHobbyController@update')->name('update');
+                Route::delete('/{cv_hobby_id}', 'Api\v2\CvHobbyController@destroy')->name('destroy');
+            });
+            // CV Awards
+            Route::prefix('resume/awards')->name('cvs.awards.')->group( function () {
+                Route::get('/', 'Api\v2\CvAwardController@index')->name('index');
+                Route::get('/{cv_award_id}', 'Api\v2\CvAwardController@show')->name('show');
+                Route::post('/', 'Api\v2\CvAwardController@store')->name('store');
+                Route::put('/{cv_award_id}', 'Api\v2\CvAwardController@update')->name('update');
+                Route::delete('/{cv_award_id}', 'Api\v2\CvAwardController@destroy')->name('destroy');
+            });
+            // CV Languages
+            Route::prefix('resume/languages')->name('cvs.languages.')->group( function () {
+                Route::get('/', 'Api\v2\CvLanguageController@index')->name('index');
+                Route::get('/{cv_language_id}', 'Api\v2\CvLanguageController@show')->name('show');
+                Route::post('/', 'Api\v2\CvLanguageController@store')->name('store');
+                Route::put('/{cv_language_id}', 'Api\v2\CvLanguageController@update')->name('update');
+                Route::delete('/{cv_language_id}', 'Api\v2\CvLanguageController@destroy')->name('destroy');
+            });
+            // CV References
+            Route::prefix('resume/references')->name('cvs.references.')->group( function () {
+                Route::get('/', 'Api\v2\CvReferenceController@index')->name('index');
+                Route::get('/{cv_reference_id}', 'Api\v2\CvReferenceController@show')->name('show');
+                Route::post('/', 'Api\v2\CvReferenceController@store')->name('store');
+                Route::put('/{cv_reference_id}', 'Api\v2\CvReferenceController@update')->name('update');
+                Route::delete('/{cv_reference_id}', 'Api\v2\CvReferenceController@destroy')->name('destroy');
+            });
+        });
+
+        // CVs
+        Route::get('cvs', 'Api\v2\CvController@index')->name('cvs.index');
+        Route::post('cvs', 'Api\v2\CvController@store')->name('cvs.store');
+        Route::get('cvs/{id}', 'Api\v2\CvController@show')->name('cvs.show');
+        Route::put('cvs/{id}', 'Api\v2\CvController@update')->name('cvs.update');
+        Route::post('cvs/{id}/photo', 'Api\v2\CvController@photo')->name('cvs.update_photo');
+        Route::patch('cvs/{id}/publish', 'Api\v2\CvController@publish')->name('cvs.publish');
+        Route::patch('cvs/{id}/unpublish', 'Api\v2\CvController@unpublish')->name('cvs.unpublish');
+        Route::delete('cvs/{id}', 'Api\v2\CvController@destroy')->name('cvs.destroy');
+        Route::post('cvs/delete-multiple', 'Api\v2\CvController@destroyMultiple')->name('cvs.destroy_multiple');
         // Users
         Route::get('users', 'Api\v2\UserController@index')->name('users.index');
         Route::get('users/{id}', 'Api\v2\UserController@show')->name('users.show');
@@ -122,83 +199,6 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::post('jobs/applied', 'Api\v2\CroxxJobsController@store')->name('jobs.applied');
         Route::post('jobs/unapplied/{id}', 'Api\v2\CroxxJobsController@unapplyJob')->name('jobs.unapplied');
 
-        // CVs
-        Route::get('cvs', 'Api\v2\CvController@index')->name('cvs.index');
-        Route::post('cvs', 'Api\v2\CvController@store')->name('cvs.store');
-        Route::post('cvs/delete-multiple', 'Api\v2\CvController@destroyMultiple')->name('cvs.destroy_multiple');
-
-        // Talent CV
-        Route::get('cvs/{id}', 'Api\v2\CvController@show')->name('cvs.show');
-        Route::post('cvs', 'Api\v2\CvController@store')->name('cvs.store');
-        Route::put('cvs/{id}', 'Api\v2\CvController@update')->name('cvs.update');
-        Route::post('cvs/{id}/photo', 'Api\v2\CvController@photo')->name('cvs.update_photo');
-        Route::patch('cvs/{id}/publish', 'Api\v2\CvController@publish')->name('cvs.publish');
-        Route::patch('cvs/{id}/unpublish', 'Api\v2\CvController@unpublish')->name('cvs.unpublish');
-        Route::delete('cvs/{id}', 'Api\v2\CvController@destroy')->name('cvs.destroy');
-        // CV Work Experiences
-        Route::prefix('cvs/{cv_id}/work-experiences')->name('cvs.work_experience.')->group( function () {
-            Route::get('/', 'Api\v2\CvWorkExperienceController@index')->name('index');
-            Route::get('/{cv_work_experience_id}', 'Api\v2\CvWorkExperienceController@show')->name('show');
-            Route::post('/', 'Api\v2\CvWorkExperienceController@store')->name('store');
-            Route::put('/{cv_work_experience_id}', 'Api\v2\CvWorkExperienceController@update')->name('update');
-            Route::delete('/{cv_work_experience_id}', 'Api\v2\CvWorkExperienceController@destroy')->name('destroy');
-        });
-        // CV Educations
-        Route::prefix('cvs/{cv_id}/educations')->name('cvs.educations.')->group( function () {
-            Route::get('/', 'Api\v2\CvEducationController@index')->name('index');
-            Route::get('/{cv_education_id}', 'Api\v2\CvEducationController@show')->name('show');
-            Route::post('/', 'Api\v2\CvEducationController@store')->name('store');
-            Route::put('/{cv_education_id}', 'Api\v2\CvEducationController@update')->name('update');
-            Route::delete('/{cv_education_id}', 'Api\v2\CvEducationController@destroy')->name('destroy');
-        });
-        // CV Certifications
-        Route::prefix('cvs/{cv_id}/certifications')->name('cvs.certifications.')->group( function () {
-            Route::get('/', 'Api\v2\CvCertificationController@index')->name('index');
-            Route::get('/{cv_certification_id}', 'Api\v2\CvCertificationController@show')->name('show');
-            Route::post('/', 'Api\v2\CvCertificationController@store')->name('store');
-            Route::put('/{cv_certification_id}', 'Api\v2\CvCertificationController@update')->name('update');
-            Route::delete('/{cv_certification_id}', 'Api\v2\CvCertificationController@destroy')->name('destroy');
-        });
-        // CV Skills
-        Route::prefix('cvs/{cv_id}/skills')->name('cvs.skills.')->group( function () {
-            Route::get('/', 'Api\v2\CvSkillController@index')->name('index');
-            Route::get('/{cv_skill_id}', 'Api\v2\CvSkillController@show')->name('show');
-            Route::post('/', 'Api\v2\CvSkillController@store')->name('store');
-            Route::put('/{cv_skill_id}', 'Api\v2\CvSkillController@update')->name('update');
-            Route::delete('/{cv_skill_id}', 'Api\v2\CvSkillController@destroy')->name('destroy');
-        });
-        // CV Hobbies
-        Route::prefix('cvs/{cv_id}/hobbies')->name('cvs.hobbies.')->group( function () {
-            Route::get('/', 'Api\v2\CvHobbyController@index')->name('index');
-            Route::get('/{cv_hobby_id}', 'Api\v2\CvHobbyController@show')->name('show');
-            Route::post('/', 'Api\v2\CvHobbyController@store')->name('store');
-            Route::put('/{cv_hobby_id}', 'Api\v2\CvHobbyController@update')->name('update');
-            Route::delete('/{cv_hobby_id}', 'Api\v2\CvHobbyController@destroy')->name('destroy');
-        });
-        // CV Awards
-        Route::prefix('cvs/{cv_id}/awards')->name('cvs.awards.')->group( function () {
-            Route::get('/', 'Api\v2\CvAwardController@index')->name('index');
-            Route::get('/{cv_award_id}', 'Api\v2\CvAwardController@show')->name('show');
-            Route::post('/', 'Api\v2\CvAwardController@store')->name('store');
-            Route::put('/{cv_award_id}', 'Api\v2\CvAwardController@update')->name('update');
-            Route::delete('/{cv_award_id}', 'Api\v2\CvAwardController@destroy')->name('destroy');
-        });
-        // CV Languages
-        Route::prefix('cvs/{cv_id}/languages')->name('cvs.languages.')->group( function () {
-            Route::get('/', 'Api\v2\CvLanguageController@index')->name('index');
-            Route::get('/{cv_language_id}', 'Api\v2\CvLanguageController@show')->name('show');
-            Route::post('/', 'Api\v2\CvLanguageController@store')->name('store');
-            Route::put('/{cv_language_id}', 'Api\v2\CvLanguageController@update')->name('update');
-            Route::delete('/{cv_language_id}', 'Api\v2\CvLanguageController@destroy')->name('destroy');
-        });
-        // CV References
-        Route::prefix('cvs/{cv_id}/references')->name('cvs.references.')->group( function () {
-            Route::get('/', 'Api\v2\CvReferenceController@index')->name('index');
-            Route::get('/{cv_reference_id}', 'Api\v2\CvReferenceController@show')->name('show');
-            Route::post('/', 'Api\v2\CvReferenceController@store')->name('store');
-            Route::put('/{cv_reference_id}', 'Api\v2\CvReferenceController@update')->name('update');
-            Route::delete('/{cv_reference_id}', 'Api\v2\CvReferenceController@destroy')->name('destroy');
-        });
 
         Route::get('job-invitations', 'Api\v2\JobInvitationController@index')->name('job_invitations.index');
         Route::get('job-invitations/{id}', 'Api\v2\JobInvitationController@show')->name('job_invitations.show');

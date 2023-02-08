@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1;
+namespace App\Http\Controllers\Api\v2;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
@@ -20,9 +20,12 @@ class CvWorkExperienceController extends Controller
      * @param  string  $cv_id
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request, $cv_id)
+    public function index(Request $request)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+
+        $cv = CV::where('user_id', $user->id)->firstorFail();
+        // $cv = Cv::findOrFail($cv_id);
 
         $this->authorize('view-any', Cv::class);
 
@@ -38,7 +41,7 @@ class CvWorkExperienceController extends Controller
         $cvWorkExperiences = CvWorkExperience::where('cv_id', $cv->id)
         ->where( function ($query) use ($current) {
             if ($current !== null ) {
-                $query->where('is_current', $current);                 
+                $query->where('is_current', $current);
             }
         })->where( function($query) use ($search) {
             $query->where('employer', 'LIKE', "%{$search}%");
@@ -50,9 +53,9 @@ class CvWorkExperienceController extends Controller
         } else {
             $cvWorkExperiences = $cvWorkExperiences->paginate($per_page);
         }
-        
+
         $response = collect([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful."
         ])->merge($cvWorkExperiences)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
@@ -65,28 +68,31 @@ class CvWorkExperienceController extends Controller
      * @param  string  $cv_id
      * @return \Illuminate\Http\Response
      */
-    public function store(CvWorkExperienceRequest $request, $cv_id)
+    public function store(CvWorkExperienceRequest $request)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+
+        $cv = CV::where('user_id', $user->id)->firstorFail();
+        // $cv = Cv::findOrFail($cv_id);
 
         // Authorization was declared in the Form Request
 
         // Retrieve the validated input data...
-        $validatedData = $request->validated(); 
+        $validatedData = $request->validated();
         $validatedData['cv_id'] = $cv->id;
         $cvWorkExperience = CvWorkExperience::create($validatedData);
         if ($cvWorkExperience) {
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Work experience created successfully.",
                 'data' => $cvWorkExperience
             ], 201);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Could not complete request.",
             ], 400);
-        }        
+        }
     }
 
     /**
@@ -96,18 +102,21 @@ class CvWorkExperienceController extends Controller
      * @param  string  $cv_work_experience_id
      * @return \Illuminate\Http\Response
      */
-    public function show($cv_id, $cv_work_experience_id)
+    public function show($cv_work_experience_id)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+
+        $cv = CV::where('user_id', $user->id)->firstorFail();
+
         $cvWorkExperience = CvWorkExperience::findOrFail($cv_work_experience_id);
         if ($cv->id != $cvWorkExperience->cv_id) {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Unrelated request.",
             ], 400);
         }
         $this->authorize('view', [Cv::class, $cv]);
-        
+
         return response()->json([
             'status' => true,
             'message' => "Successful.",
@@ -123,13 +132,16 @@ class CvWorkExperienceController extends Controller
      * @param  string  $cv_work_experience_id
      * @return \Illuminate\Http\Response
      */
-    public function update(CvWorkExperienceRequest $request, $cv_id, $cv_work_experience_id)
+    public function update(CvWorkExperienceRequest $request,  $cv_work_experience_id)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+
+        $cv = CV::where('user_id', $user->id)->firstorFail();
+
         $cvWorkExperience = CvWorkExperience::findOrFail($cv_work_experience_id);
         if ($cv->id != $cvWorkExperience->cv_id) {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Unrelated request.",
             ], 400);
         }
@@ -140,7 +152,7 @@ class CvWorkExperienceController extends Controller
         $validatedData = $request->validated();
         $cvWorkExperience->update($validatedData);
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Work experience updated successfully.",
             'data' => CvWorkExperience::findOrFail($cvWorkExperience->id)
         ], 200);
@@ -153,13 +165,16 @@ class CvWorkExperienceController extends Controller
      * @param  string  $cv_work_experience_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($cv_id, $cv_work_experience_id)
+    public function destroy($cv_work_experience_id)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+
+        $cv = CV::where('user_id', $user->id)->firstorFail();
+
         $cvWorkExperience = CvWorkExperience::findOrFail($cv_work_experience_id);
         if ($cv->id != $cvWorkExperience->cv_id) {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Unrelated request.",
             ], 400);
         }
@@ -168,8 +183,8 @@ class CvWorkExperienceController extends Controller
 
         $cvWorkExperience->delete();
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Work experience deleted successfully.",
-        ], 200);              
+        ], 200);
     }
 }

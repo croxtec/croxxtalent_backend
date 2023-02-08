@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1\Link;
+namespace App\Http\Controllers\Api\v2\Link;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -15,43 +15,43 @@ class CvLinkController extends Controller
 {
     /**
      * Import LinkedIn Profile
-     * 
+     *
      * @param Illuminate\Http\Request $request
      * @param string $id
      * @return \Illuminate\Http\Response
      */
     public function importLinkedIn(Request $request, $id)
-    {   
+    {
         $cv = Cv::findOrFail($id);
 
         // https://api.croxxtalent.com/v1/links/cvs/import-linkedin-callback
 
         $linkedIn = new LinkedIn([
-            'api_key' => env('LINKEDIN_APP_CLIENT_ID'), 
-            'api_secret' => env('LINKEDIN_APP_CLIENT_SECRET'), 
+            'api_key' => env('LINKEDIN_APP_CLIENT_ID'),
+            'api_secret' => env('LINKEDIN_APP_CLIENT_SECRET'),
             'callback_url' => route('api.links.cvs.import_linkedin_callback')
         ]);
 
         $login_url = $linkedIn->getLoginUrl([
-            LinkedIn::SCOPE_BASIC_PROFILE, 
+            LinkedIn::SCOPE_BASIC_PROFILE,
             // LinkedIn::SCOPE_FULL_PROFILE, // needs approval
             LinkedIn::SCOPE_EMAIL_ADDRESS,
             // LinkedIn::SCOPE_CONTACT_INFO, // needs approval
         ]);
 
         session(['oauth2_target_cv_id' => $cv->id]);
-        
-        return redirect($login_url);        
+
+        return redirect($login_url);
     }
 
     /**
      * Import LinkedIn Profile Callback
-     * 
+     *
      * @param Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
     public function importLinkedInCallback(Request $request)
-    {   
+    {
         $error_message = null;
         try {
             $error = $request->query('error');
@@ -67,14 +67,14 @@ class CvLinkController extends Controller
                 $authorization_code = $request->query('code');
 
                 $linkedIn = new LinkedIn([
-                    'api_key' => env('LINKEDIN_APP_CLIENT_ID'), 
-                    'api_secret' => env('LINKEDIN_APP_CLIENT_SECRET'), 
+                    'api_key' => env('LINKEDIN_APP_CLIENT_ID'),
+                    'api_secret' => env('LINKEDIN_APP_CLIENT_SECRET'),
                     'callback_url' => route('api.links.cvs.import_linkedin_callback')
                 ]);
 
                 $access_token = $linkedIn->getAccessToken($authorization_code);
-                $access_token_expires = $linkedIn->getAccessTokenExpiration();   
-                
+                $access_token_expires = $linkedIn->getAccessTokenExpiration();
+
                 // $info = $linkedIn->get("/me?projection=(id,firstName,lastName,profilePicture(displayImage~:playableStreams))");
                 $profileInfo = $linkedIn->get("/me?projection=(id,firstName,lastName)");
                 $emailInfo = $linkedIn->get("/emailAddress?q=members&projection=(elements*(handle~))");
@@ -89,7 +89,7 @@ class CvLinkController extends Controller
                     $cv->email = $emailInfo->elements[0]->{'handle~'}->emailAddress;
                 }
                 $cv->save();
-                
+
                 $data_retrieved = true;
             }
         }
@@ -105,5 +105,5 @@ class CvLinkController extends Controller
         return view('api.links.cvs.oauth2_import')
                 ->with( compact('data_retrieved', 'error_message') );;
     }
-    
+
 }

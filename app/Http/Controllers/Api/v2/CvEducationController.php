@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1;
+namespace App\Http\Controllers\Api\v2;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
@@ -20,9 +20,11 @@ class CvEducationController extends Controller
      * @param  string  $cv_id
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request, $cv_id)
+    public function index(Request $request)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+
+        $cv = CV::where('user_id', $user->id)->firstorFail();
 
         $this->authorize('view-any', Cv::class);
 
@@ -38,7 +40,7 @@ class CvEducationController extends Controller
         $cvEducations = CvEducation::where('cv_id', $cv->id)
         ->where( function ($query) use ($current) {
             if ($current !== null ) {
-                $query->where('is_current', $current);                 
+                $query->where('is_current', $current);
             }
         })->where( function($query) use ($search) {
             $query->where('school', 'LIKE', "%{$search}%");
@@ -50,9 +52,9 @@ class CvEducationController extends Controller
         } else {
             $cvEducations = $cvEducations->paginate($per_page);
         }
-        
+
         $response = collect([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful."
         ])->merge($cvEducations)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
@@ -65,28 +67,30 @@ class CvEducationController extends Controller
      * @param  string  $cv_id
      * @return \Illuminate\Http\Response
      */
-    public function store(CvEducationRequest $request, $cv_id)
+    public function store(CvEducationRequest $request)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+
+        $cv = CV::where('user_id', $user->id)->firstorFail();
 
         // Authorization was declared in the Form Request
 
         // Retrieve the validated input data...
-        $validatedData = $request->validated(); 
+        $validatedData = $request->validated();
         $validatedData['cv_id'] = $cv->id;
         $cvEducation = CvEducation::create($validatedData);
         if ($cvEducation) {
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Education created successfully.",
                 'data' => $cvEducation
             ], 201);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Could not complete request.",
             ], 400);
-        }        
+        }
     }
 
     /**
@@ -98,16 +102,18 @@ class CvEducationController extends Controller
      */
     public function show($cv_id, $cv_education_id)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
+
         $cvEducation = CvEducation::findOrFail($cv_education_id);
         if ($cv->id != $cvEducation->cv_id) {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Unrelated request.",
             ], 400);
         }
         $this->authorize('view', [Cv::class, $cv]);
-        
+
         return response()->json([
             'status' => true,
             'message' => "Successful.",
@@ -123,24 +129,26 @@ class CvEducationController extends Controller
      * @param  string  $cv_education_id
      * @return \Illuminate\Http\Response
      */
-    public function update(CvEducationRequest $request, $cv_id, $cv_education_id)
+    public function update(CvEducationRequest $request, $cv_education_id)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
+
+
         $cvEducation = CvEducation::findOrFail($cv_education_id);
         if ($cv->id != $cvEducation->cv_id) {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Unrelated request.",
             ], 400);
         }
-
         // Authorization was declared in the Form Request
 
         // Retrieve the validated input data....
         $validatedData = $request->validated();
         $cvEducation->update($validatedData);
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Education updated successfully.",
             'data' => CvEducation::findOrFail($cvEducation->id)
         ], 200);
@@ -153,13 +161,15 @@ class CvEducationController extends Controller
      * @param  string  $cv_education_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($cv_id, $cv_education_id)
+    public function destroy($cv_education_id)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
+
         $cvEducation = CvEducation::findOrFail($cv_education_id);
         if ($cv->id != $cvEducation->cv_id) {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Unrelated request.",
             ], 400);
         }
@@ -168,8 +178,8 @@ class CvEducationController extends Controller
 
         $cvEducation->delete();
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Education deleted successfully.",
-        ], 200);              
+        ], 200);
     }
 }

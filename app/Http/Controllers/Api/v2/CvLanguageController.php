@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1;
+namespace App\Http\Controllers\Api\v2;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
@@ -20,9 +20,10 @@ class CvLanguageController extends Controller
      * @param  string  $cv_id
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request, $cv_id)
+    public function index(Request $request)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
 
         $this->authorize('view-any', Cv::class);
 
@@ -43,9 +44,9 @@ class CvLanguageController extends Controller
         } else {
             $cvLanguages = $cvLanguages->paginate($per_page);
         }
-        
+
         $response = collect([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful."
         ])->merge($cvLanguages)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
@@ -58,14 +59,15 @@ class CvLanguageController extends Controller
      * @param  string  $cv_id
      * @return \Illuminate\Http\Response
      */
-    public function store(CvLanguageRequest $request, $cv_id)
+    public function store(CvLanguageRequest $request)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
 
         // Authorization was declared in the Form Request
 
         // Retrieve the validated input data...
-        $validatedData = $request->validated(); 
+        $validatedData = $request->validated();
         $validatedData['cv_id'] = $cv->id;
         $cvLanguage = CvLanguage::updateOrCreate(
             ['cv_id' => $validatedData['cv_id'], 'language_id' => $validatedData['language_id']],
@@ -73,16 +75,16 @@ class CvLanguageController extends Controller
         );
         if ($cvLanguage) {
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Language created successfully.",
                 'data' => $cvLanguage
             ], 201);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Could not complete request.",
             ], 400);
-        }        
+        }
     }
 
     /**
@@ -92,18 +94,19 @@ class CvLanguageController extends Controller
      * @param  string  $cv_language_id
      * @return \Illuminate\Http\Response
      */
-    public function show($cv_id, $cv_language_id)
+    public function show($cv_language_id)
     {
-        $cv = Cv::findOrFail($cv_id);
-        $cvLanguage = CvLanguage::findOrFail($cv_language_id);
+        $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
+                $cvLanguage = CvLanguage::findOrFail($cv_language_id);
         if ($cv->id != $cvLanguage->cv_id) {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Unrelated request.",
             ], 400);
         }
         $this->authorize('view', [Cv::class, $cv]);
-        
+
         return response()->json([
             'status' => true,
             'message' => "Successful.",
@@ -119,13 +122,14 @@ class CvLanguageController extends Controller
      * @param  string  $cv_language_id
      * @return \Illuminate\Http\Response
      */
-    public function update(CvLanguageRequest $request, $cv_id, $cv_language_id)
+    public function update(CvLanguageRequest $request, $cv_language_id)
     {
-        $cv = Cv::findOrFail($cv_id);
-        $cvLanguage = CvLanguage::findOrFail($cv_language_id);
+        $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
+                $cvLanguage = CvLanguage::findOrFail($cv_language_id);
         if ($cv->id != $cvLanguage->cv_id) {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Unrelated request.",
             ], 400);
         }
@@ -136,7 +140,7 @@ class CvLanguageController extends Controller
         $validatedData = $request->validated();
         $cvLanguage->update($validatedData);
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Language updated successfully.",
             'data' => CvLanguage::findOrFail($cvLanguage->id)
         ], 200);
@@ -149,13 +153,14 @@ class CvLanguageController extends Controller
      * @param  string  $cv_language_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($cv_id, $cv_language_id)
+    public function destroy($cv_language_id)
     {
-        $cv = Cv::findOrFail($cv_id);
-        $cvLanguage = CvLanguage::findOrFail($cv_language_id);
+        $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
+                $cvLanguage = CvLanguage::findOrFail($cv_language_id);
         if ($cv->id != $cvLanguage->cv_id) {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Unrelated request.",
             ], 400);
         }
@@ -164,8 +169,8 @@ class CvLanguageController extends Controller
 
         $cvLanguage->delete();
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Language deleted successfully.",
-        ], 200);              
+        ], 200);
     }
 }

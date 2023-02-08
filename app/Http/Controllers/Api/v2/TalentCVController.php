@@ -15,40 +15,20 @@ class TalentCVController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
+        info('Resume');
         $user = $request->user();
+        // $this->authorize('view', [Cv::class, $cv]);
         // Retrieve the validated input data...
-        $validatedData = $request->validated();
-        
-        // $user = User::findOrFail($validatedData['user_id']);
+
         if ($user->type != 'talent') {
             return response()->json([
                 'status' => false,
                 'message' => "CV Builder can only be used by a talent.",
             ], 400);
         }
+
         $aff_eligibility = false;
         $_cv = Cv::where('user_id', $user->id)->first();
         if (!$_cv) {
@@ -63,6 +43,7 @@ class TalentCVController extends Controller
                 'email' => $user->email,
             ]
         );
+
         if ($cv) {
             // give reward to affiliate referral
             if ($aff_eligibility && $user->referral_user_id) {
@@ -75,7 +56,7 @@ class TalentCVController extends Controller
 
             return response()->json([
                 'status' => true,
-                'message' => "CV profile loaded successfully.",
+                'message' => "Resume loaded successfully.",
                 'data' => $cv
             ], 201);
         } else {
@@ -84,6 +65,27 @@ class TalentCVController extends Controller
                 'message' => "Could not complete request.",
             ], 400);
         }
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+
     }
 
     /**

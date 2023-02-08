@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1;
+namespace App\Http\Controllers\Api\v2;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
@@ -20,9 +20,10 @@ class CvReferenceController extends Controller
      * @param  string  $cv_id
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request, $cv_id)
+    public function index(Request $request)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
 
         $this->authorize('view-any', Cv::class);
 
@@ -44,9 +45,9 @@ class CvReferenceController extends Controller
         } else {
             $cvReferences = $cvReferences->paginate($per_page);
         }
-        
+
         $response = collect([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful."
         ])->merge($cvReferences)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
@@ -59,28 +60,29 @@ class CvReferenceController extends Controller
      * @param  string  $cv_id
      * @return \Illuminate\Http\Response
      */
-    public function store(CvReferenceRequest $request, $cv_id)
+    public function store(CvReferenceRequest $request)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
 
         // Authorization was declared in the Form Request
 
         // Retrieve the validated input data...
-        $validatedData = $request->validated(); 
+        $validatedData = $request->validated();
         $validatedData['cv_id'] = $cv->id;
         $cvReference = CvReference::create($validatedData);
         if ($cvReference) {
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Reference created successfully.",
                 'data' => $cvReference
             ], 201);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Could not complete request.",
             ], 400);
-        }        
+        }
     }
 
     /**
@@ -90,18 +92,19 @@ class CvReferenceController extends Controller
      * @param  string  $cv_reference_id
      * @return \Illuminate\Http\Response
      */
-    public function show($cv_id, $cv_reference_id)
+    public function show($cv_reference_id)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
         $cvReference = CvReference::findOrFail($cv_reference_id);
         if ($cv->id != $cvReference->cv_id) {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Unrelated request.",
             ], 400);
         }
         $this->authorize('view', [Cv::class, $cv]);
-        
+
         return response()->json([
             'status' => true,
             'message' => "Successful.",
@@ -117,13 +120,14 @@ class CvReferenceController extends Controller
      * @param  string  $cv_reference_id
      * @return \Illuminate\Http\Response
      */
-    public function update(CvReferenceRequest $request, $cv_id, $cv_reference_id)
+    public function update(CvReferenceRequest $request, $cv_reference_id)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
         $cvReference = CvReference::findOrFail($cv_reference_id);
         if ($cv->id != $cvReference->cv_id) {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Unrelated request.",
             ], 400);
         }
@@ -134,7 +138,7 @@ class CvReferenceController extends Controller
         $validatedData = $request->validated();
         $cvReference->update($validatedData);
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Reference updated successfully.",
             'data' => CvReference::findOrFail($cvReference->id)
         ], 200);
@@ -147,13 +151,14 @@ class CvReferenceController extends Controller
      * @param  string  $cv_reference_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($cv_id, $cv_reference_id)
+    public function destroy($cv_reference_id)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
         $cvReference = CvReference::findOrFail($cv_reference_id);
         if ($cv->id != $cvReference->cv_id) {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Unrelated request.",
             ], 400);
         }
@@ -162,8 +167,8 @@ class CvReferenceController extends Controller
 
         $cvReference->delete();
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Reference deleted successfully.",
-        ], 200);              
+        ], 200);
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1;
+namespace App\Http\Controllers\Api\v2;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
@@ -20,9 +20,10 @@ class CvAwardController extends Controller
      * @param  string  $cv_id
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request, $cv_id)
+    public function index(Request $request)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
 
         $this->authorize('view-any', Cv::class);
 
@@ -59,9 +60,10 @@ class CvAwardController extends Controller
      * @param  string  $cv_id
      * @return \Illuminate\Http\Response
      */
-    public function store(CvAwardRequest $request, $cv_id)
+    public function store(CvAwardRequest $request)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
 
         // Authorization was declared in the Form Request
 
@@ -90,9 +92,10 @@ class CvAwardController extends Controller
      * @param  string  $cv_award_id
      * @return \Illuminate\Http\Response
      */
-    public function show($cv_id, $cv_award_id)
+    public function show($cv_award_id)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
         $cvAward = CvAward::findOrFail($cv_award_id);
         if ($cv->id != $cvAward->cv_id) {
             return response()->json([
@@ -117,9 +120,10 @@ class CvAwardController extends Controller
      * @param  string  $cv_award_id
      * @return \Illuminate\Http\Response
      */
-    public function update(CvAwardRequest $request, $cv_id, $cv_award_id)
+    public function update(CvAwardRequest $request, $cv_award_id)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
         $cvAward = CvAward::findOrFail($cv_award_id);
         if ($cv->id != $cvAward->cv_id) {
             return response()->json([
@@ -147,9 +151,10 @@ class CvAwardController extends Controller
      * @param  string  $cv_award_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($cv_id, $cv_award_id)
+    public function destroy($cv_award_id)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
         $cvAward = CvAward::findOrFail($cv_award_id);
         if ($cv->id != $cvAward->cv_id) {
             return response()->json([
