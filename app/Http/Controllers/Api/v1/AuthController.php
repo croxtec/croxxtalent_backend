@@ -111,9 +111,6 @@ class AuthController extends Controller
         $new_values = [];
         Audit::log($user->id, 'login', $old_values, $new_values, User::class, $user->id);
 
-
-
-
         $responseData = $this->tokenData($token);
         $responseData['user'] = $user;
 
