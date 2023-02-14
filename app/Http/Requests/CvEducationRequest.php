@@ -74,7 +74,7 @@ class CvEducationRequest extends FormRequest
                 return [];
             default:break;
         }
-        
+
     }
 
     /**

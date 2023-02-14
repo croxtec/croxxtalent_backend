@@ -20,7 +20,7 @@ class CvPolicy
     public function viewAny(?User $user)
     {
         // any one can perform this action
-        return true; 
+        return true;
     }
 
     /**
@@ -33,7 +33,7 @@ class CvPolicy
     public function view(?User $user, Cv $cv)
     {
         // any one can perform this action
-        return true; 
+        return true;
     }
 
     /**
@@ -44,6 +44,7 @@ class CvPolicy
      */
     public function create(User $user)
     {
+        // info([$user->tokenCan('access:talent'), $user->role]);
         if ($user->tokenCan('access:talent')) {
             return $user->type == 'talent'
                     || $user->role->is_owner
@@ -62,13 +63,13 @@ class CvPolicy
      */
     public function update(User $user, Cv $cv)
     {
-        $user->role = ($user->role) ?$user->role : [];
-        // Log::info([$user->id == $cv->user_id,$user->id , $cv->user_id, $user->tokenCan('access:talent')]); 
+        $user->role = ($user->role) ? $user->role : [];
+        // Log::info([$user->id == $cv->user_id,$user->id , $cv->user_id, $user->tokenCan('access:talent')]);
         if ($user->tokenCan('access:talent') || $user->tokenCan('access:admin')) {
             return $user->id == $cv->user_id
                     || isset($user->role->is_owner)
                     || isset($user->role->is_admin)
-                    || $user->role->hasPermission('update-cv'); 
+                    || $user->role->hasPermission('update-cv');
         }
         return false;
     }
@@ -86,7 +87,7 @@ class CvPolicy
             return $user->id == $cv->user_id
                     || $user->role->is_owner
                     || $user->role->is_admin
-                    || $user->role->hasPermission('delete-cv'); 
+                    || $user->role->hasPermission('delete-cv');
         }
         return false;
     }
@@ -104,7 +105,7 @@ class CvPolicy
             return $user->id == $cv->user_id
                     || $user->role->is_owner
                     || $user->role->is_admin
-                    || $user->role->hasPermission('delete-cv'); 
+                    || $user->role->hasPermission('delete-cv');
         }
         return false;
     }
@@ -122,7 +123,7 @@ class CvPolicy
             return $user->id == $cv->user_id
                     || $user->role->is_owner
                     || $user->role->is_admin
-                    || $user->role->hasPermission('delete-cv'); 
+                    || $user->role->hasPermission('delete-cv');
         }
         return false;
     }

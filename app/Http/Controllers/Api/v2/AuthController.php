@@ -107,14 +107,11 @@ class AuthController extends Controller
         // create token
         array_push($abilities, "access:{$user->type}");
         $token =  $user->createToken('access-token', $abilities)->plainTextToken;
-
+        // info($token, $abilities);
         // save audit trail log
         $old_values = [];
         $new_values = [];
         Audit::log($user->id, 'login', $old_values, $new_values, User::class, $user->id);
-
-
-
 
         $responseData = $this->tokenData($token);
         $responseData['user'] = $user;

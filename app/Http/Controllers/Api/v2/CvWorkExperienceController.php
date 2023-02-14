@@ -102,7 +102,7 @@ class CvWorkExperienceController extends Controller
      * @param  string  $cv_work_experience_id
      * @return \Illuminate\Http\Response
      */
-    public function show($cv_work_experience_id)
+    public function show(Request $request, $cv_work_experience_id)
     {
         $user = $request->user();
 
@@ -165,7 +165,7 @@ class CvWorkExperienceController extends Controller
      * @param  string  $cv_work_experience_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($cv_work_experience_id)
+    public function destroy(Request $request, $cv_work_experience_id)
     {
         $user = $request->user();
 

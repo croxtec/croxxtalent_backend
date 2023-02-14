@@ -21,11 +21,10 @@ class CvWorkExperienceRequest extends FormRequest
                 $cv = Cv::findOrFail($cvWorkExperience->cv_id);
                 return $this->user()->can('view', [Cv::class, $cv]);
             case 'POST':
-                return $this->user()->can('view', [Cv::class, $cv]);
-                // return $this->user()->can('create', Cv::class);
+                return $this->user()->can('create', Cv::class);
             case 'PUT':
             case 'PATCH':
-                $cvWorkExperience = CvWorkExperience::findOrFail($this->id);
+                $cvWorkExperience = CvWorkExperience::findOrFail($this->cv_work_experience_id);
                 $cv = Cv::findOrFail($cvWorkExperience->cv_id);
                 return $this->user()->can('update', [Cv::class, $cv]);
             case 'DELETE':
