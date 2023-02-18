@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1\Settings;
+namespace App\Http\Controllers\Api\v2\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -33,15 +33,15 @@ class TimezoneController extends Controller
                     $query->whereNotNull('archived_at');
                 } else {
                     $query->whereNull('archived_at');
-                }                 
+                }
             }
         })->where( function($query) use ($search) {
             $query->where('name', 'ILIKE', "%{$search }%");
         })->orderBy($sort_by, $sort_dir)
             ->paginate($per_page);
-        
+
         $response = collect([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful."
         ])->merge($timezones)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
@@ -62,16 +62,16 @@ class TimezoneController extends Controller
         $timezone = Timezone::create($validatedData);
         if ($timezone) {
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Timezone \"{$timezone->name}\" created successfully.",
                 'data' => Timezone::find($timezone->id)
             ], 201);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Could not complete request.",
             ], 400);
-        }        
+        }
     }
 
     /**
@@ -85,12 +85,12 @@ class TimezoneController extends Controller
         $timezone = Timezone::findOrFail($id);
 
         $this->authorize('view', [Timezone::class, $timezone]);
-        
+
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful.",
             'data' => $timezone
-        ], 200);        
+        ], 200);
     }
 
     /**
@@ -109,7 +109,7 @@ class TimezoneController extends Controller
         $timezone = Timezone::findOrFail($id);
         $timezone->update($validatedData);
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Timezone \"{$timezone->name}\" updated successfully.",
             'data' => Timezone::find($timezone->id)
         ], 200);
@@ -131,7 +131,7 @@ class TimezoneController extends Controller
         $timezone->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Timezone \"{$timezone->name}\" archived successfully.",
             'data' => Timezone::find($timezone->id)
         ], 200);
@@ -153,7 +153,7 @@ class TimezoneController extends Controller
         $timezone->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Timezone \"{$timezone->name}\" unarchived successfully.",
             'data' => Timezone::find($timezone->id)
         ], 200);
@@ -178,14 +178,14 @@ class TimezoneController extends Controller
         if ($relatedRecordsCount <= 0) {
             $timezone->delete();
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Timezone \"{$name}\" deleted successfully.",
             ], 200);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "The \"{$name}\" record cannot be deleted because it is associated with {$relatedRecordsCount} other record(s). You can archive it instead.",
             ], 400);
-        }              
+        }
     }
 }

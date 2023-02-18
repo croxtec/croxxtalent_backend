@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1\Settings;
+namespace App\Http\Controllers\Api\v2\Settings;
 
 use App\Helpers\SkillImport;
 use App\Http\Controllers\Controller;
@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests\SkillRequest;
 use App\Models\Skill;
 use App\Models\SkillSecondary;
-use App\Models\SkillTertiary; 
+use App\Models\SkillTertiary;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -32,14 +32,14 @@ class SkillController extends Controller
         $industry = $request->input('industry');
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
-        
+
         $skills = Skill::where( function ($query) use ($archived) {
             if ($archived !== null ) {
                 if ($archived === true ) {
                     $query->whereNotNull('archived_at');
                 } else {
                     $query->whereNull('archived_at');
-                }                 
+                }
             }
         })->when( $search,function($query) use ($search) {
             $query->where('name', 'LIKE', "%{$search}%");
@@ -58,14 +58,14 @@ class SkillController extends Controller
         }
         foreach ($skills as $skill) {
             $skill->industry;
-            $skill->secondary = SkillSecondary::where('skill_id', $skill->id)->get(); 
+            $skill->secondary = SkillSecondary::where('skill_id', $skill->id)->get();
             $skill->total = SkillSecondary::where('skill_id', $skill->id)->count();
             foreach($skill->secondary as $seconday){
                 $seconday->total = SkillTertiary::where('skill_secondary_id', $seconday->id)->count();
             }
-        } 
+        }
         $response = collect([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful."
         ])->merge($skills)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
@@ -93,23 +93,23 @@ class SkillController extends Controller
                 $new_tertiary = new SkillTertiary();
                 $new_tertiary->skill_id = $skill->id;
                 $new_tertiary->skill_secondary_id = $new_secondary->id;
-                $new_tertiary->name = $tertiary['name']; 
+                $new_tertiary->name = $tertiary['name'];
                 $new_tertiary->description = $tertiary['description'];
                 $new_tertiary->save();
-            } 
+            }
         }
         if ($skill) {
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Skill \"{$skill->name}\" created successfully.",
                 'data' => Skill::find($skill->id)
             ], 201);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Could not complete request.",
             ], 400);
-        }        
+        }
     }
 
     public function uploadSkill(Request $request)
@@ -121,18 +121,18 @@ class SkillController extends Controller
         if ($request->hasFile('file')){
             $path = $request->file('file');
             $data = Excel::import(new SkillImport(), $request->file);
-            
-            return response()->json([ 
-                'status' => true,  
+
+            return response()->json([
+                'status' => true,
                 'message' => 'Data imported successfully.'
             ], 200);
         }else{
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Could not upload file, please try again.",
-            ], 400);   
+            ], 400);
         }
-          
+
         // file_get_contents();
     }
 
@@ -147,12 +147,12 @@ class SkillController extends Controller
         $skill = Skill::findOrFail($id);
 
         $this->authorize('view', [Skill::class, $skill]);
-        
+
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful.",
             'data' => $skill
-        ], 200);        
+        ], 200);
     }
 
     /**
@@ -171,7 +171,7 @@ class SkillController extends Controller
         $skill = Skill::findOrFail($id);
         $skill->update($validatedData);
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Skill \"{$skill->name}\" updated successfully.",
             'data' => Skill::find($skill->id)
         ], 200);
@@ -193,7 +193,7 @@ class SkillController extends Controller
         $skill->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Skill \"{$skill->name}\" archived successfully.",
             'data' => Skill::find($skill->id)
         ], 200);
@@ -215,7 +215,7 @@ class SkillController extends Controller
         $skill->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Skill \"{$skill->name}\" unarchived successfully.",
             'data' => Skill::find($skill->id)
         ], 200);
@@ -236,10 +236,10 @@ class SkillController extends Controller
         $name = $skill->name;
         // check if the record is linked to other records
         $relatedRecordsCount = related_records_count(Skill::class, $skill);
-        $secondary = SkillSecondary::where('skill_id', $skill->id)->get(); 
+        $secondary = SkillSecondary::where('skill_id', $skill->id)->get();
         $tertiary = SkillSecondary::where('skill_id', $skill->id)->get();
         // Log::info($relatedRecordsCount);
-        
+
         if ($relatedRecordsCount <= 0) {
             $skill->delete();
             foreach ($secondary as $second) {
@@ -249,15 +249,15 @@ class SkillController extends Controller
                 $ter->delete();
             }
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Skill \"{$name}\" deleted successfully.",
             ], 200);
         } else {
             return $this->archive($id);
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "The \"{$name}\" record cannot be deleted because it is associated with {$relatedRecordsCount} other record(s). You can archive it instead.",
             ], 400);
-        }              
+        }
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1\Settings;
+namespace App\Http\Controllers\Api\v2\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -26,14 +26,14 @@ class DegreeController extends Controller
         $datatable_draw = $request->input('draw'); // if any
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
-        
+
         $degrees = Degree::where( function ($query) use ($archived) {
             if ($archived !== null ) {
                 if ($archived === true ) {
                     $query->whereNotNull('archived_at');
                 } else {
                     $query->whereNull('archived_at');
-                }                 
+                }
             }
         })->where( function($query) use ($search) {
             $query->where('name', 'LIKE', "%{$search}%");
@@ -45,9 +45,9 @@ class DegreeController extends Controller
         } else {
             $degrees = $degrees->paginate($per_page);
         }
-        
+
         $response = collect([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful."
         ])->merge($degrees)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
@@ -68,16 +68,16 @@ class DegreeController extends Controller
         $degree = Degree::create($validatedData);
         if ($degree) {
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Degree \"{$degree->name}\" created successfully.",
                 'data' => Degree::find($degree->id)
             ], 201);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Could not complete request.",
             ], 400);
-        }        
+        }
     }
 
     /**
@@ -91,12 +91,12 @@ class DegreeController extends Controller
         $degree = Degree::findOrFail($id);
 
         $this->authorize('view', [Degree::class, $degree]);
-        
+
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful.",
             'data' => $degree
-        ], 200);        
+        ], 200);
     }
 
     /**
@@ -115,7 +115,7 @@ class DegreeController extends Controller
         $degree = Degree::findOrFail($id);
         $degree->update($validatedData);
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Degree \"{$degree->name}\" updated successfully.",
             'data' => Degree::find($degree->id)
         ], 200);
@@ -137,7 +137,7 @@ class DegreeController extends Controller
         $degree->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Degree \"{$degree->name}\" archived successfully.",
             'data' => Degree::find($degree->id)
         ], 200);
@@ -159,7 +159,7 @@ class DegreeController extends Controller
         $degree->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Degree \"{$degree->name}\" unarchived successfully.",
             'data' => Degree::find($degree->id)
         ], 200);
@@ -184,14 +184,14 @@ class DegreeController extends Controller
         if ($relatedRecordsCount <= 0) {
             $degree->delete();
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Degree \"{$name}\" deleted successfully.",
             ], 200);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "The \"{$name}\" record cannot be deleted because it is associated with {$relatedRecordsCount} other record(s). You can archive it instead.",
             ], 400);
-        }              
+        }
     }
 }

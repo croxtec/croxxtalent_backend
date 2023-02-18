@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1\Settings;
+namespace App\Http\Controllers\Api\v2\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -26,7 +26,7 @@ class PermissionController extends Controller
         $is_visible_to = $request->input('is_visible_to');
         $group_list = $request->input('group_list');
         $datatable_draw = $request->input('draw'); // if any
-        
+
         $filter['archived'] = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
         $filter['group_list'] = $group_list == 'yes' ? true : ($group_list == 'no' ? false : null);
         $filter['is_visible_to_sysadmin'] = null;
@@ -52,7 +52,7 @@ class PermissionController extends Controller
                         $query->whereNotNull('archived_at');
                     } else {
                         $query->whereNull('archived_at');
-                    }                 
+                    }
                 }
                 if ($filter['is_visible_to_sysadmin'] !== null ) {
                     $query->where('is_visible_to_sysadmin', (bool) $filter['is_visible_to_sysadmin']);
@@ -77,7 +77,7 @@ class PermissionController extends Controller
                         $query->whereNotNull('archived_at');
                     } else {
                         $query->whereNull('archived_at');
-                    }                 
+                    }
                 }
                 if ($filter['is_visible_to_sysadmin'] !== null ) {
                     $query->where('is_visible_to_sysadmin', (bool) $filter['is_visible_to_sysadmin']);
@@ -96,7 +96,7 @@ class PermissionController extends Controller
         }
 
         $response = collect([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful."
         ])->merge($permissions)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
@@ -117,16 +117,16 @@ class PermissionController extends Controller
         $permission = Permission::create($validatedData);
         if ($permission) {
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Permission \"{$permission->name}\" created successfully.",
                 'data' => Permission::find($permission->id)
             ], 201);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Could not complete request.",
             ], 400);
-        }        
+        }
     }
 
     /**
@@ -140,12 +140,12 @@ class PermissionController extends Controller
         $permission = Permission::findOrFail($id);
 
         $this->authorize('view', [Permission::class, $permission]);
-        
+
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful.",
             'data' => $permission
-        ], 200);        
+        ], 200);
     }
 
     /**
@@ -164,7 +164,7 @@ class PermissionController extends Controller
         $permission = Permission::findOrFail($id);
         $permission->update($validatedData);
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Permission \"{$permission->name}\" updated successfully.",
             'data' => Permission::find($permission->id)
         ], 200);
@@ -186,7 +186,7 @@ class PermissionController extends Controller
         $permission->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Permission \"{$permission->name}\" archived successfully.",
             'data' => Permission::find($permission->id)
         ], 200);
@@ -208,7 +208,7 @@ class PermissionController extends Controller
         $permission->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Permission \"{$permission->name}\" unarchived successfully.",
             'data' => Permission::find($permission->id)
         ], 200);
@@ -233,14 +233,14 @@ class PermissionController extends Controller
         if ($relatedRecordsCount <= 0) {
             $permission->delete();
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Permission \"{$name}\" deleted successfully.",
             ], 200);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "The \"{$name}\" record cannot be deleted because it is associated with {$relatedRecordsCount} other record(s). You can archive it instead.",
             ], 400);
-        }              
+        }
     }
 }

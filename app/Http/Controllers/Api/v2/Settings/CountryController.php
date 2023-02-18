@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1\Settings;
+namespace App\Http\Controllers\Api\v2\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -27,14 +27,14 @@ class CountryController extends Controller
         $datatable_draw = $request->input('draw'); // if any
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
-        
+
         $countries = Country::where( function ($query) use ($archived) {
             if ($archived !== null ) {
                 if ($archived === true ) {
                     $query->whereNotNull('archived_at');
                 } else {
                     $query->whereNull('archived_at');
-                }                 
+                }
             }
         })->where( function($query) use ($search) {
             $query->where('name', 'LIKE', "%{$search}%");
@@ -46,9 +46,9 @@ class CountryController extends Controller
         } else {
             $countries = $countries->paginate($per_page);
         }
-        
+
         $response = collect([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful."
         ])->merge($countries)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
@@ -69,16 +69,16 @@ class CountryController extends Controller
         $country = Country::create($validatedData);
         if ($country) {
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Country \"{$country->name}\" created successfully.",
                 'data' => Country::find($country->id)
             ], 201);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Could not complete request.",
             ], 400);
-        }        
+        }
     }
 
     /**
@@ -96,12 +96,12 @@ class CountryController extends Controller
         }
 
         $this->authorize('view', [Country::class, $country]);
-        
+
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful.",
             'data' => $country
-        ], 200);        
+        ], 200);
     }
 
     /**
@@ -117,7 +117,7 @@ class CountryController extends Controller
 
         // Retrieve the validated input data....
         $validatedData = $request->validated();
-        
+
         if (strlen($id) == 2 && !is_int($id)) {
             $country = Country::where('code', $id)->firstOrFail();
         } else {
@@ -126,7 +126,7 @@ class CountryController extends Controller
 
         $country->update($validatedData);
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Country \"{$country->name}\" updated successfully.",
             'data' => Country::find($country->id)
         ], 200);
@@ -152,7 +152,7 @@ class CountryController extends Controller
         $country->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Country \"{$country->name}\" archived successfully.",
             'data' => Country::find($country->id)
         ], 200);
@@ -178,7 +178,7 @@ class CountryController extends Controller
         $country->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Country \"{$country->name}\" unarchived successfully.",
             'data' => Country::find($country->id)
         ], 200);
@@ -207,15 +207,15 @@ class CountryController extends Controller
         if ($relatedRecordsCount <= 0) {
             $country->delete();
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Country \"{$name}\" deleted successfully.",
             ], 200);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "The \"{$name}\" record cannot be deleted because it is associated with {$relatedRecordsCount} other record(s). You can archive it instead.",
             ], 400);
-        }              
+        }
     }
 
     /**
@@ -242,7 +242,7 @@ class CountryController extends Controller
         $datatable_draw = $request->input('draw'); // if any
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
-        
+
         $states = State::where('country_code', $country->code)
         ->where( function ($query) use ($archived) {
             if ($archived !== null ) {
@@ -250,12 +250,12 @@ class CountryController extends Controller
                     $query->whereNotNull('archived_at');
                 } else {
                     $query->whereNull('archived_at');
-                }                 
+                }
             }
         })->where( function($query) use ($search) {
             $query->where('name', 'LIKE', "%{$search}%");
         })->orderBy($sort_by, $sort_dir);
-        
+
         if ($per_page === 'all' || $per_page <= 0 ) {
             $results = $states->get();
             $states = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
@@ -264,7 +264,7 @@ class CountryController extends Controller
         }
 
         $response = collect([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful."
         ])->merge($states)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);

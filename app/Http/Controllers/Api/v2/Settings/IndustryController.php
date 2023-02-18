@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1\Settings;
+namespace App\Http\Controllers\Api\v2\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -26,14 +26,14 @@ class IndustryController extends Controller
         $datatable_draw = $request->input('draw'); // if any
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
-        
+
         $industries = Industry::where( function ($query) use ($archived) {
             if ($archived !== null ) {
                 if ($archived === true ) {
                     $query->whereNotNull('archived_at');
                 } else {
                     $query->whereNull('archived_at');
-                }                 
+                }
             }
         })->where( function($query) use ($search) {
             $query->where('name', 'LIKE', "%{$search}%");
@@ -45,9 +45,9 @@ class IndustryController extends Controller
         } else {
             $industries = $industries->paginate($per_page);
         }
-        
+
         $response = collect([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful."
         ])->merge($industries)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
@@ -68,16 +68,16 @@ class IndustryController extends Controller
         $industry = Industry::create($validatedData);
         if ($industry) {
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Industry \"{$industry->name}\" created successfully.",
                 'data' => Industry::find($industry->id)
             ], 201);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Could not complete request.",
             ], 400);
-        }        
+        }
     }
 
     /**
@@ -91,12 +91,12 @@ class IndustryController extends Controller
         $industry = Industry::findOrFail($id);
 
         $this->authorize('view', [Industry::class, $industry]);
-        
+
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful.",
             'data' => $industry
-        ], 200);        
+        ], 200);
     }
 
     /**
@@ -115,7 +115,7 @@ class IndustryController extends Controller
         $industry = Industry::findOrFail($id);
         $industry->update($validatedData);
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Industry \"{$industry->name}\" updated successfully.",
             'data' => Industry::find($industry->id)
         ], 200);
@@ -137,7 +137,7 @@ class IndustryController extends Controller
         $industry->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Industry \"{$industry->name}\" archived successfully.",
             'data' => Industry::find($industry->id)
         ], 200);
@@ -159,7 +159,7 @@ class IndustryController extends Controller
         $industry->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Industry \"{$industry->name}\" unarchived successfully.",
             'data' => Industry::find($industry->id)
         ], 200);
@@ -184,14 +184,14 @@ class IndustryController extends Controller
         if ($relatedRecordsCount <= 0) {
             $industry->delete();
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Industry \"{$name}\" deleted successfully.",
             ], 200);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "The \"{$name}\" record cannot be deleted because it is associated with {$relatedRecordsCount} other record(s). You can archive it instead.",
             ], 400);
-        }              
+        }
     }
 }

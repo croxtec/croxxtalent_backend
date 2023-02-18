@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1\Link;
+namespace App\Http\Controllers\Api\v2\Link;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -16,7 +16,7 @@ class CvReferenceLinkController extends Controller
 {
     /**
      * Questionnaire form
-     * 
+     *
      * @param Illuminate\Http\Request $request
      * @param string $id
      * @return \Illuminate\Http\Response
@@ -28,7 +28,7 @@ class CvReferenceLinkController extends Controller
 
         $form_action_url = URL::signedRoute('api.links.cv_references.questionnaire_form.store', ['id' => $cvReference->id]);
         $success_page_url = URL::signedRoute('api.links.cv_references.questionnaire_form.successful', ['id' => $cvReference->id]);
-         
+
         // check if feedback form was previously submitted
         if (!$cvReference->feedback) {
             $cvReference->is_approved = false;
@@ -39,31 +39,31 @@ class CvReferenceLinkController extends Controller
             return redirect($success_page_url);
         }else{
             $feedback = [];
-            // if (is_array($feedback)) {   }         
+            // if (is_array($feedback)) {   }
             $cvReference->is_approved = true;
             $cvReference->approved_at = Carbon::now();
             $cvReference->feedback = count($feedback) > 0 ? $feedback : null;
             $cvReference->save();
 
             // send email notification
-            if ($cvReference->cv->email) {     
+            if ($cvReference->cv->email) {
                 if (config('mail.queue_send')) {
                     Mail::to($cvReference->cv->email)->queue(new CvReferenceRequestApproved($cvReference));
                 } else {
                     Mail::to($cvReference->cv->email)->send(new CvReferenceRequestApproved($cvReference));
                 }
-            }   
+            }
             return view('api.links.cv-references.questionnaire_form_successful')
                 ->with( compact('cvReference') );
         }
-        
+
         return view('api.links.cv-references.questionnaire_form')
                 ->with( compact('cvReference', 'referenceQuestions', 'form_action_url') );
     }
 
     /**
      * Store Questionnaire form
-     * 
+     *
      * @param Illuminate\Http\Request $request
      * @param string $id
      * @return \Illuminate\Http\Response
@@ -73,7 +73,7 @@ class CvReferenceLinkController extends Controller
         $cvReference = CvReference::findOrFail($id);
 
         $success_page_url = URL::signedRoute('api.links.cv_references.questionnaire_form.successful', ['id' => $cvReference->id]);
-        
+
         // check if feedback form was previously submitted
         if (!$cvReference->feedback) {
             $cvReference->is_approved = false;
@@ -85,29 +85,29 @@ class CvReferenceLinkController extends Controller
         }
 
         // save the feeback from to the reference record
-        $feedback = $request->input('feedback');         
-        if (is_array($feedback)) {            
+        $feedback = $request->input('feedback');
+        if (is_array($feedback)) {
             $cvReference->is_approved = true;
             $cvReference->approved_at = Carbon::now();
             $cvReference->feedback = count($feedback) > 0 ? $feedback : null;
             $cvReference->save();
 
             // send email notification
-            if ($cvReference->cv->email) {     
+            if ($cvReference->cv->email) {
                 if (config('mail.queue_send')) {
                     Mail::to($cvReference->cv->email)->queue(new CvReferenceRequestApproved($cvReference));
                 } else {
                     Mail::to($cvReference->cv->email)->send(new CvReferenceRequestApproved($cvReference));
                 }
             }
-        }        
+        }
 
         return redirect($success_page_url);
     }
 
     /**
      * Questionnaire form Successful
-     * 
+     *
      * @param Illuminate\Http\Request $request
      * @param string $id
      * @return \Illuminate\Http\Response
@@ -126,7 +126,7 @@ class CvReferenceLinkController extends Controller
             $form_url = URL::signedRoute('api.links.cv_references.questionnaire_form', ['id' => $cvReference->id]);
             return redirect($form_url);
         }
-        
+
         return view('api.links.cv-references.questionnaire_form_successful')
                 ->with( compact('cvReference') );
     }

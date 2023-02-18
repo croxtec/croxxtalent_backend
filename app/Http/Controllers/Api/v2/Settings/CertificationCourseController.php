@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1\Settings;
+namespace App\Http\Controllers\Api\v2\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -26,14 +26,14 @@ class CertificationCourseController extends Controller
         $datatable_draw = $request->input('draw'); // if any
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
-        
+
         $certificationCourses = CertificationCourse::where( function ($query) use ($archived) {
             if ($archived !== null ) {
                 if ($archived === true ) {
                     $query->whereNotNull('archived_at');
                 } else {
                     $query->whereNull('archived_at');
-                }                 
+                }
             }
         })->where( function($query) use ($search) {
             $query->where('name', 'LIKE', "%{$search}%");
@@ -45,9 +45,9 @@ class CertificationCourseController extends Controller
         } else {
             $certificationCourses = $certificationCourses->paginate($per_page);
         }
-        
+
         $response = collect([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful."
         ])->merge($certificationCourses)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
@@ -68,16 +68,16 @@ class CertificationCourseController extends Controller
         $certificationCourse = CertificationCourse::create($validatedData);
         if ($certificationCourse) {
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Certification course \"{$certificationCourse->name}\" created successfully.",
                 'data' => CertificationCourse::find($certificationCourse->id)
             ], 201);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Could not complete request.",
             ], 400);
-        }        
+        }
     }
 
     /**
@@ -91,12 +91,12 @@ class CertificationCourseController extends Controller
         $certificationCourse = CertificationCourse::findOrFail($id);
 
         $this->authorize('view', [CertificationCourse::class, $certificationCourse]);
-        
+
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful.",
             'data' => $certificationCourse
-        ], 200);        
+        ], 200);
     }
 
     /**
@@ -115,7 +115,7 @@ class CertificationCourseController extends Controller
         $certificationCourse = CertificationCourse::findOrFail($id);
         $certificationCourse->update($validatedData);
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Certification course \"{$certificationCourse->name}\" updated successfully.",
             'data' => CertificationCourse::find($certificationCourse->id)
         ], 200);
@@ -137,7 +137,7 @@ class CertificationCourseController extends Controller
         $certificationCourse->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Certification course \"{$certificationCourse->name}\" archived successfully.",
             'data' => CertificationCourse::find($certificationCourse->id)
         ], 200);
@@ -159,7 +159,7 @@ class CertificationCourseController extends Controller
         $certificationCourse->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Certification course \"{$certificationCourse->name}\" unarchived successfully.",
             'data' => CertificationCourse::find($certificationCourse->id)
         ], 200);
@@ -184,14 +184,14 @@ class CertificationCourseController extends Controller
         if ($relatedRecordsCount <= 0) {
             $certificationCourse->delete();
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Certification course \"{$name}\" deleted successfully.",
             ], 200);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "The \"{$name}\" record cannot be deleted because it is associated with {$relatedRecordsCount} other record(s). You can archive it instead.",
             ], 400);
-        }              
+        }
     }
 }

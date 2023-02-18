@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1\Settings;
+namespace App\Http\Controllers\Api\v2\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -26,14 +26,14 @@ class CourseOfStudyController extends Controller
         $datatable_draw = $request->input('draw'); // if any
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
-        
+
         $courseOfStudies = CourseOfStudy::where( function ($query) use ($archived) {
             if ($archived !== null ) {
                 if ($archived === true ) {
                     $query->whereNotNull('archived_at');
                 } else {
                     $query->whereNull('archived_at');
-                }                 
+                }
             }
         })->where( function($query) use ($search) {
             $query->where('name', 'LIKE', "%{$search}%");
@@ -45,9 +45,9 @@ class CourseOfStudyController extends Controller
         } else {
             $courseOfStudies = $courseOfStudies->paginate($per_page);
         }
-        
+
         $response = collect([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful."
         ])->merge($courseOfStudies)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
@@ -68,16 +68,16 @@ class CourseOfStudyController extends Controller
         $courseOfStudy = CourseOfStudy::create($validatedData);
         if ($courseOfStudy) {
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Course of study \"{$courseOfStudy->name}\" created successfully.",
                 'data' => CourseOfStudy::find($courseOfStudy->id)
             ], 201);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Could not complete request.",
             ], 400);
-        }        
+        }
     }
 
     /**
@@ -91,12 +91,12 @@ class CourseOfStudyController extends Controller
         $courseOfStudy = CourseOfStudy::findOrFail($id);
 
         $this->authorize('view', [CourseOfStudy::class, $courseOfStudy]);
-        
+
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful.",
             'data' => $courseOfStudy
-        ], 200);        
+        ], 200);
     }
 
     /**
@@ -115,7 +115,7 @@ class CourseOfStudyController extends Controller
         $courseOfStudy = CourseOfStudy::findOrFail($id);
         $courseOfStudy->update($validatedData);
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Course of study \"{$courseOfStudy->name}\" updated successfully.",
             'data' => CourseOfStudy::find($courseOfStudy->id)
         ], 200);
@@ -137,7 +137,7 @@ class CourseOfStudyController extends Controller
         $courseOfStudy->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Course of study \"{$courseOfStudy->name}\" archived successfully.",
             'data' => CourseOfStudy::find($courseOfStudy->id)
         ], 200);
@@ -159,7 +159,7 @@ class CourseOfStudyController extends Controller
         $courseOfStudy->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Course of study \"{$courseOfStudy->name}\" unarchived successfully.",
             'data' => CourseOfStudy::find($courseOfStudy->id)
         ], 200);
@@ -184,14 +184,14 @@ class CourseOfStudyController extends Controller
         if ($relatedRecordsCount <= 0) {
             $courseOfStudy->delete();
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Course of study \"{$name}\" deleted successfully.",
             ], 200);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "The \"{$name}\" record cannot be deleted because it is associated with {$relatedRecordsCount} other record(s). You can archive it instead.",
             ], 400);
-        }              
+        }
     }
 }

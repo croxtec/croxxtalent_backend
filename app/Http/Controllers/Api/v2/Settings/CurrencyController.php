@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1\Settings;
+namespace App\Http\Controllers\Api\v2\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -33,15 +33,15 @@ class CurrencyController extends Controller
                     $query->whereNotNull('archived_at');
                 } else {
                     $query->whereNull('archived_at');
-                }                 
+                }
             }
         })->where( function($query) use ($search) {
             $query->where('name', 'ILIKE', "%{$search }%");
         })->orderBy($sort_by, $sort_dir)
             ->paginate($per_page);
-        
+
         $response = collect([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful."
         ])->merge($currencies)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
@@ -62,16 +62,16 @@ class CurrencyController extends Controller
         $currency = Currency::create($validatedData);
         if ($currency) {
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Currency \"{$currency->name}\" created successfully.",
                 'data' => Currency::find($currency->id)
             ], 201);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Could not complete request.",
             ], 400);
-        }        
+        }
     }
 
     /**
@@ -85,12 +85,12 @@ class CurrencyController extends Controller
         $currency = Currency::findOrFail($id);
 
         $this->authorize('view', [Currency::class, $currency]);
-        
+
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful.",
             'data' => $currency
-        ], 200);        
+        ], 200);
     }
 
     /**
@@ -109,7 +109,7 @@ class CurrencyController extends Controller
         $currency = Currency::findOrFail($id);
         $currency->update($validatedData);
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Currency \"{$currency->name}\" updated successfully.",
             'data' => Currency::find($currency->id)
         ], 200);
@@ -129,7 +129,7 @@ class CurrencyController extends Controller
 
         if ($currency->is_base) {
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "The \"{$name}\" record cannot be archived because it is currently set as the base currency.",
             ], 400);
         }
@@ -138,7 +138,7 @@ class CurrencyController extends Controller
         $currency->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Currency \"{$currency->name}\" archived successfully.",
             'data' => Currency::find($currency->id)
         ], 200);
@@ -160,7 +160,7 @@ class CurrencyController extends Controller
         $currency->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Currency \"{$currency->name}\" unarchived successfully.",
             'data' => Currency::find($currency->id)
         ], 200);
@@ -184,7 +184,7 @@ class CurrencyController extends Controller
 
         if ($currency->is_base) {
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "The \"{$name}\" record cannot be deleted because it is currently set as the base currency.",
             ], 400);
         }
@@ -192,15 +192,15 @@ class CurrencyController extends Controller
         if ($relatedRecordsCount <= 0) {
             $currency->delete();
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Currency \"{$name}\" deleted successfully.",
             ], 200);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "The \"{$name}\" record cannot be deleted because it is associated with {$relatedRecordsCount} other record(s). You can archive it instead.",
             ], 400);
-        }              
+        }
     }
 
 
@@ -224,8 +224,8 @@ class CurrencyController extends Controller
         $currency->update(['is_base' => true, 'rate' => 1]);
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "\"{$currency->name}\" has been sent as base currency.",
-        ], 200);  
+        ], 200);
     }
 }

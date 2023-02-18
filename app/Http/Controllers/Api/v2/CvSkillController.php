@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1;
+namespace App\Http\Controllers\Api\v2;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
@@ -35,7 +35,7 @@ class CvSkillController extends Controller
         $cvSkills = CvSkill::where('cv_id', $cv->id)
         ->where( function($query) use ($search) {
             $query->where('id', 'LIKE', "%{$search}%");
-        })->orderBy($sort_by, $sort_dir); 
+        })->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
             $results = $cvSkills->get();
@@ -49,9 +49,9 @@ class CvSkillController extends Controller
             $skill->tertiary;
             $skill->extra = 1;
         }
-        
+
         $response = collect([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful."
         ])->merge($cvSkills)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
@@ -71,29 +71,29 @@ class CvSkillController extends Controller
         // Authorization was declared in the Form Request
 
         // Retrieve the validated input data...
-        $validatedData = $request->validated(); 
-        
+        $validatedData = $request->validated();
+
         $validatedData['cv_id'] = $cv->id;
         $cvSkill = CvSkill::updateOrCreate(
             ['cv_id' => $validatedData['cv_id'], 'skill_id' => $validatedData['skill_id'],
-                'skill_secondary_id' => $request->secondary_id, 
+                'skill_secondary_id' => $request->secondary_id,
                 'skill_tertiary_id' => $request->tertiary_id,
                 'level' => $request->level
-            ], 
+            ],
             $validatedData
-        );  
+        );
         if ($cvSkill) {
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Skill created successfully.",
                 'data' => $cvSkill
             ], 201);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Could not complete request.",
             ], 400);
-        }        
+        }
     }
 
     /**
@@ -109,12 +109,12 @@ class CvSkillController extends Controller
         $cvSkill = CvSkill::findOrFail($cv_skill_id);
         if ($cv->id != $cvSkill->cv_id) {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Unrelated request.",
             ], 400);
         }
         $this->authorize('view', [Cv::class, $cv]);
-        
+
         return response()->json([
             'status' => true,
             'message' => "Successful.",
@@ -136,7 +136,7 @@ class CvSkillController extends Controller
         $cvSkill = CvSkill::findOrFail($cv_skill_id);
         if ($cv->id != $cvSkill->cv_id) {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Unrelated request.",
             ], 400);
         }
@@ -147,7 +147,7 @@ class CvSkillController extends Controller
         $validatedData = $request->validated();
         $cvSkill->update($validatedData);
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Skill updated successfully.",
             'data' => CvSkill::findOrFail($cvSkill->id)
         ], 200);
@@ -166,7 +166,7 @@ class CvSkillController extends Controller
         $cvSkill = CvSkill::findOrFail($cv_skill_id);
         if ($cv->id != $cvSkill->cv_id) {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Unrelated request.",
             ], 400);
         }
@@ -175,8 +175,8 @@ class CvSkillController extends Controller
 
         $cvSkill->delete();
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Skill deleted successfully.",
-        ], 200);              
+        ], 200);
     }
 }

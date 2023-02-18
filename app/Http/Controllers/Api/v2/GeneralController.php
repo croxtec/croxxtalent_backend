@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API\V2;
+namespace App\Http\Controllers\Api\v2;
 
 use App\Http\Controllers\Controller;
 use App\Mail\ContactMail;

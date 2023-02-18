@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1\Settings;
+namespace App\Http\Controllers\Api\v2\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Models\SkillSecondary;
@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 use App\Models\SkillTertiary as Tertiary;
 use Illuminate\Support\Facades\Validator;
- 
+
 class SkillLevelsController extends Controller
 {
     /**
@@ -34,7 +34,7 @@ class SkillLevelsController extends Controller
         $skills = Tertiary::where('skill_secondary_id', $secondary)->get();
 
         $response = collect([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful.",
             'skills' => $skills
         ]);
@@ -57,7 +57,7 @@ class SkillLevelsController extends Controller
         ]);
 
         if($validator->fails()){
-            $status = false; 
+            $status = false;
             $message = $validator->errors()->toJson();
             return response()->json(compact('status', 'message') , 400);
         }
@@ -65,17 +65,17 @@ class SkillLevelsController extends Controller
             $tertiary = new Tertiary();
             $tertiary->skill_id = $request->primary;
             $tertiary->skill_secondary_id = $request->secondary;
-            $tertiary->name = $skill['name']; 
+            $tertiary->name = $skill['name'];
             $tertiary->description = $skill['description'];
             $tertiary->save();
         }
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Skill Tertiary created successfully.",
             'data' => $request->skills
-        ], 201); 
+        ], 201);
     }
-    
+
     public function storeSecondary(Request $request)
     {
         $validator = Validator::make($request->all(),[
@@ -100,15 +100,15 @@ class SkillLevelsController extends Controller
             $tertiary = new Tertiary();
             $tertiary->skill_id = $request->primary;
             $tertiary->skill_secondary_id = $secondary->id;
-            $tertiary->name = $skill['name']; 
+            $tertiary->name = $skill['name'];
             $tertiary->description = $skill['description'];
             $tertiary->save();
         }
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Skill Secondary created successfully.",
             'data' => $request->skills
-        ], 201); 
+        ], 201);
     }
 
     /**
@@ -147,7 +147,7 @@ class SkillLevelsController extends Controller
         $core_skill = SkillSecondary::findOrFail($id);
         $core_skill->update($request->all());
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Core Skill \"{$core_skill->name}\" updated successfully.",
             'data' => $core_skill
         ], 200);
@@ -173,7 +173,7 @@ class SkillLevelsController extends Controller
         $main_skill = Tertiary::findOrFail($id);
         $main_skill->update($request->all());
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Skill \"{$main_skill->name}\" updated successfully.",
             'data' => $main_skill->id
         ], 200);

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1\Settings;
+namespace App\Http\Controllers\Api\v2\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -25,16 +25,16 @@ class JobTitleController extends Controller
         $archived = $request->input('archived');
         $datatable_draw = $request->input('draw'); // if any
         $industry = $request->input('industry');
-        
+
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
-        
+
         $jobTitles = JobTitle::where( function ($query) use ($archived) {
             if ($archived !== null ) {
                 if ($archived === true ) {
                     $query->whereNotNull('archived_at');
                 } else {
                     $query->whereNull('archived_at');
-                }                 
+                }
             }
         })->where( function($query) use ($search) {
             $query->where('name', 'LIKE', "%{$search}%");
@@ -50,13 +50,13 @@ class JobTitleController extends Controller
         } else {
             $jobTitles = $jobTitles->paginate($per_page);
         }
-        
+
         foreach($jobTitles as $job){
             $job->industry;
         }
-        
+
         $response = collect([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful."
         ])->merge($jobTitles)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
@@ -77,16 +77,16 @@ class JobTitleController extends Controller
         $jobTitle = JobTitle::create($validatedData);
         if ($jobTitle) {
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Job title \"{$jobTitle->name}\" created successfully.",
                 'data' => JobTitle::find($jobTitle->id)
             ], 201);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Could not complete request.",
             ], 400);
-        }        
+        }
     }
 
     /**
@@ -100,12 +100,12 @@ class JobTitleController extends Controller
         $jobTitle = JobTitle::findOrFail($id);
 
         $this->authorize('view', [JobTitle::class, $jobTitle]);
-        
+
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful.",
             'data' => $jobTitle
-        ], 200);        
+        ], 200);
     }
 
     /**
@@ -124,7 +124,7 @@ class JobTitleController extends Controller
         $jobTitle = JobTitle::findOrFail($id);
         $jobTitle->update($validatedData);
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Job title \"{$jobTitle->name}\" updated successfully.",
             'data' => JobTitle::find($jobTitle->id)
         ], 200);
@@ -146,7 +146,7 @@ class JobTitleController extends Controller
         $jobTitle->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Job title \"{$jobTitle->name}\" archived successfully.",
             'data' => JobTitle::find($jobTitle->id)
         ], 200);
@@ -168,7 +168,7 @@ class JobTitleController extends Controller
         $jobTitle->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Job title \"{$jobTitle->name}\" unarchived successfully.",
             'data' => JobTitle::find($jobTitle->id)
         ], 200);
@@ -193,14 +193,14 @@ class JobTitleController extends Controller
         if ($relatedRecordsCount <= 0) {
             $jobTitle->delete();
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Job title \"{$name}\" deleted successfully.",
             ], 200);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "The \"{$name}\" record cannot be deleted because it is associated with {$relatedRecordsCount} other record(s). You can archive it instead.",
             ], 400);
-        }              
+        }
     }
 }

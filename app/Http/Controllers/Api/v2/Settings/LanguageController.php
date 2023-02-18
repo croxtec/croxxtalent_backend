@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1\Settings;
+namespace App\Http\Controllers\Api\v2\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -26,14 +26,14 @@ class LanguageController extends Controller
         $datatable_draw = $request->input('draw'); // if any
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
-        
+
         $languages = Language::where( function ($query) use ($archived) {
             if ($archived !== null ) {
                 if ($archived === true ) {
                     $query->whereNotNull('archived_at');
                 } else {
                     $query->whereNull('archived_at');
-                }                 
+                }
             }
         })->where( function($query) use ($search) {
             $query->where('name', 'LIKE', "%{$search}%");
@@ -45,9 +45,9 @@ class LanguageController extends Controller
         } else {
             $languages = $languages->paginate($per_page);
         }
-        
+
         $response = collect([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful."
         ])->merge($languages)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
@@ -68,16 +68,16 @@ class LanguageController extends Controller
         $language = Language::create($validatedData);
         if ($language) {
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Language \"{$language->name}\" created successfully.",
                 'data' => Language::find($language->id)
             ], 201);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Could not complete request.",
             ], 400);
-        }        
+        }
     }
 
     /**
@@ -91,12 +91,12 @@ class LanguageController extends Controller
         $language = Language::findOrFail($id);
 
         $this->authorize('view', [Language::class, $language]);
-        
+
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful.",
             'data' => $language
-        ], 200);        
+        ], 200);
     }
 
     /**
@@ -115,7 +115,7 @@ class LanguageController extends Controller
         $language = Language::findOrFail($id);
         $language->update($validatedData);
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Language \"{$language->name}\" updated successfully.",
             'data' => Language::find($language->id)
         ], 200);
@@ -137,7 +137,7 @@ class LanguageController extends Controller
         $language->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Language \"{$language->name}\" archived successfully.",
             'data' => Language::find($language->id)
         ], 200);
@@ -159,7 +159,7 @@ class LanguageController extends Controller
         $language->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Language \"{$language->name}\" unarchived successfully.",
             'data' => Language::find($language->id)
         ], 200);
@@ -184,14 +184,14 @@ class LanguageController extends Controller
         if ($relatedRecordsCount <= 0) {
             $language->delete();
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Language \"{$name}\" deleted successfully.",
             ], 200);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "The \"{$name}\" record cannot be deleted because it is associated with {$relatedRecordsCount} other record(s). You can archive it instead.",
             ], 400);
-        }              
+        }
     }
 }

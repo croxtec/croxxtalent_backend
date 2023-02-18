@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes - v1
+| API Routes - v2
 |--------------------------------------------------------------------------
 |
 | Here is where you can register API routes for your application. These
@@ -345,7 +345,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
     Route::fallback(function () {
         return response()->json([
             'status' => false,
-            'message' => "V1 Resource not found",
+            'message' => "V2 Resource not found",
         ], 404);
     });
     // Nothing more, this is just route for direct access to the API domain

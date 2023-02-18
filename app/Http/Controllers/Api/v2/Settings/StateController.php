@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1\Settings;
+namespace App\Http\Controllers\Api\v2\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -33,21 +33,21 @@ class StateController extends Controller
                     $query->whereNotNull('archived_at');
                 } else {
                     $query->whereNull('archived_at');
-                }                 
+                }
             }
         })->where( function($query) use ($search) {
             $query->where('name', 'LIKE', "%{$search}%");
         })->orderBy($sort_by, $sort_dir);
-        
+
         if ($per_page === 'all' || $per_page <= 0 ) {
             $results = $states->get();
             $states = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
         } else {
             $states = $states->paginate($per_page);
         }
-        
+
         $response = collect([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful."
         ])->merge($states)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
@@ -68,16 +68,16 @@ class StateController extends Controller
         $state = State::create($validatedData);
         if ($state) {
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "State \"{$state->name}\" created successfully.",
                 'data' => State::find($state->id)
             ], 201);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Could not complete request.",
             ], 400);
-        }        
+        }
     }
 
     /**
@@ -91,12 +91,12 @@ class StateController extends Controller
         $state = State::findOrFail($id);
 
         $this->authorize('view', [State::class, $state]);
-        
+
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful.",
             'data' => $state
-        ], 200);        
+        ], 200);
     }
 
     /**
@@ -115,7 +115,7 @@ class StateController extends Controller
         $state = State::findOrFail($id);
         $state->update($validatedData);
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "State \"{$state->name}\" updated successfully.",
             'data' => State::find($state->id)
         ], 200);
@@ -137,7 +137,7 @@ class StateController extends Controller
         $state->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "State \"{$state->name}\" archived successfully.",
             'data' => State::find($state->id)
         ], 200);
@@ -159,7 +159,7 @@ class StateController extends Controller
         $state->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "State \"{$state->name}\" unarchived successfully.",
             'data' => State::find($state->id)
         ], 200);
@@ -184,14 +184,14 @@ class StateController extends Controller
         if ($relatedRecordsCount <= 0) {
             $state->delete();
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "State \"{$name}\" deleted successfully.",
             ], 200);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "The \"{$name}\" record cannot be deleted because it is associated with {$relatedRecordsCount} other record(s). You can archive it instead.",
             ], 400);
-        }              
+        }
     }
 }

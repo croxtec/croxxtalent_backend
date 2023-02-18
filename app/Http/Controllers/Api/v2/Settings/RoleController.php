@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1\Settings;
+namespace App\Http\Controllers\Api\v2\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -29,10 +29,10 @@ class RoleController extends Controller
         $archived = $request->input('archived');
         $is_custom = $request->input('is_custom');
         $datatable_draw = $request->input('draw'); // if any
-        
+
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
         $is_custom = $is_custom == 'yes' ? true : ($is_custom == 'no' ? false : null);
-        
+
         $roles = Role::where( function ($query) use ($type, $archived, $is_custom) {
             $query->where('type', $type);
             if ($archived !== null ) {
@@ -40,7 +40,7 @@ class RoleController extends Controller
                     $query->whereNotNull('archived_at');
                 } else {
                     $query->whereNull('archived_at');
-                }                 
+                }
             }
             if ($is_custom !== null ) {
                 $query->where('is_custom', (bool) $is_custom);
@@ -52,7 +52,7 @@ class RoleController extends Controller
             ->paginate($per_page);
 
         $response = collect([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful."
         ])->merge($roles)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
@@ -94,16 +94,16 @@ class RoleController extends Controller
                 }
             }
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Role \"{$role->name}\" created successfully.",
                 'data' => Role::find($role->id)
             ], 201);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Could not complete request.",
             ], 400);
-        }        
+        }
     }
 
     /**
@@ -117,12 +117,12 @@ class RoleController extends Controller
         $role = Role::findOrFail($id);
 
         $this->authorize('view', [Role::class, $role]);
-        
+
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful.",
             'data' => $role
-        ], 200);        
+        ], 200);
     }
 
     /**
@@ -146,7 +146,7 @@ class RoleController extends Controller
         $role = Role::findOrFail($id);
         $role->update($validatedData);
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Role \"{$role->name}\" updated successfully.",
             'data' => Role::find($role->id)
         ], 200);
@@ -168,7 +168,7 @@ class RoleController extends Controller
         $role->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Role \"{$role->name}\" archived successfully.",
             'data' => Role::find($role->id)
         ], 200);
@@ -190,7 +190,7 @@ class RoleController extends Controller
         $role->save();
 
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Role \"{$role->name}\" unarchived successfully.",
             'data' => Role::find($role->id)
         ], 200);
@@ -215,15 +215,15 @@ class RoleController extends Controller
         if ($relatedRecordsCount <= 0) {
             $role->delete();
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Role \"{$name}\" deleted successfully.",
             ], 200);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "The \"{$name}\" record cannot be deleted because it is associated with {$relatedRecordsCount} other record(s). You can archive it instead.",
             ], 400);
-        }              
+        }
     }
 
 
@@ -235,11 +235,11 @@ class RoleController extends Controller
     public function showPermissions($id)
     {
         $this->authorize('view-any', Role::class);
-        
+
         $permissionRoles = PermissionRole::where('role_id', $id)->get();
 
         $response = collect([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful.",
             'data' => $permissionRoles
         ]);
@@ -268,16 +268,16 @@ class RoleController extends Controller
         PermissionRole::where('role_id', $role->id)->delete();
 
         if ($validatedData['permissions']) {
-            foreach($validatedData['permissions'] as $permission_id) 
+            foreach($validatedData['permissions'] as $permission_id)
             {
                 PermissionRole::create([
                     'role_id' => $role->id,
                     'permission_id' => $permission_id
                 ]);
             }
-        }        
+        }
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "{$role->name} permissions updated successfully.",
             'data' => null
         ], 200);
