@@ -24,7 +24,7 @@ class CvEducationRequest extends FormRequest
                 return $this->user()->can('create', Cv::class);
             case 'PUT':
             case 'PATCH':
-                $cvEducation = CvEducation::findOrFail($this->id);
+                $cvEducation = CvEducation::findOrFail($this->cv_education_id);
                 $cv = Cv::findOrFail($cvEducation->cv_id);
                 return $this->user()->can('update', [Cv::class, $cv]);
             case 'DELETE':
@@ -34,7 +34,7 @@ class CvEducationRequest extends FormRequest
             default:break;
         }
     }
-
+ 
     /**
      * Get the validation rules that apply to the request.
      *
@@ -66,7 +66,7 @@ class CvEducationRequest extends FormRequest
                     'city' => 'required|max:255',
                     'country_code' => 'required|exists:countries,code',
                     'start_date' => 'required|date',
-                    'end_date' => 'nullable|date',
+                    'end_date' => 'nullable|date', 
                     'is_current' => 'boolean',
                     'description' => 'nullable|max:500',
                 ];

@@ -100,7 +100,7 @@ class CvEducationController extends Controller
      * @param  string  $cv_education_id
      * @return \Illuminate\Http\Response
      */
-    public function show($cv_id, $cv_education_id)
+    public function show(Request $request, $cv_education_id)
     {
         $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
