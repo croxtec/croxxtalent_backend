@@ -91,7 +91,7 @@ class CvHobbyController extends Controller
      * @param  string  $cv_skill_id
      * @return \Illuminate\Http\Response
      */
-    public function show($cv_skill_id)
+    public function show(Request $request, $cv_skill_id)
     {
        $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
@@ -107,7 +107,7 @@ class CvHobbyController extends Controller
         return response()->json([
             'status' => true,
             'message' => "Successful.",
-            'data' => $cv
+            'data' => $cvHobby
         ], 200);
     }
 
@@ -150,7 +150,7 @@ class CvHobbyController extends Controller
      * @param  string  $cv_skill_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($cv_skill_id)
+    public function destroy(Request $request, $cv_skill_id)
     {
        $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();

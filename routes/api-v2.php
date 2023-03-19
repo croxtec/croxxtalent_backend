@@ -123,7 +123,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
                 Route::delete('/{cv_certification_id}', 'Api\v2\CvCertificationController@destroy')->name('destroy');
             });
             // CV Skills
-            Route::prefix('resume/skills')->name('resume.skills.')->group( function () {
+            Route::prefix('resume/competences')->name('resume.competences.')->group( function () {
                 Route::get('/', 'Api\v2\CvSkillController@index')->name('index');
                 Route::get('/{cv_skill_id}', 'Api\v2\CvSkillController@show')->name('show');
                 Route::post('/', 'Api\v2\CvSkillController@store')->name('store');

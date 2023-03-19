@@ -24,7 +24,7 @@ class CvAwardRequest extends FormRequest
                 return $this->user()->can('create', Cv::class);
             case 'PUT':
             case 'PATCH':
-                $cvAward = CvAward::findOrFail($this->id);
+                $cvAward = CvAward::findOrFail($this->cv_award_id);
                 $cv = Cv::findOrFail($cvAward->cv_id);
                 return $this->user()->can('update', [Cv::class, $cv]);
             case 'DELETE':
@@ -64,7 +64,7 @@ class CvAwardRequest extends FormRequest
                 return [];
             default:break;
         }
-        
+
     }
 
     /**

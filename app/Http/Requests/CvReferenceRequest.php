@@ -24,7 +24,7 @@ class CvReferenceRequest extends FormRequest
                 return $this->user()->can('create', Cv::class);
             case 'PUT':
             case 'PATCH':
-                $cvReference = CvReference::findOrFail($this->id);
+                $cvReference = CvReference::findOrFail($this->cv_reference_id);
                 $cv = Cv::findOrFail($cvReference->cv_id);
                 return $this->user()->can('update', [Cv::class, $cv]);
             case 'DELETE':
@@ -68,7 +68,7 @@ class CvReferenceRequest extends FormRequest
                 return [];
             default:break;
         }
-        
+
     }
 
     /**

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 class CvSkill extends Model
 {
     use HasFactory;
-    
+
     /**
      * The table associated with the model.
      *
@@ -45,14 +45,26 @@ class CvSkill extends Model
      * @var array
      */
     protected $appends = [
+        'domain_name',
+        'core_name',
         'skill_name'
     ];
 
     // Get Custom Model Attributes
 
-    public function getSkillNameAttribute()
+    public function getDomainNameAttribute()
     {
         return $this->skill_id ? $this->skill->name : null;
+    }
+
+    public function getCoreNameAttribute()
+    {
+        return $this->seconary_id ? $this->seconary->name : null;
+    }
+
+    public function getSkillNameAttribute()
+    {
+        return $this->tertiary_id ? $this->tertiary->name : null;
     }
 
     public function cv()
@@ -64,7 +76,7 @@ class CvSkill extends Model
     {
         return $this->belongsTo('App\Models\Skill', 'skill_id', 'id');
     }
-    
+
     public function secondary()
     {
         return $this->belongsTo('App\Models\SkillSecondary', 'skill_secondary_id', 'id');

@@ -20,9 +20,11 @@ class CvSkillController extends Controller
      * @param  string  $cv_id
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request, $cv_id)
+    public function index(Request $request)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+
+        $cv = CV::where('user_id', $user->id)->firstorFail();
 
         $this->authorize('view-any', Cv::class);
 
@@ -64,9 +66,11 @@ class CvSkillController extends Controller
      * @param  string  $cv_id
      * @return \Illuminate\Http\Response
      */
-    public function store(CvSkillRequest $request, $cv_id)
+    public function store(CvSkillRequest $request)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+
+        $cv = CV::where('user_id', $user->id)->firstorFail();
 
         // Authorization was declared in the Form Request
 
@@ -75,7 +79,7 @@ class CvSkillController extends Controller
 
         $validatedData['cv_id'] = $cv->id;
         $cvSkill = CvSkill::updateOrCreate(
-            ['cv_id' => $validatedData['cv_id'], 'skill_id' => $validatedData['skill_id'],
+            [   'cv_id' => $validatedData['cv_id'], 'skill_id' => $validatedData['skill_id'],
                 'skill_secondary_id' => $request->secondary_id,
                 'skill_tertiary_id' => $request->tertiary_id,
                 'level' => $request->level
@@ -85,7 +89,7 @@ class CvSkillController extends Controller
         if ($cvSkill) {
             return response()->json([
                 'status' => true,
-                'message' => "Skill created successfully.",
+                'message' => "Competence created successfully.",
                 'data' => $cvSkill
             ], 201);
         } else {
@@ -103,9 +107,11 @@ class CvSkillController extends Controller
      * @param  string  $cv_skill_id
      * @return \Illuminate\Http\Response
      */
-    public function show($cv_id, $cv_skill_id)
+    public function show(Request $request,  $cv_skill_id)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+
+        $cv = CV::where('user_id', $user->id)->firstorFail();
         $cvSkill = CvSkill::findOrFail($cv_skill_id);
         if ($cv->id != $cvSkill->cv_id) {
             return response()->json([
@@ -118,7 +124,7 @@ class CvSkillController extends Controller
         return response()->json([
             'status' => true,
             'message' => "Successful.",
-            'data' => $cv
+            'data' => $cvSkill
         ], 200);
     }
 
@@ -130,9 +136,11 @@ class CvSkillController extends Controller
      * @param  string  $cv_skill_id
      * @return \Illuminate\Http\Response
      */
-    public function update(CvSkillRequest $request, $cv_id, $cv_skill_id)
+    public function update(CvSkillRequest $request,  $cv_skill_id)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+
+        $cv = CV::where('user_id', $user->id)->firstorFail();
         $cvSkill = CvSkill::findOrFail($cv_skill_id);
         if ($cv->id != $cvSkill->cv_id) {
             return response()->json([
@@ -148,7 +156,7 @@ class CvSkillController extends Controller
         $cvSkill->update($validatedData);
         return response()->json([
             'status' => true,
-            'message' => "Skill updated successfully.",
+            'message' => "Competence updated successfully.",
             'data' => CvSkill::findOrFail($cvSkill->id)
         ], 200);
     }
@@ -160,9 +168,11 @@ class CvSkillController extends Controller
      * @param  string  $cv_skill_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($cv_id, $cv_skill_id)
+    public function destroy(Request $request, $cv_skill_id)
     {
-        $cv = Cv::findOrFail($cv_id);
+        $user = $request->user();
+
+        $cv = CV::where('user_id', $user->id)->firstorFail();
         $cvSkill = CvSkill::findOrFail($cv_skill_id);
         if ($cv->id != $cvSkill->cv_id) {
             return response()->json([
@@ -176,7 +186,7 @@ class CvSkillController extends Controller
         $cvSkill->delete();
         return response()->json([
             'status' => true,
-            'message' => "Skill deleted successfully.",
+            'message' => "Competence deleted successfully.",
         ], 200);
     }
 }

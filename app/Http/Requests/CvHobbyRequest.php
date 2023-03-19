@@ -24,7 +24,7 @@ class CvHobbyRequest extends FormRequest
                 return $this->user()->can('create', Cv::class);
             case 'PUT':
             case 'PATCH':
-                $cvHobby = CvHobby::findOrFail($this->id);
+                $cvHobby = CvHobby::findOrFail($this->cv_hobby_id);
                 $cv = Cv::findOrFail($cvHobby->cv_id);
                 return $this->user()->can('update', [Cv::class, $cv]);
             case 'DELETE':
@@ -58,7 +58,7 @@ class CvHobbyRequest extends FormRequest
                 return [];
             default:break;
         }
-        
+
     }
 
     /**

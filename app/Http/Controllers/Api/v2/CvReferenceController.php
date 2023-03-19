@@ -92,7 +92,7 @@ class CvReferenceController extends Controller
      * @param  string  $cv_reference_id
      * @return \Illuminate\Http\Response
      */
-    public function show($cv_reference_id)
+    public function show(Request $request, $cv_reference_id)
     {
         $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
@@ -108,7 +108,7 @@ class CvReferenceController extends Controller
         return response()->json([
             'status' => true,
             'message' => "Successful.",
-            'data' => $cv
+            'data' => $cvReference
         ], 200);
     }
 
@@ -151,7 +151,7 @@ class CvReferenceController extends Controller
      * @param  string  $cv_reference_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($cv_reference_id)
+    public function destroy(Request $request, $cv_reference_id)
     {
         $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();

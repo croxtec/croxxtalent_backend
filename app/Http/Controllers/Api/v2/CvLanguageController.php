@@ -94,11 +94,12 @@ class CvLanguageController extends Controller
      * @param  string  $cv_language_id
      * @return \Illuminate\Http\Response
      */
-    public function show($cv_language_id)
+    public function show(Request $request,$cv_language_id)
     {
         $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
-                $cvLanguage = CvLanguage::findOrFail($cv_language_id);
+        $cvLanguage = CvLanguage::findOrFail($cv_language_id);
+
         if ($cv->id != $cvLanguage->cv_id) {
             return response()->json([
                 'status' => false,
@@ -153,7 +154,7 @@ class CvLanguageController extends Controller
      * @param  string  $cv_language_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($cv_language_id)
+    public function destroy(Request $request, $cv_language_id)
     {
         $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();

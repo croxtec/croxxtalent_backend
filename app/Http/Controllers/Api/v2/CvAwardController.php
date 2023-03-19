@@ -45,9 +45,9 @@ class CvAwardController extends Controller
         } else {
             $cvAwards = $cvAwards->paginate($per_page);
         }
-        
+
         $response = collect([
-            'status' => true, 
+            'status' => true,
             'message' => "Successful."
         ])->merge($cvAwards)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
@@ -68,21 +68,21 @@ class CvAwardController extends Controller
         // Authorization was declared in the Form Request
 
         // Retrieve the validated input data...
-        $validatedData = $request->validated(); 
+        $validatedData = $request->validated();
         $validatedData['cv_id'] = $cv->id;
         $cvAward = CvAward::create($validatedData);
         if ($cvAward) {
             return response()->json([
-                'status' => true, 
+                'status' => true,
                 'message' => "Award created successfully.",
                 'data' => $cvAward
             ], 201);
         } else {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Could not complete request.",
             ], 400);
-        }        
+        }
     }
 
     /**
@@ -92,23 +92,23 @@ class CvAwardController extends Controller
      * @param  string  $cv_award_id
      * @return \Illuminate\Http\Response
      */
-    public function show($cv_award_id)
+    public function show(Request $request, $cv_award_id)
     {
         $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
         $cvAward = CvAward::findOrFail($cv_award_id);
         if ($cv->id != $cvAward->cv_id) {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Unrelated request.",
             ], 400);
         }
         $this->authorize('view', [Cv::class, $cv]);
-        
+
         return response()->json([
             'status' => true,
             'message' => "Successful.",
-            'data' => $cv
+            'data' => $cvAward
         ], 200);
     }
 
@@ -127,7 +127,7 @@ class CvAwardController extends Controller
         $cvAward = CvAward::findOrFail($cv_award_id);
         if ($cv->id != $cvAward->cv_id) {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Unrelated request.",
             ], 400);
         }
@@ -138,7 +138,7 @@ class CvAwardController extends Controller
         $validatedData = $request->validated();
         $cvAward->update($validatedData);
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Award updated successfully.",
             'data' => CvAward::findOrFail($cvAward->id)
         ], 200);
@@ -151,14 +151,14 @@ class CvAwardController extends Controller
      * @param  string  $cv_award_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($cv_award_id)
+    public function destroy(Request $request, $cv_award_id)
     {
         $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
         $cvAward = CvAward::findOrFail($cv_award_id);
         if ($cv->id != $cvAward->cv_id) {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => "Unrelated request.",
             ], 400);
         }
@@ -167,8 +167,8 @@ class CvAwardController extends Controller
 
         $cvAward->delete();
         return response()->json([
-            'status' => true, 
+            'status' => true,
             'message' => "Award deleted successfully.",
-        ], 200);              
+        ], 200);
     }
 }

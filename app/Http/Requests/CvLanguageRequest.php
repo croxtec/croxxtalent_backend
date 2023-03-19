@@ -24,7 +24,7 @@ class CvLanguageRequest extends FormRequest
                 return $this->user()->can('create', Cv::class);
             case 'PUT':
             case 'PATCH':
-                $cvLanguage = CvLanguage::findOrFail($this->id);
+                $cvLanguage = CvLanguage::findOrFail($this->cv_language_id);
                 $cv = Cv::findOrFail($cvLanguage->cv_id);
                 return $this->user()->can('update', [Cv::class, $cv]);
             case 'DELETE':
@@ -60,7 +60,7 @@ class CvLanguageRequest extends FormRequest
                 return [];
             default:break;
         }
-        
+
     }
 
     /**
