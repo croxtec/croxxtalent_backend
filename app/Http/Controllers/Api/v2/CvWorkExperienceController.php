@@ -120,7 +120,7 @@ class CvWorkExperienceController extends Controller
         return response()->json([
             'status' => true,
             'message' => "Successful.",
-            'data' => $cv
+            'data' => $cvWorkExperience
         ], 200);
     }
 

@@ -24,7 +24,7 @@ class CvCertificationRequest extends FormRequest
                 return $this->user()->can('create', Cv::class);
             case 'PUT':
             case 'PATCH':
-                $cvCertification = CvCertification::findOrFail($this->id);
+                $cvCertification = CvCertification::findOrFail($this->cv_certification_id);
                 $cv = Cv::findOrFail($cvCertification->cv_id);
                 return $this->user()->can('update', [Cv::class, $cv]);
             case 'DELETE':
@@ -66,7 +66,7 @@ class CvCertificationRequest extends FormRequest
                 return [];
             default:break;
         }
-        
+
     }
 
     /**

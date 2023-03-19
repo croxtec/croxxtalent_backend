@@ -100,7 +100,7 @@ class CvCertificationController extends Controller
      * @param  string  $cv_certification_id
      * @return \Illuminate\Http\Response
      */
-    public function show($cv_certification_id)
+    public function show(Request $request, $cv_certification_id)
     {
         $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
@@ -117,7 +117,7 @@ class CvCertificationController extends Controller
         return response()->json([
             'status' => true,
             'message' => "Successful.",
-            'data' => $cv
+            'data' => $cvCertification
         ], 200);
     }
 
@@ -161,11 +161,11 @@ class CvCertificationController extends Controller
      * @param  string  $cv_certification_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($cv_certification_id)
+    public function destroy(Request $request, $cv_certification_id)
     {
         $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
- 
+
         $cvCertification = CvCertification::findOrFail($cv_certification_id);
         if ($cv->id != $cvCertification->cv_id) {
             return response()->json([

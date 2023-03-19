@@ -106,6 +106,7 @@ class CvEducationController extends Controller
         $cv = CV::where('user_id', $user->id)->firstorFail();
 
         $cvEducation = CvEducation::findOrFail($cv_education_id);
+
         if ($cv->id != $cvEducation->cv_id) {
             return response()->json([
                 'status' => false,
@@ -117,7 +118,7 @@ class CvEducationController extends Controller
         return response()->json([
             'status' => true,
             'message' => "Successful.",
-            'data' => $cv
+            'data' => $cvEducation
         ], 200);
     }
 
@@ -161,7 +162,7 @@ class CvEducationController extends Controller
      * @param  string  $cv_education_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($cv_education_id)
+    public function destroy(Request $request, $cv_education_id)
     {
         $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();

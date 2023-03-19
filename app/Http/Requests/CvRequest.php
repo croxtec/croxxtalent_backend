@@ -44,25 +44,25 @@ class CvRequest extends FormRequest
             //         'user_id' => 'required|exists:users,id',
             //     ];
             case 'PUT':
-                return [
-                    'phone' => 'required|max:25',
-                    'email' => 'required|email|max:150',
-                    'country_code' => 'required|exists:countries,code',
-                    'city' => 'required|max:255',
-                    'state_id' => 'required|exists:states,id',
-                    'postal_code' => 'nullable|max:10',
-                    'address' => 'required|max:255',
-                ];
+                // return [
+                //     'phone' => 'required|max:25',
+                //     'email' => 'required|email|max:150',
+                //     'country_code' => 'required|exists:countries,code',
+                //     'city' => 'required|max:255',
+                //     'state_id' => 'required|exists:states,id',
+                //     'postal_code' => 'nullable|max:10',
+                //     'address' => 'required|max:255',
+                // ];
             case 'POST':
                 return [
                     'first_name' => 'required|max:30',
                     'last_name' => 'required|max:30',
                     'gender' => 'required',
-                    'date_of_birth' => 'required|date',
+                    'date_of_birth' => 'nullable|date',
 
-                    'industry_id' => 'required|exists:industry,id',
+                    'industry_id' => 'required|exists:industries,id',
                     // 'job_title_id' => 'required|exists:job_titles,id',
-                    'job_title' => 'required', 
+                    'job_title' => 'required',
                     'career_summary' => 'required|max:500',
                 ];
             case 'DELETE':

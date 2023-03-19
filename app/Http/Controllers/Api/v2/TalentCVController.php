@@ -125,7 +125,12 @@ class TalentCVController extends Controller
             'address' => 'required|max:255'
         ]);
         // Retrieve the validated input data...
-        $validatedData = $validator->validated();
+        if($validator->fails()){
+            return response()->json([
+              'status' => false,
+              'errors' =>  $validator->errors()->toJson()
+            ], 400);
+        }
         // $user = User::findOrFail($validatedData['user_id']);
         $cv->update($request->all());
         return response()->json([
