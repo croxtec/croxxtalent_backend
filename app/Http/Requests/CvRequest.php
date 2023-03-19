@@ -39,32 +39,37 @@ class CvRequest extends FormRequest
         switch($this->method()) {
             case 'GET':
                 return [];
+            // case 'POST':
+            //     return [
+            //         'user_id' => 'required|exists:users,id',
+            //     ];
+            case 'PUT':
+                return [
+                    'phone' => 'required|max:25',
+                    'email' => 'required|email|max:150',
+                    'country_code' => 'required|exists:countries,code',
+                    'city' => 'required|max:255',
+                    'state_id' => 'required|exists:states,id',
+                    'postal_code' => 'nullable|max:10',
+                    'address' => 'required|max:255',
+                ];
             case 'POST':
                 return [
-                    'user_id' => 'required|exists:users,id',
-                ];
-            case 'PUT':
-            case 'PATCH':
-                return [
-                    'job_title_id' => 'required|exists:job_titles,id',
                     'first_name' => 'required|max:30',
                     'last_name' => 'required|max:30',
                     'gender' => 'required',
                     'date_of_birth' => 'required|date',
-                    'email' => 'required|email|max:150',
-                    'phone' => 'required|max:25',
-                    'address' => 'required|max:255',
-                    'city' => 'required|max:255',
-                    'state_id' => 'required|exists:states,id',
-                    'country_code' => 'required|exists:countries,code',
-                    'postal_code' => 'nullable|max:10',
+
+                    'industry_id' => 'required|exists:industry,id',
+                    // 'job_title_id' => 'required|exists:job_titles,id',
+                    'job_title' => 'required', 
                     'career_summary' => 'required|max:500',
                 ];
             case 'DELETE':
                 return [];
             default:break;
         }
-        
+
     }
 
     /**

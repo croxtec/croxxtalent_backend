@@ -6,10 +6,14 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
-use Carbon\Carbon;
+use App\Http\Requests\CvRequest;
+use App\Http\Requests\CvPhotoRequest;
+use Illuminate\Support\Facades\Validator;
 
+use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Cv;
+use App\Models\Audit;
 use App\Libraries\LinkedIn;
 
 
@@ -57,6 +61,16 @@ class TalentCVController extends Controller
                     $referralUser->save();
                 }
             }
+            // Attach Cv skill
+            $cv_skills = [];
+            foreach($cv->skills as $sk){
+                $sk->secondary;
+                $sk->tertiary;
+                // array_push($cv_skills, $sk);
+            }
+            // $cv->cv_skills = $cv_skills;
+            $this->authorize('view', [Cv::class, $cv]);
+
 
             return response()->json([
                 'status' => true,
@@ -71,15 +85,6 @@ class TalentCVController extends Controller
         }
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-
-    }
 
     /**
      * Store a newly created resource in storage.
@@ -87,43 +92,156 @@ class TalentCVController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(CvRequest $request)
     {
+        // Authorization was declared in the Form Request
+        $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
+        // Retrieve the validated input data...
+        $validatedData = $request->validated();
+        // $user = User::findOrFail($validatedData['user_id']);
+        $cv->update($request->all());
+        return response()->json([
+            'status' => true,
+            'message' => "CV profile saved successfully.",
+            'data' => Cv::find($cv->id)
+        ], 200);
+    }
 
+
+    public function contact(Request $request)
+    {
+        // Authorization was declared in the Form Request
+        $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
+
+        $validator = Validator::make($request->all(),[
+            'phone' => 'required|max:25',
+            'email' => 'required|email|max:150',
+            'country_code' => 'required|exists:countries,code',
+            'city' => 'required|max:255',
+            'state_id' => 'required|exists:states,id',
+            'postal_code' => 'nullable|max:10',
+            'address' => 'required|max:255'
+        ]);
+        // Retrieve the validated input data...
+        $validatedData = $validator->validated();
+        // $user = User::findOrFail($validatedData['user_id']);
+        $cv->update($request->all());
+        return response()->json([
+            'status' => true,
+            'message' => "CV contact saved successfully.",
+            'data' => Cv::find($cv->id)
+        ], 200);
+    }
+
+     /**
+    * Upload and update photo.
+    *
+    * @param  \App\Models\Http\Requests\CvPhotoRequest  $request
+    * @param  string  $id
+    * @return \Illuminate\Http\Response
+    */
+    public function photo(Request $request, $id)
+    {
+        // Authorization was declared in the CvPhotoRequest
+
+        // Retrieve the validated input data....
+        // $validatedData = $request->validated();
+        $cv = Cv::findOrFail($id);
+
+        if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
+            $extension = $request->file('photo')->extension();
+            $filename = $cv->id . '-' . time() . '-' . Str::random(32);
+            $filename = "{$filename}.$extension";
+            $year = date('Y');
+            $month = date('m');
+            $rel_upload_path    = "profile/{$year}/{$month}";
+            if ( config('app.env') == 'local') {
+                $rel_upload_path = "local/{$rel_upload_path}"; // dir for dev environment test uploads
+            }
+            // do upload
+            $uploaded_file_path = $request->file('photo')->storeAs($rel_upload_path, $filename);
+            Storage::setVisibility($uploaded_file_path, 'public'); //set file visibility to  "public"
+            // delete previously uploaded file if any
+            if ($cv->photo) {
+                Storage::delete($cv->photo);
+            }
+            // Update with the newly update file
+            $cv->photo = $uploaded_file_path;
+            $cv->save();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Photo uploaded successfully.',
+                'data' => [
+                    'photo_url' => cloud_asset($uploaded_file_path),
+                    'cv' => $cv
+                ]
+            ], 200);
+        }
+        return response()->json([
+            'status' => true,
+            'message' => "Could not upload photo, please try again.",
+        ], 400);
     }
 
     /**
-     * Display the specified resource.
+     * Publish a CV
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function publish(Request $request, $id)
     {
-        //
+        $cv = Cv::findOrFail($id);
+
+        $this->authorize('update', [Cv::class, $cv]);
+        $old_is_published = $cv->is_published;
+
+        $cv->is_published = true;
+        $cv->save();
+
+        // save audit trail log
+        $event = $old_is_published === false ? 'cvs.created' : 'cvs.updated';
+        $old_values = ['is_published' => $old_is_published];
+        $new_values = ['is_published' => $cv->is_published];
+        Audit::log($request->user()->id, $event, $old_values, $new_values, Cv::class, $cv->id);
+
+        // Send notifications to the references
+        if ($cv->references) {
+            foreach($cv->references as $cvReference) {
+                $cvReference->sendReferenceRequestEmail();
+            }
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => "CV published and sent successfully.",
+            'data' => Cv::find($cv->id)
+        ], 200);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Unublish a CV
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function unpublish($id)
     {
-        //
-    }
+        $cv = Cv::findOrFail($id);
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
+        $this->authorize('update', [Cv::class, $cv]);
+
+        $cv->is_published = false;
+        $cv->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => "CV unpublished successfully.",
+            'data' => Cv::find($cv->id)
+        ], 200);
     }
 
     /**
