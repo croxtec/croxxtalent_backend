@@ -36,7 +36,7 @@ class TimezoneController extends Controller
                 }
             }
         })->where( function($query) use ($search) {
-            $query->where('name', 'ILIKE', "%{$search }%");
+            $query->where('name', 'LIKE', "%{$search }%");
         })->orderBy($sort_by, $sort_dir)
             ->paginate($per_page);
 
