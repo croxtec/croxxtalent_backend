@@ -19,7 +19,7 @@ class TimezoneController extends Controller
         $this->authorize('view-any', Timezone::class);
 
         $per_page = $request->input('per_page', 100);
-        $sort_by = $request->input('sort_by', 'sort_order');
+        $sort_by = $request->input('sort_by', 'name');
         $sort_dir = $request->input('sort_dir', 'asc');
         $search = $request->input('search');
         $archived = $request->input('archived');
