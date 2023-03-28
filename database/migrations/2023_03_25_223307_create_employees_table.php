@@ -15,6 +15,11 @@ return new class extends Migration
     {
         Schema::create('employees', function (Blueprint $table) {
             $table->id();
+            $table->string('name', 50)->nullable();
+            $table->string('email')->nullable();
+            $table->string('phone')->nullable();
+            $table->date('birth_date', 50)->nullable();
+            $table->foreignId('job_code_id')->nullable();
             $table->timestamps();
         });
     }

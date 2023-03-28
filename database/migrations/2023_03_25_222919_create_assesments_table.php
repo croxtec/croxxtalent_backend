@@ -24,9 +24,14 @@ return new class extends Migration
 
             $table->string('type')->default('experience');
             $table->string('name')->nullable();
+            $table->text('description')->nullable();
             $table->string('category')->nullable();
             $table->string('validity_period')->nullable();
             $table->string('delivery_type')->nullable();
+            $table->integer('expected_score')->nullable();
+
+            $table->json('candidate')->nullable();
+            $table->json('manager')->nullable();
 
             $table->timestamps();
         });

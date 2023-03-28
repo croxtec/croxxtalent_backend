@@ -13,17 +13,18 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('assesment_summaries', function (Blueprint $table) {
+        Schema::create('vetting_summaries', function (Blueprint $table) {
             $table->id();
             $table->foreignId('assesment_id');
-            $table->foreignId('manager_id');
+            $table->foreignId('professional_id');
             $table->foreignId('talent_id');
-            $table->integer('total_score')->default(0)->nullable();
+            $table->integer('croxxtalent_score')->default(0)->nullable();
             $table->integer('talent_score')->default(0)->nullable();
             $table->integer('score_average')->default(0)->nullable();
             $table->text('talent_feedback')->nullable();
-            $table->text('manager_feedback')->nullable();
-            $table->text('training_suggestion')->nullable();
+            $table->text('professional_feedback')->nullable();
+            $table->string('badge_earn')->nullable();
+            $table->json('training_suggestion')->nullable();
             $table->timestamps();
         });
     }
@@ -35,6 +36,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('assesment_summaries');
+        Schema::dropIfExists('vetting_summaries');
     }
 };

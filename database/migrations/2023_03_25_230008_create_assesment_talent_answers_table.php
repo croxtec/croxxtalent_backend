@@ -18,6 +18,13 @@ return new class extends Migration
             $table->foreignId('talent_id');
             $table->foreignId('assesment_id');
             $table->foreignId('assesment_question_id');
+
+            $table->text('comment')->nullable();
+            $table->dateTime('period')->nullable();
+            $table->string('option')->nullable();
+            $table->json('options')->nullable();
+            $table->text('upload')->nullable();
+            $table->text('document')->nullable();
             $table->timestamps();
         });
     }
