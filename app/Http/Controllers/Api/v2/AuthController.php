@@ -352,7 +352,7 @@ class AuthController extends Controller
         }
     }
 
-    public function confirmResetCode(Rewquest  $request){
+    public function confirmResetCode(Request  $request){
         $email = $request->input('email');
         $token = $request->input('code');
 
