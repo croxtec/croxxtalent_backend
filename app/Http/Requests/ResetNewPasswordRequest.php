@@ -43,16 +43,16 @@ class ResetNewPasswordRequest extends FormRequest
                     'email' => 'required|email',
                     'password_reset_code' => 'required',
                     'new_password' => 'required|min:6|confirmed',
-                    'new_password_confirmation' => 'required',
+                    // 'new_password_confirmation' => 'required',
                 ];
             case 'PUT':
-            case 'PATCH':                
+            case 'PATCH':
             case 'DELETE':
                 return [];
             default:
                 break;
         }
-        
+
     }
 
     /**

@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('job_code');
             $table->string('job_title')->nullable();
             $table->text('description')->nullable();
-            $table->text('managers')->nullable();
+            $table->json('managers')->nullable();
             $table->foreignId('manager1_id')->nullable();
             $table->foreignId('manager2_id')->nullable();
             $table->foreignId('manager3_id')->nullable();

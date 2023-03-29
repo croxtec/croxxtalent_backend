@@ -45,6 +45,7 @@ Route::prefix('auth')->name('api.')->group( function () {
         Route::get('user', 'Api\v2\AuthController@user')->name('auth.user');
     });
 
+    Route::get('confirm-code', 'Api\v2\AuthController@confirmResetCode')->name('users.confirm_reset_code');
     Route::post('forgot-passwword', 'Api\v2\AuthController@sendPasswordVerification')->name('users.send_password_verification');
     Route::post('reset-password', 'Api\v2\AuthController@resetNewPassword')->name('users.reset_new_password');
 });

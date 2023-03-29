@@ -68,6 +68,7 @@ class UserController extends Controller
             'status' => true,
             'message' => "Successful."
         ])->merge($users)->merge(['draw' => $datatable_draw]);
+
         return response()->json($response, 200);
     }
 
@@ -247,7 +248,7 @@ class UserController extends Controller
         ], 200);
     }
 
-    /**
+    /*
      * Remove the specified resource from storage.
      *
      * @param  string  $id

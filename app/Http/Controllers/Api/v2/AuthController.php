@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
+use App\Http\Requests\ResetNewPasswordRequest;
 use Illuminate\Support\Facades\Notification;
 
 use GeoIPLocation;
@@ -27,7 +28,6 @@ use Illuminate\Support\Facades\Validator;
 
 use App\Mail\PasswordReset;
 use App\Mail\PasswordChanged;
-
 class AuthController extends Controller
 {
 
@@ -352,6 +352,27 @@ class AuthController extends Controller
         }
     }
 
+    public function confirmResetCode(Rewquest  $request){
+        $email = $request->input('email');
+        $token = $request->input('code');
+
+        $verification = Verification::where('action', 'reset_password')
+                                ->where('token', $token)
+                                ->where('sent_to', $email)
+                                ->first();
+        if($verification){
+            return response()->json([
+                'status' => true,
+                'message' => "Valid verification code.",
+            ], 200);
+        }else {
+            return response()->json([
+                'status' => false,
+                'message' => "Invalid verification code.",
+            ], 400);
+        }
+
+    }
 
     /**
     * Reset and update password.
