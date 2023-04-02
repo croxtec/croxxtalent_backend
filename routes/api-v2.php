@@ -214,6 +214,12 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::post('job-invitations/check', 'Api\v2\JobInvitationController@check')->name('job_invitations.check');
     });
 
+    // Employee
+    Route::resources([
+        'employee' => 'Api\v2\EmployeeController'
+    ]);
+    // ->name('employers.employee');
+
     // Campaigns
     Route::get('campaigns', 'Api\v2\CampaignController@index')->name('campaigns.index');
     Route::get('campaigns/{id}', 'Api\v2\CampaignController@show')->name('campaigns.show');

@@ -15,14 +15,15 @@ return new class extends Migration
     {
         Schema::create('assesments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id');
+            $table->foreignId('admin_id');
+            $table->foreignId('employer_id');
             $table->foreignId('domain_id');
             $table->foreignId('core_id');
             $table->foreignId('skill_id');
             $table->string('level');
             $table->string('code')->nullable();
 
-            $table->string('type')->default('experience');
+            $table->string('type')->default('experience'); //experience,vetting
             $table->string('name')->nullable();
             $table->text('description')->nullable();
             $table->string('category')->nullable();

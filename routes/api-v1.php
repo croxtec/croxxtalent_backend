@@ -60,7 +60,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::get('cv-references/{id}/questionnaire/successful', 'Api\v1\Link\CvReferenceLinkController@questionnaireFormSuccessful')->name('cv_references.questionnaire_form.successful');
 
         // Misc
-        Route::get('image-cors-proxy', 'Api\v1\Public\ImageCorsProxyController@view')->name('image_cors_proxy');
+        Route::get('image-cors-proxy', 'Api\v1\Link\ImageCorsProxyController@view')->name('image_cors_proxy');
     });
 
     // Unsigned Routes
