@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api\v2;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\EmployerJobcode as JobCode;
+
 
 class JobCodeController extends Controller
 {
@@ -25,7 +27,18 @@ class JobCodeController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $user = $request->user();
+        $rules = [
+            'job_code' => 'required'
+        ];
+
+        $validatedData = $request->validate($rules);
+        $validatedData['employer_id'] = $user->id;
+
+        info($validatedData);
+
+
+
     }
 
     /**
@@ -36,7 +49,7 @@ class JobCodeController extends Controller
      */
     public function show($id)
     {
-        //
+
     }
 
     /**

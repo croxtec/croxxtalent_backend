@@ -14,7 +14,7 @@ class EmployeeController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = $request->user();
         // $this->authorize('view-any', Campaign::class);
@@ -37,7 +37,7 @@ class EmployeeController extends Controller
                 }
             }
         })->where( function($query) use ($search) {
-            $query->where('title', 'LIKE', "%{$search}%");
+            $query->where('name', 'LIKE', "%{$search}%");
         })->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
@@ -60,18 +60,11 @@ class EmployeeController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(EmployeeRequest $request)
     {
-        $rules = [
-            'name' => 'required|max:100',
-            'email' => 'required|max:100',
-            'phone' => 'required|max:100',
-            'employer_id' => 'required|exist:users,id',
-            'job_code_id' => 'required',
-        ];
-        $validatedData = $request->validate($rules);
+        $user = $request->user();
+        $validatedData = $request->validated();
 
-        info($validatedData);
         $employee = Employee::create($validatedData);
 
         if($employee){

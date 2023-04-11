@@ -41,13 +41,12 @@ class EmployeeRequest extends FormRequest
             case 'GET':
                 return [];
             case 'POST':
-                info($this);
                 return [
                     'name' => 'required|max:100',
                     'email' => 'required|max:100',
                     'phone' => 'required|max:100',
-                    'employer_id' => 'required|exist:users,id',
-                    'job_code_id' => 'required',
+                    // 'employer_id' => 'required|exist:users,id',
+                    // 'job_code_id' => 'required',
                 ];
             default:break;
         }
