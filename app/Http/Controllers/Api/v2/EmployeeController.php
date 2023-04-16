@@ -28,7 +28,8 @@ class EmployeeController extends Controller
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
 
-        $employees = Employee::where( function ($query) use ($archived) {
+        $employees = Employee::where('employer_id', $user->id)
+        ->when( $archived ,function ($query) use ($archived) {
             if ($archived !== null ) {
                 if ($archived === true ) {
                     $query->whereNotNull('archived_at');
@@ -64,6 +65,8 @@ class EmployeeController extends Controller
     {
         $user = $request->user();
         $validatedData = $request->validated();
+        $validatedData['employer_id'] = $user->id;
+        $validatedData['user_id'] = User::where('email', $validatedData['email'])->first();
 
         $employee = Employee::create($validatedData);
 

@@ -13,7 +13,9 @@ class EmployerJobcode extends Model
         'employer_id',
         'job_code',
         'job_title',
-        'description'
+        'description',
+        "manager1_id",
+        "manager2_id",
     ];
 
 }

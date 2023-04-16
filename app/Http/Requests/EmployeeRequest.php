@@ -46,7 +46,7 @@ class EmployeeRequest extends FormRequest
                     'email' => 'required|max:100',
                     'phone' => 'required|max:100',
                     // 'employer_id' => 'required|exist:users,id',
-                    // 'job_code_id' => 'required',
+                    'job_code_id' => 'required|exists:employer_jobcodes,id',
                 ];
             default:break;
         }
