@@ -17,8 +17,8 @@ class CreateJobTitlesTable extends Migration
             $table->id();
             $table->foreignId('industry_id')->default(1);
             $table->string('name', 100);
-            $table->text('description')->nullable();
             $table->timestamps();
+            $table->text('description')->nullable();
             $table->timestamp('archived_at')->nullable();
         });
     }

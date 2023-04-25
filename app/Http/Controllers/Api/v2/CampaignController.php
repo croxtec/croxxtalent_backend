@@ -89,6 +89,7 @@ class CampaignController extends Controller
                 'message' => "Campaign created successfully.",
                 'data' => Campaign::find($campaign->id)
             ], 201);
+
         } else {
             return response()->json([
                 'status' => false,

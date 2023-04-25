@@ -23,6 +23,7 @@ return new class extends Migration
             $table->foreignId('manager1_id')->nullable();
             $table->foreignId('manager2_id')->nullable();
             $table->foreignId('manager3_id')->nullable();
+            $table->timestamp('archived_at')->nullable();
             $table->timestamps();
         });
     }

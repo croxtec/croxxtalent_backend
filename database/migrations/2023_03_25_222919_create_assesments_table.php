@@ -16,7 +16,6 @@ return new class extends Migration
         Schema::create('assesments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('admin_id');
-            $table->foreignId('employer_id');
             $table->foreignId('domain_id');
             $table->foreignId('core_id');
             $table->foreignId('skill_id');
@@ -31,9 +30,11 @@ return new class extends Migration
             $table->string('delivery_type')->nullable();
             $table->integer('expected_score')->nullable();
 
-            $table->json('candidate')->nullable();
-            $table->json('manager')->nullable();
-
+            $table->json('candidates')->nullable();
+            $table->json('managers')->nullable();
+            $table->foreignId('job_code_id')->nullable();
+            $table->boolean('is_published')->default(false);
+            $table->timestamp('archived_at')->nullable();
             $table->timestamps();
         });
     }

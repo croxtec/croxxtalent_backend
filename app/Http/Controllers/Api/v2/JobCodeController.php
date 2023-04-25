@@ -14,7 +14,7 @@ class JobCodeController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = $request->user();
 
@@ -27,7 +27,7 @@ class JobCodeController extends Controller
         $datatable_draw = $request->input('draw'); // if any
 
         $job_code = JobCode::where('employer_id', $user->id)
-        ->when($query, function($query) use ($search) {
+        ->when($search, function($query) use ($search) {
             $query->where('id', 'LIKE', "%{$search}%");
         })->orderBy($sort_by, $sort_dir);
 

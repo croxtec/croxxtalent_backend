@@ -25,6 +25,7 @@ return new class extends Migration
             $table->json('options')->nullable();
             $table->text('upload')->nullable();
             $table->text('document')->nullable();
+
             $table->timestamps();
         });
     }
