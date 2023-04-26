@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Http\Requests\EmployeeRequest;
 use App\Mail\WelcomeEmployee;
 use App\Models\User;
+use Illuminate\Support\Facades\Mail;
 
 class EmployeeController extends Controller
 {
@@ -49,7 +50,7 @@ class EmployeeController extends Controller
         } else {
             $employees = $employees->paginate($per_page);
         }
-
+ 
         $response = collect([
             'status' => true,
             'message' => "Successful."
