@@ -19,7 +19,7 @@ return new class extends Migration
             $table->foreignId('domain_id');
             $table->foreignId('core_id');
             $table->foreignId('user_id')->nullable();
-            $table->string('name', 30)->nullable();
+            $table->string('name', 50)->nullable();
             $table->string('phone', 25)->nullable();
             $table->text('description')->nullable();
             $table->timestamp('archived_at')->nullable();

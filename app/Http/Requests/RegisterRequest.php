@@ -40,7 +40,7 @@ class RegisterRequest extends FormRequest
             case 'POST':
                 // info($this);
                 return [
-                    'type' => 'required|in:talent,employer,affiliate', // optional for admin
+                    'type' => 'required|in:talent,employer', // optional for admin andaffiliate
                     'first_name' => 'required|max:30',
                     'last_name' => 'required|max:30',
                     'email' => 'required|max:150|unique:users,email',

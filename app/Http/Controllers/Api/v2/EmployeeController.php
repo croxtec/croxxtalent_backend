@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Employee;
 use App\Http\Requests\EmployeeRequest;
+use App\Mail\WelcomeEmployee;
+
 
 class EmployeeController extends Controller
 {
@@ -71,6 +73,7 @@ class EmployeeController extends Controller
         $employee = Employee::create($validatedData);
 
         if($employee){
+            Mail::to($validatedData['email'])->send(new WelcomeEmployee($employee, $user));
             return response()->json([
                 'status' => true,
                 'message' => "Employee created successfully.",
