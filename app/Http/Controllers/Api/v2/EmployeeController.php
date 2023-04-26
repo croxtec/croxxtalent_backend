@@ -75,6 +75,7 @@ class EmployeeController extends Controller
 
         if($employee){
             Mail::to($validatedData['email'])->send(new WelcomeEmployee($employee, $user));
+             
             return response()->json([
                 'status' => true,
                 'message' => "Employee created successfully.",

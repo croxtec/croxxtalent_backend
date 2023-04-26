@@ -9,6 +9,7 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use App\Models\User;
+use App\Models\Employee;
 
 class WelcomeEmployee extends Mailable
 {
@@ -23,7 +24,7 @@ class WelcomeEmployee extends Mailable
      *
      * @return void
      */
-    public function __construct(User $employee, User $employer)
+    public function __construct(Employee $employee, User $employer)
     {
         $this->employee = $employee;
         $this->employer = $employer;
