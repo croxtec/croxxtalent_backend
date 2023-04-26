@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Employee;
 use App\Http\Requests\EmployeeRequest;
 use App\Mail\WelcomeEmployee;
-
+use App\Models\User;
 
 class EmployeeController extends Controller
 {

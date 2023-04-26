@@ -55,7 +55,10 @@ class JobCodeController extends Controller
     {
         $user = $request->user();
         $rules = [
-            'job_code' => 'required'
+            'job_code' => 'required',
+            'job_title' => 'nullable',
+            'description' => 'nullable',
+            'manager1_id' => 'nullable|intger',
         ];
 
         $validatedData = $request->validate($rules);
@@ -108,7 +111,9 @@ class JobCodeController extends Controller
         $user = $request->user();
         $rules = [
             'job_code' => 'required',
-            'manager1_id' => 'integer'
+            'job_title' => 'nullable',
+            'description' => 'nullable',
+            'manager1_id' => 'nullable|intger',
         ];
 
         $validatedData = $request->validate($rules);
