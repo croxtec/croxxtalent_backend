@@ -214,6 +214,17 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::post('job-invitations/check', 'Api\v2\JobInvitationController@check')->name('job_invitations.check');
     });
 
+    // Professional
+    Route::get('professional', 'Api\v2\ProfessionalController@index')->name('professional.index');
+    Route::get('professional/{id}', 'Api\v2\ProfessionalController@show')->name('professional.show');
+    Route::middleware('auth:sanctum')->group( function () {
+        Route::post('professional', 'Api\v2\ProfessionalController@store')->name('professional.store');
+        Route::put('professional/{id}', 'Api\v2\ProfessionalController@update')->name('professional.update');
+        Route::patch('professional/{id}/archive', 'Api\v2\ProfessionalController@archive')->name('professional.archive');
+        Route::patch('professional/{id}/unarchive', 'Api\v2\ProfessionalController@unarchive')->name('professional.unarchive');
+        Route::delete('professional/{id}', 'Api\v2\ProfessionalController@destroy')->name('professional.destroy');
+    });
+
     // Employers
     Route::middleware('auth:sanctum')->prefix('employers')->name('employers.')->group( function () {
         Route::resources([
