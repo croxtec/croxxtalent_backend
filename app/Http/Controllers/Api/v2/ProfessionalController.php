@@ -16,7 +16,7 @@ class ProfessionalController extends Controller
     public function index()
     {
 
-        $this->authorize('view-any', Professional::class);
+        // $this->authorize('view-any', Professional::class);
 
         $per_page = $request->input('per_page', 100);
         $sort_by = $request->input('sort_by', 'name');
@@ -97,7 +97,7 @@ class ProfessionalController extends Controller
     {
         $professional = Professional::findOrFail($id);
 
-        $this->authorize('view', [Professional::class, $professional]);
+        // $this->authorize('view', [Professional::class, $professional]);
 
         return response()->json([
             'status' => true,
@@ -106,7 +106,7 @@ class ProfessionalController extends Controller
         ], 200);
     }
 
- 
+
     /**
      * Update the specified resource in storage.
      *
@@ -143,7 +143,7 @@ class ProfessionalController extends Controller
     {
         $professional = Professional::findOrFail($id);
 
-        $this->authorize('delete', [Professional::class, $professional]);
+        // $this->authorize('delete', [Professional::class, $professional]);
 
         $professional->archived_at = now();
         $professional->save();
@@ -160,12 +160,12 @@ class ProfessionalController extends Controller
      *
      * @param  string  $id
      * @return \Illuminate\Http\Response
-     */
+     */ 
     public function unarchive($id)
     {
         $professional = Professional::findOrFail($id);
 
-        $this->authorize('delete', [Professional::class, $professional]);
+        // $this->authorize('delete', [Professional::class, $professional]);
 
         $professional->archived_at = null;
         $professional->save();
@@ -187,7 +187,7 @@ class ProfessionalController extends Controller
     {
         $professional = Professional::findOrFail($id);
 
-        $this->authorize('delete', [Professional::class, $professional]);
+        // $this->authorize('delete', [Professional::class, $professional]);
 
         $name = $professional->name;
         // check if the record is linked to other records
