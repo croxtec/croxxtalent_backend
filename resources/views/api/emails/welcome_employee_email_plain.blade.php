@@ -7,7 +7,6 @@ Your profile has been registered with {{ config('myapp.name') }} ({{ config('mya
 
 Simply click or copy the link below to verify your email address.
 
-<!-- {{ $verification_url }} -->
 @endsection
 
 @section('email_complimentary_close')
