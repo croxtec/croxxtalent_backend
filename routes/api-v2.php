@@ -215,9 +215,9 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
     });
 
     // Professional
-    Route::get('professional', 'Api\v2\ProfessionalController@index')->name('professional.index');
-    Route::get('professional/{id}', 'Api\v2\ProfessionalController@show')->name('professional.show');
-    Route::middleware('auth:sanctum')->group( function () {
+    Route::middleware('auth:sanctum')->group( function () { 
+        Route::get('professional', 'Api\v2\ProfessionalController@index')->name('professional.index');
+        Route::get('professional/{id}', 'Api\v2\ProfessionalController@show')->name('professional.show');
         Route::post('professional', 'Api\v2\ProfessionalController@store')->name('professional.store');
         Route::put('professional/{id}', 'Api\v2\ProfessionalController@update')->name('professional.update');
         Route::patch('professional/{id}/archive', 'Api\v2\ProfessionalController@archive')->name('professional.archive');
