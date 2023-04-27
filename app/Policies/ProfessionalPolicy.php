@@ -18,6 +18,7 @@ class ProfessionalPolicy
      */
     public function viewAny(User $user)
     {
+        info($user->tokenCan('access:admin'));
         if ($user->tokenCan('access:admin')) {
             return true;
         }
