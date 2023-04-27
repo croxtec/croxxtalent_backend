@@ -215,7 +215,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
     });
 
     // Professional
-    Route::middleware('auth:sanctum')->group( function () { 
+    Route::middleware('auth:sanctum')->prefix('croxxtalent')->group( function () {
         Route::get('professional', 'Api\v2\ProfessionalController@index')->name('professional.index');
         Route::get('professional/{id}', 'Api\v2\ProfessionalController@show')->name('professional.show');
         Route::post('professional', 'Api\v2\ProfessionalController@store')->name('professional.store');
