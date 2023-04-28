@@ -18,10 +18,11 @@ class ProfessionalPolicy
      */
     public function viewAny(User $user)
     {
-        info($user->tokenCan('access:admin'));
+        // info($user->tokenCan('access:admin'));
         if ($user->tokenCan('access:admin')) {
             return true;
         }
+        return false;
     }
 
     /**
@@ -36,6 +37,7 @@ class ProfessionalPolicy
         if ($user->tokenCan('access:admin')) {
             return true;
         }
+        return false;
     }
 
     /**

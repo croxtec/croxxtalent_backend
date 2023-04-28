@@ -20,7 +20,7 @@ class EmployeeController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        // $this->authorize('view-any', Campaign::class);
+        $this->authorize('view-any', Campaign::class);
 
         $per_page = $request->input('per_page', 100);
         $sort_by = $request->input('sort_by', 'created_at');
@@ -50,7 +50,7 @@ class EmployeeController extends Controller
         } else {
             $employees = $employees->paginate($per_page);
         }
- 
+
         $response = collect([
             'status' => true,
             'message' => "Successful."
@@ -69,13 +69,14 @@ class EmployeeController extends Controller
         $user = $request->user();
         $validatedData = $request->validated();
         $validatedData['employer_id'] = $user->id;
-        $validatedData['user_id'] = User::where('email', $validatedData['email'])->first();
+        $talent = User::where('email', $validatedData['email'])->first();
+        $validatedData['user_id'] = $talent->id;
 
         $employee = Employee::create($validatedData);
 
         if($employee){
             Mail::to($validatedData['email'])->send(new WelcomeEmployee($employee, $user));
-             
+
             return response()->json([
                 'status' => true,
                 'message' => "Employee created successfully.",
@@ -95,9 +96,17 @@ class EmployeeController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        //
+        $employee = Employee::findOrFail($id);
+
+        // $this->authorize('view', [Professional::class, $employee]);
+
+        return response()->json([
+            'status' => true,
+            'message' => "Successful.",
+            'data' => $employee
+        ], 200);
     }
 
     /**
@@ -107,19 +116,91 @@ class EmployeeController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(EmployeeRequest $request, $id)
     {
-        //
+        $user = $request->user();
+        $validatedData = $request->validated();
+        $employee = Employee::findOrFail($id);
+        $employee->update($validatedData);
+
+        return response()->json([
+            'status' => true,
+            'message' => "Employee \"{$employee->name}\" updated successfully.",
+            'data' => Employee::find($employee->id)
+        ], 200);
+    }
+
+    /**
+     * Archive the specified resource from active list.
+     *
+     * @param  string  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function archive($id)
+    {
+        $employee = Employee::findOrFail($id);
+
+        // $this->authorize('delete', [Professional::class, $employee]);
+
+        $employee->archived_at = now();
+        $employee->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => "Professional \"{$employee->name}\" archived successfully.",
+            'data' => Employee::find($employee->id)
+        ], 200);
+    }
+
+    /**
+     * Unarchive the specified resource from archived storage.
+     *
+     * @param  string  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function unarchive($id)
+    {
+        $employee = Employee::findOrFail($id);
+
+        // $this->authorize('delete', [Professional::class, $employee]);
+
+        $employee->archived_at = null;
+        $employee->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => "Professional \"{$employee->name}\" unarchived successfully.",
+            'data' => Employee::find($employee->id)
+        ], 200);
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param  string  $id
      * @return \Illuminate\Http\Response
      */
     public function destroy($id)
     {
-        //
+        $employee = Employee::findOrFail($id);
+
+        // $this->authorize('delete', [Professional::class, $employee]);
+
+        $name = $employee->name;
+        // check if the record is linked to other records
+        $relatedRecordsCount = related_records_count(Professional::class, $employee);
+
+        if ($relatedRecordsCount <= 0) {
+            $employee->delete();
+            return response()->json([
+                'status' => true,
+                'message' => "Professional \"{$name}\" deleted successfully.",
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => false,
+                'message' => "The \"{$name}\" record cannot be deleted because it is associated with {$relatedRecordsCount} other record(s). You can archive it instead.",
+            ], 400);
+        }
     }
 }

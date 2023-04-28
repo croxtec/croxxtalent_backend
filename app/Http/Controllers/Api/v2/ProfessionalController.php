@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api\v2;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Professional;
+use App\Mail\WelcomeEmployee;
 use App\Models\User;
+use Illuminate\Support\Facades\Mail;
 
 class ProfessionalController extends Controller
 {
@@ -16,8 +18,7 @@ class ProfessionalController extends Controller
      */
     public function index(Request $request)
     {
-
-        // $this->authorize('view-any', Professional::class);
+        $this->authorize('view-any', Professional::class);
 
         $per_page = $request->input('per_page', 100);
         $sort_by = $request->input('sort_by', 'name');
@@ -62,6 +63,8 @@ class ProfessionalController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create', Professional::class);
+
          $rules = [
             'email' => 'required|email|exists:users,email',
             'name' => 'required|max:50',
@@ -75,6 +78,8 @@ class ProfessionalController extends Controller
 
          $professional = Professional::create($validatedData);
          if ($professional) {
+            // Mail::to($validatedData['email'])->send(new WelcomeEmployee($employee, $user));
+
              return response()->json([
                  'status' => true,
                  'message' => "Professional \"{$professional->name}\" created successfully.",
@@ -98,7 +103,7 @@ class ProfessionalController extends Controller
     {
         $professional = Professional::findOrFail($id);
 
-        // $this->authorize('view', [Professional::class, $professional]);
+        $this->authorize('view', [Professional::class, $professional]);
 
         return response()->json([
             'status' => true,
@@ -117,7 +122,6 @@ class ProfessionalController extends Controller
     public function update(Request $request, $id)
     {
         $rules = [
-            'email' => 'required|email',
             'name' => 'required|max:50',
             'domain_id' => 'required',
             'core_id' => 'required',
@@ -126,6 +130,9 @@ class ProfessionalController extends Controller
         // Retrieve the validated input data....
         $validatedData = $request->validate($rules);
         $professional = Professional::findOrFail($id);
+
+        $this->authorize('update', [Professional::class, $professional]);
+
         $professional->update($validatedData);
         return response()->json([
             'status' => true,
@@ -144,14 +151,14 @@ class ProfessionalController extends Controller
     {
         $professional = Professional::findOrFail($id);
 
-        // $this->authorize('delete', [Professional::class, $professional]);
+        $this->authorize('delete', [Professional::class, $professional]);
 
         $professional->archived_at = now();
         $professional->save();
 
         return response()->json([
             'status' => true,
-            'message' => "professional$professional \"{$professional->name}\" archived successfully.",
+            'message' => "Professional \"{$professional->name}\" archived successfully.",
             'data' => Professional::find($professional->id)
         ], 200);
     }
@@ -166,14 +173,14 @@ class ProfessionalController extends Controller
     {
         $professional = Professional::findOrFail($id);
 
-        // $this->authorize('delete', [Professional::class, $professional]);
+        $this->authorize('delete', [Professional::class, $professional]);
 
         $professional->archived_at = null;
         $professional->save();
 
         return response()->json([
             'status' => true,
-            'message' => "professional$professional \"{$professional->name}\" unarchived successfully.",
+            'message' => "Professional \"{$professional->name}\" unarchived successfully.",
             'data' => Professional::find($professional->id)
         ], 200);
     }
@@ -188,7 +195,7 @@ class ProfessionalController extends Controller
     {
         $professional = Professional::findOrFail($id);
 
-        // $this->authorize('delete', [Professional::class, $professional]);
+        $this->authorize('delete', [Professional::class, $professional]);
 
         $name = $professional->name;
         // check if the record is linked to other records
@@ -198,7 +205,7 @@ class ProfessionalController extends Controller
             $professional->delete();
             return response()->json([
                 'status' => true,
-                'message' => "professional$professional \"{$name}\" deleted successfully.",
+                'message' => "Professional \"{$name}\" deleted successfully.",
             ], 200);
         } else {
             return response()->json([

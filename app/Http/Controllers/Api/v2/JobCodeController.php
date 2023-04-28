@@ -129,14 +129,77 @@ class JobCodeController extends Controller
         ], 201);
     }
 
+       /**
+     * Archive the specified resource from active list.
+     *
+     * @param  string  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function archive($id)
+    {
+        $job_code = JobCode::findOrFail($id);
+
+        // $this->authorize('delete', [Professional::class, $job_code]);
+
+        $job_code->archived_at = now();
+        $job_code->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => "Professional \"{$job_code->name}\" archived successfully.",
+            'data' => JobCode::find($job_code->id)
+        ], 200);
+    }
+
+    /**
+     * Unarchive the specified resource from archived storage.
+     *
+     * @param  string  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function unarchive($id)
+    {
+        $job_code = JobCode::findOrFail($id);
+
+        // $this->authorize('delete', [Professional::class, $job_code]);
+
+        $job_code->archived_at = null;
+        $job_code->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => "Professional \"{$job_code->name}\" unarchived successfully.",
+            'data' => JobCode::find($job_code->id)
+        ], 200);
+    }
+
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param  string  $id
      * @return \Illuminate\Http\Response
      */
     public function destroy($id)
     {
-        //
+        $job_code = JobCode::findOrFail($id);
+
+        // $this->authorize('delete', [Professional::class, $job_code]);
+
+        $name = $job_code->name;
+        // check if the record is linked to other records
+        $relatedRecordsCount = related_records_count(Professional::class, $job_code);
+
+        if ($relatedRecordsCount <= 0) {
+            $job_code->delete();
+            return response()->json([
+                'status' => true,
+                'message' => "Professional \"{$name}\" deleted successfully.",
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => false,
+                'message' => "The \"{$name}\" record cannot be deleted because it is associated with {$relatedRecordsCount} other record(s). You can archive it instead.",
+            ], 400);
+        }
     }
 }
