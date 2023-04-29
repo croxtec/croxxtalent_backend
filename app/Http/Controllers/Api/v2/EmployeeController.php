@@ -100,7 +100,7 @@ class EmployeeController extends Controller
     {
         $employee = Employee::findOrFail($id);
 
-        // $this->authorize('view', [Professional::class, $employee]);
+        // $this->authorize('view', [Employee::class, $employee]);
 
         return response()->json([
             'status' => true,
@@ -120,6 +120,7 @@ class EmployeeController extends Controller
     {
         $user = $request->user();
         $validatedData = $request->validated();
+        info($validatedData);
         $employee = Employee::findOrFail($id);
         $employee->update($validatedData);
 
@@ -140,14 +141,14 @@ class EmployeeController extends Controller
     {
         $employee = Employee::findOrFail($id);
 
-        // $this->authorize('delete', [Professional::class, $employee]);
+        // $this->authorize('delete', [Employee::class, $employee]);
 
         $employee->archived_at = now();
         $employee->save();
 
         return response()->json([
             'status' => true,
-            'message' => "Professional \"{$employee->name}\" archived successfully.",
+            'message' => "Employee \"{$employee->name}\" archived successfully.",
             'data' => Employee::find($employee->id)
         ], 200);
     }
@@ -162,14 +163,14 @@ class EmployeeController extends Controller
     {
         $employee = Employee::findOrFail($id);
 
-        // $this->authorize('delete', [Professional::class, $employee]);
+        // $this->authorize('delete', [Employee::class, $employee]);
 
         $employee->archived_at = null;
         $employee->save();
 
         return response()->json([
             'status' => true,
-            'message' => "Professional \"{$employee->name}\" unarchived successfully.",
+            'message' => "Employee \"{$employee->name}\" unarchived successfully.",
             'data' => Employee::find($employee->id)
         ], 200);
     }
@@ -184,17 +185,17 @@ class EmployeeController extends Controller
     {
         $employee = Employee::findOrFail($id);
 
-        // $this->authorize('delete', [Professional::class, $employee]);
+        // $this->authorize('delete', [Employee::class, $employee]);
 
         $name = $employee->name;
         // check if the record is linked to other records
-        $relatedRecordsCount = related_records_count(Professional::class, $employee);
+        $relatedRecordsCount = related_records_count(Employee::class, $employee);
 
         if ($relatedRecordsCount <= 0) {
             $employee->delete();
             return response()->json([
                 'status' => true,
-                'message' => "Professional \"{$name}\" deleted successfully.",
+                'message' => "Employee \"{$name}\" deleted successfully.",
             ], 200);
         } else {
             return response()->json([

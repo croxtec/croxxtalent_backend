@@ -58,7 +58,8 @@ class JobCodeController extends Controller
             'job_code' => 'required',
             'job_title' => 'nullable',
             'description' => 'nullable',
-            'manager1_id' => 'nullable|intger',
+            'manager1_id' => 'nullable|integer',
+            'manager2_id' => 'nullable|integer',
         ];
 
         $validatedData = $request->validate($rules);
@@ -113,7 +114,8 @@ class JobCodeController extends Controller
             'job_code' => 'required',
             'job_title' => 'nullable',
             'description' => 'nullable',
-            'manager1_id' => 'nullable|intger',
+            'manager1_id' => 'nullable|integer',
+            'manager2_id' => 'nullable|integer',
         ];
 
         $validatedData = $request->validate($rules);
@@ -139,14 +141,14 @@ class JobCodeController extends Controller
     {
         $job_code = JobCode::findOrFail($id);
 
-        // $this->authorize('delete', [Professional::class, $job_code]);
+        // $this->authorize('delete', [Jobcode::class, $job_code]);
 
         $job_code->archived_at = now();
         $job_code->save();
 
         return response()->json([
             'status' => true,
-            'message' => "Professional \"{$job_code->name}\" archived successfully.",
+            'message' => "Jobcode \"{$job_code->name}\" archived successfully.",
             'data' => JobCode::find($job_code->id)
         ], 200);
     }
@@ -161,14 +163,14 @@ class JobCodeController extends Controller
     {
         $job_code = JobCode::findOrFail($id);
 
-        // $this->authorize('delete', [Professional::class, $job_code]);
+        // $this->authorize('delete', [Jobcode::class, $job_code]);
 
         $job_code->archived_at = null;
         $job_code->save();
 
         return response()->json([
             'status' => true,
-            'message' => "Professional \"{$job_code->name}\" unarchived successfully.",
+            'message' => "Jobcode \"{$job_code->name}\" unarchived successfully.",
             'data' => JobCode::find($job_code->id)
         ], 200);
     }
@@ -183,17 +185,17 @@ class JobCodeController extends Controller
     {
         $job_code = JobCode::findOrFail($id);
 
-        // $this->authorize('delete', [Professional::class, $job_code]);
+        // $this->authorize('delete', [Jobcode::class, $job_code]);
 
         $name = $job_code->name;
         // check if the record is linked to other records
-        $relatedRecordsCount = related_records_count(Professional::class, $job_code);
+        $relatedRecordsCount = related_records_count(JobCode::class, $job_code);
 
         if ($relatedRecordsCount <= 0) {
             $job_code->delete();
             return response()->json([
                 'status' => true,
-                'message' => "Professional \"{$name}\" deleted successfully.",
+                'message' => "Jobcode \"{$name}\" deleted successfully.",
             ], 200);
         } else {
             return response()->json([

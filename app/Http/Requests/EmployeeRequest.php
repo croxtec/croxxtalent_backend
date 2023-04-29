@@ -22,8 +22,9 @@ class EmployeeRequest extends FormRequest
                 // return $this->user()->can('create', Employee::class);
             case 'PUT':
             case 'PATCH':
-                $employee = Employee::findOrFail($this->id);
-                return $this->user()->can('update', [Employee::class, $degree]);
+                return true;
+                // $employee = Employee::findOrFail($this->id);
+                // return $this->user()->can('update', [Employee::class, $employee]);
             case 'DELETE':
                 return false;
             default:break;
@@ -45,7 +46,13 @@ class EmployeeRequest extends FormRequest
                     'name' => 'required|max:100',
                     'email' => 'required|max:100',
                     'phone' => 'required|max:100',
-                    // 'employer_id' => 'required|exist:users,id',
+                    'job_code_id' => 'required|exists:employer_jobcodes,id',
+                ];
+                case 'PUT':
+            case 'PATCH':
+                return [
+                    'name' => 'required|max:100',
+                    'phone' => 'required|max:100',
                     'job_code_id' => 'required|exists:employer_jobcodes,id',
                 ];
             default:break;

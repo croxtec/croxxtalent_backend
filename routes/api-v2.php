@@ -216,16 +216,9 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
 
     Route::middleware('auth:sanctum')->prefix('croxxtalent')->group( function () {
         // Professional
-        Route::resources([
-            'professional' => 'Api\v2\ProfessionalController'
-        ]);
-        // Route::get('professional', 'Api\v2\ProfessionalController@index')->name('professional.index');
-        // Route::get('professional/{id}', 'Api\v2\ProfessionalController@show')->name('professional.show');
-        // Route::post('professional', 'Api\v2\ProfessionalController@store')->name('professional.store');
-        // Route::put('professional/{id}', 'Api\v2\ProfessionalController@update')->name('professional.update');
+        Route::resources([ 'professional' => 'Api\v2\ProfessionalController' ]);
         Route::patch('professional/{id}/archive', 'Api\v2\ProfessionalController@archive')->name('professional.archive');
         Route::patch('professional/{id}/unarchive', 'Api\v2\ProfessionalController@unarchive')->name('professional.unarchive');
-        Route::delete('professional/{id}', 'Api\v2\ProfessionalController@destroy')->name('professional.destroy');
     });
 
     // Employers
@@ -234,13 +227,16 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             'employee' => 'Api\v2\EmployeeController',
             'jobcode' => 'Api\v2\JobCodeController'
         ]);//->name('.employee');
+        Route::patch('employee/{id}/archive', 'Api\v2\EmployeeController@archive')->name('employee.archive');
+        Route::patch('employee/{id}/unarchive', 'Api\v2\EmployeeController@unarchive')->name('employee.unarchive');
+        Route::patch('jobcode/{id}/archive', 'Api\v2\JobCodeController@archive')->name('jobcode.archive');
+        Route::patch('jobcode/{id}/unarchive', 'Api\v2\JobCodeController@unarchive')->name('jobcode.unarchive');
     });
 
     // Assesment
     Route::middleware('auth:sanctum')->group( function () {
         Route::resources([
             'assesments' => 'Api\v2\AssesmentController',
-            // 'jobcode' => 'Api\v2\JobCodeController'
         ]);
         Route::post('assesment/answers', 'Api\v2\ScoresheetController@storeTalentAnswer');//->name('assesments.index');
         Route::post('assesment/scoresheet', 'Api\v2\ScoresheetController@storeAssesmentScoreSheet');//->name('assesments.index');
