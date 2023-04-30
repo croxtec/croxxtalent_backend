@@ -25,7 +25,7 @@ return new class extends Migration
             $table->text('professional_feedback')->nullable();
             $table->string('badge_earn')->nullable();
             $table->json('training_suggestion')->nullable();
-            $table->boolean('is_published')->default(true);
+            $table->boolean('is_published')->default(false);
             $table->timestamp('archived_at')->nullable();
             $table->timestamps();
         });

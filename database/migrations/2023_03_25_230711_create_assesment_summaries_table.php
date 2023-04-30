@@ -24,7 +24,7 @@ return new class extends Migration
             $table->text('talent_feedback')->nullable();
             $table->text('manager_feedback')->nullable();
             $table->text('training_suggestion')->nullable();
-            $table->boolean('is_published')->default(true);
+            $table->boolean('is_published')->default(false);
             $table->timestamp('archived_at')->nullable();
             $table->timestamps();
         });
