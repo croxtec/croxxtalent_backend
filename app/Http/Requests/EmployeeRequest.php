@@ -48,7 +48,7 @@ class EmployeeRequest extends FormRequest
                     'phone' => 'required|max:100',
                     'job_code_id' => 'required|exists:employer_jobcodes,id',
                 ];
-                case 'PUT':
+            case 'PUT':
             case 'PATCH':
                 return [
                     'name' => 'required|max:100',

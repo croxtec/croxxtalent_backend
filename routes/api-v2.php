@@ -214,12 +214,6 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::post('job-invitations/check', 'Api\v2\JobInvitationController@check')->name('job_invitations.check');
     });
 
-    Route::middleware('auth:sanctum')->prefix('croxxtalent')->group( function () {
-        // Professional
-        Route::resources([ 'professional' => 'Api\v2\ProfessionalController' ]);
-        Route::patch('professional/{id}/archive', 'Api\v2\ProfessionalController@archive')->name('professional.archive');
-        Route::patch('professional/{id}/unarchive', 'Api\v2\ProfessionalController@unarchive')->name('professional.unarchive');
-    });
 
     // Employers
     Route::middleware('auth:sanctum')->prefix('employers')->name('employers.')->group( function () {
@@ -233,29 +227,43 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::patch('jobcode/{id}/unarchive', 'Api\v2\JobCodeController@unarchive')->name('jobcode.unarchive');
     });
 
-    // Assesment
     Route::middleware('auth:sanctum')->group( function () {
         Route::resources([
             'assesments' => 'Api\v2\AssesmentController',
+            'campaigns' => 'Api\v2\CampaignController',
         ]);
+        // Assesment
+        Route::patch('assesments/{id}/archive', 'Api\v2\AssesmentController@archive')->name('assesments.archive');
+        Route::patch('assesments/{id}/unarchive', 'Api\v2\AssesmentController@unarchive')->name('assesments.unarchive');
+        Route::patch('assesments/{id}/publish', 'Api\v2\AssesmentController@publish')->name('assesments.publish');
+        Route::patch('assesments/{id}/unpublish', 'Api\v2\AssesmentController@unpublish')->name('assesments.unpublish');
+
         Route::post('assesment/answers', 'Api\v2\ScoresheetController@storeTalentAnswer');//->name('assesments.index');
         Route::post('assesment/scoresheet', 'Api\v2\ScoresheetController@storeAssesmentScoreSheet');//->name('assesments.index');
         // Route::get('assesments/{code}', 'Api\v2\AssesmentController@index')->name('assesments.index');
-    });
 
-    // Campaigns
-    Route::get('campaigns', 'Api\v2\CampaignController@index')->name('campaigns.index');
-    Route::get('campaigns/{id}', 'Api\v2\CampaignController@show')->name('campaigns.show');
-    Route::middleware('auth:sanctum')->group( function () {
-        Route::post('campaigns', 'Api\v2\CampaignController@store')->name('campaigns.store');
-        Route::put('campaigns/{id}', 'Api\v2\CampaignController@update')->name('campaigns.update');
-        // Route::post('campaigns/{id}/photo', 'Api\v2\CampaignController@photo')->name('campaigns.update_photo');
+        // Campaigns
+        Route::post('campaigns/{id}/photo', 'Api\v2\CampaignController@photo')->name('campaigns.update_photo');
         Route::patch('campaigns/{id}/publish', 'Api\v2\CampaignController@publish')->name('campaigns.publish');
         Route::patch('campaigns/{id}/unpublish', 'Api\v2\CampaignController@unpublish')->name('campaigns.unpublish');;
-        Route::delete('campaigns/{id}', 'Api\v2\CampaignController@destroy')->name('campaigns.destroy');
+        Route::patch('campaigns/{id}/archive', 'Api\v2\CampaignController@archive')->name('campaigns.archive');
+        Route::patch('campaigns/{id}/unarchive', 'Api\v2\CampaignController@unarchive')->name('campaigns.unarchive');;
         Route::post('campaigns/delete-multiple', 'Api\v2\CampaignController@destroyMultiple')->name('campaigns.destroy_multiple');
+        // Route::get('campaigns', 'Api\v2\CampaignController@index')->name('campaigns.index');
+        // Route::get('campaigns/{id}', 'Api\v2\CampaignController@show')->name('campaigns.show');
+        // Route::post('campaigns', 'Api\v2\CampaignController@store')->name('campaigns.store');
+        // Route::put('campaigns/{id}', 'Api\v2\CampaignController@update')->name('campaigns.update');
+        // Route::delete('campaigns/{id}', 'Api\v2\CampaignController@destroy')->name('campaigns.destroy');
     });
 
+
+
+    Route::middleware('auth:sanctum')->prefix('croxxtalent')->group( function () {
+        // Professional
+        Route::resources([ 'professional' => 'Api\v2\ProfessionalController' ]);
+        Route::patch('professional/{id}/archive', 'Api\v2\ProfessionalController@archive')->name('professional.archive');
+        Route::patch('professional/{id}/unarchive', 'Api\v2\ProfessionalController@unarchive')->name('professional.unarchive');
+    });
     // Configurations
     Route::prefix('settings')->name('api.settings.')->group( function () {
         // Timezones

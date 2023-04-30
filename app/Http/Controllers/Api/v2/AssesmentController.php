@@ -65,7 +65,7 @@ class AssesmentController extends Controller
         // Authorization is declared in the Form Request
         $validatedData = $request->validated();
         $validatedData['admin_id'] = $user->id;
-        $validatedData['employer_id'] = $user->id;
+        // $validatedData['employer_id'] = $user->id;
         $validatedData['code'] = $user->id.md5(time());
         info($validatedData);
         $questions = $validatedData['questions'];
@@ -98,10 +98,12 @@ class AssesmentController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($code)
+    public function show(Request $request, $code)
     {
+        $user = $request->user();
+
         $assesment = Assesment::where('code', $code)
-                    ->with('questions', 'answers')->firstOrFail();
+                    ->with('questions')->firstOrFail();
 
         return response()->json([
             'status' => true,
@@ -118,19 +120,137 @@ class AssesmentController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(AssesmentRequest $request, $id)
     {
-        //
+        $validatedData = $request->validated();
+        info($validatedData);
+        $assesment = Assesment::findOrFail($id);
+        $assesment->update($validatedData);
+
+        return response()->json([
+            'status' => true,
+            'message' => "Assesment \"{$assesment->name}\" updated successfully.",
+            'data' => Assesment::find($assesment->id)
+        ], 200);
+    }
+
+    /**
+     * Publish Assesment
+     *
+     * @param  string  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function publish($id)
+    {
+        $assesment = Assesment::findOrFail($id);
+
+        // $this->authorize('update', [Assesment::class, $assesment]);
+
+        if($assesment->is_published != true){
+            $assesment->is_published = true;
+            $assesment->save();
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => "Assesment \"{$assesment->name}\" publish successfully.",
+            'data' => Assesment::find($assesment->id)
+        ], 200);
+    }
+
+    /**
+     * Publish Assesment
+     *
+     * @param  string  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function unpublish($id)
+    {
+        $assesment = Assesment::findOrFail($id);
+
+        // $this->authorize('update', [Assesment::class, $assesment]);
+
+        $assesment->is_published = false;
+        $assesment->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => "Assesment \"{$assesment->name}\" unpublish successfully.",
+            'data' => Assesment::find($assesment->id)
+        ], 200);
+    }
+
+    /**
+     * Archive the specified resource from active list.
+     *
+     * @param  string  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function archive($id)
+    {
+        $assesment = Assesment::findOrFail($id);
+
+        // $this->authorize('delete', [Assesment::class, $assesment]);
+
+        $assesment->archived_at = now();
+        $assesment->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => "Assesment \"{$assesment->name}\" archived successfully.",
+            'data' => Assesment::find($assesment->id)
+        ], 200);
+    }
+
+    /**
+     * Unarchive the specified resource from archived storage.
+     *
+     * @param  string  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function unarchive($id)
+    {
+        $assesment = Assesment::findOrFail($id);
+
+        // $this->authorize('delete', [Assesment::class, $assesment]);
+
+        $assesment->archived_at = null;
+        $assesment->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => "Assesment \"{$assesment->name}\" unarchived successfully.",
+            'data' => Assesment::find($assesment->id)
+        ], 200);
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param  string  $id
      * @return \Illuminate\Http\Response
      */
     public function destroy($id)
     {
-        //
+        $assesment = Assesment::findOrFail($id);
+
+        // $this->authorize('delete', [Assesment::class, $assesment]);
+
+        $name = $assesment->name;
+        // check if the record is linked to other records
+        $relatedRecordsCount = related_records_count(Assesment::class, $assesment);
+
+        if ($relatedRecordsCount <= 0) {
+            $assesment->delete();
+            return response()->json([
+                'status' => true,
+                'message' => "Assesment \"{$name}\" deleted successfully.",
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => false,
+                'message' => "The \"{$name}\" record cannot be deleted because it is associated with {$relatedRecordsCount} other record(s). You can archive it instead.",
+            ], 400);
+        }
     }
 }

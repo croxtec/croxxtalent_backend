@@ -21,7 +21,8 @@ class AssesmentRequest extends FormRequest
                 return true;//$this->user()->can('create', Assesment::class);
             case 'PUT':
             case 'PATCH':
-                $assesment = Assesment::findOrFail($this->id);
+                return  true;
+                $assesment = Assesment::findOrFail(1);
                 return $this->user()->can('update', [Assesment::class, $assesment]);
             case 'DELETE':
                 return false;
@@ -47,6 +48,7 @@ class AssesmentRequest extends FormRequest
                     'core_id' => 'required',
                     'skill_id' => 'required',
                     'level' => 'required|max:100',
+                    'job_code_id' => 'required',
                     // 'skill_ids.*' => 'required',
 
                     'name' => 'required|max:100',
@@ -66,8 +68,33 @@ class AssesmentRequest extends FormRequest
                     'questions.*.option4' => 'nullable|max:50',
                 ];
             case 'PUT':
+            case 'PATCH':
+                return [
+                    // 'employer_id' => 'required|exists:users,id',
+                    'domain_id' => 'required|exists:skills,id',
+                    'core_id' => 'required',
+                    'skill_id' => 'required',
+                    'level' => 'required|max:100',
+                    'job_code_id' => 'required',
+                    // 'skill_ids.*' => 'required',
 
-
+                    'name' => 'required|max:100',
+                    'description' => 'nullable',
+                    'category' => 'required',
+                    'validity_period' => 'nullable',
+                    'delivery_type' => 'required',
+                    'expected_score' => 'nullable',
+                ];
+            case 'DELETE':
+                return [];
+            default:break;
         }
+    }
+
+    public function messages()
+    {
+        return [
+            // 'questions.*.type'
+        ];
     }
 }
