@@ -20,4 +20,12 @@ class Employee extends Model
     ];
 
     // DOB, Job title, job code, employee number and a lot more;
+
+    protected $appends = [
+
+    ];
+
+    public function job_code(){
+        return $this->belongsTo('App\Models\EmployerJobcode', 'job_code_id', 'id');
+    }
 }

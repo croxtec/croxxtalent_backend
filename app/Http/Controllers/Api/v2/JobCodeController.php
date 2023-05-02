@@ -29,7 +29,8 @@ class JobCodeController extends Controller
         $job_code = JobCode::where('employer_id', $user->id)
         ->when($search, function($query) use ($search) {
             $query->where('id', 'LIKE', "%{$search}%");
-        })->orderBy($sort_by, $sort_dir);
+        })->with('firstManager','secondManager')
+        ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
             $results = $job_code->get();
@@ -90,7 +91,7 @@ class JobCodeController extends Controller
     public function show(Request $request, $id)
     {
         $user = $request->user();
-        $job_code = JobCode::findOrFail($id);
+        $job_code = JobCode::findOrFail($id)->with('firstManager','secondManager');
 
         return response()->json([
             'status' => true,

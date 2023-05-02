@@ -53,9 +53,9 @@ class AssesmentRequest extends FormRequest
 
                     'name' => 'required|max:100',
                     'description' => 'nullable',
-                    'category' => 'required',
+                    'category' => 'required|in:hse,assesment,job specific, generic',
+                    'delivery_type' => 'required|Classroom, On-the-job, Assessment, Experience, Exam, External',
                     'validity_period' => 'nullable',
-                    'delivery_type' => 'required',
                     'expected_score' => 'nullable',
                     'questions' => 'required|array',
 

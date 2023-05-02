@@ -42,7 +42,8 @@ class EmployeeController extends Controller
             }
         })->where( function($query) use ($search) {
             $query->where('name', 'LIKE', "%{$search}%");
-        })->orderBy($sort_by, $sort_dir);
+        })->with('job_code')
+        ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
             $results = $employees->get();
@@ -98,7 +99,7 @@ class EmployeeController extends Controller
      */
     public function show(Request $request, $id)
     {
-        $employee = Employee::findOrFail($id);
+        $employee = Employee::findOrFail($id)->with('job_code');
 
         // $this->authorize('view', [Employee::class, $employee]);
 

@@ -18,4 +18,15 @@ class EmployerJobcode extends Model
         "manager2_id",
     ];
 
+    protected $appends = [
+
+    ];
+
+    public function firstManager(){
+        return $this->belongsTo('App\Models\User', 'manager1_id', 'id');
+    }
+
+    public function secondManager(){
+        return $this->belongsTo('App\Models\User', 'manager2_id', 'id');
+    }
 }
