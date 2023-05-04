@@ -71,7 +71,7 @@ class EmployeeController extends Controller
         $validatedData = $request->validated();
         $validatedData['employer_id'] = $user->id;
         $talent = User::where('email', $validatedData['email'])->first();
-        $validatedData['user_id'] = $talent->id;
+        // $validatedData['user_id'] = $talent->id;
 
         $employee = Employee::create($validatedData);
 
@@ -121,7 +121,7 @@ class EmployeeController extends Controller
     {
         $user = $request->user();
         $validatedData = $request->validated();
-        info($validatedData);
+
         $employee = Employee::findOrFail($id);
         $employee->update($validatedData);
 
