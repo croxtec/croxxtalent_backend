@@ -232,11 +232,16 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             'assesments' => 'Api\v2\AssesmentController',
             'campaigns' => 'Api\v2\CampaignController',
         ]);
-        // Assesment
+        // Assesment Options
         Route::patch('assesments/{id}/archive', 'Api\v2\AssesmentController@archive')->name('assesments.archive');
         Route::patch('assesments/{id}/unarchive', 'Api\v2\AssesmentController@unarchive')->name('assesments.unarchive');
         Route::patch('assesments/{id}/publish', 'Api\v2\AssesmentController@publish')->name('assesments.publish');
         Route::patch('assesments/{id}/unpublish', 'Api\v2\AssesmentController@unpublish')->name('assesments.unpublish');
+        // Assesment Questions
+        Route::post('assesments/questions', 'Api\v2\AssesmentQuestionController@store');//->name('assesments.index');
+        Route::patch('assesments/questions/{id}/archive', 'Api\v2\AssesmentQuestionController@archive')->name('assesments.archive');
+        Route::patch('assesments/questions/{id}/unarchive', 'Api\v2\AssesmentQuestionController@unarchive')->name('assesments.unpublish');
+        Route::delete('assesments/questions/{id}', 'Api\v2\AssesmentQuestionController@destroy');//->name('assesments.index');
 
         Route::post('assesment/answers', 'Api\v2\ScoresheetController@storeTalentAnswer');//->name('assesments.index');
         Route::post('assesment/scoresheet', 'Api\v2\ScoresheetController@storeAssesmentScoreSheet');//->name('assesments.index');

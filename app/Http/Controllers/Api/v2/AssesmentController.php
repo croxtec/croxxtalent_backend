@@ -6,7 +6,11 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Assesment;
 use App\Models\AssesmentQuestion as Question;
+use App\Models\EmployerJobcode as JobCode;
+use App\Models\Employee;
+
 use App\Http\Requests\AssesmentRequest;
+use App\Models\AssesmentSummary;
 
 class AssesmentController extends Controller
 {
@@ -67,7 +71,7 @@ class AssesmentController extends Controller
         $validatedData['admin_id'] = $user->id;
         // $validatedData['employer_id'] = $user->id;
         $validatedData['code'] = $user->id.md5(time());
-        info($validatedData);
+        // info($validatedData);
         $questions = $validatedData['questions'];
         $assesment = Assesment::create($validatedData);
 
@@ -123,7 +127,7 @@ class AssesmentController extends Controller
     public function update(AssesmentRequest $request, $id)
     {
         $validatedData = $request->validated();
-        info($validatedData);
+        // info($validatedData);
         $assesment = Assesment::findOrFail($id);
         $assesment->update($validatedData);
 
@@ -142,9 +146,20 @@ class AssesmentController extends Controller
      */
     public function publish($id)
     {
-        $assesment = Assesment::findOrFail($id);
-
         // $this->authorize('update', [Assesment::class, $assesment]);
+        $assesment = Assesment::findOrFail($id); 
+        $employees = array();
+
+        if($assesment->job_code_id) {
+            $employees = Employee::where('job_code_id', $assesment->job_code_id)->get();
+        }
+    
+        foreach($employees as $employee) {
+            AssesmentSummary::create([
+                'assesment_id' => $assesment->id,
+                'talent_id' => $employee->id
+            ]); 
+        }       
 
         if($assesment->is_published != true){
             $assesment->is_published = true;

@@ -58,7 +58,7 @@ class SkillController extends Controller
         }
         foreach ($skills as $skill) {
             $skill->industry;
-            $skill->secondary = SkillSecondary::where('skill_id', $skill->id)->get();
+            $skill->secondary = SkillSecondary::where('skill_id', $skilDol->id)->get();
             $skill->total = SkillSecondary::where('skill_id', $skill->id)->count();
             foreach($skill->secondary as $seconday){
                 $seconday->total = SkillTertiary::where('skill_secondary_id', $seconday->id)->count();
@@ -145,7 +145,7 @@ class SkillController extends Controller
     public function show($id)
     {
         $skill = Skill::findOrFail($id);
-
+        // $skill->with('')
         $this->authorize('view', [Skill::class, $skill]);
 
         return response()->json([
