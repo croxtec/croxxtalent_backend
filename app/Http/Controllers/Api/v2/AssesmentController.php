@@ -147,21 +147,22 @@ class AssesmentController extends Controller
     public function publish($id)
     {
         // $this->authorize('update', [Assesment::class, $assesment]);
-        $assesment = Assesment::findOrFail($id); 
+        $assesment = Assesment::findOrFail($id);
         $employees = array();
 
-        if($assesment->job_code_id) {
-            $employees = Employee::where('job_code_id', $assesment->job_code_id)->get();
-        }
-    
-        foreach($employees as $employee) {
-            AssesmentSummary::create([
-                'assesment_id' => $assesment->id,
-                'talent_id' => $employee->id
-            ]); 
-        }       
 
         if($assesment->is_published != true){
+            if($assesment->job_code_id) {
+                $employees = Employee::where('job_code_id', $assesment->job_code_id)->get();
+            }
+
+            foreach($employees as $employee) {
+                AssesmentSummary::create([
+                    'assesment_id' => $assesment->id,
+                    'talent_id' => $employee->id
+                ]);
+            }
+
             $assesment->is_published = true;
             $assesment->save();
         }
@@ -185,7 +186,7 @@ class AssesmentController extends Controller
 
         // $this->authorize('update', [Assesment::class, $assesment]);
 
-        $assesment->is_published = false;
+        // $assesment->is_published = false;
         $assesment->save();
 
         return response()->json([

@@ -24,7 +24,7 @@ class Assesment extends Model
         'category',
         'validity_period',
         'delivery_type',
-        'expected_score', 
+        'expected_score',
 
         'job_code_id',
         'candidates',
@@ -40,5 +40,9 @@ class Assesment extends Model
     public function answers()
     {
         return $this->hasMany('App\Models\AssesmentTalentAnswer', 'assesment_id', 'id');
+    }
+
+    public function summary(){
+        return $this->hasMany('App\Models\AssesmentSummary', 'assesment_id', 'id');
     }
 }

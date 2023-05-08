@@ -7,9 +7,25 @@ use Illuminate\Http\Request;
 use App\Models\AssesmentTalentAnswer as TalentAnswer;
 use App\Models\AssesmentScoreSheet as ScoreSheet;
 use App\Models\AssesmentQuestion as Question;
+use App\Models\AssesmentSummary;
+use App\Models\Assesment;
 
 class ScoresheetController extends Controller
 {
+
+    public function employeeList(Request $request, $id){
+        $user = $request->user();
+
+        $assesment = Assesment::where('id', $id)
+                        ->with('summary')->firstOrFail();
+
+        return response()->json([
+            'status' => true,
+            'message' => "Successful.",
+            'data' => $assesment
+        ], 200);
+    }
+
     /**
      * Store a newly created resource in storage.
      *
@@ -44,17 +60,6 @@ class ScoresheetController extends Controller
             'status' => true,
             'message' => "Assesment Answer submited"
         ], 201);
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
     }
 
     /**
@@ -93,14 +98,44 @@ class ScoresheetController extends Controller
         ], 201);
 
     }
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
+
+    public function publishTalentAnswers(Request $request, $id)
     {
-        //
+        $user = $request->user();
+        // $this->authorize('update', [Assesment::class, $assesment]);
+        $summary = AssesmentSummary::where([
+            'assesment_id' => $id,
+            'talent_id' => $user->id
+        ])->firstOrFail();
+
+        $summary->talent_feedback = $request->feedback;
+        $summary->is_published = true;
+        $summary->save();
+
+        return response()->json([
+            'status' => true,
+            // 'message' => "Assesment \"{$assesment->name}\" publish successfully.",
+            'data' =>$summary
+        ], 200);
+    }
+    
+    public function publishManagementFeedback(Request $request, $id)
+    {
+        $user = $request->user();
+        // $this->authorize('update', [Assesment::class, $assesment]);
+        $summary = AssesmentSummary::where([
+            'assesment_id' => $id,
+            'talent_id' => $request->talent
+        ])->firstOrFail();
+
+        $summary->manager_feedback = $request->feedback;
+        $summary->manager_id = $user->id;
+        $summary->save();
+
+        return response()->json([
+            'status' => true,
+            // 'message' => "Assesment \"{$assesment->name}\" publish successfully.",
+            'data' =>$summary
+        ], 200);
     }
 }
