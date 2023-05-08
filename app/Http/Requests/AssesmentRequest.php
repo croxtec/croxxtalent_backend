@@ -50,11 +50,12 @@ class AssesmentRequest extends FormRequest
                     'level' => 'required|max:100',
                     'job_code_id' => 'required',
                     // 'skill_ids.*' => 'required',
-
+                    // |Quiz, Classroom,On-the-job, Assessment, Experience, Exam, External
+                    // in:hse,assesment,job specific,generic
                     'name' => 'required|max:100',
                     'description' => 'nullable',
-                    'category' => 'required|in:hse,assesment,job specific, generic',
-                    'delivery_type' => 'required|Classroom, On-the-job, Assessment, Experience, Exam, External',
+                    'category' => 'required',
+                    'delivery_type' => 'required',
                     'validity_period' => 'nullable',
                     'expected_score' => 'nullable',
                     'questions' => 'required|array',
