@@ -11,6 +11,13 @@ class AssesmentSummary extends Model
 
     protected $fillable = [
         'assesment_id',
-        'talent_id'
+        'talent_id',
+        'employer_id'
     ];
+
+
+    public function assesment(){
+        return $this->belongsTo('App\Models\Assesment', 'assesment_id', 'id');
+    }
+
 }

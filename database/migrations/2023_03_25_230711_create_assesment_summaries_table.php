@@ -17,6 +17,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('assesment_id');
             $table->foreignId('talent_id');
+            $table->foreignId('employer_id')->nullable();
             $table->foreignId('manager_id')->nullable();
             $table->integer('total_score')->default(0)->nullable();
             $table->integer('talent_score')->default(0)->nullable();

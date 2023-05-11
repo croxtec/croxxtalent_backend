@@ -42,7 +42,7 @@ class EmployeeController extends Controller
             }
         })->where( function($query) use ($search) {
             $query->where('name', 'LIKE', "%{$search}%");
-        })->with('job_code')
+        })->with('job_code', 'employer', 'talent')
         ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
@@ -76,6 +76,7 @@ class EmployeeController extends Controller
         $employee = Employee::create($validatedData);
 
         if($employee){
+
             Mail::to($validatedData['email'])->send(new WelcomeEmployee($employee, $user));
 
             return response()->json([
@@ -99,7 +100,7 @@ class EmployeeController extends Controller
      */
     public function show(Request $request, $id)
     {
-        $employee = Employee::findOrFail($id)->with('job_code');
+        $employee = Employee::with('job_code', 'employer', 'talent')->findOrFail($id);
 
         // $this->authorize('view', [Employee::class, $employee]);
 

@@ -159,7 +159,8 @@ class AssesmentController extends Controller
             foreach($employees as $employee) {
                 AssesmentSummary::create([
                     'assesment_id' => $assesment->id,
-                    'talent_id' => $employee->id
+                    'employer_id' => $assesment->admin_id,
+                    'talent_id' => $employee->user_id
                 ]);
             }
 
@@ -186,7 +187,7 @@ class AssesmentController extends Controller
 
         // $this->authorize('update', [Assesment::class, $assesment]);
 
-        // $assesment->is_published = false;
+        $assesment->is_published = false;
         $assesment->save();
 
         return response()->json([

@@ -90,7 +90,7 @@ class SkillImport implements ToModel, WithHeadingRow
                 $row['id'] = $secondary->id;
                 $tertiary = Tertiary::where('name', $row['name'])->where('skill_secondary_id' , $row['id'])->first();
                 if($tertiary){
-                   Log::info(['Secondary >>', $secondary->id ,$row]);
+                //    Log::info(['Secondary >>', $secondary->id ,$row]);
                    $tertiary->name =  $row['name'];
                    $tertiary->description =  $row['description'];
                    $tertiary->save();

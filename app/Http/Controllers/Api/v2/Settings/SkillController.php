@@ -56,6 +56,7 @@ class SkillController extends Controller
         } else {
             $skills = $skills->paginate($per_page);
         }
+
         foreach ($skills as $skill) {
             $skill->industry;
             $skill->secondary = SkillSecondary::where('skill_id', $skill->id)->get();

@@ -15,8 +15,8 @@ return new class extends Migration
     {
         Schema::create('vetting_summaries', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('assesment_id');
             $table->foreignId('cv_skill');
+            $table->foreignId('assesment_id');
             $table->foreignId('professional_id')->nullable();
             $table->integer('total_score')->default(0)->nullable();
             $table->integer('talent_score')->default(0)->nullable();

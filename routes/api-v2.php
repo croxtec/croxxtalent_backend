@@ -91,6 +91,9 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
     Route::middleware('auth:sanctum')->name('api.')->group( function () {
 
         Route::prefix('talent')->name('cvs.work_experience.')->group( function () {
+            // Competence
+            Route::get('competence/skill', 'Api\v2\TalentCompetencyController@skill')->name('competence.skill');
+            Route::get('competence/experience', 'Api\v2\TalentCompetencyController@experience')->name('competence.experience');
             // Resume
             Route::get('resume', 'Api\v2\TalentCVController@index')->name('resume.index');
             Route::post('resume', 'Api\v2\TalentCvController@store')->name('resume.store');
@@ -106,7 +109,6 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
                 Route::put('/{cv_work_experience_id}', 'Api\v2\CvWorkExperienceController@update')->name('update');
                 Route::delete('/{cv_work_experience_id}', 'Api\v2\CvWorkExperienceController@destroy')->name('destroy');
             });
-
             // CV Educations
             Route::prefix('resume/educations')->name('resume.educations.')->group( function () {
                 Route::get('/', 'Api\v2\CvEducationController@index')->name('index');
@@ -404,3 +406,11 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
     // }); // end of Route::middleware('auth.apikey')...
 
 
+    // dataTableFilter: {
+    //     per_page: 25, // 25, -1 or all = all records,
+    //     page: 1,
+    //     search: null,
+    //     active: "no",
+    //     sort_by: "created_at",
+    //     sort_dir: "desc"
+    //   },
