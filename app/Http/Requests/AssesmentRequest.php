@@ -48,14 +48,10 @@ class AssesmentRequest extends FormRequest
                     'core_id' => 'required',
                     'skill_id' => 'required',
                     'level' => 'required|max:100',
-                    'job_code_id' => 'required',
-                    // 'skill_ids.*' => 'required',
-                    // |Quiz, Classroom,On-the-job, Assessment, Experience, Exam, External
-                    // in:hse,assesment,job specific,generic
                     'name' => 'required|max:100',
-                    'description' => 'nullable',
-                    'category' => 'required',
-                    'delivery_type' => 'required',
+                    'description' => 'nullable|max:250',
+                    'category' => 'required|in:hse,vetting,job specific,generic',
+                    'delivery_type' => 'required|in:quiz,classroom,on the job,assessment,experience,exam,external',
                     'validity_period' => 'nullable',
                     'expected_score' => 'nullable',
                     'questions' => 'required|array',
@@ -67,6 +63,13 @@ class AssesmentRequest extends FormRequest
                     'questions.*.option2' => 'nullable|max:50',
                     'questions.*.option3' => 'nullable|max:50',
                     'questions.*.option4' => 'nullable|max:50',
+
+                    'job_code_id' => 'required_if:category,job specific',
+                    'candidates' => 'required_if:category,generic',
+                    'managers' => 'required_if:category,generic',
+                    'job_code_id' => 'exists:employer_jobcodes,id',
+                    'candidates.*' => 'exists:employees,id',
+                    'managers.*' => 'exists:employees,id',
                 ];
             case 'PUT':
             case 'PATCH':
@@ -76,7 +79,7 @@ class AssesmentRequest extends FormRequest
                     'core_id' => 'required',
                     'skill_id' => 'required',
                     'level' => 'required|max:100',
-                    'job_code_id' => 'required',
+                    // 'job_code_id' => 'required',
                     // 'skill_ids.*' => 'required',
 
                     'name' => 'required|max:100',

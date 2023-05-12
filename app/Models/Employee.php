@@ -26,15 +26,17 @@ class Employee extends Model
     ];
 
     public function job_code(){
-        return $this->belongsTo('App\Models\EmployerJobcode', 'job_code_id', 'id');
-                // ->select('job_code', 'job_title');
+        return $this->belongsTo('App\Models\EmployerJobcode', 'job_code_id', 'id')
+                    ->select(['id','job_code', 'job_title']);
     }
 
     public function employer(){
-        return $this->belongsTo('App\Models\User', 'employer_id', 'id');
+        return $this->belongsTo('App\Models\User', 'employer_id', 'id')
+                    ->select(['id','first_name','last_name','photo']);
     }
 
     public function talent(){
-        return $this->belongsTo('App\Models\User', 'user_id', 'id');
+        return $this->belongsTo('App\Models\User', 'user_id', 'id')
+                    ->select(['id','first_name','last_name','photo']);
     }
 }

@@ -340,12 +340,14 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
 
         Route::middleware('auth:sanctum')->group( function () {
             // Skills Levels
-            Route::get('/competence/levels/tertiary/{secondary}', 'Api\v2\Settings\SkillLevelsController@indexTertiary')->name('competence.tertiary');
-            Route::post('/competence/levels/secondary', 'Api\v2\Settings\SkillLevelsController@storeSecondary')->name('competence.store.secondary');
-            Route::post('/competence/levels/tertiary', 'Api\v2\Settings\SkillLevelsController@storeTertiary')->name('competence.store.tertiary');
-            Route::put('competence/levels/secondary/{id}', 'Api\v2\Settings\SkillLevelsController@updateSecondary')->name('competence.update.secondary');
-            Route::put('competence/levels/tertiary/{id}', 'Api\v2\Settings\SkillLevelsController@updateTertiary')->name('competence.update.tertiary');
-            // Route::post('/competence/levels/secondary', 'Api\v2\Settings\SkillLevelsController@storeSecondary')->name('competence.store.secondary');
+            Route::get('/competence/core/{domain}', 'Api\v2\Settings\SkillLevelsController@indexCore')->name('competence.core');
+            Route::get('/competence/skill/{core}', 'Api\v2\Settings\SkillLevelsController@indexTertiary')->name('competence.skill');
+
+            Route::post('/competence/levels/secondary', 'Api\v2\Settings\SkillLevelsController@storeSecondary')->name('competence.store.core');
+            Route::post('/competence/levels/tertiary', 'Api\v2\Settings\SkillLevelsController@storeTertiary')->name('competence.store.skill');
+            Route::put('competence/levels/secondary/{id}', 'Api\v2\Settings\SkillLevelsController@updateSecondary')->name('competence.update.core');
+            Route::put('competence/levels/tertiary/{id}', 'Api\v2\Settings\SkillLevelsController@updateTertiary')->name('competence.update.skill');
+            // Route::post('/competence/levels/secondary', 'Api\v2\Settings\SkillLevelsController@storeSecondary')->name('competence.store.core');
             // Route::patch('competence/{id}/archive', 'Api\v2\Settings\SkillController@archive')->name('competence.archive');
         });
 

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\v2\Settings;
 
 use App\Http\Controllers\Controller;
-use App\Models\SkillSecondary;
+use App\Models\SkillSecondary as Core;
 use Illuminate\Http\Request;
 
 use App\Models\SkillTertiary as Tertiary;
@@ -16,12 +16,27 @@ class SkillLevelsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function indexCore(Request $request, $domain)
     {
-        //
+        // $this->authorize('view', Tertiary::class);
+        $per_page = $request->input('per_page', 100);
+        $sort_by = $request->input('sort_by', 'name');
+        $sort_dir = $request->input('sort_dir', 'asc');
+        $search = $request->input('search');
+        $datatable_draw = $request->input('draw'); // if any
+
+        $core = Core::where('skill_id', $domain)->get();
+
+        $response = collect([
+            'status' => true,
+            'message' => "Successful.",
+            'data' => compact('core')
+        ]);
+
+        return response()->json($response, 200);
     }
 
-    public function indexTertiary(Request $request, $secondary)
+    public function indexTertiary(Request $request, $core)
     {
         // $this->authorize('view', Tertiary::class);
 
@@ -31,16 +46,18 @@ class SkillLevelsController extends Controller
         $search = $request->input('search');
         $datatable_draw = $request->input('draw'); // if any
 
-        $skills = Tertiary::where('skill_secondary_id', $secondary)->get();
+        $skills = Tertiary::where('skill_secondary_id', $core)->get();
 
         $response = collect([
             'status' => true,
             'message' => "Successful.",
-            'skills' => $skills
+            'data' => $skills
         ]);
 
         return response()->json($response, 200);
     }
+
+
     /**
      * Store a newly created resource in storage.
      *

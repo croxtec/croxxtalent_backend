@@ -71,8 +71,9 @@ class AssesmentController extends Controller
         $validatedData['admin_id'] = $user->id;
         // $validatedData['employer_id'] = $user->id;
         $validatedData['code'] = $user->id.md5(time());
-        // info($validatedData);
+
         $questions = $validatedData['questions'];
+
         $assesment = Assesment::create($validatedData);
 
         if($assesment){

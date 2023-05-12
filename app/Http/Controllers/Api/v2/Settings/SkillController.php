@@ -59,11 +59,11 @@ class SkillController extends Controller
 
         foreach ($skills as $skill) {
             $skill->industry;
-            $skill->secondary = SkillSecondary::where('skill_id', $skill->id)->get();
-            $skill->total = SkillSecondary::where('skill_id', $skill->id)->count();
-            foreach($skill->secondary as $seconday){
-                $seconday->total = SkillTertiary::where('skill_secondary_id', $seconday->id)->count();
-            }
+            // $skill->core = SkillSecondary::where('skill_id', $skill->id)->get();
+            $skill->total_core = SkillSecondary::where('skill_id', $skill->id)->count();
+            // foreach($skill->core as $core){
+            //     $core->total_skill = SkillTertiary::where('skill_secondary_id', $core->id)->count();
+            // }
         }
         $response = collect([
             'status' => true,
