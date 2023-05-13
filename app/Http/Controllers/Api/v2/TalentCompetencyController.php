@@ -32,7 +32,8 @@ class TalentCompetencyController extends Controller
         $cvSkills = CvSkill::where('cv_id', $cv->id)
         ->where( function($query) use ($search) {
             $query->where('id', 'LIKE', "%{$search}%");
-        })->orderBy($sort_by, $sort_dir);
+        })->with('vetting')
+        ->orderBy($sort_by, $sort_dir);
 
         $cvSkills = $cvSkills->get()->toArray();
 
@@ -69,7 +70,7 @@ class TalentCompetencyController extends Controller
            $summary = AssesmentSummary::where([
                 'talent_id' => $user->id,
                 'employer_id' => $learn->user_id
-            ])->with('assesment')->get();
+            ])->with('assesment_code')->get();
 
             // $assemsnts = array_column($summary->toArray(), 'assesment_id');
             // info($assemsnts);

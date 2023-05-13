@@ -15,14 +15,53 @@ class ScoresheetController extends Controller
 
     public function employeeList(Request $request, $id){
         $user = $request->user();
+        $assesment = Assesment::where('id', $id)->firstOrFail();
 
-        $assesment = Assesment::where('id', $id)
-                        ->with('summary')->firstOrFail();
+        $per_page = $request->input('per_page', 100);
+        $sort_by = $request->input('sort_by', 'created_at');
+        $sort_dir = $request->input('sort_dir', 'desc');
+        $search = $request->input('search');
+        $archived = $request->input('archived');
+
+        $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
+
+        $summaries = AssesmentSummary::where('assesment_id', $id)
+            ->when($archived ,function ($query) use ($archived) {
+            if ($archived !== null ) {
+                if ($archived === true ) {
+                    $query->whereNotNull('archived_at');
+                } else {
+                    $query->whereNull('archived_at');
+                }
+            }
+        })->when( $search,function($query) use ($search) {
+            $query->where('assesment_id', 'LIKE', "%{$search}%");
+        })->orderBy($sort_by, $sort_dir);
+
+        if ($per_page === 'all' || $per_page <= 0 ) {
+            $results = $summaries->get();
+            $summaries = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
+        } else {
+            $summaries = $summaries->paginate($per_page);
+        }
 
         return response()->json([
             'status' => true,
             'message' => "Successful.",
-            'data' => $assesment
+            'data' => compact('assesment', 'summaries')
+        ], 200);
+    }
+
+    public function assesmentResult(Request $request, $code, $talent){
+        $user = $request->user();
+        $assesment = Assesment::where('id', $code)->with('questions')->firstOrFail();
+        $answers = TalentAnswer::where([ 'talent_id' => $talent, 'assesment_id' => $code ])->get();
+        $results = ScoreSheet::where([ 'talent_id' => $talent, 'assesment_id' => $code ])->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => "Successful.",
+            'data' => compact('assesment', 'answers','results')
         ], 200);
     }
 
@@ -49,9 +88,12 @@ class ScoresheetController extends Controller
         $question = Question::find($searchData['assesment_question_id']);
         $answer = TalentAnswer::firstOrCreate($searchData);
 
-        if($question->type == 'text') $answer->comment = $request->comment;
-        // if($question->type == 'text') $answer->comment = $request->comment;
-        // if($question->type == 'text') $answer->comment = $request->comment;
+        if($question->type == 'text') $answer->comment = $request->answer;
+        if($question->type == 'radio') $answer->option = $request->answer;
+        if($question->type == 'checkbox') $answer->options = $request->answer; //json
+        if($question->type == 'file'){
+            $answer->comment = $request->comment;
+        }
         // if($question->type == 'text') $answer->comment = $request->comment;
 
         $answer->save();
@@ -75,6 +117,7 @@ class ScoresheetController extends Controller
 
         $rules =[
             'assesment_id' => 'required|exists:assesments,id',
+            'talent_id' => 'required|exists:users,id',
             'question_id' => 'required|exists:assesment_questions,id',
             'score' => 'required|integer|between:1,5'
         ];
@@ -85,12 +128,11 @@ class ScoresheetController extends Controller
         unset($searchData['question_id']);
 
         $question = Question::find($searchData['assesment_question_id']);
-        $answer = ScoreSheet::firstOrCreate($searchData);
+        $score = ScoreSheet::firstOrCreate($searchData);
 
-        $answer->comment = $request->comment;
-        $answer->score = $request->score;
+        $score->comment = $request->comment;
 
-        $answer->save();
+        $score->save();
 
         return response()->json([
             'status' => true,
@@ -118,7 +160,7 @@ class ScoresheetController extends Controller
             'data' =>$summary
         ], 200);
     }
-    
+
     public function publishManagementFeedback(Request $request, $id)
     {
         $user = $request->user();

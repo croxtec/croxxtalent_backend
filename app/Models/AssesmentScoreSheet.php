@@ -12,6 +12,7 @@ class AssesmentScoreSheet extends Model
     protected $fillable = [
         'manager_id',
         'assesment_id',
+        'talent_id',
         'assesment_question_id',
 
         'comment',

@@ -86,4 +86,9 @@ class CvSkill extends Model
     {
         return $this->belongsTo('App\Models\SkillTertiary', 'skill_tertiary_id', 'id');
     }
+
+    public function vetting()
+    {
+        return $this->belongsTo('App\Models\VettingSummary', 'cv_skill', 'id');
+    }
 }

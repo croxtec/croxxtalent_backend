@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 
+use App\Models\Employee;
+
 class Assesment extends Model
 {
     use HasFactory;
@@ -32,6 +34,10 @@ class Assesment extends Model
         'managers'
     ];
 
+    protected $appends = [
+        'assigned_managers', 'assisgned_employees'
+    ];
+
     protected function managers(): Attribute
     {
         return Attribute::make(
@@ -48,6 +54,15 @@ class Assesment extends Model
         );
     }
 
+    public function getAssignedManagersAttribute(){
+        $assigned = Employee::where('id', $this->managers)->get();
+        return $assigned;
+    }
+
+    public function getAssisgnedEmployeesAttribute(){
+        $assigned = Employee::where('id', $this->candidates)->get();
+        return $assigned;
+    }
 
     public function questions()
     {

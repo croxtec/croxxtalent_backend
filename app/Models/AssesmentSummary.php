@@ -20,4 +20,14 @@ class AssesmentSummary extends Model
         return $this->belongsTo('App\Models\Assesment', 'assesment_id', 'id');
     }
 
+    public function assesment_code(){
+        return $this->belongsTo('App\Models\Assesment', 'assesment_id', 'id')
+            ->select(['id', 'code']);
+    }
+
+
+    public function talent(){
+        return $this->belongsTo('App\Models\User', 'talent_id', 'id');
+    }
+
 }

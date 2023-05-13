@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Cv;
 use App\Models\CvSkill;
+use App\Models\VettingSummary;
 
 class CvSkillController extends Controller
 {
@@ -79,13 +80,18 @@ class CvSkillController extends Controller
 
         $validatedData['cv_id'] = $cv->id;
         $cvSkill = CvSkill::updateOrCreate(
-            [   'cv_id' => $validatedData['cv_id'], 'skill_id' => $validatedData['skill_id'],
+            [
+                'cv_id' => $validatedData['cv_id'],
+                'skill_id' => $validatedData['skill_id'],
                 'skill_secondary_id' => $request->secondary_id,
                 'skill_tertiary_id' => $request->tertiary_id,
                 'level' => $request->level
             ],
             $validatedData
         );
+
+        $vetting = VettingSummary::create([ 'cv_skill' => $cvSkill->id, 'assesment_id' => $user->id]);
+
         if ($cvSkill) {
             return response()->json([
                 'status' => true,

@@ -8,4 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class VettingSummary extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'cv_skill',
+        'talent_id',
+        'assesment_id'
+    ];
+
 }

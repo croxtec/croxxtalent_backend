@@ -246,6 +246,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::delete('assesments/questions/{id}', 'Api\v2\AssesmentQuestionController@destroy');//->name('assesments.index');
         // Manage Assesment
         Route::get('assesments/{id}/assigned/employees', 'Api\v2\ScoresheetController@employeeList');//->name('assesments.index');
+        Route::get('assesments/{code}/result/{talent}', 'Api\v2\ScoresheetController@assesmentResult');//->name('assesments.index');
         Route::post('assesments/talent/answer', 'Api\v2\ScoresheetController@storeTalentAnswer');//->name('assesments.index');
         Route::patch('assesments/{id}/talent/publish', 'Api\v2\ScoresheetController@publishTalentAnswers');//->name('assesments.index');
         Route::post('assesments/management/scoresheet', 'Api\v2\ScoresheetController@storeAssesmentScoreSheet');//->name('assesments.index');
