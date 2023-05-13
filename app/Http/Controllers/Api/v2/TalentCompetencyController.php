@@ -9,7 +9,7 @@ use App\Models\CvSkill;
 use App\Models\Employee;
 use App\Models\AssesmentSummary;
 use App\Models\Assesment;
-
+use App\Models\VettingSummary;
 class TalentCompetencyController extends Controller
 {
     /**
@@ -32,7 +32,7 @@ class TalentCompetencyController extends Controller
         $cvSkills = CvSkill::where('cv_id', $cv->id)
         ->where( function($query) use ($search) {
             $query->where('id', 'LIKE', "%{$search}%");
-        })->with('vetting')
+        })
         ->orderBy($sort_by, $sort_dir);
 
         $cvSkills = $cvSkills->get()->toArray();
@@ -40,7 +40,8 @@ class TalentCompetencyController extends Controller
         $secondary = array_column($cvSkills, 'skill_secondary_id');
 
         foreach($cvSkills as $skill){
-            $groups[$skill['skill_secondary_id']][] = $skill;
+            $skill['vetting'] = VettingSummary::where('cv_skill', $skill['id'])->first();
+            $groups[$skill['skill_id']][] = $skill;
         }
 
         // info($groups);
@@ -109,7 +110,7 @@ class TalentCompetencyController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function finder(Request $request)
     {
         //
     }
