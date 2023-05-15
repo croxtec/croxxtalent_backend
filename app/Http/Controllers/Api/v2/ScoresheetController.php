@@ -77,7 +77,7 @@ class ScoresheetController extends Controller
 
         $rules =[
             'assesment_id' => 'required|exists:assesments,id',
-            'question_id' => 'required|exists:assesment_questions,id',
+            'question_id' => 'required|exists:assesment_questions,id'
         ];
 
         $searchData = $request->validate($rules);
@@ -88,18 +88,51 @@ class ScoresheetController extends Controller
         $question = Question::find($searchData['assesment_question_id']);
         $answer = TalentAnswer::firstOrCreate($searchData);
 
-        if($question->type == 'text') $answer->comment = $request->answer;
-        if($question->type == 'radio') $answer->option = $request->answer;
-        if($question->type == 'checkbox') $answer->options = $request->answer; //json
-        if($question->type == 'file'){
-            $answer->comment = $request->comment;
+        if($question->type == 'text') {
+            $request->validate([ 'answer' => 'required|min:10|max:250' ]);
+            $answer->comment = $request->answer;
         }
-        // if($question->type == 'text') $answer->comment = $request->comment;
+        if($question->type == 'reference') {
+            $regex = '/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/';
+            $request->validate([ 'answer' => 'required|regex:'.$regex ]);
+            $answer->comment = $request->answer;
+        }
+        if($question->type == 'radio'){
+            $request->validate([ 'answer' => 'required|in:option1,option2,option3,option4' ]);
+            $answer->option = $request->answer;
+        }
+        if($question->type == 'checkbox'){
+            $request->validate([
+                'answer' => 'required|array',
+                'answer.*' => 'in:option1,option2,option3,option4'
+            ]);
+            $answer->options = $request->answer; //json
+        }
+        if($question->type == 'file'){
+            if ($request->hasFile('file') && $request->file('file')->isValid()) {
+                $extension = $request->file('file')->extension();
+                $filename = $user->id . '-' . time() . '-' . Str::random(32);
+                $filename = "{$filename}.$extension";
+                $year = date('Y');
+                $month = date('m');
+                $rel_upload_path    = "assesment/{$year}/{$month}";
+                if ( config('app.env') == 'local')  $rel_upload_path = "local/{$rel_upload_path}"; // dir for dev environment test uploads
+
+                // do upload
+                $uploaded_file_path = $request->file('file')->storeAs($rel_upload_path, $filename);
+                Storage::setVisibility($uploaded_file_path, 'public'); //set file visibility to  "public"
+
+                // Update with the newly update file
+                $answer->upload = $request->comment;
+            }
+
+        }
 
         $answer->save();
 
         return response()->json([
             'status' => true,
+            'data' => $answer,
             'message' => "Assesment Answer submited"
         ], 201);
     }

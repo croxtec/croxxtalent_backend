@@ -14,13 +14,25 @@ class EmployerJobcode extends Model
         'job_code',
         'job_title',
         'description',
-        "manager1_id",
-        "manager2_id",
+        'managers'
     ];
 
     protected $appends = [
-
+        'department_managers'
     ];
+
+    protected function managers(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => json_decode($value, true),
+            set: fn ($value) => json_encode($value),
+        );
+    }
+
+    public function getDepartmentManagersAttribute(){
+        $department = Employee::where('id', $this->managers)->get();
+        return $department;
+    }
 
     public function firstManager(){
         return $this->belongsTo('App\Models\User', 'manager1_id', 'id');

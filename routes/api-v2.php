@@ -225,6 +225,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         ]);//->name('.employee');
         Route::patch('employee/{id}/archive', 'Api\v2\EmployeeController@archive')->name('employee.archive');
         Route::patch('employee/{id}/unarchive', 'Api\v2\EmployeeController@unarchive')->name('employee.unarchive');
+        Route::patch('jobcode/{id}/managers', 'Api\v2\JobCodeController@update_managers')->name('jobcode.managers');
         Route::patch('jobcode/{id}/archive', 'Api\v2\JobCodeController@archive')->name('jobcode.archive');
         Route::patch('jobcode/{id}/unarchive', 'Api\v2\JobCodeController@unarchive')->name('jobcode.unarchive');
     });

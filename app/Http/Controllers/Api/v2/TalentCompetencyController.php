@@ -41,10 +41,8 @@ class TalentCompetencyController extends Controller
 
         foreach($cvSkills as $skill){
             $skill['vetting'] = VettingSummary::where('cv_skill', $skill['id'])->first();
-            $groups[$skill['skill_id']][] = $skill;
+            $groups[$skill['skill_id']][$skill['skill_secondary_id']][] = $skill;
         }
-
-        // info($groups);
 
         return response()->json([
             'status' => true,
@@ -96,6 +94,7 @@ class TalentCompetencyController extends Controller
     public function manager(Request $request)
     {
         $user = $request->user();
+
     }
 
 

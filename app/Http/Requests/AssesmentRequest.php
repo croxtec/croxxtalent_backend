@@ -56,7 +56,7 @@ class AssesmentRequest extends FormRequest
                     'expected_score' => 'nullable',
                     'questions' => 'required|array',
 
-                    'questions.*.type' => 'required',
+                    'questions.*.type' => 'required|in:text,reference,radio,checkbox,file',
                     'questions.*.question' => 'required',
                     'questions.*.desctiption' => 'nullable',
                     'questions.*.option1' => 'nullable|max:50',

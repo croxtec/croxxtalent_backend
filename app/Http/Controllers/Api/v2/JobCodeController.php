@@ -58,9 +58,7 @@ class JobCodeController extends Controller
         $rules = [
             'job_code' => 'required',
             'job_title' => 'nullable',
-            'description' => 'nullable',
-            'manager1_id' => 'nullable|integer',
-            'manager2_id' => 'nullable|integer',
+            'description' => 'nullable'
         ];
 
         $validatedData = $request->validate($rules);
@@ -91,7 +89,34 @@ class JobCodeController extends Controller
     public function show(Request $request, $id)
     {
         $user = $request->user();
-        $job_code = JobCode::findOrFail($id)->with('firstManager','secondManager');
+        $job_code = JobCode::findOrFail($id);
+
+        return response()->json([
+            'status' => true,
+            'message' => "Successful.",
+            'data' => $job_code
+        ], 200);
+
+    }
+
+     /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update_managers(Request $request, $id)
+    {
+        $user = $request->user();
+        $job_code = JobCode::findOrFail($id);
+        $rules = [
+            'managers' => 'required|array',
+            'managers.*' => 'exists:employees,id'
+        ];
+
+        $validatedData = $request->validate($rules);
+        $job_code->managers = $validatedData['managers'];
+        $job_code->save();
 
         return response()->json([
             'status' => true,
@@ -114,9 +139,7 @@ class JobCodeController extends Controller
         $rules = [
             'job_code' => 'required',
             'job_title' => 'nullable',
-            'description' => 'nullable',
-            'manager1_id' => 'nullable|integer',
-            'manager2_id' => 'nullable|integer',
+            'description' => 'nullable'
         ];
 
         $validatedData = $request->validate($rules);
