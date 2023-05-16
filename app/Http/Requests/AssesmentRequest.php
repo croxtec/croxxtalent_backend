@@ -67,9 +67,9 @@ class AssesmentRequest extends FormRequest
                     'job_code_id' => 'required_if:category,job specific',
                     'candidates' => 'required_if:category,generic',
                     'managers' => 'required_if:category,generic',
-                    'job_code_id' => 'exists:employer_jobcodes,id',
-                    'candidates.*' => 'exists:employees,id',
-                    'managers.*' => 'exists:employees,id',
+                    'job_code_id' => 'integer|exists:employer_jobcodes,id',
+                    'candidates.*' => 'integer|exists:employees,id',
+                    'managers.*' => 'integer|exists:employees,id',
                 ];
             case 'PUT':
             case 'PATCH':
@@ -79,15 +79,19 @@ class AssesmentRequest extends FormRequest
                     'core_id' => 'required',
                     'skill_id' => 'required',
                     'level' => 'required|max:100',
-                    // 'job_code_id' => 'required',
-                    // 'skill_ids.*' => 'required',
-
                     'name' => 'required|max:100',
-                    'description' => 'nullable',
-                    'category' => 'required',
+                    'description' => 'nullable|max:250',
+                    'category' => 'required|in:hse,vetting,job specific,generic',
+                    'delivery_type' => 'required|in:quiz,classroom,on the job,assessment,experience,exam,external',
                     'validity_period' => 'nullable',
-                    'delivery_type' => 'required',
                     'expected_score' => 'nullable',
+
+                    'job_code_id' => 'required_if:category,job specific',
+                    'candidates' => 'required_if:category,generic',
+                    'managers' => 'required_if:category,generic',
+                    'job_code_id' => 'integer|exists:employer_jobcodes,id',
+                    'candidates.*' => 'integer|exists:employees,id',
+                    'managers.*' => 'integer|exists:employees,id',
                 ];
             case 'DELETE':
                 return [];

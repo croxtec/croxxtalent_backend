@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('phone', 25)->nullable();
             $table->text('description')->nullable();
             $table->timestamp('archived_at')->nullable();
+            $table->text('token')->nullable();
             $table->timestamps();
         });
     }

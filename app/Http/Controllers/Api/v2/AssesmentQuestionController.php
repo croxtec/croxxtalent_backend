@@ -29,7 +29,7 @@ class AssesmentQuestionController extends Controller
     {
         $rules = [
             'assesment_id' => 'required',
-            'type' => 'required',
+            'type' =>  'required|in:text,reference,radio,checkbox,file',
             'question' => 'required',
             'desctiption' => 'nullable',
             'option1' => 'nullable|max:50',

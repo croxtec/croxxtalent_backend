@@ -23,6 +23,7 @@ return new class extends Migration
             $table->date('birth_date')->nullable();
             $table->foreignId('job_code_id')->nullable();
             $table->timestamp('archived_at')->nullable();
+            $table->text('token')->nullable();
             $table->timestamps();
         });
     }

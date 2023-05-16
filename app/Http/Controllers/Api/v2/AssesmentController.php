@@ -30,7 +30,7 @@ class AssesmentController extends Controller
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
 
-        $assesments = Assesment::when($archived ,function ($query) use ($archived) {
+        $assesments = Assesment::where($archived ,function ($query) use ($archived) {
             if ($archived !== null ) {
                 if ($archived === true ) {
                     $query->whereNotNull('archived_at');
@@ -40,8 +40,7 @@ class AssesmentController extends Controller
             }
         })->where( function($query) use ($search) {
             $query->where('code', 'LIKE', "%{$search}%");
-        })->orderBy($sort_by, $sort_dir)
-          ->with('questions');
+        })->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
             $results = $assesments->get();
@@ -155,6 +154,10 @@ class AssesmentController extends Controller
         if($assesment->is_published != true){
             if($assesment->job_code_id) {
                 $employees = Employee::where('job_code_id', $assesment->job_code_id)->get();
+            }
+
+            if($assesment->candidates) {
+                $employees = $assesment->candidates;
             }
 
             foreach($employees as $employee) {

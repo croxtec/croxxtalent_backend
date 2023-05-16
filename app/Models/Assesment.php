@@ -66,7 +66,7 @@ class Assesment extends Model
 
     public function questions()
     {
-        return $this->hasMany('App\Models\AssesmentQuestion', 'assesment_id', 'id');
+        return $this->hasMany('App\Models\AssesmentQuestion', 'assesment_id', 'id')->whereNull('archived_at');
     }
 
     public function answers()

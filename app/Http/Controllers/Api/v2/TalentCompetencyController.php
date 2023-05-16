@@ -10,6 +10,8 @@ use App\Models\Employee;
 use App\Models\AssesmentSummary;
 use App\Models\Assesment;
 use App\Models\VettingSummary;
+use App\Models\EmployerJobcode as JobCode;
+
 class TalentCompetencyController extends Controller
 {
     /**
@@ -79,7 +81,7 @@ class TalentCompetencyController extends Controller
         return response()->json([
             'status' => true,
             'data' => $experience,
-            'message' => 'Data imported successfully.'
+            'message' => 'Experience  .'
         ], 200);
 
     }
@@ -94,6 +96,43 @@ class TalentCompetencyController extends Controller
     public function manager(Request $request)
     {
         $user = $request->user();
+        $per_page = $request->input('per_page', 100);
+        $sort_by = $request->input('sort_by', 'created_at');
+        $sort_dir = $request->input('sort_dir', 'desc');
+        $search = $request->input('search');
+        $archived = $request->input('archived');
+
+        $groups = array();
+        $employee =  Employee::where('user_id', $user->id)->firstOrFail();
+
+        $jobcodes =  JobCode::whereJsonContains('managers', $employee->id)->get();
+        $managers =  array_column($jobcodes->toArray(),  'id');
+
+
+        $assessments =  Assesment::where(['job_code_id' =>  $managers ])
+                                ->orWhereJsonContains('managers', $employee->id)
+            ->when($archived ,function ($query) use ($archived) {
+            if ($archived !== null ) {
+                if ($archived === true ) {
+                    $query->whereNotNull('archived_at');
+                } else {
+                    $query->whereNull('archived_at');
+                }
+            }
+        })->where( function($query) use ($search) {
+            $query->where('code', 'LIKE', "%{$search}%");
+        })->orderBy($sort_by, $sort_dir)->get();
+
+
+        foreach($assessments->toArray() as $assesment){
+            $groups[$assesment['domain_id']][$assesment['core_id']][] = $assesment;
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $groups,
+            'message' => 'Manager  .'
+        ], 200);
 
     }
 

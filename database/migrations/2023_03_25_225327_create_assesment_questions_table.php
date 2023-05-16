@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('option3')->nullable();
             $table->string('option4')->nullable();
 
+            $table->integer('duration')->nullable();
             $table->timestamp('archived_at')->nullable();
             $table->timestamps();
         });

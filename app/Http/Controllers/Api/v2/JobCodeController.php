@@ -111,7 +111,7 @@ class JobCodeController extends Controller
         $job_code = JobCode::findOrFail($id);
         $rules = [
             'managers' => 'required|array',
-            'managers.*' => 'exists:employees,id'
+            'managers.*' => 'required|integer|exists:employees,id'
         ];
 
         $validatedData = $request->validate($rules);

@@ -94,6 +94,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             // Competence
             Route::get('competence/skill', 'Api\v2\TalentCompetencyController@skill')->name('competence.skill');
             Route::get('competence/experience', 'Api\v2\TalentCompetencyController@experience')->name('competence.experience');
+            Route::get('competence/manager', 'Api\v2\TalentCompetencyController@manager')->name('competence.manager');
             // Resume
             Route::get('resume', 'Api\v2\TalentCVController@index')->name('resume.index');
             Route::post('resume', 'Api\v2\TalentCvController@store')->name('resume.store');
