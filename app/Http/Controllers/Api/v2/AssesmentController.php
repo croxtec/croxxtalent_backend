@@ -30,7 +30,7 @@ class AssesmentController extends Controller
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
 
-        $assesments = Assesment::where($archived ,function ($query) use ($archived) {
+        $assesments = Assesment::when($archived ,function ($query) use ($archived) {
             if ($archived !== null ) {
                 if ($archived === true ) {
                     $query->whereNotNull('archived_at');
