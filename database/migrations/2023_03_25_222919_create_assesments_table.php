@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('assesments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('admin_id');
+            $table->foreignId('employer_id');
             $table->foreignId('domain_id');
             $table->foreignId('core_id');
             $table->foreignId('skill_id');

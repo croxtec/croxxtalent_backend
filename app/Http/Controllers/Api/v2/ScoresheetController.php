@@ -36,7 +36,8 @@ class ScoresheetController extends Controller
             }
         })->when( $search,function($query) use ($search) {
             $query->where('assesment_id', 'LIKE', "%{$search}%");
-        })->orderBy($sort_by, $sort_dir);
+        })->with('assesment_code')
+        ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
             $results = $summaries->get();
@@ -48,20 +49,32 @@ class ScoresheetController extends Controller
         return response()->json([
             'status' => true,
             'message' => "Successful.",
-            'data' => compact('assesment', 'summaries')
+            'data' => compact('summaries','assesment')
         ], 200);
     }
 
     public function assesmentResult(Request $request, $code, $talent){
         $user = $request->user();
         $assesment = Assesment::where('id', $code)->with('questions')->firstOrFail();
-        $answers = TalentAnswer::where([ 'talent_id' => $talent, 'assesment_id' => $code ])->get();
-        $results = ScoreSheet::where([ 'talent_id' => $talent, 'assesment_id' => $code ])->get();
+
+        foreach ($assesment->questions as $question) {
+            info($question->id);
+            $question->answer = TalentAnswer::where([
+                    'assesment_question_id' => $question->id,
+                    'talent_id' => $talent,
+                    'assesment_id' => $code
+             ])->first();
+            $question->result = ScoreSheet::where([
+                    'assesment_question_id' => $question->id,
+                    'talent_id' => $talent,
+                    'assesment_id' => $code
+             ])->first();
+        }
 
         return response()->json([
             'status' => true,
             'message' => "Successful.",
-            'data' => compact('assesment', 'answers','results')
+            'data' => compact('assesment')
         ], 200);
     }
 
@@ -203,13 +216,26 @@ class ScoresheetController extends Controller
             'talent_id' => $request->talent
         ])->firstOrFail();
 
-        $summary->manager_feedback = $request->feedback;
+        $total_question = Question::where('assesment_id', $id)->count();
+        $total_score = $total_question * 5;
+
+        $talent_score = ScoreSheet::where([
+            'talent_id' => $request->talent,  'assesment_id' => $id
+        ])->sum('score');
+
+        $score_average = ((int)$talent_score / $total_score) * 5;
+        
         $summary->manager_id = $user->id;
+        $summary->is_published = 1;
+        $summary->total_score = $total_score;
+        $summary->talent_score = $talent_score;
+        $summary->score_average = $score_average;
+        $summary->manager_feedback = $request->feedback;
         $summary->save();
 
         return response()->json([
             'status' => true,
-            // 'message' => "Assesment \"{$assesment->name}\" publish successfully.",
+            'message' => "Assesment Scoresheet  has been recorded for this talent.",
             'data' =>$summary
         ], 200);
     }

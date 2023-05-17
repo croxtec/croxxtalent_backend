@@ -30,7 +30,8 @@ class AssesmentController extends Controller
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
 
-        $assesments = Assesment::when($archived ,function ($query) use ($archived) {
+        $assesments = Assesment::
+            when($archived ,function ($query) use ($archived) {
             if ($archived !== null ) {
                 if ($archived === true ) {
                     $query->whereNotNull('archived_at');
@@ -68,7 +69,7 @@ class AssesmentController extends Controller
         // Authorization is declared in the Form Request
         $validatedData = $request->validated();
         $validatedData['admin_id'] = $user->id;
-        // $validatedData['employer_id'] = $user->id;
+        $validatedData['employer_id'] = $user->id;
         $validatedData['code'] = $user->id.md5(time());
 
         $questions = $validatedData['questions'];
