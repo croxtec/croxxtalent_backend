@@ -82,6 +82,11 @@ class Assesment extends Model
         return $assigned;
     }
 
+    public function jobcode()
+    {
+        return $this->belongsTo('App\Models\EmployerJobcode', 'job_code_id', 'id');
+    }
+
     public function questions()
     {
         return $this->hasMany('App\Models\AssesmentQuestion', 'assesment_id', 'id')->whereNull('archived_at');
@@ -110,4 +115,6 @@ class Assesment extends Model
     {
         return $this->belongsTo('App\Models\SkillTertiary', 'skill_id', 'id');
     }
+
+
 }

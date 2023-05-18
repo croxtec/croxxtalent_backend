@@ -225,7 +225,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             'jobcode' => 'Api\v2\JobCodeController'
         ]);//->name('.employee');
         Route::get('competency', 'Api\v2\EmployerCompetencyController@index')->name('competency.index');
-        Route::get('competency/{skill_id}', 'Api\v2\EmployerCompetencyController@competency')->name('competency.skill');
+        Route::get('competency/gap', 'Api\v2\EmployerCompetencyController@competency')->name('competency.skill');
 
         Route::patch('employee/{id}/archive', 'Api\v2\EmployeeController@archive')->name('employee.archive');
         Route::patch('employee/{id}/unarchive', 'Api\v2\EmployeeController@unarchive')->name('employee.unarchive');

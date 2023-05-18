@@ -34,7 +34,7 @@ class EmployerCompetencyController extends Controller
         ->get()->toArray();
 
         foreach($companySkills as $skill){
-            $groups[$skill['domain_id']][$skill['core_id']][] = $skill;
+            $groups[$skill['domain_name']][$skill['core_name']][] = $skill;
         }
 
         return response()->json([
@@ -44,23 +44,30 @@ class EmployerCompetencyController extends Controller
         ], 200);
     }
 
-    public function competency(Request $request, $skill_id)
+    public function competency(Request $request)
     {
         $user = $request->user();
         $groups = array();
 
         $per_page = $request->input('per_page', -1);
-        $sort_by = $request->input('sort_by', 'created_at');
-        $sort_dir = $request->input('sort_dir', 'asc');
+        $skill_gap = $request->input('skill_gap');
+        $jobcode_gap = $request->input('jobcode_gap');
         $search = $request->input('search');
 
         $assessments = Assesment::join('assesment_summaries',
                     'assesment_summaries.assesment_id', '=', 'assesments.id')
                     // ->where('assesments.admin_id', $user->id)
-                    ->where('assesments.skill_id', $skill_id)
-                    ->get()->toArray(); 
+                    ->when($skill_gap, function($query) use ($skill_gap){
+                        info($skill_gap);
+                        $query ->where('assesments.skill_id', $skill_gap);
+                     })
+                     ->when($jobcode_gap, function($query) use ($jobcode_gap){
+                        info($jobcode_gap);
+                        $query ->where('assesments.job_code_id', $jobcode_gap);
+                     })
+                    ->get()->toArray();
 
-        // ->groupBy('assesment_summaries.talent_id'); 
+        // ->groupBy('assesment_summaries.talent_id');
         // ->orderBy($sort_by, $sort_dir);
         foreach($assessments as $skill){
             $groups[$skill['talent_id']]['assesments'][] = $skill;
@@ -69,7 +76,7 @@ class EmployerCompetencyController extends Controller
         foreach($groups as $key => $competency ){
             $groups[$key]['talent'] = Employee::where('user_id',$key)->first();
             $groups[$key]['info'] = [
-                'total_assesments' =>  count($groups[$key]['assesments']) 
+                'total_assesments' =>  count($groups[$key]['assesments'])
             ];
         }
 
