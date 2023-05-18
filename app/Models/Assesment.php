@@ -14,7 +14,7 @@ class Assesment extends Model
 
     protected $fillable = [
         'admin_id',
-        'employer_id',
+        // 'employer_id',
         'domain_id',
         'core_id',
         'skill_id',
