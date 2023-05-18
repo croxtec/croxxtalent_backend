@@ -35,8 +35,26 @@ class Assesment extends Model
     ];
 
     protected $appends = [
-        'assigned_managers', 'assisgned_employees'
+        'assigned_managers', 'assisgned_employees',
+        'domain_name',
+        'core_name',
+        'skill_name'
     ];
+
+    public function getDomainNameAttribute()
+    {
+        return $this->domain_id ? $this->domain?->name : null;
+    }
+
+    public function getCoreNameAttribute()
+    {
+        return $this->core_id ? $this->core?->name : null;
+    }
+
+    public function getSkillNameAttribute()
+    {
+        return $this->skill_id ? $this->skill?->name : null;
+    }
 
     protected function managers(): Attribute
     {
@@ -76,5 +94,20 @@ class Assesment extends Model
 
     public function summary(){
         return $this->hasMany('App\Models\AssesmentSummary', 'assesment_id', 'id');
+    }
+
+    public function domain()
+    {
+        return $this->belongsTo('App\Models\Skill', 'domain_id', 'id');
+    }
+
+    public function core()
+    {
+        return $this->belongsTo('App\Models\SkillSecondary', 'core_id', 'id');
+    }
+
+    public function skill()
+    {
+        return $this->belongsTo('App\Models\SkillTertiary', 'skill_id', 'id');
     }
 }

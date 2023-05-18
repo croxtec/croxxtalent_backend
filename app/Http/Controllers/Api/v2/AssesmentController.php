@@ -30,9 +30,9 @@ class AssesmentController extends Controller
         $datatable_draw = $request->input('draw'); // if any
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
-        // where('admin_id', $user->id)->
+        //
         $groups = array();
-        $assesments = Assesment::
+        $assesments = Assesment::where('admin_id', $user->id)->
             when($archived ,function ($query) use ($archived) {
             if ($archived !== null ) {
                 if ($archived === true ) {
@@ -53,7 +53,7 @@ class AssesmentController extends Controller
         }
 
         foreach($assesments as $assessment){
-            $groups[$assessment['domain_id']][$assessment['core_id']][] = $assessment;
+            $groups[$assessment['domain_name']][$assessment['core_name']][] = $assessment;
         }
 
 
