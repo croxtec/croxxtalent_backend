@@ -21,6 +21,7 @@ class AssesmentController extends Controller
      */
     public function index(Request $request)
     {
+        $user = $request->user();
         $per_page = $request->input('per_page', 100);
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'desc');
