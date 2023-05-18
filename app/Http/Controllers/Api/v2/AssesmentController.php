@@ -30,9 +30,10 @@ class AssesmentController extends Controller
         $datatable_draw = $request->input('draw'); // if any
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
-
-        $assesments = Assesment::where('admin_id', $user->id)
-            ->when($archived ,function ($query) use ($archived) {
+        // where('admin_id', $user->id)->
+        $groups = array();
+        $assesments = Assesment::
+            when($archived ,function ($query) use ($archived) {
             if ($archived !== null ) {
                 if ($archived === true ) {
                     $query->whereNotNull('archived_at');
@@ -51,10 +52,15 @@ class AssesmentController extends Controller
             $assesments = $assesments->paginate($per_page);
         }
 
+        foreach($assesments as $assessment){
+            $groups[$assessment['domain_id']][$assessment['core_id']][] = $assessment;
+        }
+
+
         $response = collect([
             'status' => true,
             'message' => "Successful."
-        ])->merge($assesments)->merge(['draw' => $datatable_draw]);
+        ])->merge($groups)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
     }
 
