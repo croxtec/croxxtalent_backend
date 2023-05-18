@@ -113,9 +113,25 @@ class AssesmentController extends Controller
     public function show(Request $request, $code)
     {
         $user = $request->user();
+        $isTalent = false;
+        $isManager = false;
 
         $assesment = Assesment::where('code', $code)
                     ->with('questions')->firstOrFail();
+
+        if($assesment->category == 'general' || $assesment->category == 'generic'){
+
+        }
+
+        if($assesment->job_code_id){
+            $employee = Employee::where('user_id', $user->id)->first();
+            $jobcode =  JobCode::where('id', $assesment->job_code_id)
+                            ->whereJsonContains('managers', $employee?->id)->first();
+            $isManager = ($jobcode) ? true : false;
+        }
+
+        $assesment->isManager = true;
+        $assesment->isTalent = $isTalent;
 
         return response()->json([
             'status' => true,
