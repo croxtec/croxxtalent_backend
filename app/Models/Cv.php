@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Storage;
 class Cv extends Model
 {
     use HasFactory;
-    
+
     /**
      * The table associated with the model.
      *
@@ -82,17 +82,17 @@ class Cv extends Model
     {
         return strtoupper("{$this->first_name[0]}{$this->last_name[0]}");
     }
- 
+
     public function getPhotoUrlAttribute()
-    { 
+    {
         // Log::info([url(Storage::url($this->photo)),$this->id ]);
         return $this->photo ? url(Storage::url($this->photo)) : null;
         // return $this->photo ? url(Storage::url($this->photo)) : null;
     }
-    
+
     public function getPhotoUrlCorsAttribute()
     {
-        if ($this->photo) { 
+        if ($this->photo) {
             return URL::signedRoute('api.links.image_cors_proxy', ['image_url' => url(Storage::url($this->photo))]);
         } else {
             return null;
@@ -109,18 +109,18 @@ class Cv extends Model
         } else {
             return null;
         }
-    } 
-     
+    }
+
     public function getIndustryNameAttribute()
     {
         return $this->industry_id ? $this->industry->name : null;
-    } 
+    }
 
     public function getJobTitleNameAttribute()
     {
         return $this->job_title_id ? $this->jobTitle->name : null;
     }
-    
+
     public function getCountryNameAttribute()
     {
         return $this->country_code ? $this->country->name : null;
@@ -154,15 +154,15 @@ class Cv extends Model
 
     public function levelToProgress($level){
         $progress = 0;
-        if($level == 'basic'){ 
+        if($level == 'basic'){
             $progress = 33;
         }
-        else if($level == 'intermediate'){ 
-            $progress = 67; 
+        else if($level == 'intermediate'){
+            $progress = 67;
         }
         else{
-            $progress = 100; 
-        } 
+            $progress = 100;
+        }
         return $progress;
     }
 
@@ -174,22 +174,22 @@ class Cv extends Model
         // info($skills);
         foreach($skills as $sk){
             $sk->level_progress = $this->levelToProgress($sk->level);
-            $sk->secondary = SkillSecondary::find($sk->skill_secondary_id);
-            $sk->tertiary = SkillTertiary::find($sk->skill_tertiary_id);
-        }      
+            $sk->core = SkillSecondary::find($sk->core_id);
+            $sk->skill = SkillTertiary::find($sk->skill_id);
+        }
         return $skills;
     }
 
     public function getSkillGroupsAttribute(){
         $skills = $this->skills;
         $groups = array();
-        $secondary = array_column($skills->toArray(), 'skill_secondary_id');
-  
+        $secondary = array_column($skills->toArray(), 'core_id');
+
         foreach($skills as $skill){
-            $groups[$skill->skill_secondary_id][] = $skill;
-        }  
+            $groups[$skill->core_id][] = $skill;
+        }
         // info(['Group',count($groups),$groups]);
-        
+
         return $groups;
     }
 

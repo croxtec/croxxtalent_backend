@@ -25,8 +25,8 @@ class CvSkill extends Model
     protected $fillable = [
         'cv_id',
         'skill_id',
-        'skill_secondary_id',
-        'skill_tertiary_id',
+        'domain_id',
+        'core_id',
         'level',
     ];
 

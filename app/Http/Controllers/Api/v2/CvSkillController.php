@@ -79,18 +79,24 @@ class CvSkillController extends Controller
         $validatedData = $request->validated();
 
         $validatedData['cv_id'] = $cv->id;
+        info($validatedData);
+
         $cvSkill = CvSkill::updateOrCreate(
             [
                 'cv_id' => $validatedData['cv_id'],
+                'domain_id' => $validatedData['domain_id'],
+                'core_id' => $validatedData['core_id'],
                 'skill_id' => $validatedData['skill_id'],
-                'skill_secondary_id' => $request->secondary_id,
-                'skill_tertiary_id' => $request->tertiary_id,
                 'level' => $request->level
             ],
             $validatedData
         );
 
-        $vetting = VettingSummary::create([ 'cv_skill' => $cvSkill->id, 'assesment_id' => $user->id]);
+        $vetting = VettingSummary::create([
+            'cv_skill' => $cvSkill->id,
+            'assesment_id' => $user->id,
+            'talent_id' => $user->id
+        ]);
 
         if ($cvSkill) {
             return response()->json([
@@ -108,7 +114,7 @@ class CvSkillController extends Controller
 
     /**
      * Display the specified resource.
-     *
+     *3
      * @param  string  $cv_id
      * @param  string  $cv_skill_id
      * @return \Illuminate\Http\Response

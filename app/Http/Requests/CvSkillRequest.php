@@ -47,18 +47,18 @@ class CvSkillRequest extends FormRequest
                 return [];
             case 'POST':
                 return [
-                    'skill_id' => 'required|exists:skills,id',
-                    'secondary_id' => 'required|exists:skill_secondaries,id',
-                    'tertiary_id' => 'required|exists:skill_tertiaries,id',
-                    'level' => 'required|max:50',
+                    'domain_id' => 'required|exists:skills,id',
+                    'core_id' => 'required|exists:skill_secondaries,id',
+                    'skill_id' => 'required|exists:skill_tertiaries,id',
+                    'level' => 'required|max:50|in:basic,intermediate,advance,expert',
                 ];
             case 'PUT':
             case 'PATCH':
                 return [
-                    'skill_id' => 'required|exists:skills,id',
-                    'secondary_id' => 'required|exists:skill_secondaries,id',
-                    'tertiary_id' => 'required|exists:skill_tertiaries,id',
-                    'level' => 'required|max:50',
+                    'domain_id' => 'required|exists:skills,id',
+                    'core_id' => 'required|exists:skill_secondaries,id',
+                    'skill_id' => 'required|exists:skill_tertiaries,id',
+                    'level' => 'required|max:50|in:basic,intermediate,advance,expert',
                 ];
             case 'DELETE':
                 return [];
@@ -76,13 +76,14 @@ class CvSkillRequest extends FormRequest
     {
         return [
             'user_id.exists' => 'User not found.',
-            'skill_id.required' => 'Domain field is required',
-            'skill_id.exists' => 'Domain not found.',
+            'domain_id.required' => 'Domain field is required',
+            'domain_id.exists' => 'Domain not found.',
 
-            'secondary_id.required' => 'Core field is required',
-            'secondary_id.exists' => 'Core not found.',
-            'tertiary_id.required' => 'Skill field is required',
-            'tertiary_id.exists' => 'Skill not found.',
+            'core_id.required' => 'Core field is required',
+            'core_id.exists' => 'Core not found.',
+
+            'skill_id.required' => 'Skill field is required',
+            'skill_id.exists' => 'Skill not found.',
 
         ];
     }

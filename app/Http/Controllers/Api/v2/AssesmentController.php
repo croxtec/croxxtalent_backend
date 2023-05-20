@@ -32,7 +32,7 @@ class AssesmentController extends Controller
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
         //
         $groups = array();
-        $assesments = Assesment::where('admin_id', $user->id)->
+        $assesments = Assesment:://where('admin_id', $user->id)->
             when($archived ,function ($query) use ($archived) {
             if ($archived !== null ) {
                 if ($archived === true ) {
@@ -59,8 +59,9 @@ class AssesmentController extends Controller
 
         $response = collect([
             'status' => true,
+            'data' => $groups,
             'message' => "Successful."
-        ])->merge($groups)->merge(['draw' => $datatable_draw]);
+        ]);
         return response()->json($response, 200);
     }
 
@@ -130,7 +131,7 @@ class AssesmentController extends Controller
             $isManager = ($jobcode) ? true : false;
         }
 
-        $assesment->isManager = true;
+        $assesment->isManager = true ;
         $assesment->isTalent = $isTalent;
 
         return response()->json([
