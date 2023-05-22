@@ -65,7 +65,7 @@ class AssesmentController extends Controller
           array_push($competence_tree, $competence);
         }
 
-
+ 
         $response = collect([
             'status' => true,
             'data' => $competence_tree,
