@@ -31,7 +31,7 @@ class AssesmentController extends Controller
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
         //
-        $groups = array();
+        $groups = array(); $competence_tree = array();
         $assesments = Assesment:://where('admin_id', $user->id)->
             when($archived ,function ($query) use ($archived) {
             if ($archived !== null ) {
@@ -43,7 +43,8 @@ class AssesmentController extends Controller
             }
         })->where( function($query) use ($search) {
             $query->where('code', 'LIKE', "%{$search}%");
-        })->orderBy($sort_by, $sort_dir);
+        })->with('jobcode')
+        ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
             $results = $assesments->get();
@@ -56,10 +57,18 @@ class AssesmentController extends Controller
             $groups[$assessment['domain_name']][$assessment['core_name']][] = $assessment;
         }
 
+        foreach ($groups as $key => $assessment) {
+           $competence = [
+                'name' => $key,
+                'core' => $assessment
+           ];
+          array_push($competence_tree, $competence);
+        }
+
 
         $response = collect([
             'status' => true,
-            'data' => $groups,
+            'data' => $competence_tree,
             'message' => "Successful."
         ]);
         return response()->json($response, 200);
