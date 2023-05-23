@@ -31,8 +31,8 @@ class AssesmentController extends Controller
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
         //
-        $groups = array(); $competence_tree = array();
-        $assesments = Assesment:://where('admin_id', $user->id)->
+
+        $assesments = Assesment::where('admin_id', $user->id)->
             when($archived ,function ($query) use ($archived) {
             if ($archived !== null ) {
                 if ($archived === true ) {
@@ -76,7 +76,7 @@ class AssesmentController extends Controller
 
 
         $response = collect([
-            'status' => true, 
+            'status' => true,
             'data' => $competency,
             'message' => "Successful."
         ]);

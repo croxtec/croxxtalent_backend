@@ -39,16 +39,15 @@ class TalentCompetencyController extends Controller
 
         $cvSkills = $cvSkills->get()->toArray();
 
-        $secondary = array_column($cvSkills, 'skill_secondary_id');
-
         foreach($cvSkills as $skill){
             $skill['vetting'] = VettingSummary::where('cv_skill', $skill['id'])->first();
-            $groups[$skill['skill_id']][$skill['skill_secondary_id']][] = $skill;
+            // $groups[$skill['skill_id']][$skill['skill_secondary_id']][] = $skill;
         }
+        $competency = croxxtalent_competency_tree($cvSkills);
 
         return response()->json([
             'status' => true,
-            'data' => $groups,
+            'data' => $competency,
             'message' => 'Data imported successfully.'
         ], 200);
     }
@@ -102,7 +101,6 @@ class TalentCompetencyController extends Controller
         $search = $request->input('search');
         $archived = $request->input('archived');
 
-        $groups = array();
         $employee =  Employee::where('user_id', $user->id)->firstOrFail();
 
         $jobcodes =  JobCode::whereJsonContains('managers', $employee->id)->get();
@@ -123,14 +121,15 @@ class TalentCompetencyController extends Controller
             $query->where('code', 'LIKE', "%{$search}%");
         })->orderBy($sort_by, $sort_dir)->get();
 
+        $competency = croxxtalent_competency_tree($assesments);
 
-        foreach($assessments->toArray() as $assesment){
-            $groups[$assesment['domain_id']][$assesment['core_id']][] = $assesment;
-        }
+        // foreach($assessments->toArray() as $assesment){
+        //     $groups[$assesment['domain_id']][$assesment['core_id']][] = $assesment;
+        // }
 
         return response()->json([
             'status' => true,
-            'data' => $groups,
+            'data' => $competency,
             'message' => 'Manager  .'
         ], 200);
 

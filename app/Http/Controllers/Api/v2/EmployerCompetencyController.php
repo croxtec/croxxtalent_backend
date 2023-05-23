@@ -33,13 +33,11 @@ class EmployerCompetencyController extends Controller
         ->select(['id', 'domain_id','core_id', 'code','skill_id'])
         ->get()->toArray();
 
-        foreach($companySkills as $skill){
-            $groups[$skill['domain_name']][$skill['core_name']][] = $skill;
-        }
+        $competency = croxxtalent_competency_tree($companySkills);
 
         return response()->json([
             'status' => true,
-            'data' => $groups,
+            'data' => $competency,
             'message' => 'Data imported successfully.'
         ], 200);
     }

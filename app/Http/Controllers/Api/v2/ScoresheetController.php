@@ -46,6 +46,7 @@ class ScoresheetController extends Controller
             $summaries = $summaries->paginate($per_page);
         }
 
+
         return response()->json([
             'status' => true,
             'message' => "Successful.",
@@ -58,12 +59,13 @@ class ScoresheetController extends Controller
         $assesment = Assesment::where('id', $code)->with('questions')->firstOrFail();
 
         foreach ($assesment->questions as $question) {
-            info($question->id);
+            // info($question->id);
             $question->answer = TalentAnswer::where([
                     'assesment_question_id' => $question->id,
                     'talent_id' => $talent,
                     'assesment_id' => $code
              ])->first();
+
             $question->result = ScoreSheet::where([
                     'assesment_question_id' => $question->id,
                     'talent_id' => $talent,
@@ -137,6 +139,11 @@ class ScoresheetController extends Controller
 
                 // Update with the newly update file
                 $answer->upload = $request->comment;
+            }else{
+                return response()->json([
+                    'status' => false,
+                    'message' => 'File is not valid'
+                ]);
             }
 
         }
@@ -224,7 +231,7 @@ class ScoresheetController extends Controller
         ])->sum('score');
 
         $score_average = ((int)$talent_score / $total_score) * 5;
-        
+
         $summary->manager_id = $user->id;
         $summary->is_published = 1;
         $summary->total_score = $total_score;
