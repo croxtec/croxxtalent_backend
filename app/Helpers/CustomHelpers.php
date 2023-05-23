@@ -90,3 +90,31 @@ if ( ! function_exists('related_records_count')) {
         return $relatedRecordsCount;
     }
 }
+
+if (! function_exists('croxxtalent_competency_tree') ){
+    function croxxtalent_competency_tree($competency){
+        $groups = array();
+        $competence_tree = array();
+
+        foreach($competency as $skill){
+            $groups[$skill['domain_name']][$skill['core_name']][] = $skill;
+        }
+
+        foreach ($groups as $key => $skill) {
+           $competence = [
+                'name' => $key,
+                'core' => []
+            ];
+            foreach ($skill as $ckey => $core) {
+                $score  = array(
+                    'name' => $ckey,
+                    'skills' => $core
+                );
+                array_push( $competence['core'], $score );
+           }
+          array_push($competence_tree, $competence);
+        }
+
+        return $competence_tree;
+    }
+}

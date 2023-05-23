@@ -53,22 +53,31 @@ class AssesmentController extends Controller
             $assesments = $assesments->paginate($per_page);
         }
 
-        foreach($assesments as $assessment){
-            $groups[$assessment['domain_name']][$assessment['core_name']][] = $assessment;
-        }
+        $competency = croxxtalent_competency_tree($assesments);
 
-        foreach ($groups as $key => $assessment) {
-           $competence = [
-                'name' => $key,
-                'core' => $assessment
-           ];
-          array_push($competence_tree, $competence);
-        }
+        // foreach($assesments as $assessment){
+        //     $groups[$assessment['domain_name']][$assessment['core_name']][] = $assessment;
+        // }
 
- 
+        // foreach ($groups as $key => $assessment) {
+        //    $competence = [
+        //         'name' => $key,
+        //         'core' => []
+        //     ];
+        //     foreach ($assessment as $ckey => $core) {
+        //         $score  = array(
+        //             'name' => $ckey,
+        //             'skills' => $core
+        //         );
+        //         array_push( $competence['core'], $score );
+        //    }
+        //   array_push($competence_tree, $competence);
+        // }
+
+
         $response = collect([
-            'status' => true,
-            'data' => $competence_tree,
+            'status' => true, 
+            'data' => $competency,
             'message' => "Successful."
         ]);
         return response()->json($response, 200);
