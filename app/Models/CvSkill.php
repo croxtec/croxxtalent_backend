@@ -54,17 +54,17 @@ class CvSkill extends Model
 
     public function getDomainNameAttribute()
     {
-        return $this->skill_id ? $this->skill->name : null;
+        return $this->domain_id ? $this->domain->name : null;
     }
 
     public function getCoreNameAttribute()
     {
-        return $this->seconary_id ? $this->seconary->name : null;
+        return $this->core_id ? $this->core->name : null;
     }
 
     public function getSkillNameAttribute()
     {
-        return $this->tertiary_id ? $this->tertiary->name : null;
+        return $this->skill_id ? $this->skill->name : null;
     }
 
     public function cv()
@@ -72,19 +72,19 @@ class CvSkill extends Model
         return $this->belongsTo('App\Models\Cv', 'cv_id', 'id');
     }
 
+    public function domain()
+    {
+        return $this->belongsTo('App\Models\Skill', 'domain_id', 'id');
+    }
+
+    public function core()
+    {
+        return $this->belongsTo('App\Models\SkillSecondary', 'core_id', 'id');
+    }
+
     public function skill()
     {
-        return $this->belongsTo('App\Models\Skill', 'skill_id', 'id');
-    }
-
-    public function secondary()
-    {
-        return $this->belongsTo('App\Models\SkillSecondary', 'skill_secondary_id', 'id');
-    }
-
-    public function tertiary()
-    {
-        return $this->belongsTo('App\Models\SkillTertiary', 'skill_tertiary_id', 'id');
+        return $this->belongsTo('App\Models\SkillTertiary', 'skill_id', 'id');
     }
 
     public function vetting()
