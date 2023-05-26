@@ -59,7 +59,7 @@ class CvSkillRequest extends FormRequest
                     'core_id' => 'required|exists:skill_secondaries,id',
                     'skill_id' => 'required|exists:skill_tertiaries,id',
                     'level' => 'required|max:50|in:basic,intermediate,advance,expert',
-                ];
+                ]; 
             case 'DELETE':
                 return [];
             default:break;
