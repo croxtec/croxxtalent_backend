@@ -45,6 +45,33 @@ class VerificationLinkController extends Controller
                 ->with( compact('verified') );;
     }
 
+    public function verifyEmployee(Request $request, $token)
+    {
+        $verification = Verification::where('action', 'employee')->where('token', $token)->first();
+        $verified = false;
+        if ($verification) {
+            $employee = $verification->verifiable()->first();
+            if ($employee) {
+                $user = User::whereEmail($employee->email)->first();
+                // $employee->email_verified_at = Carbon::now();
+                $employee->user_id = $user->id;
+                $employee->save();
+                // delete token after verification
+                $verification->delete();
+
+                // save audit trail log
+                $old_values = [];
+                $new_values = [];
+                Audit::log($user->id, 'email_verified', $old_values, $new_values, User::class, $user->id);
+
+                $verified = true;
+            }
+        }
+
+        return view('api.links.verifications.verify_employee')
+                ->with( compact('verified') );;
+    }
+
     /**
      * Verify welcome email address
      *
