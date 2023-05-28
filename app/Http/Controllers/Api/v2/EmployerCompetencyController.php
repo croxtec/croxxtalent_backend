@@ -60,7 +60,7 @@ class EmployerCompetencyController extends Controller
                         $query ->where('assesments.skill_id', $skill_gap);
                      })
                      ->when($jobcode_gap, function($query) use ($jobcode_gap){
-                        info($jobcode_gap);
+                        // info($jobcode_gap);
                         $query ->where('assesments.job_code_id', $jobcode_gap);
                      })
                     ->get()->toArray();

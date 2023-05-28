@@ -72,11 +72,9 @@ class TalentCompetencyController extends Controller
            $summary =  Assesment::join('assesment_summaries',
                         'assesment_summaries.assesment_id', '=', 'assesments.id')
                         ->where('assesment_summaries.talent_id', $user->id)
-                        ->where('assesments.admin_id' , $learn->id)
+                        ->where('assesments.admin_id' , $learn->employer_id)
                         ->get();
 
-            // $assemsnts = array_column($summary->toArray(), 'assesment_id');
-            // info($assemsnts);
             $learn->competence =  $summary;// Assesment::where('id', $assemsnts)->with('summary')->get();
         }
 
