@@ -199,9 +199,9 @@ class AssesmentController extends Controller
                 $employees = Employee::where('job_code_id', $assesment->job_code_id)->get();
             }
 
-            if(count($assesment->candidates)) {
-                $employees = $assesment->candidates;
-            }
+            // if(count($assesment->candidates)) {
+            //     $employees = $assesment->candidates;
+            // }
 
             foreach($employees as $employee) {
                 AssesmentSummary::create([
