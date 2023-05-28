@@ -68,10 +68,12 @@ class TalentCompetencyController extends Controller
         $experience =  Employee::where('user_id', $user->id)->get();
 
         foreach ($experience as $learn) {
-           $summary = AssesmentSummary::where([
-                'talent_id' => $user->id,
-                'employer_id' => $learn->user_id
-            ])->with('assesment_code')->get();
+
+           $summary =  Assesment::join('assesment_summaries',
+                        'assesment_summaries.assesment_id', '=', 'assesments.id')
+                        ->where('assesment_summaries.talent_id', $user->id)
+                        ->where('assesments.admin_id' , $learn->id)
+                        ->get();
 
             // $assemsnts = array_column($summary->toArray(), 'assesment_id');
             // info($assemsnts);
