@@ -199,7 +199,7 @@ class AssesmentController extends Controller
                 $employees = Employee::where('job_code_id', $assesment->job_code_id)->get();
             }
 
-            if($assesment->candidates) {
+            if(count($assesment->candidates)) {
                 $employees = $assesment->candidates;
             }
 
@@ -208,6 +208,8 @@ class AssesmentController extends Controller
                     'assesment_id' => $assesment->id,
                     'talent_id' => $employee->user_id
                 ]);
+                // Send E-Mail Out
+
             }
 
             $assesment->is_published = true;
