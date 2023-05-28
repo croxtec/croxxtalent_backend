@@ -11,14 +11,14 @@
     Hi {{ $name }},
     <br>
     <p>
-        Your profile has been registered with <a href="{{ config('myapp.url') }}" target="_blank">{{ config('myapp.name') }}</a>.
+        Your profile has been linked with <a href="{{ config('myapp.url') }}" target="_blank">{{ config('myapp.name') }}</a>.
         <br><br>
         Simply click the button below  to verify your email address.
     </p>
     <p>
         @include('api.emails.layouts.partials.button_primary', [
-            'button_text' => 'Click here to verify email address',
-            'button_url' => ''
+            'button_text' => 'Click here to connect email address',
+            'button_url' =>  $verification_url
         ])
     </p>
 @endsection

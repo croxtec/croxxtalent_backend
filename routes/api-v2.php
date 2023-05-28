@@ -55,6 +55,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
     // Verifications
     Route::prefix('verifications')->name('verifications.')->group( function () {
         Route::get('/verify-email/{token}', 'Api\v2\Link\VerificationLinkController@verifyEmail')->name('verify_email');
+        Route::get('/verify-employee/{token}', 'Api\v2\Link\VerificationLinkController@verifyEmployee')->name('verify_employee');
         Route::get('/verify-edit-email/{token}', 'Api\v2\Link\VerificationLinkController@verifyEditEmail')->name('verify_edit_email');
     });
 

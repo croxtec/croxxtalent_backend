@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Http\Requests\EmployeeRequest;
 use App\Mail\WelcomeEmployee;
 use App\Models\User;
+use App\Models\Verification;
 use Illuminate\Support\Facades\Mail;
 
 class EmployeeController extends Controller
@@ -76,12 +77,20 @@ class EmployeeController extends Controller
         $employee = Employee::create($validatedData);
 
         if($employee){
-
-            Mail::to($validatedData['email'])->send(new WelcomeEmployee($employee, $user));
+            $verification = new Verification();
+            $verification->action = "employee";
+            $verification->sent_to = $employee->email;
+            $verification->metadata = null;
+            $verification->is_otp = false;
+            $verification = $employee->verifications()->save($verification);
+            if ($verification) {
+                Mail::to($validatedData['email'])->send(new WelcomeEmployee($employee, $user, $verification));
+            }
 
             return response()->json([
                 'status' => true,
                 'message' => "Employee created successfully.",
+                'verification' => $verification,
                 'data' => Employee::find($employee->id)
             ], 201);
         } else {

@@ -43,6 +43,7 @@ class TalentCompetencyController extends Controller
             $skill['vetting'] = VettingSummary::where('cv_skill', $skill['id'])->first();
             // $groups[$skill['skill_id']][$skill['skill_secondary_id']][] = $skill;
         }
+
         $competency = croxxtalent_competency_tree($cvSkills);
 
         return response()->json([

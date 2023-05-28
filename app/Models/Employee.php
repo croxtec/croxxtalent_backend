@@ -39,4 +39,9 @@ class Employee extends Model
         return $this->belongsTo('App\Models\User', 'user_id', 'id')
                     ->select(['id','first_name','last_name','photo']);
     }
+
+    public function verifications()
+    {
+        return $this->morphMany('App\Models\Verification', 'verifiable');
+    }
 }

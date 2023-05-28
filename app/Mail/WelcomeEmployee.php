@@ -10,6 +10,7 @@ use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use App\Models\User;
 use App\Models\Employee;
+use App\Models\Verification;
 
 class WelcomeEmployee extends Mailable
 {
@@ -24,10 +25,11 @@ class WelcomeEmployee extends Mailable
      *
      * @return void
      */
-    public function __construct(Employee $employee, User $employer)
+    public function __construct(Employee $employee, User $employer, Verification $verification)
     {
         $this->employee = $employee;
         $this->employer = $employer;
+        $this->verification = $verification;
     }
 
        /**
@@ -47,7 +49,9 @@ class WelcomeEmployee extends Mailable
                     ->text('api.emails.welcome_employee_email_plain')
                     ->with([
                         'name' => $this->employee->name,
-                        'email' => $this->employee->email
+                        'email' => $this->employee->email,
+                        'verification_token' => $this->verification->token,
+                        'verification_url' => route('api.links.verifications.verify_employee', ['token' => $this->verification->token]),
                     ]);
     }
 }

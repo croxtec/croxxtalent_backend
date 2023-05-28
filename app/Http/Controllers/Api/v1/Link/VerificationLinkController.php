@@ -15,7 +15,7 @@ class VerificationLinkController extends Controller
 {
     /**
      * Verify welcome email address
-     * 
+     *
      * @param Illuminate\Http\Request $request
      * @param string $token
      * @return \Illuminate\Http\Response
@@ -31,7 +31,7 @@ class VerificationLinkController extends Controller
                 $user->save();
                 // delete token after verification
                 $verification->delete();
-                
+
                 // save audit trail log
                 $old_values = [];
                 $new_values = [];
@@ -40,14 +40,42 @@ class VerificationLinkController extends Controller
                 $verified = true;
             }
         }
-        
+
         return view('api.links.verifications.verify_email')
                 ->with( compact('verified') );;
-    } 
+    }
+
+
+    public function verifyEmployee(Request $request, $token)
+    {
+        $verification = Verification::where('action', 'employee')->where('token', $token)->first();
+        $verified = false;
+        if ($verification) {
+            $employee = $verification->verifiable()->first();
+            if ($employee) {
+                $user = User::whereEmail($employee->email)->first();
+                // $employee->email_verified_at = Carbon::now();
+                $employee->user_id = $user->id;
+                $employee->save();
+                // delete token after verification
+                $verification->delete();
+
+                // save audit trail log
+                $old_values = [];
+                $new_values = [];
+                Audit::log($user->id, 'email_verified', $old_values, $new_values, User::class, $user->id);
+
+                $verified = true;
+            }
+        }
+
+        return view('api.links.verifications.verify_employee')
+                ->with( compact('verified') );;
+    }
 
     /**
      * Verify welcome email address
-     * 
+     *
      * @param Illuminate\Http\Request $request
      * @param string $token
      * @return \Illuminate\Http\Response
@@ -63,7 +91,7 @@ class VerificationLinkController extends Controller
             if ($user && isset($verification->metadata['new_email'])) {
                 $user->email = $verification->metadata['new_email'];
                 $user->email_updated_at = Carbon::now();
-                $user->save();                
+                $user->save();
                 $new_email = $user->email;
                 // delete token after verification
                 $verification->delete();
@@ -72,9 +100,9 @@ class VerificationLinkController extends Controller
                 $old_values = ['email' => $old_email];
                 $new_values = ['email' => $new_email];
                 Audit::log($user->id, 'users.email.updated', $old_values, $new_values, User::class, $user->id);
-                
+
                 // send email notification
-                if ($old_email) {                    
+                if ($old_email) {
                     if (config('mail.queue_send')) {
                         Mail::to($old_email)->queue(new EmailChanged($user, $old_email, $new_email));
                     } else {
@@ -85,7 +113,7 @@ class VerificationLinkController extends Controller
                 $verified = true;
             }
         }
-        
+
         return view('api.links.verifications.verify_email')
                 ->with( compact('verified') );;
     }
