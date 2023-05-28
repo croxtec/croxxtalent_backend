@@ -65,7 +65,8 @@ class TalentCompetencyController extends Controller
     {
         $user = $request->user();
 
-        $experience =  Employee::where('user_id', $user->id)->get();
+        $experience =  Employee::where('user_id', $user->id)
+                            ->with(['job_code','employer'])->get();
 
         foreach ($experience as $learn) {
 
