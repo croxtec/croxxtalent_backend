@@ -11,9 +11,9 @@
     Hi {{ $name }},
     <br>
     <p>
-        Your profile has been linked with <a href="{{ config('myapp.url') }}" target="_blank">{{ config('myapp.name') }}</a>.
+        Your profile has been linked with  this company <a href="{{ config('myapp.url') }}" target="_blank">{{ config('myapp.name') }}</a>.
         <br><br>
-        Simply click the button below  to verify your email address.
+        Simply click the button below  to verify your email address and join their employee list.
     </p>
     <p>
         @include('api.emails.layouts.partials.button_primary', [

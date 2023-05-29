@@ -65,8 +65,8 @@ class EmployerCompetencyController extends Controller
                      })
                     ->get()->toArray();
 
-        // ->groupBy('assesment_summaries.talent_id');
-        // ->orderBy($sort_by, $sort_dir);
+
+
         foreach($assessments as $skill){
             $groups[$skill['talent_id']]['assesments'][] = $skill;
         }

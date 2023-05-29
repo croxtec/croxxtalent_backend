@@ -68,8 +68,9 @@ class VerificationLinkController extends Controller
             }
         }
 
-        return view('api.links.verifications.verify_employee')
-                ->with( compact('verified') );;
+         return  Redirect::to('https://croxxtalent-staging.netlify.app/login');
+        // return view('api.links.verifications.verify_employee')
+        //         ->with( compact('verified') );;
     }
 
     /**
