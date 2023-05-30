@@ -27,7 +27,8 @@ class AssesmentSummary extends Model
 
 
     public function talent(){
-        return $this->belongsTo('App\Models\User', 'talent_id', 'id');
+        return $this->belongsTo('App\Models\User', 'talent_id', 'id')
+            ->select(['first_name','last_name']);
     }
 
 }

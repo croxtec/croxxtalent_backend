@@ -29,7 +29,7 @@ class JobCodeController extends Controller
         $job_code = JobCode::where('employer_id', $user->id)
         ->when($search, function($query) use ($search) {
             $query->where('id', 'LIKE', "%{$search}%");
-        })->with('firstManager','secondManager')
+        })
         ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {

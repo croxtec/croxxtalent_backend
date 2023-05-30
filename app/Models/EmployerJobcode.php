@@ -19,7 +19,9 @@ class EmployerJobcode extends Model
     ];
 
     protected $appends = [
-        'department_managers'
+        'department_managers',
+        'total_employee',
+        'total_assessment'
     ];
 
     protected function managers(): Attribute
@@ -30,16 +32,25 @@ class EmployerJobcode extends Model
         );
     }
 
+    public function employee(){
+        return $this->hasMany('App\Models\Employee', 'job_code_id', 'id');
+    }
+
+    public function assessment(){
+        return $this->hasMany('App\Models\Assesment', 'job_code_id', 'id');
+    }
+
     public function getDepartmentManagersAttribute(){
         $department = Employee::where('id', $this->managers)->get();
         return $department;
     }
 
-    public function firstManager(){
-        return $this->belongsTo('App\Models\User', 'manager1_id', 'id');
+    public function getTotalEmployeeAttribute(){
+        return $this->employee->count();
     }
 
-    public function secondManager(){
-        return $this->belongsTo('App\Models\User', 'manager2_id', 'id');
+    public function getTotalAssessmentAttribute(){
+        return $this->assessment->count();
     }
+
 }

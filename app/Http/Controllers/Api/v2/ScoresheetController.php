@@ -9,6 +9,7 @@ use App\Models\AssesmentScoreSheet as ScoreSheet;
 use App\Models\AssesmentQuestion as Question;
 use App\Models\AssesmentSummary;
 use App\Models\Assesment;
+use App\Models\Employee;
 
 class ScoresheetController extends Controller
 {
@@ -46,6 +47,10 @@ class ScoresheetController extends Controller
             $summaries = $summaries->paginate($per_page);
         }
 
+
+        foreach ($summaries as $submitted) {
+            $submitted->talent =  Employee::where('user_id',$submitted->talent_id)->first();
+        }
 
         return response()->json([
             'status' => true,

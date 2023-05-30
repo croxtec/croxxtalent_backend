@@ -72,12 +72,14 @@ class EmployerCompetencyController extends Controller
         }
 
         foreach($groups as $key => $competency ){
+            // info($competency);
             $groups[$key]['talent'] = Employee::where('user_id',$key)->first();
             $groups[$key]['info'] = [
                 'total_assesments' =>  count($groups[$key]['assesments'])
             ];
         }
 
+        $groups = array_values($groups);
         return response()->json([
             'status' => true,
             'data' => $groups,
