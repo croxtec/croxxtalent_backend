@@ -15,6 +15,9 @@ class AssesmentSummary extends Model
         'employer_id'
     ];
 
+    protected $appends = [
+
+    ];
 
     public function assesment(){
         return $this->belongsTo('App\Models\Assesment', 'assesment_id', 'id');

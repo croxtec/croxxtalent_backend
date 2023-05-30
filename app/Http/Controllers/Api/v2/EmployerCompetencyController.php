@@ -26,12 +26,12 @@ class EmployerCompetencyController extends Controller
 
 
         $companySkills = Assesment::
-        where( function($query) use ($search) {
-            $query->where('id', 'LIKE', "%{$search}%");
-        })
-        ->distinct('skill_id')
-        ->select(['id', 'domain_id','core_id', 'code','skill_id'])
-        ->get()->toArray();
+                        where( function($query) use ($search) {
+                            $query->where('id', 'LIKE', "%{$search}%");
+                        })
+                        ->distinct('skill_id')
+                        ->select(['id', 'domain_id','core_id', 'code','skill_id'])
+                        ->get()->toArray();
 
         $competency = croxxtalent_competency_tree($companySkills);
 
@@ -72,10 +72,11 @@ class EmployerCompetencyController extends Controller
         }
 
         foreach($groups as $key => $competency ){
-            // info($competency);
-            $groups[$key]['talent'] = Employee::where('user_id',$key)->first();
+            $score = array_column($groups[$key]['assesments'], 'score_average');
+            $groups[$key]['talent'] = Employee::where('user_id',$key)->with('job_code')->first();
             $groups[$key]['info'] = [
-                'total_assesments' =>  count($groups[$key]['assesments'])
+                'total_assesments' =>  count($groups[$key]['assesments']),
+                'score_average' =>  array_sum($score)
             ];
         }
 

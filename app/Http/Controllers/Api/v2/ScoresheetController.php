@@ -49,7 +49,7 @@ class ScoresheetController extends Controller
 
 
         foreach ($summaries as $submitted) {
-            $submitted->talent =  Employee::where('user_id',$submitted->talent_id)->first();
+            $submitted->talent =  Employee::where('user_id',$submitted->talent_id)->with('job_code')->first();
         }
 
         return response()->json([
