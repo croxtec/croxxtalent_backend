@@ -71,7 +71,8 @@ class CampaignController extends Controller
 
         // Retrieve the validated input data...
         $validatedData = $request->validated();
-
+        $validatedData['code'] = $user->id.md5(time());
+        
         $skill_ids = $validatedData['skill_ids'];
         $course_of_study_ids = $validatedData['course_of_study_ids'];
         $language_ids = $validatedData['language_ids'];

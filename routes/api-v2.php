@@ -201,22 +201,28 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::get('notifications/seen/{id}', 'Api\v2\UserController@seenNotification')->name('users.notifications');
 
         Route::get('trending/employers', 'Api\v2\CroxxJobsController@trendingEmployers')->name('trending.employers');
-        // Croxx Jobs
-        Route::get('jobs/available', 'Api\v2\CroxxJobsController@available')->name('jobs.available');
-        Route::get('jobs/available/{id}', 'Api\v2\CroxxJobsController@show')->name('jobs.show');
-        Route::get('jobs/applied', 'Api\v2\CroxxJobsController@index')->name('jobs.index');
-        Route::post('jobs/applied', 'Api\v2\CroxxJobsController@store')->name('jobs.applied');
-        Route::post('jobs/unapplied/{id}', 'Api\v2\CroxxJobsController@unapplyJob')->name('jobs.unapplied');
-
-
-        Route::get('job-invitations', 'Api\v2\JobInvitationController@index')->name('job_invitations.index');
-        Route::get('job-invitations/{id}', 'Api\v2\JobInvitationController@show')->name('job_invitations.show');
-        Route::post('job-invitations', 'Api\v2\JobInvitationController@store')->name('job_invitations.store');
-        // Route::put('job-invitations/{id}', 'Api\v2\JobInvitationController@update')->name('job_invitations.update');
-        Route::patch('job-invitations/{id}/accept', 'Api\v2\JobInvitationController@accept')->name('job_invitations.accept');
-        Route::patch('job-invitations/{id}/reject', 'Api\v2\JobInvitationController@reject')->name('job_invitations.reject');
-        Route::post('job-invitations/check', 'Api\v2\JobInvitationController@check')->name('job_invitations.check');
     });
+
+    // Croxx Jobs
+    Route::get('jobs', 'Api\v2\CroxxJobsController@index')->name('jobs.index');
+    Route::get('jobs/{id}', 'Api\v2\CroxxJobsController@show')->name('jobs.show');
+    Route::post('jobs/applied', 'Api\v2\CroxxJobsController@apply')->name('jobs.apply');
+    Route::post('jobs/saved', 'Api\v2\CroxxJobsController@saved')->name('jobs.saved');
+    Route::get('jobs/recommendation', 'Api\v2\CroxxJobsController@recommendations')->name('jobs.recommendations');
+
+    Route::get('myjob/applied', 'Api\v2\MyJobController@indexApplied')->name('myjob.applied');
+    Route::post('myjob/unapplied/{id}', 'Api\v2\MyJobController@unapplyJob')->name('myjob.unapplied');
+    Route::get('myjob/saved', 'Api\v2\MyJobController@indexSaved')->name('myjob.saved');
+    Route::delete('myjob/saved/{id}', 'Api\v2\MyJobController@destroySaved')->name('myjob.delete.saved');
+
+
+    Route::get('job-invitations', 'Api\v2\JobInvitationController@index')->name('job_invitations.index');
+    Route::get('job-invitations/{id}', 'Api\v2\JobInvitationController@show')->name('job_invitations.show');
+    Route::post('job-invitations', 'Api\v2\JobInvitationController@store')->name('job_invitations.store');
+    // Route::put('job-invitations/{id}', 'Api\v2\JobInvitationController@update')->name('job_invitations.update');
+    Route::patch('job-invitations/{id}/accept', 'Api\v2\JobInvitationController@accept')->name('job_invitations.accept');
+    Route::patch('job-invitations/{id}/reject', 'Api\v2\JobInvitationController@reject')->name('job_invitations.reject');
+    Route::post('job-invitations/check', 'Api\v2\JobInvitationController@check')->name('job_invitations.check');
 
 
     // Employers

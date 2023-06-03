@@ -23,12 +23,13 @@ class Campaign extends Model
      */
     protected $fillable = [
         'user_id',
+        'code',
         'title',
         'industry_id',
         'job_title',
-        'domain_id', 
-        'core_id', 
-        'interview',
+        'assessment_id',
+        'domain_id',
+        'core_id',
         // 'job_title_id',
         'work_type',
         'minimum_degree_id',
@@ -47,7 +48,6 @@ class Campaign extends Model
         'photo',
         'is_managed',
     ];
-
 
     /**
      * The attributes that should be cast.
@@ -191,15 +191,15 @@ class Campaign extends Model
 
     public function getSkillIdsAttribute()
     {
-        // $dataSet = $this->skills()->get(['id']);
-        // $ids = [];
-        // if ($dataSet->isNotEmpty()) {
-        //     foreach($dataSet as $data)
-        //     {
-        //         $ids[] = $data->id;
-        //     }
-        // }
-        // return $ids;
+        $dataSet = $this->skills()->get(['id']);
+        $ids = [];
+        if ($dataSet->isNotEmpty()) {
+            foreach($dataSet as $data)
+            {
+                $ids[] = $data->id;
+            }
+        }
+        return $ids;
     }
 
     // Course of Studies pivot relationships
@@ -237,7 +237,7 @@ class Campaign extends Model
 
     public function getCertificationCoursesAttribute()
     {
-        return $this->certificationCourses()->get(); 
+        return $this->certificationCourses()->get();
     }
 
     public function getCertificationCourseIdsAttribute()

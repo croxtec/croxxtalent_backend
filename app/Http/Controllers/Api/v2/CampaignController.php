@@ -67,10 +67,12 @@ class CampaignController extends Controller
      */
     public function store(CampaignRequest $request)
     {
+        $user = $request->user();
         // Authorization is declared in the Form Request
 
         // Retrieve the validated input data...
         $validatedData = $request->validated();
+        $validatedData['user_id'] = $user->id;
 
         $skill_ids = $validatedData['skill_ids'];
         $course_of_study_ids = $validatedData['course_of_study_ids'];
@@ -80,7 +82,7 @@ class CampaignController extends Controller
         $campaign = Campaign::create($validatedData);
         if ($campaign) {
             // save records to pivot table
-            // $campaign->skills()->attach($skill_ids);
+            $campaign->skills()->attach($skill_ids);
             $campaign->courseOfStudies()->attach($course_of_study_ids);
             $campaign->languages()->attach($language_ids);
 

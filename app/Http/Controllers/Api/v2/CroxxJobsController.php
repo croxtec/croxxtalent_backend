@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\Campaign;
 use App\Models\Cv;
 use App\Models\AppliedJob;
+use App\Models\SavedJob;
 use App\Models\Notification;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -22,7 +23,7 @@ class CroxxJobsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function available(Request $request)
+    public function index(Request $request)
     {
         $user = $request->user();
         // $this->authorize('view-any', Campaign::class);
@@ -63,15 +64,18 @@ class CroxxJobsController extends Controller
         } else {
             $campaigns = $campaigns->paginate($per_page);
         }
-        foreach($campaigns as $campaign){
-            $campaign->applied = AppliedJob::where('campaign_id', $campaign->id)->where('talent_user_id', $user->id)->first();
-        }
+
+        // foreach($campaigns as $campaign){
+        //     $campaign->applied = AppliedJob::where('campaign_id', $campaign->id)->where('talent_user_id', $user->id)->first();
+        // }
 
 
         $response = collect([
             'status' => true,
+            'data' => $campaigns,
             'message' => "Successful."
-        ])->merge($campaigns)->merge(['draw' => $datatable_draw]);
+        ]);
+        // ->merge($campaigns)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
     }
 
@@ -81,44 +85,6 @@ class CroxxJobsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
-    {
-        $user = $request->user();
-
-        $per_page = $request->input('per_page', 100);
-        $sort_by = $request->input('sort_by', 'created_at');
-        $sort_dir = $request->input('sort_dir', 'desc');
-        $search = $request->input('search');
-        $archived = $request->input('archived');
-        $datatable_draw = $request->input('draw'); // if any
-
-        $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
-
-        $jobApplied = AppliedJob::where('talent_user_id', $user->id)
-              ->where( function ($query) use ($archived) {
-            if ($archived !== null ) {
-                if ($archived === true ) {
-                    $query->whereNotNull('archived_at');
-                } else {
-                    $query->whereNull('archived_at');
-                }
-            }
-        })->orderBy($sort_by, $sort_dir);
-
-        if ($per_page === 'all' || $per_page <= 0 ) {
-            $results = $jobApplied->get();
-            $jobApplied = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
-        } else {
-            $jobApplied = $jobApplied->paginate($per_page);
-        }
-
-        $response = collect([
-            'status' => true,
-            'message' => "Successful."
-        ])->merge($jobApplied)->merge(['draw' => $datatable_draw]);
-        return response()->json($response, 200);
-    }
-
     public function show($id)
     {
         $campaign = Campaign::findOrFail($id);
@@ -140,7 +106,45 @@ class CroxxJobsController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function apply(Request $request)
+    {
+        $validator = Validator::make($request->all(),[
+            'campaign_id' => 'required',
+            'talent_user_id' => 'required',
+            'talent_cv_id' => 'required',
+        ]);
+
+        if($validator->fails()){
+            $status = false;
+            $message = $validator->errors()->toJson();
+            return response()->json(compact('status', 'message') , 400);
+        }
+
+        $appliedJob = AppliedJob::firstOrCreate($request->all());
+
+        if ($appliedJob) {
+            $campaign = Campaign::find($request->campaign_id);
+            $notification = new Notification();
+            $notification->user_id = $campaign->user_id;
+            $notification->action = "/campaign/applications/$request->campaign_id";
+            $notification->title = 'Campaign Application';
+            $notification->message = "A talent has just applied for $campaign->title campaingn.";
+            $notification->save();
+            event(new NewNotification($notification->user_id,$notification));
+            return response()->json([
+                'status' => true,
+                'message' => "Your Job Application has been submitted.",
+                'data' => AppliedJob::find($appliedJob->id)
+            ], 201);
+        } else {
+            return response()->json([
+                'status' => false,
+                'message' => "Could not complete request.",
+            ], 400);
+        }
+    }
+
+    public function saved(Request $request)
     {
         // Log::info($request->all());
         $validator = Validator::make($request->all(),[
@@ -179,27 +183,7 @@ class CroxxJobsController extends Controller
         }
     }
 
-    public function unapplyJob(Request $request, $id)
-    {
-        $user = $request->user();
-
-        $appliedJob = AppliedJob::where('campaign_id', $id)->where('talent_user_id', $user->id)->first();
-        if ($appliedJob) {
-            // Log::info($appliedJob);
-            $appliedJob->delete();
-            return response()->json([
-                'status' => true,
-                'message' => "Job application removed successfully.",
-            ], 201);
-        } else {
-            return response()->json([
-                'status' => false,
-                'message' => "Could not complete request.",
-            ], 400);
-        }
-    }
-
-    public function trendingEmployers(Request $request)
+    public function recommendations(Request $request)
     {
         $sort_by = $request->input('sort_by', 'created_at');
         $type = $request->input('type', 'employer');
@@ -220,6 +204,34 @@ class CroxxJobsController extends Controller
             $employer->vacancy = Campaign::whereId($employer->id)->count();
         }
 
+        $response = collect([
+            'status' => true,
+            'data' => $employers,
+            'message' => "Successful."
+        ]);
+        return response()->json($response, 200);
+    }
+
+    public function topEmployers(Request $request)
+    {
+        $sort_by = $request->input('sort_by', 'created_at');
+        $type = $request->input('type', 'employer');
+        $active = $request->input('active');
+        $active = $active == 'yes' ? true : ($active == 'no' ? false : null);
+
+        $employers = User::where( function ($query) use ($type, $active) {
+            if ($type) {
+                $query->where('type', $type);
+            }
+            if ($active !== null ) {
+                $query->where('is_active', $active);
+            }
+        })
+        ->orderBy($sort_by)->limit(10)->get();
+
+        foreach($employers as $employer){
+            $employer->vacancy = Campaign::whereId($employer->id)->count();
+        }
 
         $response = collect([
             'status' => true,
@@ -228,5 +240,6 @@ class CroxxJobsController extends Controller
         ]);
         return response()->json($response, 200);
     }
+
 
 }

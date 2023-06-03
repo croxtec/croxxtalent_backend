@@ -41,7 +41,7 @@ class CampaignRequest extends FormRequest
                 return [];
             case 'POST':
                 return [
-                    'user_id' => 'required|exists:users,id',
+                    // 'user_id' => 'required|exists:users,id',
                     'title' => 'required|max:100',
                     'industry_id' => 'required|exists:industries,id',
                     // 'job_title_id' => 'required|exists:job_titles,id',

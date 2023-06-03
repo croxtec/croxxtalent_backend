@@ -114,7 +114,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
 
         Route::get('trending/employers', 'Api\v1\CroxxJobsController@trendingEmployers')->name('trending.employers');
         // Croxx Jobs
-        Route::get('jobs/available', 'Api\v1\CroxxJobsController@available')->name('jobs.available');
+        Route::get('jobs', 'Api\v1\CroxxJobsController@index')->name('jobs.index');
         Route::get('jobs/available/{id}', 'Api\v1\CroxxJobsController@show')->name('jobs.show');
         Route::get('jobs/applied', 'Api\v1\CroxxJobsController@index')->name('jobs.index');
         Route::post('jobs/applied', 'Api\v1\CroxxJobsController@store')->name('jobs.applied');
