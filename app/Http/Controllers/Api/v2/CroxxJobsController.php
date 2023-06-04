@@ -108,29 +108,29 @@ class CroxxJobsController extends Controller
      */
     public function apply(Request $request)
     {
+        $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
+
         $validator = Validator::make($request->all(),[
             'campaign_id' => 'required',
-            'talent_user_id' => 'required',
-            'talent_cv_id' => 'required',
+            // 'talent_user_id' => 'required',
+            // 'talent_cv_id' => 'required',
         ]);
 
-        if($validator->fails()){
-            $status = false;
-            $message = $validator->errors()->toJson();
-            return response()->json(compact('status', 'message') , 400);
-        }
+        $request['talent_user_id'] = $user->id;
+        $request['talent_cv_id'] = $cv->id;
 
         $appliedJob = AppliedJob::firstOrCreate($request->all());
 
         if ($appliedJob) {
-            $campaign = Campaign::find($request->campaign_id);
-            $notification = new Notification();
-            $notification->user_id = $campaign->user_id;
-            $notification->action = "/campaign/applications/$request->campaign_id";
-            $notification->title = 'Campaign Application';
-            $notification->message = "A talent has just applied for $campaign->title campaingn.";
-            $notification->save();
-            event(new NewNotification($notification->user_id,$notification));
+            // $campaign = Campaign::find($request->campaign_id);
+            // $notification = new Notification();
+            // $notification->user_id = $campaign->user_id;
+            // $notification->action = "/campaign/applications/$request->campaign_id";
+            // $notification->title = 'Campaign Application';
+            // $notification->message = "A talent has just applied for $campaign->title campaingn.";
+            // $notification->save();
+            // event(new NewNotification($notification->user_id,$notification));
             return response()->json([
                 'status' => true,
                 'message' => "Your Job Application has been submitted.",
@@ -146,11 +146,11 @@ class CroxxJobsController extends Controller
 
     public function saved(Request $request)
     {
-        // Log::info($request->all());
+        $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
+
         $validator = Validator::make($request->all(),[
             'campaign_id' => 'required',
-            'talent_user_id' => 'required',
-            'talent_cv_id' => 'required',
         ]);
 
         if($validator->fails()){
@@ -159,21 +159,16 @@ class CroxxJobsController extends Controller
             return response()->json(compact('status', 'message') , 400);
         }
 
-        $appliedJob = AppliedJob::firstOrCreate($request->all());
+        $request['talent_user_id'] = $user->id;
+        $request['talent_cv_id'] = $cv->id;
 
-        if ($appliedJob) {
-            $campaign = Campaign::find($request->campaign_id);
-            $notification = new Notification();
-            $notification->user_id = $campaign->user_id;
-            $notification->action = "/campaign/applications/$request->campaign_id";
-            $notification->title = 'Campaign Application';
-            $notification->message = "A talent has just applied for $campaign->title campaingn.";
-            $notification->save();
-            event(new NewNotification($notification->user_id,$notification));
+        $saved = SavedJob::firstOrCreate($request->all());
+
+        if ($saved) {
             return response()->json([
                 'status' => true,
-                'message' => "Your Job Application has been submitted.",
-                'data' => AppliedJob::find($appliedJob->id)
+                'message' => "Campaign has been saved successfuly.",
+                'data' => SavedJob::find($saved->id)
             ], 201);
         } else {
             return response()->json([
@@ -185,30 +180,46 @@ class CroxxJobsController extends Controller
 
     public function recommendations(Request $request)
     {
+        $user = $request->user();
+        // $this->authorize('view-any', Campaign::class);
+
+
+        $per_page = $request->input('per_page', 100);
         $sort_by = $request->input('sort_by', 'created_at');
-        $type = $request->input('type', 'employer');
-        $active = $request->input('active');
-        $active = $active == 'yes' ? true : ($active == 'no' ? false : null);
+        $sort_dir = $request->input('sort_dir', 'desc');
+        $search = $request->input('search');
+        $industry = $request->input('industry');
+        $country = $request->input('country');
+        $qualifications = $request->input('qualifications');
+        $experience = $request->input('experience');
+        $employer = $request->input('employer');
+        $employment_type = $request->input('employment_type');
+        $salary_currency = $request->input('salary_currency');
+        $salary_salary = $request->input('salary_salary');
+        $salary_end = $request->input('salary_end');
+        $date_start = $request->input('date_start');
+        $date_end = $request->input('date_end');
+        $languages = $request->input('languages');
 
-        $employers = User::where( function ($query) use ($type, $active) {
-            if ($type) {
-                $query->where('type', $type);
-            }
-            if ($active !== null ) {
-                $query->where('is_active', $active);
-            }
-        })
-        ->orderBy($sort_by)->limit(10)->get();
+        $datatable_draw = $request->input('draw'); // if any
 
-        foreach($employers as $employer){
-            $employer->vacancy = Campaign::whereId($employer->id)->count();
-        }
+
+        $campaigns = Campaign::where('is_published', 1)
+        ->where( function($query) use ($search) {
+            $query->where('title', 'LIKE', "%{$search}%");
+        }) // ->when
+        ->orderBy($sort_by, $sort_dir);
+
+        $results = $campaigns->limit(18)->get();
+        $campaigns = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
+
 
         $response = collect([
             'status' => true,
-            'data' => $employers,
+            'data' => $campaigns,
             'message' => "Successful."
         ]);
+        // ->merge($campaigns)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
     }
 
