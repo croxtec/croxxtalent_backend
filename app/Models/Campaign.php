@@ -184,10 +184,10 @@ class Campaign extends Model
     //     return $this->belongsToMany('App\Models\SkillTertiary', 'campaign_skill', 'campaign_id', 'skill_id');
     // }
 
-    public function getSkillsAttribute()
-    {
-        return $this->skills()->get();
-    }
+    // public function getSkillsAttribute()
+    // {
+    //     return $this->skills()->get();
+    // }
 
     public function getSkillIdsAttribute()
     {
