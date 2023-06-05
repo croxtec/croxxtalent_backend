@@ -20,8 +20,8 @@ class CreateCampaignCourseOfStudyPivotTable extends Migration
             $table->foreignId('course_of_study_id');
 
             // $table->primary(['campaign_id', 'course_of_study_id']);
-			$table->foreign('campaign_id')->references('id')->on('campaigns')->onDelete('cascade');
-			$table->foreign('course_of_study_id')->references('id')->on('course_of_studies')->onDelete('cascade');
+			// $table->foreign('campaign_id')->references('id')->on('campaigns')->onDelete('cascade');
+			// $table->foreign('course_of_study_id')->references('id')->on('course_of_studies')->onDelete('cascade');
         });
     }
 

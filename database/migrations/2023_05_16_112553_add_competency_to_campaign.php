@@ -14,8 +14,8 @@ return new class extends Migration
     public function up()
     {
         Schema::table('campaigns', function (Blueprint $table) {
-            $table->foreignId('domain_id')->nullable();
-            $table->foreignId('core_id')->nullable();
+            $table->foreignId('domain_id');
+            $table->foreignId('core_id');
             $table->string('code')->nullable();
             $table->foreignId('assessment_id')->nullable();
         });
