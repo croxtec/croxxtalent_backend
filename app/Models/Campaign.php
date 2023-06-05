@@ -179,10 +179,10 @@ class Campaign extends Model
 
     // Skills pivot relationships
 
-    public function skills()
-    {
-        return $this->belongsToMany('App\Models\SkillTertiary', 'campaign_skill', 'campaign_id', 'skill_id');
-    }
+    // public function skills()
+    // {
+    //     return $this->belongsToMany('App\Models\SkillTertiary', 'campaign_skill', 'campaign_id', 'skill_id');
+    // }
 
     public function getSkillsAttribute()
     {
