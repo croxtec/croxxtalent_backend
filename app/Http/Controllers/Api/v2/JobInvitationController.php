@@ -22,6 +22,8 @@ class JobInvitationController extends Controller
      */
     public function index(Request $request)
     {
+        $user = $request->user();
+
         $this->authorize('view-any', JobInvitation::class);
 
         $per_page = $request->input('per_page', 100);
@@ -134,8 +136,6 @@ class JobInvitationController extends Controller
     public function show($id)
     {
         $jobInvitation = JobInvitation::findOrFail($id);
-
-
 
         $this->authorize('view', [JobInvitation::class, $jobInvitation]);
 
@@ -354,13 +354,13 @@ class JobInvitationController extends Controller
             $jobInvitation->save();
 
             // send push notification
-            $notification = new Notification();
-            $notification->user_id = $jobInvitation->talent_user_id;
-            $notification->action = '/my-job';
-            $notification->category = 'danger';
-            $notification->title = 'Job Invitation Rejected';
-            $notification->message = "Your job invitation/offer was rejected by $display_name ";
-            $notification->save();
+            // $notification = new Notification();
+            // $notification->user_id = $jobInvitation->talent_user_id;
+            // $notification->action = '/my-job';
+            // $notification->category = 'danger';
+            // $notification->title = 'Job Invitation Rejected';
+            // $notification->message = "Your job invitation/offer was rejected by $display_name ";
+            // $notification->save();
             // send email notification
             if ($jobInvitation->employerUser->email) {
                 if (config('mail.queue_send')) {

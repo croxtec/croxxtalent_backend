@@ -204,6 +204,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
 
     Route::get('jobs', 'Api\v2\CroxxJobsController@index')->name('jobs.index');
     Route::get('jobs/{id}', 'Api\v2\CroxxJobsController@show')->name('jobs.show');
+
     // Croxx Jobs
     Route::middleware('auth:sanctum')->name('api.')->group( function () {
         Route::get('jobs/recommendations', 'Api\v2\CroxxJobsController@recommendations')->name('jobs.recommendations');
@@ -218,11 +219,14 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
 
         Route::get('job-invitations', 'Api\v2\JobInvitationController@index')->name('job_invitations.index');
         Route::get('job-invitations/{id}', 'Api\v2\JobInvitationController@show')->name('job_invitations.show');
-        Route::post('job-invitations', 'Api\v2\JobInvitationController@store')->name('job_invitations.store');
         Route::patch('job-invitations/{id}/accept', 'Api\v2\JobInvitationController@accept')->name('job_invitations.accept');
         Route::patch('job-invitations/{id}/reject', 'Api\v2\JobInvitationController@reject')->name('job_invitations.reject');
         Route::post('job-invitations/check', 'Api\v2\JobInvitationController@check')->name('job_invitations.check');
         Route::put('job-invitations/{id}', 'Api\v2\JobInvitationController@update')->name('job_invitations.update');
+
+        Route::get('candidate', 'Api\v2\CandidateController@index')->name('candidate.index');
+        Route::post('candidate/invite', 'Api\v2\CandidateController@invite')->name('candidate.invite');
+        Route::post('candidate/result', 'Api\v2\CandidateController@result')->name('candidate.result');
     });
 
     // Employers

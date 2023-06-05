@@ -14,16 +14,17 @@ class AppliedJob extends Model
         'campaign_id',
         'talent_user_id',
         'talent_cv_id',
-        'status'
+        'status',
+        'rating'
     ];
-    
+
         /**
      * The accessors to append to the model's array form.
      *
      * @var array
      */
     protected $appends = [
-        'employer', 'cv' 
+        'employer', 'cv'
     ];
 
 
