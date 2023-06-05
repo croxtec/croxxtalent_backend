@@ -179,28 +179,28 @@ class Campaign extends Model
 
     // Skills pivot relationships
 
-    // public function skills()
-    // {
-    //     return $this->belongsToMany('App\Models\SkillTertiary', 'campaign_skill', 'campaign_id', 'skill_id');
-    // }
+    public function skills()
+    {
+        return $this->belongsToMany('App\Models\SkillTertiary', 'campaign_skill', 'campaign_id', 'skill_id');
+    }
 
     // public function getSkillsAttribute()
     // {
     //     return $this->skills()->get();
     // }
 
-    public function getSkillIdsAttribute()
-    {
-        $dataSet = $this->skills()->get(['id']);
-        $ids = [];
-        if ($dataSet->isNotEmpty()) {
-            foreach($dataSet as $data)
-            {
-                $ids[] = $data->id;
-            }
-        }
-        return $ids;
-    }
+    // public function getSkillIdsAttribute()
+    // {
+    //     $dataSet = $this->skills()->get(['id']);
+    //     $ids = [];
+    //     if ($dataSet->isNotEmpty()) {
+    //         foreach($dataSet as $data)
+    //         {
+    //             $ids[] = $data->id;
+    //         }
+    //     }
+    //     return $ids;
+    // }
 
     // Course of Studies pivot relationships
 
