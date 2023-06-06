@@ -206,7 +206,7 @@ class AssesmentController extends Controller
             foreach($employees as $employee) {
                 AssesmentSummary::create([
                     'assesment_id' => $assesment->id,
-                    'talent_id' => $employee->user_id
+                    'talent_id' => $employee?->user_id
                 ]);
                 // Send E-Mail Out
 
