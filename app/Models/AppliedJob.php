@@ -24,7 +24,7 @@ class AppliedJob extends Model
      * @var array
      */
     protected $appends = [
-        'employer', 'cv'
+        'employer', 'cv', 'talent'
     ];
 
 

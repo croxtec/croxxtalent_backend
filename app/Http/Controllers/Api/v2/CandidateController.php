@@ -4,7 +4,12 @@ namespace App\Http\Controllers\API\v2;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use App\Http\Requests\JobInvitationRequest;
 use App\Models\JobInvitation;
+use App\Mail\TalentJobInvitation;
+use App\Mail\TalentJobInvitationAccepted;
+use App\Mail\TalentJobInvitationRejected;
 use App\Models\AppliedJob;
 
 class CandidateController extends Controller
@@ -23,7 +28,7 @@ class CandidateController extends Controller
         $sort_dir = $request->input('sort_dir', 'desc');
         $search = $request->input('search');
         $archived = $request->input('archived');
-        $rate = $request->input('rate');
+        $rating = $request->input('rating');
         $datatable_draw = $request->input('draw'); // if any
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
@@ -37,7 +42,10 @@ class CandidateController extends Controller
                     $query->whereNull('archived_at');
                 }
             }
-        })->orderBy($sort_by, $sort_dir);
+        })->when($rating, function ($query) use($rating){
+            $query->where('rating', $rating);
+        })
+        ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
             $results = $jobApplied->get();
@@ -53,23 +61,22 @@ class CandidateController extends Controller
         return response()->json($response, 200);
     }
 
-    public function rateCV(Request $request){
+
+    public function rateCandidate(Request $request, $id){
         $user = $request->user();
         $applied = AppliedJob::findOrFail($id);
 
-        $validator = Validator::make($request->all(),[
-            'campaign_id' => 'required',
-            'rating' => 'required',
-            // 'talent_cv_id' => 'required',
+        $request->validate([
+            'rating' => 'required|integer|between:1,5',
         ]);
 
-
-        $applied->update($request->all());
+        $applied->rating = $request->rating;
+        $applied->save();
 
         return response()->json([
             'status' => true,
-            'message' => "Your Job Application has been submitted.",
-            'data' => AppliedJob::find($appliedJob->id)
+            'message' => "Candidate has been reviewed",
+            'data' => AppliedJob::find($id)
         ], 201);
     }
 
@@ -81,12 +88,13 @@ class CandidateController extends Controller
      */
     public function invite(JobInvitationRequest $request)
     {
-
         // Authorization is declared in the Form Request
 
         // Retrieve the validated input data...
         $validatedData = $request->validated();
-         // Set interview time
+        // unset($validatedData['interview_at']);
+        // Avoid Dublicate
+
         $jobInvitation = JobInvitation::firstOrCreate($validatedData);
         if ($jobInvitation) {
             // send email notification
@@ -105,7 +113,7 @@ class CandidateController extends Controller
             // $notification->title = 'Job Invitation';
             // $notification->message = "You have a new job invitation/offer from <b>$display_name</b>.";
             // $notification->save();
-            event(new NewNotification($notification->user_id,$notification));
+            // event(new NewNotification($notification->user_id,$notification));
             return response()->json([
                 'status' => true,
                 'message' => "An invitation has been sent to {$jobInvitation->talentCv->name}.",
@@ -121,8 +129,29 @@ class CandidateController extends Controller
 
 
     //  Interview Result
-    public function result(Request $request){
+    public function result(Request $request, $id){
 
+        $request->validate([
+            'score' => 'required|integer|between:1,5',
+        ]);
+
+        $jobInvitation = JobInvitation::findOrFail($id);
+        $jobInvitation->score = $request->score;
+        $jobInvitation->save();
+
+        if ($jobInvitation) {
+            // send email notification
+            return response()->json([
+                'status' => true,
+                // 'message' => "An invitation has been sent to {$jobInvitation->talentCv->name}.",
+                'data' => JobInvitation::find($id)
+            ], 201);
+        } else {
+            return response()->json([
+                'status' => false,
+                'message' => "Could not complete request.",
+            ], 400);
+        }
     }
 
     /**
@@ -134,12 +163,11 @@ class CandidateController extends Controller
     public function withdraw($id)
     {
         $jobApplied = AppliedJob::findOrFail($id);
-
-        $this->authorize('update', [AppliedJob::class, $jobApplied]);
+        // $this->authorize('update', [AppliedJob::class, $jobApplied]);
 
         $display_name = $jobApplied->talentCv->name;
-        if ($jobApplied->status != 'withdraw') {
-            $jobApplied->status = 'withdraw';
+        if ($jobApplied->status != 2) {
+            $jobApplied->status = 2;
             $jobApplied->save();
         }
 

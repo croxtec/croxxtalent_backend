@@ -25,6 +25,7 @@ class JobInvitation extends Model
         'employer_user_id',
         'talent_user_id',
         'talent_cv_id',
+        'interview_at',
         'status',
         'accepted_at',
         'employed_at',
@@ -51,7 +52,7 @@ class JobInvitation extends Model
      * @var array
      */
     protected $appends = [
-        'employer', 'cv' 
+        'employer', 'cv'
     ];
 
 

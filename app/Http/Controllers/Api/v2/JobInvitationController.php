@@ -23,6 +23,7 @@ class JobInvitationController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+        info([$user->id, $user->type]);
 
         $this->authorize('view-any', JobInvitation::class);
 
@@ -103,29 +104,6 @@ class JobInvitationController extends Controller
         }
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Http\Requests\JobInvitationRequest  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function check(JobInvitationRequest $request)
-    {
-        // Authorization is declared in the Form Request
-
-        // Retrieve the validated input data...
-        $validatedData = $request->validated();
-        $jobInvitation = JobInvitation::where('employer_user_id', $validatedData['employer_user_id'])
-                                        ->where('talent_user_id', $validatedData['talent_user_id'])
-                                        ->where('talent_cv_id', $validatedData['talent_cv_id'])
-                                        ->firstOrFail();
-
-        return response()->json([
-            'status' => true,
-            'message' => "Successful.",
-            'data' => $jobInvitation
-        ], 200);
-    }
 
     /**
      * Display the specified resource.
@@ -304,7 +282,7 @@ class JobInvitationController extends Controller
     {
         $jobInvitation = JobInvitation::findOrFail($id);
 
-        $this->authorize('update', [JobInvitation::class, $jobInvitation]);
+        // $this->authorize('update', [JobInvitation::class, $jobInvitation]);
 
         $display_name = $jobInvitation->talentCv->name;
         if ($jobInvitation->status != 'accepted') {
@@ -312,13 +290,13 @@ class JobInvitationController extends Controller
             $jobInvitation->save();
 
             //Send push notifications
-            $notification = new Notification();
-            $notification->user_id = $jobInvitation->talent_user_id;
-            $notification->action = '/my-job';
-            $notification->category = 'success';
-            $notification->title = 'Job Invitation Accepted';
-            $notification->message = "Your job invitation/offer was accepted by $display_name ";
-            $notification->save();
+            // $notification = new Notification();
+            // $notification->user_id = $jobInvitation->talent_user_id;
+            // $notification->action = '/my-job';
+            // $notification->category = 'success';
+            // $notification->title = 'Job Invitation Accepted';
+            // $notification->message = "Your job invitation/offer was accepted by $display_name ";
+            // $notification->save();
             // send email notification
             if ($jobInvitation->employerUser->email) {
                 if (config('mail.queue_send')) {
@@ -346,7 +324,7 @@ class JobInvitationController extends Controller
     {
         $jobInvitation = JobInvitation::findOrFail($id);
 
-        $this->authorize('update', [JobInvitation::class, $jobInvitation]);
+        // $this->authorize('update', [JobInvitation::class, $jobInvitation]);
 
         $display_name = $jobInvitation->talentCv->name;
         if ($jobInvitation->status != 'rejected') {

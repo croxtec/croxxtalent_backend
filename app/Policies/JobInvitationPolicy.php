@@ -20,7 +20,7 @@ class JobInvitationPolicy
         public function viewAny(?User $user)
         {
             // any one can perform this action
-            return true; 
+            return true;
         }
 
         /**
@@ -33,7 +33,7 @@ class JobInvitationPolicy
         public function view(?User $user, JobInvitation $jobInvitation)
         {
             // any one can perform this action
-            return true; 
+            return true;
         }
 
         /**
@@ -46,9 +46,9 @@ class JobInvitationPolicy
         {
             if ($user->tokenCan('access:employer') || $user->tokenCan('access:admin')) {
                 return $user->type === 'employer' || $user->type === 'admin'
-                        || $user->role->is_owner
-                        || $user->role->is_admin
-                        || $user->role->hasPermission('create-job-invitation');
+                        || $user?->role->is_owner
+                        || $user?->role->is_admin
+                        || $user?->role->hasPermission('create-job-invitation');
             }
             return false;
         }
@@ -63,11 +63,11 @@ class JobInvitationPolicy
         public function update(User $user, JobInvitation $jobInvitation)
         {
             if ($user->tokenCan('access:talent') || $user->tokenCan('access:employer') || $user->tokenCan('access:admin')) {
-                Log::info([ $user->id , $jobInvitation->talent_user_id]);
+                // info([ $user->id,$user?->role, $jobInvitation->talent_user_id]);
                 return $user->id == $jobInvitation->talent_user_id || $user->id == $jobInvitation->employer_user_id
-                        // || $user->role->is_owner
-                        || $user->role->is_admin
-                        || $user->role->hasPermission('update-job-invitation'); 
+                        || $user?->role->is_owner
+                        || $user?->role->is_admin
+                        || $user?->role->hasPermission('update-job-invitation');
             }
             return false;
         }
@@ -83,9 +83,9 @@ class JobInvitationPolicy
         {
             if ($user->tokenCan('access:talent') || $user->tokenCan('access:employer') || $user->tokenCan('access:admin')) {
                 return $user->id === $jobInvitation->talent_user_id || $user->id === $jobInvitation->employer_user_id
-                        || $user->role->is_owner
-                        || $user->role->is_admin
-                        || $user->role->hasPermission('delete-job-invitation'); 
+                        || $user?->role->is_owner
+                        || $user?->role->is_admin
+                        || $user?->role->hasPermission('delete-job-invitation');
             }
             return false;
         }
@@ -101,9 +101,9 @@ class JobInvitationPolicy
         {
             if ($user->tokenCan('access:talent') || $user->tokenCan('access:employer') || $user->tokenCan('access:admin')) {
                 return $user->id === $jobInvitation->talent_user_id || $user->id === $jobInvitation->employer_user_id
-                        || $user->role->is_owner
-                        || $user->role->is_admin
-                        || $user->role->hasPermission('delete-job-invitation'); 
+                        || $user?->role->is_owner
+                        || $user?->role->is_admin
+                        || $user?->role->hasPermission('delete-job-invitation');
             }
             return false;
         }
@@ -119,9 +119,9 @@ class JobInvitationPolicy
         {
             if ($user->tokenCan('access:talent') || $user->tokenCan('access:employer') || $user->tokenCan('access:admin')) {
                 return $user->id === $jobInvitation->talent_user_id || $user->id === $jobInvitation->employer_user_id
-                        || $user->role->is_owner
-                        || $user->role->is_admin
-                        || $user->role->hasPermission('delete-job-invitation'); 
+                        || $user?->role->is_owner
+                        || $user?->role->is_admin
+                        || $user?->role->hasPermission('delete-job-invitation');
             }
             return false;
         }
