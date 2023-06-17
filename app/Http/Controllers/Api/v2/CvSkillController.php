@@ -79,7 +79,7 @@ class CvSkillController extends Controller
         $validatedData = $request->validated();
 
         $validatedData['cv_id'] = $cv->id;
-        info($validatedData);
+        // info($validatedData);
 
         $cvSkill = CvSkill::updateOrCreate(
             [
@@ -94,7 +94,7 @@ class CvSkillController extends Controller
 
         $vetting = VettingSummary::create([
             'cv_skill' => $cvSkill->id,
-            'assesment_id' => $user->id,
+            'assesment_id' => 1,
             'talent_id' => $user->id
         ]);
 

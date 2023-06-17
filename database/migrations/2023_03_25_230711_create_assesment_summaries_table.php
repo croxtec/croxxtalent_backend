@@ -21,7 +21,7 @@ return new class extends Migration
             $table->foreignId('manager_id')->nullable();
             $table->integer('total_score')->default(0)->nullable();
             $table->integer('talent_score')->default(0)->nullable();
-            $table->integer('score_average')->default(1)->nullable();
+            $table->integer('score_average')->default(0)->nullable();
             $table->text('talent_feedback')->nullable();
             $table->text('manager_feedback')->nullable();
             $table->text('training_suggestion')->nullable();

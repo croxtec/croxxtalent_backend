@@ -40,8 +40,7 @@ class TalentCompetencyController extends Controller
         $cvSkills = $cvSkills->get()->toArray();
 
         foreach($cvSkills as $skill){
-            $skill['vetting'] = VettingSummary::where('cv_skill', $skill['id'])->first();
-            // $groups[$skill['skill_id']][$skill['skill_secondary_id']][] = $skill;
+            $skill->vetting = VettingSummary::where('cv_skill', $skill['id'])->with('vetting')->first();
         }
 
         $competency = croxxtalent_competency_tree($cvSkills);
@@ -124,10 +123,6 @@ class TalentCompetencyController extends Controller
         })->orderBy($sort_by, $sort_dir)->get();
 
         $competency = croxxtalent_competency_tree($assesments);
-
-        // foreach($assessments->toArray() as $assesment){
-        //     $groups[$assesment['domain_id']][$assesment['core_id']][] = $assesment;
-        // }
 
         return response()->json([
             'status' => true,

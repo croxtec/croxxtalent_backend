@@ -15,4 +15,7 @@ class VettingSummary extends Model
         'assesment_id'
     ];
 
+    public function vetting(){
+        return $this->belongsTo('App\Models\Assesment', 'assesment_id', 'id');
+    }
 }
