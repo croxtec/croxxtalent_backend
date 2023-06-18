@@ -31,17 +31,14 @@ class TalentCompetencyController extends Controller
         $search = $request->input('search');
 
 
-        $cvSkills = CvSkill::where('cv_id', $cv->id)
-        ->where( function($query) use ($search) {
-            $query->where('id', 'LIKE', "%{$search}%");
-        })
-        ->orderBy($sort_by, $sort_dir);
-
-        $cvSkills = $cvSkills->get()->toArray();
-
-        foreach($cvSkills as $skill){
-            $skill->vetting = VettingSummary::where('cv_skill', $skill['id'])->with('vetting')->first();
-        }
+        $cvSkills = CvSkill::join('vetting_summaries',
+                    'cv_skills.id', '=', 'vetting_summaries.cv_skill')
+                    // ->where('vetting_summaries.talent_id', $user->id)
+                    ->where('cv_skills.cv_id', $cv->id)
+                    ->where( function($query) use ($search) {
+                        $query->where('cv_skills.id', 'LIKE', "%{$search}%");
+                    })
+                    ->get()->toArray();
 
         $competency = croxxtalent_competency_tree($cvSkills);
 

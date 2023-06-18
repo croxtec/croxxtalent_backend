@@ -130,7 +130,7 @@ class User extends Authenticatable
     public function getDisplayNameAttribute()
     {
         if ($this->company_name) {
-            return "{$this->first_name} {$this->last_name} ({$this->company_name})";
+            return "{$this->company_name}";
         }
         return "{$this->first_name} {$this->last_name}";
     }

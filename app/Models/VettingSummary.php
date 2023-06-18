@@ -8,6 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 class VettingSummary extends Model
 {
     use HasFactory;
+      /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'vetting_summaries';
 
     protected $fillable = [
         'cv_skill',
@@ -15,7 +21,7 @@ class VettingSummary extends Model
         'assesment_id'
     ];
 
-    public function vetting(){
+    public function assesment(){
         return $this->belongsTo('App\Models\Assesment', 'assesment_id', 'id');
     }
 }
