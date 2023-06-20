@@ -26,18 +26,24 @@ class TalentCompetencyController extends Controller
                                 ->whereNotNull('interview_at')->latest()->get()->toArray();
 
         $interview = array_merge($vetting_interview, $invitation);
+        $groups = array();
 
         $assesments = Assesment::join('assesment_talent_answers',
                         'assesment_talent_answers.assesment_id', '=', 'assesments.id')
                     ->where('assesment_talent_answers.talent_id', $user->id)
-                    ->orderBy('assesment_talent_answers.created_at','DESC')->get()
-                    ->groupBy('assesment_talent_answers.assesment_id');
+                    ->orderBy('assesment_talent_answers.created_at','DESC')
+                    ->get()->toArray();
 
-        // info([$assesments]);
+        foreach($assesments as $assessment){
+            // $assessment = $this->assessment_percentage($user, $assessment);
+            $groups[$assessment['assesment_id']] = $assessment;
+        }
+
+        $competency = array_values($groups);
 
         return response()->json([
             'status' => true,
-            'data' => compact('interview', 'assesments'),
+            'data' => compact('interview', 'competency'),
             'message' => '.'
         ], 200);
     }
@@ -69,9 +75,7 @@ class TalentCompetencyController extends Controller
                     ->get();
 
         foreach ($cvSkills as $assessment) {
-            $assessment->total_questions = AssesmentQuestion::where('assesment_id', $assessment->assesment_id)->count();
-            $assessment->answered = AssesmentTalentAnswer::where([ 'assesment_id' => $assessment->assesment_id, 'talent_id' => $user->id ])->count();
-            $assessment->percentage = $assessment->answered ? ( $assessment->answered / $assessment->total_questions  ) * 100 : 0;
+            $assessment = $this->assessment_percentage($user, $assessment);
         }
 
         $competency = croxxtalent_competency_tree($cvSkills->toArray());
@@ -108,9 +112,12 @@ class TalentCompetencyController extends Controller
 
 
             foreach($summary as $assessment){
-                $assessment->total_questions = AssesmentQuestion::where('assesment_id', $assessment->id)->count();
-                $assessment->answered = AssesmentTalentAnswer::where([ 'assesment_id' => $assessment->id, 'talent_id' => $user->id ])->count();
-                $assessment->percentage = $assessment->answered ? ( $assessment->answered / $assessment->total_questions  ) * 100 : 0;
+                $assessment->assesment_id = $assessment->id;
+                $assessment = $this->assessment_percentage($user, $assessment);
+
+                // $assessment->total_questions = AssesmentQuestion::where('assesment_id', $assessment->id)->count();
+                // $assessment->answered = AssesmentTalentAnswer::where([ 'assesment_id' => $assessment->id, 'talent_id' => $user->id ])->count();
+                // $assessment->percentage = $assessment->answered ? ( $assessment->answered / $assessment->total_questions  ) * 100 : 0;
             }
 
             $learn->competence =  $summary;
@@ -185,5 +192,14 @@ class TalentCompetencyController extends Controller
     public function finder(Request $request)
     {
         //
+    }
+
+    private function assessment_percentage($user, $assessment){
+
+        $assessment->total_questions = AssesmentQuestion::where('assesment_id', $assessment->assesment_id)->count();
+        $assessment->answered = AssesmentTalentAnswer::where([ 'assesment_id' => $assessment->assesment_id, 'talent_id' => $user->id ])->count();
+        $assessment->percentage = $assessment->answered ? round(($assessment->answered / $assessment->total_questions ) * 100) : 0;
+
+        return $assessment;
     }
 }
