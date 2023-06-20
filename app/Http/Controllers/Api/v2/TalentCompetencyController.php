@@ -69,10 +69,9 @@ class TalentCompetencyController extends Controller
                     ->get();
 
         foreach ($cvSkills as $assessment) {
-            info([$assessment]);
             $assessment->total_questions = AssesmentQuestion::where('assesment_id', $assessment->assesment_id)->count();
             $assessment->answered = AssesmentTalentAnswer::where([ 'assesment_id' => $assessment->assesment_id, 'talent_id' => $user->id ])->count();
-            $assessment->percentage = $assessment->answered ??( $assessment->answered / $assessment->total_questions  ) * 100;
+            $assessment->percentage = $assessment->answered ? ( $assessment->answered / $assessment->total_questions  ) * 100 : 0;
         }
 
         $competency = croxxtalent_competency_tree($cvSkills->toArray());
@@ -111,7 +110,7 @@ class TalentCompetencyController extends Controller
             foreach($summary as $assessment){
                 $assessment->total_questions = AssesmentQuestion::where('assesment_id', $assessment->id)->count();
                 $assessment->answered = AssesmentTalentAnswer::where([ 'assesment_id' => $assessment->id, 'talent_id' => $user->id ])->count();
-                $assessment->percentage = $assessment->answered ?? ( $assessment->answered / $assessment->total_questions  ) * 100;
+                $assessment->percentage = $assessment->answered ? ( $assessment->answered / $assessment->total_questions  ) * 100 : 0;
             }
 
             $learn->competence =  $summary;

@@ -58,9 +58,9 @@ class Assesment extends Model
         return $this->skill_id ? $this->skill?->name : null;
     }
 
-    public function getTotalQuestionsAttribute(){
-        return count($this->questions);
-    }
+    // public function getTotalQuestionsAttribute(){
+    //     return count($this->questions);
+    // }
 
     protected function managers(): Attribute
     {
