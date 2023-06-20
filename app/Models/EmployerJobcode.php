@@ -41,7 +41,6 @@ class EmployerJobcode extends Model
     }
 
     public function getDepartmentManagersAttribute(){
-        info($this->managers);
         $department = Employee::where('id', $this->managers)->get();
         return $department;
     }

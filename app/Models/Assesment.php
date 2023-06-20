@@ -35,7 +35,9 @@ class Assesment extends Model
     ];
 
     protected $appends = [
-        'assigned_managers', 'assisgned_employees',
+        'assigned_managers',
+        'assisgned_employees',
+        // 'total_questions',
         'domain_name',
         'core_name',
         'skill_name'
@@ -54,6 +56,10 @@ class Assesment extends Model
     public function getSkillNameAttribute()
     {
         return $this->skill_id ? $this->skill?->name : null;
+    }
+
+    public function getTotalQuestionsAttribute(){
+        return count($this->questions);
     }
 
     protected function managers(): Attribute

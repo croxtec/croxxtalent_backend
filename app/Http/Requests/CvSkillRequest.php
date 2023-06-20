@@ -50,7 +50,7 @@ class CvSkillRequest extends FormRequest
                     'domain_id' => 'required|exists:skills,id',
                     'core_id' => 'required|exists:skill_secondaries,id',
                     'skill_id' => 'required|exists:skill_tertiaries,id',
-                    'level' => 'required|max:50|in:basic,intermediate,advance,expert',
+                    'level' => 'required|max:50|in:beginner,intermediate,advance,expert',
                 ];
             case 'PUT':
             case 'PATCH':
@@ -58,8 +58,8 @@ class CvSkillRequest extends FormRequest
                     'domain_id' => 'required|exists:skills,id',
                     'core_id' => 'required|exists:skill_secondaries,id',
                     'skill_id' => 'required|exists:skill_tertiaries,id',
-                    'level' => 'required|max:50|in:basic,intermediate,advance,expert',
-                ]; 
+                    'level' => 'required|max:50|in:beginner,intermediate,advance,expert',
+                ];
             case 'DELETE':
                 return [];
             default:break;

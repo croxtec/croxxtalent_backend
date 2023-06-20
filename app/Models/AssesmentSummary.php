@@ -28,10 +28,10 @@ class AssesmentSummary extends Model
             ->select(['id', 'code']);
     }
 
-
     public function talent(){
         return $this->belongsTo('App\Models\User', 'talent_id', 'id')
             ->select(['first_name','last_name']);
     }
+
 
 }

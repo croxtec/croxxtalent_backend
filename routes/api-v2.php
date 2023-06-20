@@ -93,6 +93,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
 
         Route::prefix('talent')->name('cvs.work_experience.')->group( function () {
             // Competence
+            Route::get('competence', 'Api\v2\TalentCompetencyController@index')->name('competence.index');
             Route::get('competence/skill', 'Api\v2\TalentCompetencyController@skill')->name('competence.skill');
             Route::get('competence/experience', 'Api\v2\TalentCompetencyController@experience')->name('competence.experience');
             Route::get('competence/manager', 'Api\v2\TalentCompetencyController@manager')->name('competence.manager');
