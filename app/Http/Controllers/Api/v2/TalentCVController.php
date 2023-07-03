@@ -92,11 +92,11 @@ class TalentCVController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(CvRequest $request)
+    public function storeInformation(CvRequest $request)
     {
         // Authorization was declared in the Form Request
         $user = $request->user();
-        $cv = CV::where('user_id', $user->id)->first();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
         // Retrieve the validated input data...
         $validatedData = $request->validated();
         // $user = User::findOrFail($validatedData['user_id']);
@@ -109,7 +109,7 @@ class TalentCVController extends Controller
     }
 
 
-    public function contact(Request $request)
+    public function storeContact(Request $request)
     {
         // Authorization was declared in the Form Request
         $user = $request->user();
