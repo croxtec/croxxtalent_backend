@@ -32,6 +32,7 @@ class Cv extends Model
         'user_id',
         'industry_id',
         'job_title_id',
+        'job_title',
         'first_name',
         'last_name',
         'other_name',
