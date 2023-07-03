@@ -87,7 +87,7 @@ class TalentCVController extends Controller
 
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created resource in storage
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
@@ -96,7 +96,7 @@ class TalentCVController extends Controller
     {
         // Authorization was declared in the Form Request
         $user = $request->user();
-        $cv = CV::where('user_id', $user->id)->firstorFail();
+        $cv = CV::where('user_id', $user->id)->first();
         // Retrieve the validated input data...
         $validatedData = $request->validated();
         // $user = User::findOrFail($validatedData['user_id']);

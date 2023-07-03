@@ -99,7 +99,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             Route::get('competence/manager', 'Api\v2\TalentCompetencyController@manager')->name('competence.manager');
             // Resume
             Route::get('resume', 'Api\v2\TalentCVController@index')->name('resume.index');
-            Route::post('resume', 'Api\v2\TalentCvController@store')->name('resume.store');
+            Route::post('resume', 'Api\v2\TalentCvController@store')->name('resume.store'); 
             Route::post('resume/contact', 'Api\v2\TalentCvController@contact')->name('resume.contact');
             Route::post('resume/photo', 'Api\v2\TalentCvController@photo')->name('resume.update_photo');
             Route::patch('resume/publish', 'Api\v2\TalentCvController@publish')->name('resume.publish');
