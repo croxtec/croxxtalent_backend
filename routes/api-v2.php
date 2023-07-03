@@ -99,11 +99,11 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             Route::get('competence/manager', 'Api\v2\TalentCompetencyController@manager')->name('competence.manager');
             // Resume
             Route::get('resume', 'Api\v2\TalentCVController@index')->name('resume.index');
-            Route::post('resume', 'Api\v2\TalentCvController@storeInformation')->name('resume.store');
-            Route::post('resume/contact', 'Api\v2\TalentCvController@storeContact')->name('resume.contact');
-            Route::post('resume/photo', 'Api\v2\TalentCvController@photo')->name('resume.update_photo');
-            Route::patch('resume/publish', 'Api\v2\TalentCvController@publish')->name('resume.publish');
-            Route::patch('resume/unpublish', 'Api\v2\TalentCvController@unpublish')->name('resume.unpublish');
+            Route::post('resume', 'Api\v2\TalentCVController@storeInformation')->name('resume.store');
+            Route::post('resume/contact', 'Api\v2\TalentCVController@storeContact')->name('resume.contact');
+            Route::post('resume/photo', 'Api\v2\TalentCVController@photo')->name('resume.update_photo');
+            Route::patch('resume/publish', 'Api\v2\TalentCVController@publish')->name('resume.publish');
+            Route::patch('resume/unpublish', 'Api\v2\TalentCVController@unpublish')->name('resume.unpublish');
             // CV Work Experiences
             Route::prefix('resume/work-experiences')->name('resume.work_experience.')->group( function () {
                 Route::get('/', 'Api\v2\CvWorkExperienceController@index')->name('index');
