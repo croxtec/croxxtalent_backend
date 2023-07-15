@@ -59,7 +59,7 @@ class CampaignRequest extends FormRequest
                     'is_confidential_salary' => 'boolean',
                     'years_of_experience' => 'required',
                     'number_of_positions' => 'required',
-                    'expire_at' => 'required|date',
+                    'expire_at' => 'nullable|date',
                     'city' => 'required|max:255',
                     'state_id' => 'required|exists:states,id',
                     'country_code' => 'required|exists:countries,code',

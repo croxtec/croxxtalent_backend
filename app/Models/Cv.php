@@ -119,7 +119,7 @@ class Cv extends Model
 
     public function getJobTitleNameAttribute()
     {
-        return $this->job_title_id ? $this->jobTitle->name : null;
+        return $this->job_title;//$this->job_title_id ? $this->jobTitle->name : null;
     }
 
     public function getCountryNameAttribute()
@@ -156,12 +156,12 @@ class Cv extends Model
     public function levelToProgress($level){
         $progress = 0;
         if($level == 'basic'){
-            $progress = 33;
-        }
-        else if($level == 'intermediate'){
-            $progress = 67;
-        }
-        else{
+            $progress = 25;
+        }else if($level == 'intermediate'){
+            $progress = 50;
+        }else if($level == 'advance'){
+            $progress = 75;
+        }else{
             $progress = 100;
         }
         return $progress;
