@@ -88,7 +88,6 @@ class Cv extends Model
     {
         // Log::info([url(Storage::url($this->photo)),$this->id ]);
         return $this->photo ? url(Storage::url($this->photo)) : null;
-        // return $this->photo ? url(Storage::url($this->photo)) : null;
     }
 
     public function getPhotoUrlCorsAttribute()

@@ -80,7 +80,7 @@ class CvRequest extends FormRequest
     public function messages()
     {
         return [
-            'user_id.exists' => 'User not found.',
+            // 'user_id.exists' => 'User not found.',
         ];
     }
 }
