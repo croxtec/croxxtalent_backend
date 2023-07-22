@@ -29,6 +29,7 @@ class EmployerCompetencyController extends Controller
                         where( function($query) use ($search) {
                             $query->where('id', 'LIKE', "%{$search}%");
                         })
+                        ->where('admin_id', $user->id)
                         ->distinct('skill_id')
                         ->select(['id', 'domain_id','core_id', 'code','skill_id'])
                         ->get()->toArray();
@@ -54,7 +55,7 @@ class EmployerCompetencyController extends Controller
 
         $assessments = Assesment::join('assesment_summaries',
                     'assesment_summaries.assesment_id', '=', 'assesments.id')
-                    // ->where('assesments.admin_id', $user->id)
+                    ->where('assesments.admin_id', $user->id)
                     ->when($skill_gap, function($query) use ($skill_gap){
                         info($skill_gap);
                         $query ->where('assesments.skill_id', $skill_gap);

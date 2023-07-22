@@ -41,7 +41,9 @@ class CampaignController extends Controller
                     $query->whereNull('archived_at');
                 }
             }
-        })->where( function($query) use ($search) {
+        })
+        ->where('user_id', $user->id)
+        ->where( function($query) use ($search) {
             $query->where('title', 'LIKE', "%{$search}%");
         })->orderBy($sort_by, $sort_dir);
 
