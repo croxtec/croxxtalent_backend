@@ -22,6 +22,8 @@ class CampaignController extends Controller
      */
     public function index(Request $request)
     {
+        $user = $request->user();
+
         $this->authorize('view-any', Campaign::class);
 
         $per_page = $request->input('per_page', 100);

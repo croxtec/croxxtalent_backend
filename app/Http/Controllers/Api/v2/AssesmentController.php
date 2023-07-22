@@ -41,7 +41,9 @@ class AssesmentController extends Controller
                     $query->whereNull('archived_at');
                 }
             }
-        })->where( function($query) use ($search) {
+        })
+        ->where('admin_id', $user->id)
+        ->where( function($query) use ($search) {
             $query->where('code', 'LIKE', "%{$search}%");
         })->with('jobcode')
         ->orderBy($sort_by, $sort_dir);
