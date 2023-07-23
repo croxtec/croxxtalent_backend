@@ -205,12 +205,13 @@ class AssesmentController extends Controller
             }
 
             foreach($employees as $employee) {
-                AssesmentSummary::create([
-                    'assesment_id' => $assesment->id,
-                    'talent_id' => $employee?->user_id
-                ]);
-                // Send E-Mail Out
-
+                if($employee->user_id){
+                    AssesmentSummary::create([
+                        'assesment_id' => $assesment->id,
+                        'talent_id' => $employee->user_id
+                    ]);
+                    // Send E-Mail Out
+                }
             }
 
             $assesment->is_published = true;
