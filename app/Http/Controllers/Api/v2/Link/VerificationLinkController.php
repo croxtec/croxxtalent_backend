@@ -51,9 +51,9 @@ class VerificationLinkController extends Controller
         $verified = false;
         if ($verification) {
             $employee = $verification->verifiable()->first();
-            if ($employee) {
-                $user = User::whereEmail($employee->email)->first();
-                // $employee->email_verified_at = Carbon::now();
+            $user = User::whereEmail($employee->email)->first();
+            if ($employee && $user) {
+                $employee->email_verified_at = Carbon::now();
                 $employee->user_id = $user->id;
                 $employee->save();
                 // delete token after verification
@@ -65,6 +65,8 @@ class VerificationLinkController extends Controller
                 Audit::log($user->id, 'email_verified', $old_values, $new_values, User::class, $user->id);
 
                 $verified = true;
+            }else{
+                return  redirect()->to('https://croxxtalent.com/alent-register');
             }
         }
         // env('CLIENT_URL', 'admin@croxxtalent.io')
