@@ -32,7 +32,7 @@ class AssesmentController extends Controller
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
         //
 
-        $assesments = Assesment:://where('admin_id', $user->id)->
+        $assesments = Assesment::where('admin_id', $user->id)->
             when($archived ,function ($query) use ($archived) {
             if ($archived !== null ) {
                 if ($archived === true ) {
@@ -42,7 +42,6 @@ class AssesmentController extends Controller
                 }
             }
         })
-        ->where('admin_id', $user->id)
         ->where( function($query) use ($search) {
             $query->where('code', 'LIKE', "%{$search}%");
         })->with('jobcode')
@@ -206,7 +205,7 @@ class AssesmentController extends Controller
 
             foreach($employees as $employee) {
                 if($employee->user_id){
-                    AssesmentSummary::create([
+                    AssesmentSummary::firstOrCreate([
                         'assesment_id' => $assesment->id,
                         'talent_id' => $employee->user_id
                     ]);

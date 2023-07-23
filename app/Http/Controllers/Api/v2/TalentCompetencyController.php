@@ -167,7 +167,7 @@ class TalentCompetencyController extends Controller
             $query->where('code', 'LIKE', "%{$search}%");
         })->orderBy($sort_by, $sort_dir)->get();
 
-        $competency = croxxtalent_competency_tree($assesments);
+        $competency = croxxtalent_competency_tree($assessments);
 
         return response()->json([
             'status' => true,
