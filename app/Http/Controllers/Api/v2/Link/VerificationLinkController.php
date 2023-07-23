@@ -66,12 +66,11 @@ class VerificationLinkController extends Controller
 
                 $verified = true;
             }else{
-                return  redirect()->to('https://croxxtalent.com/alent-register');
+                return  redirect()->to(`https://croxxtalent.com/register/talent-register?email=$employee->email`);
             }
         }
+        return  redirect()->to('https://croxxtalent.com/login');
         // env('CLIENT_URL', 'admin@croxxtalent.io')
-
-         return  redirect()->to('https://croxxtalent.com/login');
         // return view('api.links.verifications.verify_employee')
         //         ->with( compact('verified') );;
     }
