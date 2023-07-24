@@ -200,11 +200,11 @@ class AssesmentController extends Controller
             }
 
             if($assesment->candidates) {
-                $employees = $assesment->candidates;
+                $employees = Employee::where('id', $assesment->candidates)->get();
             }
 
             foreach($employees as $employee) {
-                if($employee->user_id){
+                if(($employee->user_id)){
                     AssesmentSummary::firstOrCreate([
                         'assesment_id' => $assesment->id,
                         'talent_id' => $employee->user_id
