@@ -86,10 +86,10 @@ class AssesmentRequest extends FormRequest
                     'validity_period' => 'nullable',
                     'expected_score' => 'nullable',
 
-                    'job_code_id' => 'required_if:category,job specific',
+                    // 'job_code_id' => 'required_if:category,job specific',
                     'candidates' => 'required_if:category,generic',
                     'managers' => 'required_if:category,generic',
-                    'job_code_id.*' => 'integer|exists:employer_jobcodes,id',
+                    // 'job_code_id.*' => 'integer|exists:employer_jobcodes,id',
                     'candidates.*' => 'integer|exists:employees,id',
                     'managers.*' => 'integer|exists:employees,id',
                 ];
