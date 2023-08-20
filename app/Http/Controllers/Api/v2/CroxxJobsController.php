@@ -119,6 +119,7 @@ class CroxxJobsController extends Controller
 
         $request['talent_user_id'] = $user->id;
         $request['talent_cv_id'] = $cv->id;
+        $request['rating'] = 0;
 
         $appliedJob = AppliedJob::firstOrCreate($request->all());
 
