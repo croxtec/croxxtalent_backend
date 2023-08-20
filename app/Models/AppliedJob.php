@@ -15,7 +15,7 @@ class AppliedJob extends Model
         'talent_user_id',
         'talent_cv_id',
         'status',
-        'rating'
+        'rating' => 0
     ];
 
         /**
