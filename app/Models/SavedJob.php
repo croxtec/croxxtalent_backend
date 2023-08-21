@@ -22,7 +22,7 @@ class SavedJob extends Model
 
     public function savedCampaign()
     {
-        return $this->belongsTo('App\Models\User', 'campaign_id', 'id');
+        return $this->belongsTo('App\Models\Campaign', 'campaign_id', 'id');
     }
 
     public function getCampaignAttribute()
