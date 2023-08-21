@@ -15,4 +15,34 @@ class SavedJob extends Model
         'talent_cv_id',
         'reminder'
     ];
+
+    protected $appends = [
+        'campaign', 'cv', 'talent'
+    ];
+
+
+    public function getCampaignAttribute()
+    {
+        return $this->belongsTo('App\Models\Campaign', 'campaign_id', 'id');
+    }
+ 
+    public function talentUser()
+    {
+        return $this->belongsTo('App\Models\User', 'talent_user_id', 'id');
+    }
+
+    public function getTalentAttribute()
+    {
+        return $this->talentUser;
+    }
+
+    public function talentCv()
+    {
+        return $this->belongsTo('App\Models\Cv', 'talent_cv_id', 'id');
+    }
+
+    public function getCvAttribute()
+    {
+        return $this->talentCv;
+    }
 }

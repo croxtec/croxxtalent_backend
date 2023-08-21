@@ -14,7 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('applied_jobs', function (Blueprint $table) {
-            $table->integer('rating');
+            $table->integer('rating')->default(9);
         });
     }
 
