@@ -24,11 +24,21 @@ class AppliedJob extends Model
      * @var array
      */
     protected $appends = [
-        'employer', 'cv', 'talent'
+      'campaign',  'employer', 'cv', 'talent'
     ];
 
 
     // User relationships
+
+    public function job()
+    {
+        return $this->belongsTo('App\Models\Campaign', 'campaign_id', 'id');
+    }
+
+    public function getCampaignAttribute()
+    {
+        return $this->job;
+    }
 
     public function employerUser()
     {
