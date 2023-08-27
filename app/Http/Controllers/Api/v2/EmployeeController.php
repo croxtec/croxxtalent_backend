@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Api\v2;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Employee;
+use App\Helpers\EmployeeImport;
 use App\Http\Requests\EmployeeRequest;
 use App\Mail\WelcomeEmployee;
 use App\Models\User;
 use App\Models\Verification;
 use Illuminate\Support\Facades\Mail;
+use Maatwebsite\Excel\Facades\Excel;
 
 class EmployeeController extends Controller
 {
@@ -71,12 +73,13 @@ class EmployeeController extends Controller
         $user = $request->user();
         $validatedData = $request->validated();
         $validatedData['employer_id'] = $user->id;
-        $talent = User::where('email', $validatedData['email'])->first();
+        $isEmployer = Employee::where('email', $validatedData['email'])->first();
+        // $ $isEmployer = User::where('email', $validatedData['email'])->first(); = User::where('email', $validatedData['email'])->first();
         // $validatedData['user_id'] = $talent->id;
 
         $employee = Employee::create($validatedData);
 
-        if($employee){
+        if($employee && !$isEmployer){
             $verification = new Verification();
             $verification->action = "employee";
             $verification->sent_to = $employee->email;
@@ -99,6 +102,32 @@ class EmployeeController extends Controller
                 'message' => "Could not complete request.",
             ], 400);
         }
+    }
+
+
+    public function importEmployee(Request $request)
+    {
+        $user = $request->user();
+        $this->validate($request, [
+            'file' => 'required|file|mimes:xlsx,xls'
+        ]);
+
+        if ($request->hasFile('file')){
+            $path = $request->file('file');
+            $data = Excel::import(new EmployeeImport($user), $request->file);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Data imported successfully.'
+            ], 200);
+        }else{
+            return response()->json([
+                'status' => true,
+                'message' => "Could not upload file, please try again.",
+            ], 400);
+        }
+
+        // file_get_contents();
     }
 
     /**
