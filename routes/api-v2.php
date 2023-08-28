@@ -235,11 +235,11 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
 
     // Employers
     Route::middleware('auth:sanctum')->prefix('employers')->name('employers.')->group( function () {
+        Route::post('employee/import', 'Api\v2\EmployeeController@importEmployee')->name('employee.import');
         Route::resources([
             'employee' => 'Api\v2\EmployeeController',
             'jobcode' => 'Api\v2\JobCodeController'
         ]);//->name('.employee');
-        Route::post('employee/import', 'Api\v2\EmployeeController@importEmployee')->name('employee.import');
         Route::get('competency', 'Api\v2\EmployerCompetencyController@index')->name('competency.index');
         Route::get('competency/gap', 'Api\v2\EmployerCompetencyController@competency')->name('competency.skill');
 
