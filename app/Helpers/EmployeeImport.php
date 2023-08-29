@@ -10,6 +10,9 @@ use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use App\Models\EmployerJobcode as JobCode;
 use App\Models\Employee;
+use App\Mail\WelcomeEmployee;
+use Illuminate\Support\Facades\Mail;
+use App\Models\Verification;
 
 class EmployeeImport implements ToModel, WithHeadingRow
 {
@@ -47,11 +50,26 @@ class EmployeeImport implements ToModel, WithHeadingRow
                 'name' => $name,
                 'email' => $email,
                 'phone' => $phone,
-                // 'level' => $level,
                 'employer_id' => $this->employer->id,
                 'job_code_id' => $jobCode->id
+                // 'level' => $level,
+                // 'location' => $location,
             ];
-            return Employee::create($data);
+            $employee = Employee::create($data);
+
+            if($employee){
+                $verification = new Verification();
+                $verification->action = "employee";
+                $verification->sent_to = $email;
+                $verification->metadata = null;
+                $verification->is_otp = false;
+                $verification = $employee->verifications()->save($verification);
+                if ($verification) {
+                    Mail::to($email)->send(new WelcomeEmployee($employee, $this->employer, $verification));
+                }
+            }
+
+            return $employee;
         }
 
         return $isEmployer;
