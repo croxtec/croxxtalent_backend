@@ -48,7 +48,7 @@ class WelcomeEmployee extends Mailable
                     ->view('api.emails.welcome_employee_email')
                     ->text('api.emails.welcome_employee_email_plain')
                     ->with([
-                        'company_name' => $this->employer->name,
+                        'company_name' => $this->employer->company_name,
                         'name' => $this->employee->name,
                         'email' => $this->employee->email,
                         'verification_token' => $this->verification->token,
