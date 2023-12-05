@@ -100,6 +100,8 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             // Resume
             Route::get('resume', 'Api\v2\TalentCVController@index')->name('resume.index');
             Route::post('resume', 'Api\v2\TalentCVController@storeInformation')->name('resume.store');
+            Route::post('resume/import', 'Api\v2\TalentCVController@importResume')->name('resume.import');
+
             Route::post('resume/contact', 'Api\v2\TalentCVController@storeContact')->name('resume.contact');
             Route::post('resume/photo', 'Api\v2\TalentCVController@photo')->name('resume.update_photo');
             Route::patch('resume/publish', 'Api\v2\TalentCVController@publish')->name('resume.publish');

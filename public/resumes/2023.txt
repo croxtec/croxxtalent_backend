@@ -1,0 +1,159 @@
+Summary
+
+Kabiru
+Wahab
+
+A pro-efficient full-stack developer, with 5 years commercial
+experience. A well detailed developer that oversee an
+application from an idea to production with an agile
+approach. A solution provider with scalability, security and
+user-friendly design.
+Professional development experience ranges but not
+limited to Frontend development (Vue, React), Backend
+development (PHP, Node frameworks) and various custom
+and addon plugin development for web application.
+
+Technical Skills
+•
+•
+•
+•
+
+Contact
+Location: Ogba, Lagos
+Nigeria
+
+Dec: 2017 – Jan: 2020
+
+•
+•
+
+GitHub:
+https://github.com/vearse
+
+•
+•
+
+Portfolio:
+https://kabiruwahab.com
+
+Football
+Technology
+Discovery
+Travelling
+
+Node (Express)
+React
+SQL (MySQL,PostgreSQL)
+NoSQL (MongoDB)
+Typescript(NestJs)
+
+Infoscert Consulting - Junior Full Stack Developer -
+
+Email:
+dev.kabiruwahab@gmail.com
+
+•
+•
+•
+•
+
+•
+•
+•
+•
+•
+
+Experience
+
+Phone: +2349079587368
+
+Hobbies
+
+PHP (Laravel)
+JavaScript(ES6)
+Vue
+CSS (Bootstrap &
+Tailwind)
+
+A custom REAL ESTATE web application with
+content management for administrator.(2018)
+Tools: Laravel, Blade, Jquery and HTML/CSS
+Built a Human Resources Management
+System(HRMS) for private company.(2019)
+Tools: Laravel, Vue.
+WHMCS Payment plugin for ISN. 2019
+Tools: PHP
+Opencart Payment plugin for Attods. 2019
+Spot-Report a map report plugin for Vtiger. 2019
+Tools: PHP & JS
+
+Remote/Contract Jobs - Freelancer - Jan: 2020 – Sep: 2020
+
+•
+•
+•
+
+Octatrade: A bitcoin reseller web application. 2020
+Statup: Financial Technology savings and
+Investment platform. 2020
+Social Media Web Application(source code on
+request) - 2020
+Tools: Node (Express) React, MongoDB
+
+Infoscert Consulting - Team Lead Sep: 2020 - Feb: 2022
+.
+
+•
+
+MyGaphub- Financial Independence Application.
+2021
+API development, Web Application development
+
+DIgixal 2021
+
+•
+
+CroxxTalent – A talent recruitment platform(2021)
+Laravel, Vue
+
+Expectoo Mar : 2022 - Aug : 2023
+•
+
+Clisha Monolithic: A reward based system for user who
+completd a specified task.
+Tools: Node(Express), PostgreSQL and React
+
+•
+
+Chrome Extension: Chrome extension was developed as an
+addon to the website, to achive the full potential
+Tools: JS and Chrome Developer tool
+
+•
+
+Clisha Microservice: A new backend was built to serve the
+growing number of active members.
+Tools: Express, Bull, Redis, Docker and Linux server
+
+Project Links
+•
+
+https://clisha.me/
+
+•
+
+https://croxxtalent.io/
+
+•
+•
+•
+•
+
+https://www.mygaphub.com/
+http://gappropertyhub.com/
+https://company.clisha.me/
+https://chrome.google.com/webstore/detail/
+clisha-extension/jagnnnnnooogbbpgjidbpockglhfoban
+
+

@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use App\Http\Requests\CvRequest;
 use App\Http\Requests\CvPhotoRequest;
 use Illuminate\Support\Facades\Validator;
@@ -15,7 +17,7 @@ use App\Models\User;
 use App\Models\Cv;
 use App\Models\Audit;
 use App\Libraries\LinkedIn;
-
+use Spatie\PdfToText\Pdf;
 
 class TalentCVController extends Controller
 {
@@ -86,6 +88,8 @@ class TalentCVController extends Controller
     }
 
 
+
+
     /**
      * Store a newly created resource in storage
      *
@@ -137,6 +141,44 @@ class TalentCVController extends Controller
             'status' => true,
             'message' => "CV contact saved successfully.",
             'data' => Cv::find($cv->id)
+        ], 200);
+    }
+
+      /**
+     * Store a newly created resource in storage
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function importResume(Request $request)
+    {
+        // Authorization was declared in the Form Request
+        $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
+        // Validate and store the uploaded PDF file
+        $request->validate([
+            'resume' => 'required|mimes:pdf',
+        ]);
+
+        // $resumePath = $resumeFile->storeAs('local/resumes', $filename);
+
+        // $resumeFile = $request->file('resume');
+        // $filename =  time() . '-' . Str::random(32).'.'. $resumeFile->extension();
+        // $resumePath = $resumeFile->store('resumes');
+
+        // Extract text from the PDF
+        // info(cloud_asset());
+        $resumePath = public_path("/resumes/2023.pdf");
+        $text = (new Pdf())->getText($resumePath);
+        // $url = ('https://croxxtalent-uploads.fra1.digitaloceanspaces.com/resumes/9zWfZbrawQro7kw97cDheGgrwEbKJh38nQAdIM5F.pdf');
+        // $text = (new Pdf())->getText($url);
+
+
+
+        return response()->json([
+            'status' => true,
+            'message' => "CV profile saved successfully.",
+            'data' => $text
         ], 200);
     }
 

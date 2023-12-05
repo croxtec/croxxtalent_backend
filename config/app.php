@@ -27,7 +27,7 @@ return [
     */
 
     'env' => env('APP_ENV', 'production'),
- 
+
     /*
     |--------------------------------------------------------------------------
     | Application Debug Mode
@@ -38,7 +38,7 @@ return [
     | application. If disabled, a simple generic error page is shown.
     |
     */
- 
+
     'debug' => (bool) env('APP_DEBUG', false),
 
     /*
@@ -161,13 +161,12 @@ return [
         Illuminate\Translation\TranslationServiceProvider::class,
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
-        
-        Maatwebsite\Excel\ExcelServiceProvider::class,
-        YbrNX\MariaDB\MariaDBServiceProvider::class,
         /*
          * Package Service Providers...
          */
-
+        Maatwebsite\Excel\ExcelServiceProvider::class,
+        YbrNX\MariaDB\MariaDBServiceProvider::class,
+        // Spatie\PdfToText\PdfToTextServiceProvider::class,
         /*
          * Application Service Providers...
          */
@@ -235,6 +234,7 @@ return [
         'SnappyPDF' => Barryvdh\Snappy\Facades\SnappyPdf::class,
         'SnappyImage' => Barryvdh\Snappy\Facades\SnappyImage::class,
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
+        // 'PdfToText' => Spatie\PdfToText\PdfToTextFacade::class,
     ],
 
-]; 
+];
