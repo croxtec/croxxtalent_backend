@@ -95,7 +95,8 @@ class AuthController extends Controller
         // if the work factor used by the hasher has changed since the password was hashed
         if (Hash::needsRehash($user->password)) {
             $user->password = bcrypt($validatedData['password']);
-            $user->saved();
+            // $user->saved();
+            $user->save();
         }
 
         if ($user->is_active !== true) {
@@ -107,13 +108,20 @@ class AuthController extends Controller
         // create token
         array_push($abilities, "access:{$user->type}");
         $token =  $user->createToken('access-token', $abilities)->plainTextToken;
+        // Add token to access the secondary server
+        $external_token = (string) Str::orderedUuid();// Str::random(32);
+        $user->token = $external_token;
+        $user->save();
+
         // info($token, $abilities);
+
         // save audit trail log
         $old_values = [];
         $new_values = [];
         Audit::log($user->id, 'login', $old_values, $new_values, User::class, $user->id);
 
         $responseData = $this->tokenData($token);
+        $responseData['realtime_token'] = $user->token;
         $responseData['user'] = $user;
 
         // send response
