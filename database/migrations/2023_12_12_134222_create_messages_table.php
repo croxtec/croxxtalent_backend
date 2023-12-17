@@ -21,7 +21,9 @@ return new class extends Migration
             $table->integer('stage')->default(0);
             $table->longText('message')->nullable();
             $table->text('filepath')->nullable();
-            $table->timestamps();
+            $table->date('sent_at')->nullable();
+            $table->date('read_at')->nullable();
+            // $table->timestamps();
         });
     }
 
