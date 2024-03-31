@@ -41,10 +41,6 @@ class AuthController extends Controller
 
     }
 
-    public function index(){
-        return 'Done';
-    }
-
     protected function tokenData($token)
     {
         $token_expiry = (60 * (int) config('sanctum.expiration'));
@@ -99,6 +95,11 @@ class AuthController extends Controller
             $user->save();
         }
 
+        if (!$user->username) {
+            // $user->password = bcrypt($validatedData['password']);
+            // $user->save();
+        }
+
         if ($user->is_active !== true) {
             return response()->json([
                 'status' => false,
@@ -112,8 +113,6 @@ class AuthController extends Controller
         $external_token = (string) Str::orderedUuid();// Str::random(32);
         $user->token = $external_token;
         $user->save();
-
-        // info($token, $abilities);
 
         // save audit trail log
         $old_values = [];
@@ -242,6 +241,82 @@ class AuthController extends Controller
                 'message' => "Could not complete request.",
             ], 400);
         }
+    }
+
+    // Company Login
+
+    public function companyLogin(LoginRequest $request)
+    {
+        // Retrieve the validated input data....
+        $validatedData = $request->validated();
+
+        $abilities = [];
+
+        // update the sanctum token expiration to the custom highest_expiration if the requested token is for a long-lived token
+        $long_lived_access_token = isset($validatedData['long_lived_access_token']) ? true : false;
+        if ($long_lived_access_token === true) {
+            \Config::set('sanctum.expiration', config('sanctum.highest_expiration') );
+            array_push($abilities, 'long_lived_access_token');
+        }
+
+        // check if the login user entered email or phone
+        if (filter_var($validatedData['login'], FILTER_VALIDATE_EMAIL)) {
+            $login_field = 'email';
+        } else{
+            $login_field = 'email'; // phone
+        }
+
+        $user = User::where($login_field, $validatedData['login'])
+                    ->whereIn('type', ['employer', 'traings_organization'])->first();
+        // || !Hash::check($validatedData['password'], $user->password)
+        if ( !$user ) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid login credentials.'
+            ], 401);
+        }
+        // Checking If A Password Needs To Be Rehashed
+        // if the work factor used by the hasher has changed since the password was hashed
+        if (Hash::needsRehash($user->password)) {
+            $user->password = bcrypt($validatedData['password']);
+            // $user->saved();
+            $user->save();
+        }
+
+        if (!$user->username) {
+            // $user->password = bcrypt($validatedData['password']);
+            // $user->save();
+        }
+
+        if ($user->is_active !== true) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Your account is inactive, please contact support admin.'
+            ], 401);
+        }
+        // create token
+        array_push($abilities, "access:{$user->type}");
+        $token =  $user->createToken('access-token', $abilities)->plainTextToken;
+        // Add token to access the secondary server
+        $external_token = (string) Str::orderedUuid();// Str::random(32);
+        $user->token = $external_token;
+        $user->save();
+
+        // save audit trail log
+        $old_values = [];
+        $new_values = [];
+        Audit::log($user->id, 'login', $old_values, $new_values, User::class, $user->id);
+
+        $responseData = $this->tokenData($token);
+        $responseData['realtime_token'] = $user->token;
+        $responseData['user'] = $user;
+
+        // send response
+        return response()->json([
+            'status' => true,
+            'message' => 'You have logged in successfully.',
+            'data' => $responseData
+        ], 200);
     }
 
    /**

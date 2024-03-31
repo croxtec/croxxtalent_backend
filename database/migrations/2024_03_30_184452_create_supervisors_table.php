@@ -13,10 +13,9 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('username')->nullable();
-            $table->string('token')->nullable();
-            $table->integer('onboarding_stage')->default(1);
+        Schema::create('supervisors', function (Blueprint $table) {
+            $table->id();
+            $table->timestamps();
         });
     }
 
@@ -27,8 +26,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn(['username', 'token', 'onboarding_stage']);
-        });
+        Schema::dropIfExists('supervisors');
     }
 };

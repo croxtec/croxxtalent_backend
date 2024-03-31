@@ -38,6 +38,7 @@ Route::prefix('croxtec')->middleware('web')->name('api.croxtec.')->group( functi
 Route::prefix('auth')->name('api.')->group( function () {
     Route::get('/', 'Api\v2\AuthController@index')->name('auth.index');
     Route::post('login', 'Api\v2\AuthController@login')->name('auth.login');
+    Route::post('company/login', 'Api\v2\AuthController@companyLogin')->name('company.login');
     Route::post('register', 'Api\v2\AuthController@register')->name('auth.register');
     Route::middleware('auth:sanctum')->group( function () {
         Route::post('logout', 'Api\v2\AuthController@logout')->name('auth.logout');
