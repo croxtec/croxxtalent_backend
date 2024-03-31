@@ -18,7 +18,7 @@ return new class extends Migration
             $table->integer('status')->default(0);
             $table->string('level')->nullable();
             $table->foreignId('supervisor_id')->nullable();
-            $table->dateTime('hired_date')->nullable();
+            $table->timestamp('hired_date')->nullable();
             $table->text('location')->default(0);
         });
     }
@@ -31,7 +31,7 @@ return new class extends Migration
     public function down()
     {
         Schema::table('employees', function (Blueprint $table) {
-            //
+            $table->dropColumn(['department_role_id', 'status','level','supervisor_id','hired_date', 'location']);
         });
     }
 };

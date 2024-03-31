@@ -15,6 +15,11 @@ return new class extends Migration
     {
         Schema::create('department_roles', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('employer_id');
+            $table->foreignId('deparment_id');
+            $table->string('name')->nullable();
+            $table->text('description')->nullable();
+            $table->timestamp('archived_at')->nullable();
             $table->timestamps();
         });
     }
