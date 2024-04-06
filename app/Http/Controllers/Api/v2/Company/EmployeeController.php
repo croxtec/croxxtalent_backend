@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v2;
+namespace App\Http\Controllers\Api\v2\Company;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -74,33 +74,35 @@ class EmployeeController extends Controller
         $validatedData = $request->validated();
         $validatedData['employer_id'] = $user->id;
         $isEmployer = Employee::where('email', $validatedData['email'])->first();
-        // $ $isEmployer = User::where('email', $validatedData['email'])->first(); = User::where('email', $validatedData['email'])->first();
-        // $validatedData['user_id'] = $talent->id;
 
-        $employee = Employee::create($validatedData);
+        if(!$isEmployer){
+            $employee = Employee::create($validatedData);
 
-        if($employee && !$isEmployer){
-            $verification = new Verification();
-            $verification->action = "employee";
-            $verification->sent_to = $employee->email;
-            $verification->metadata = null;
-            $verification->is_otp = false;
-            $verification = $employee->verifications()->save($verification);
-            if ($verification) {
-                Mail::to($validatedData['email'])->send(new WelcomeEmployee($employee, $user, $verification));
+            if($employee){
+                $verification = new Verification();
+                $verification->action = "employee";
+                $verification->sent_to = $employee->email;
+                $verification->metadata = null;
+                $verification->is_otp = false;
+                $verification = $employee->verifications()->save($verification);
+                if ($verification) {
+                    Mail::to($validatedData['email'])->send(new WelcomeEmployee($employee, $user, $verification));
+                }
+
+                return response()->json([
+                    'status' => true,
+                    'message' => "Employee created successfully.",
+                    'verification' => $verification,
+                    'data' => Employee::find($employee->id)
+                ], 201);
+            } else {
+                return response()->json([
+                    'status' => false,
+                    'message' => "Could not complete request.",
+                ], 400);
             }
+        } else{
 
-            return response()->json([
-                'status' => true,
-                'message' => "Employee created successfully.",
-                'verification' => $verification,
-                'data' => Employee::find($employee->id)
-            ], 201);
-        } else {
-            return response()->json([
-                'status' => false,
-                'message' => "Could not complete request.",
-            ], 400);
         }
     }
 

@@ -4,10 +4,8 @@ namespace App\Http\Requests;
 
 use App\Models\Employee;
 use Illuminate\Foundation\Http\FormRequest;
-use App\Models\SUpervisor;
 
-
-class EmployeeRequest extends FormRequest
+class SupervisorRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

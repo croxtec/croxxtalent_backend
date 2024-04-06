@@ -236,12 +236,13 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::post('candidate/{id}/result', 'Api\v2\CandidateController@result')->name('candidate.result');
     });
 
-    // Employers
+    // Company
     Route::middleware('auth:sanctum')->prefix('employers')->name('employers.')->group( function () {
         Route::post('employee/import', 'Api\v2\EmployeeController@importEmployee')->name('employee.import');
         Route::resources([
-            'employee' => 'Api\v2\EmployeeController',
-            'jobcode' => 'Api\v2\JobCodeController'
+            'employee' => 'Api\v2\Company\EmployeeController',
+            'supervisor' => 'Api\v2\Company\SupervisorController',
+            'jobcode' => 'Api\v2\Company\JobCodeController'
         ]);//->name('.employee');
         Route::get('competency', 'Api\v2\EmployerCompetencyController@index')->name('competency.index');
         Route::get('competency/gap', 'Api\v2\EmployerCompetencyController@competency')->name('competency.skill');
