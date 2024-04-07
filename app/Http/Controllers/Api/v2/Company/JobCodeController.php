@@ -4,7 +4,8 @@ namespace App\Http\Controllers\Api\v2\Company;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\EmployerJobcode as JobCode;
+use App\Models\EmployerJobcode as Department;
+use App\Models\DepartmentRole;
 
 
 class JobCodeController extends Controller
@@ -16,7 +17,7 @@ class JobCodeController extends Controller
      */
     public function index(Request $request)
     {
-        $user = $request->user();
+        $company = $request->user();
 
         // $this->authorize('view-any', Cv::class);
 
@@ -26,23 +27,23 @@ class JobCodeController extends Controller
         $search = $request->input('search');
         $datatable_draw = $request->input('draw'); // if any
 
-        $job_code = JobCode::where('employer_id', $user->id)
+        $department = Department::where('employer_id', $company->id)
         ->when($search, function($query) use ($search) {
             $query->where('id', 'LIKE', "%{$search}%");
         })
         ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
-            $results = $job_code->get();
-            $job_code = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
+            $results = $department->get();
+            $department = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
         } else {
-            $job_code = $job_code->paginate($per_page);
+            $department = $department->paginate($per_page);
         }
 
         $response = collect([
             'status' => true,
             'message' => "Successful."
-        ])->merge($job_code)->merge(['draw' => $datatable_draw]);
+        ])->merge($department)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
     }
 
@@ -54,7 +55,7 @@ class JobCodeController extends Controller
      */
     public function store(Request $request)
     {
-        $user = $request->user();
+        $company = $request->user();
         $rules = [
             'job_code' => 'required',
             'job_title' => 'nullable',
@@ -62,15 +63,15 @@ class JobCodeController extends Controller
         ];
 
         $validatedData = $request->validate($rules);
-        $validatedData['employer_id'] = $user->id;
+        $validatedData['employer_id'] = $company->id;
 
-        $job_code = JobCode::create($validatedData);
+        $job_code = Department::create($validatedData);
 
        if ($job_code) {
             return response()->json([
                 'status' => true,
                 'message' => "Job Code \"{$job_code->job_code}\" created successfully.",
-                'data' => JobCode::find($job_code->id)
+                'data' => Department::find($job_code->id)
             ], 201);
         } else {
             return response()->json([
@@ -88,8 +89,8 @@ class JobCodeController extends Controller
      */
     public function show(Request $request, $id)
     {
-        $user = $request->user();
-        $job_code = JobCode::findOrFail($id);
+        $company = $request->user();
+        $job_code = Department::findOrFail($id);
 
         return response()->json([
             'status' => true,
@@ -107,8 +108,8 @@ class JobCodeController extends Controller
      */
     public function update_managers(Request $request, $id)
     {
-        $user = $request->user();
-        $job_code = JobCode::findOrFail($id);
+        $company = $request->user();
+        $job_code = Department::findOrFail($id);
         $rules = [
             'managers' => 'required|array',
             'managers.*' => 'required|integer|exists:employees,id'
@@ -135,7 +136,7 @@ class JobCodeController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $user = $request->user();
+        $company = $request->user();
         $rules = [
             'job_code' => 'required',
             'job_title' => 'nullable',
@@ -144,14 +145,14 @@ class JobCodeController extends Controller
 
         $validatedData = $request->validate($rules);
 
-        $job_code = JobCode::findOrFail($id);
+        $job_code = Department::findOrFail($id);
 
         $job_code->update($request->all());
 
         return response()->json([
             'status' => true,
             'message' => "Job Code updated successfully.",
-            'data' =>  JobCode::findOrFail($id)
+            'data' =>  Department::findOrFail($id)
         ], 201);
     }
 
@@ -163,9 +164,9 @@ class JobCodeController extends Controller
      */
     public function archive($id)
     {
-        $job_code = JobCode::findOrFail($id);
+        $job_code = Department::findOrFail($id);
 
-        // $this->authorize('delete', [Jobcode::class, $job_code]);
+        // $this->authorize('delete', [Department::class, $job_code]);
 
         $job_code->archived_at = now();
         $job_code->save();
@@ -173,7 +174,7 @@ class JobCodeController extends Controller
         return response()->json([
             'status' => true,
             'message' => "Jobcode \"{$job_code->name}\" archived successfully.",
-            'data' => JobCode::find($job_code->id)
+            'data' => Department::find($job_code->id)
         ], 200);
     }
 
@@ -185,9 +186,9 @@ class JobCodeController extends Controller
      */
     public function unarchive($id)
     {
-        $job_code = JobCode::findOrFail($id);
+        $job_code = Department::findOrFail($id);
 
-        // $this->authorize('delete', [Jobcode::class, $job_code]);
+        // $this->authorize('delete', [Department::class, $job_code]);
 
         $job_code->archived_at = null;
         $job_code->save();
@@ -195,7 +196,7 @@ class JobCodeController extends Controller
         return response()->json([
             'status' => true,
             'message' => "Jobcode \"{$job_code->name}\" unarchived successfully.",
-            'data' => JobCode::find($job_code->id)
+            'data' => Department::find($job_code->id)
         ], 200);
     }
 
@@ -207,13 +208,13 @@ class JobCodeController extends Controller
      */
     public function destroy($id)
     {
-        $job_code = JobCode::findOrFail($id);
+        $job_code = Department::findOrFail($id);
 
-        // $this->authorize('delete', [Jobcode::class, $job_code]);
+        // $this->authorize('delete', [Department::class, $job_code]);
 
         $name = $job_code->name;
         // check if the record is linked to other records
-        $relatedRecordsCount = related_records_count(JobCode::class, $job_code);
+        $relatedRecordsCount = related_records_count(Department::class, $job_code);
 
         if ($relatedRecordsCount <= 0) {
             $job_code->delete();

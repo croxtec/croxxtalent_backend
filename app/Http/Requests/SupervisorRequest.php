@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Employee;
+use App\Models\Supervisor;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SupervisorRequest extends FormRequest
@@ -42,11 +42,12 @@ class SupervisorRequest extends FormRequest
             case 'GET':
                 return [];
             case 'POST':
+                info($this);
                 return [
                     'name' => 'required|max:100',
                     'email' => 'required|max:100',
                     'phone' => 'required|max:100',
-                    'job_code_id' => 'required|exists:employer_jobcodes,id',
+                    // 'job_code_id' => 'required|exists:employer_jobcodes,id',
                 ];
             case 'PUT':
             case 'PATCH':

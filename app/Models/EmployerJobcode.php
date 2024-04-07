@@ -14,15 +14,14 @@ class EmployerJobcode extends Model
         'employer_id',
         'job_code',
         'job_title',
-        'description',
-        'managers'
+        'description'
     ];
 
-    protected $appends = [
-        'department_managers',
-        'total_employee',
-        'total_assessment'
-    ];
+    // protected $appends = [
+    //     'department_managers',
+    //     'total_employee',
+    //     'total_assessment'
+    // ];
 
     protected function managers(): Attribute
     {

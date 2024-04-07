@@ -4,7 +4,8 @@ namespace App\Http\Controllers\Api\v2\Company;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\SUpervisor;
+use App\Models\Supervisor;
+use App\Http\Requests\SupervisorRequest;
 
 class SupervisorController extends Controller
 {
@@ -24,12 +25,15 @@ class SupervisorController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(SupervisorRequest $request)
     {
         $user = $request->user();
 
         $validatedData = $request->validated();
         $validatedData['employer_id'] = $user->id;
+
+
+
     }
 
     /**

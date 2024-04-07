@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use App\Models\Employee;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Models\SUpervisor;
-
+use Illuminate\Validation\Rule;
 
 class EmployeeRequest extends FormRequest
 {
@@ -48,14 +48,32 @@ class EmployeeRequest extends FormRequest
                     'name' => 'required|max:100',
                     'email' => 'required|max:100',
                     'phone' => 'required|max:100',
-                    'job_code_id' => 'required|exists:employer_jobcodes,id',
+                    'level' => 'required|in:beginner,intermediate,advance,expert',
+                    'job_code_id' => [
+                        Rule::requiredIf(function () {
+                            return !request()->has('job_code');
+                        }),
+                        'exists:employer_jobcodes,id'
+                    ],
+                    'department_role_id' => [
+                        Rule::requiredIf(function () {
+                            return !request()->has('department_role');
+                        }),
+                        'exists:department_roles,id'
+                    ],
+                    'location' => 'nullable|min:5|max:256',
+                    'job_code' => 'nullable|string|min:3|max:56',
+                    'department_role' => 'nullable|string|min:3|max:56'
                 ];
             case 'PUT':
             case 'PATCH':
                 return [
                     'name' => 'required|max:100',
                     'phone' => 'required|max:100',
+                    'level' => 'required|in:beginner,intermediate,advance,expert',
                     'job_code_id' => 'required|exists:employer_jobcodes,id',
+                    'department_role_id' => 'required|exists:department_roles,id',
+                    'location' => 'nullable'
                 ];
             default:break;
         }

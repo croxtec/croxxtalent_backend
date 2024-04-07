@@ -12,6 +12,8 @@ use App\Models\User;
 use App\Models\Verification;
 use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Models\EmployerJobcode as Department;
+use App\Models\DepartmentRole;
 
 class EmployeeController extends Controller
 {
@@ -22,7 +24,7 @@ class EmployeeController extends Controller
      */
     public function index(Request $request)
     {
-        $user = $request->user();
+        $employer = $request->user();
         $this->authorize('view-any', Campaign::class);
 
         $per_page = $request->input('per_page', 100);
@@ -34,7 +36,7 @@ class EmployeeController extends Controller
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
 
-        $employees = Employee::where('employer_id', $user->id)
+        $employees = Employee::where('employer_id', $employer->id)
         ->when( $archived ,function ($query) use ($archived) {
             if ($archived !== null ) {
                 if ($archived === true ) {
@@ -70,13 +72,38 @@ class EmployeeController extends Controller
      */
     public function store(EmployeeRequest $request)
     {
-        $user = $request->user();
+        $employer = $request->user();
         $validatedData = $request->validated();
-        $validatedData['employer_id'] = $user->id;
-        $isEmployer = Employee::where('email', $validatedData['email'])->first();
+        $validatedData['employer_id'] = $employer->id;
+
+        $isEmployer = Employee::where('email', $validatedData['email'])
+                            ->where('employer_id', $employer->id)->first();
+        info($validatedData);
 
         if(!$isEmployer){
-            $employee = Employee::create($validatedData);
+            if(isset($validatedData['job_code'])){
+                $department = Department::firstOrCreate([
+                    'employer_id' => $validatedData['employer_id'],
+                    'job_code' => $validatedData['job_code']
+                ]);
+                info(['Department Created ',$department]);
+                $validatedData['job_code_id'] = $department->id;
+
+            }
+
+            if (isset($validatedData['department_role'])) {
+                $department_role = DepartmentRole::firstOrCreate([
+                    'employer_id' => $validatedData['employer_id'],
+                    'department_id' => $validatedData['job_code_id'],
+                    'name' => $validatedData['department_role']
+                ]);
+                info(['Department Role Created ', $department_role]);
+                $validatedData['department_role_id'] = $department_role->id;
+            }
+
+
+            info(['Valid Data  ',$validatedData]);
+            $employee =  Employee::create($validatedData);
 
             if($employee){
                 $verification = new Verification();
@@ -85,8 +112,9 @@ class EmployeeController extends Controller
                 $verification->metadata = null;
                 $verification->is_otp = false;
                 $verification = $employee->verifications()->save($verification);
+
                 if ($verification) {
-                    Mail::to($validatedData['email'])->send(new WelcomeEmployee($employee, $user, $verification));
+                    // Mail::to($validatedData['email'])->send(new WelcomeEmployee($employee, $employer, $verification));
                 }
 
                 return response()->json([
@@ -102,21 +130,24 @@ class EmployeeController extends Controller
                 ], 400);
             }
         } else{
-
+            return response()->json([
+                "status" => false,
+                "message" => 'Employee already exist'
+            ], 422);
         }
     }
 
 
     public function importEmployee(Request $request)
     {
-        $user = $request->user();
+        $employer = $request->user();
         $this->validate($request, [
             'file' => 'required|file|mimes:xlsx,xls'
         ]);
 
         if ($request->hasFile('file')){
             $path = $request->file('file');
-            $data = Excel::import(new EmployeeImport($user), $request->file);
+            $data = Excel::import(new EmployeeImport($employer), $request->file);
 
             return response()->json([
                 'status' => true,
@@ -160,7 +191,7 @@ class EmployeeController extends Controller
      */
     public function update(EmployeeRequest $request, $id)
     {
-        $user = $request->user();
+        $employer = $request->user();
         $validatedData = $request->validated();
 
         $employee = Employee::findOrFail($id);

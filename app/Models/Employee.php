@@ -16,7 +16,8 @@ class Employee extends Model
         'email',
         'phone',
         'birth_date',
-        'job_code_id'
+        'job_code_id',
+        'department_role_id'
     ];
 
     // DOB, Job title, job code, employee number and a lot more;

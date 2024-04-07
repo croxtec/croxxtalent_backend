@@ -247,7 +247,6 @@ class AuthController extends Controller
 
     public function companyLogin(LoginRequest $request)
     {
-        // Retrieve the validated input data....
         $validatedData = $request->validated();
 
         $abilities = [];
@@ -267,7 +266,7 @@ class AuthController extends Controller
         }
 
         $user = User::where($login_field, $validatedData['login'])
-                    ->whereIn('type', ['employer', 'traings_organization'])->first();
+                    ->whereIn('type', ['employer', 'training_organization'])->first();
         // || !Hash::check($validatedData['password'], $user->password)
         if ( !$user ) {
             return response()->json([
@@ -299,7 +298,7 @@ class AuthController extends Controller
         $token =  $user->createToken('access-token', $abilities)->plainTextToken;
         // Add token to access the secondary server
         $external_token = (string) Str::orderedUuid();// Str::random(32);
-        $user->token = $external_token;
+        // $user->token = $external_token;
         $user->save();
 
         // save audit trail log
@@ -308,7 +307,7 @@ class AuthController extends Controller
         Audit::log($user->id, 'login', $old_values, $new_values, User::class, $user->id);
 
         $responseData = $this->tokenData($token);
-        $responseData['realtime_token'] = $user->token;
+        // $responseData['realtime_token'] = $user->token;
         $responseData['user'] = $user;
 
         // send response
