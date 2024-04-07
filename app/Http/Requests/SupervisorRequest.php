@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use App\Models\Supervisor;
 use Illuminate\Foundation\Http\FormRequest;
-
+use Illuminate\Validation\Rule;
 class SupervisorRequest extends FormRequest
 {
     /**
@@ -42,12 +42,17 @@ class SupervisorRequest extends FormRequest
             case 'GET':
                 return [];
             case 'POST':
-                info($this);
                 return [
-                    'name' => 'required|max:100',
-                    'email' => 'required|max:100',
-                    'phone' => 'required|max:100',
-                    // 'job_code_id' => 'required|exists:employer_jobcodes,id',
+                    'supervisor_id' => 'required|exists:employees,id',
+                    'type' => 'required|in:department,role,employees',
+                    'department_id' => [
+                        'required_if:type,department,role',
+                        'exists:employer_jobcodes,id'
+                    ],
+                    'department_role_id' => [
+                        'required_if:type,role',
+                        'exists:department_roles,id'
+                    ],
                 ];
             case 'PUT':
             case 'PATCH':

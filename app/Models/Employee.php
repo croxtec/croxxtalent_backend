@@ -26,14 +26,19 @@ class Employee extends Model
 
     ];
 
-    public function job_code(){
+    public function department(){
         return $this->belongsTo('App\Models\EmployerJobcode', 'job_code_id', 'id')
                     ->select(['id','job_code', 'job_title']);
     }
 
+    public function department_role(){
+        return $this->belongsTo('App\Models\DepartmentRole', 'department_role_id', 'id')
+                    ->select(['id','name']);
+    }
+
     public function employer(){
         return $this->belongsTo('App\Models\User', 'employer_id', 'id')
-                    ->select(['id','first_name','last_name','photo', 'company_name']);
+                    ->select(['id','photo', 'company_name']);
     }
 
     public function talent(){

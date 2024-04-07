@@ -25,7 +25,7 @@ class EmployeeController extends Controller
     public function index(Request $request)
     {
         $employer = $request->user();
-        $this->authorize('view-any', Campaign::class);
+        // $this->authorize('view-any', Employee::class);
 
         $per_page = $request->input('per_page', 100);
         $sort_by = $request->input('sort_by', 'created_at');
@@ -47,7 +47,7 @@ class EmployeeController extends Controller
             }
         })->where( function($query) use ($search) {
             $query->where('name', 'LIKE', "%{$search}%");
-        })->with('job_code', 'employer', 'talent')
+        })->with('department','department_role', 'employer', 'talent')
         ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
@@ -59,7 +59,8 @@ class EmployeeController extends Controller
 
         $response = collect([
             'status' => true,
-            'message' => "Successful."
+            "data" => $employee,
+            'message' => ""
         ])->merge($employees)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
     }
@@ -78,7 +79,6 @@ class EmployeeController extends Controller
 
         $isEmployer = Employee::where('email', $validatedData['email'])
                             ->where('employer_id', $employer->id)->first();
-        info($validatedData);
 
         if(!$isEmployer){
             if(isset($validatedData['job_code'])){

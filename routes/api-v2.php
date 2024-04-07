@@ -242,16 +242,16 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::resources([
             'employee' => 'Api\v2\Company\EmployeeController',
             'supervisor' => 'Api\v2\Company\SupervisorController',
-            'jobcode' => 'Api\v2\Company\JobCodeController'
+            'department' => 'Api\v2\Company\DepartmentController'
         ]);//->name('.employee');
         Route::get('competency', 'Api\v2\EmployerCompetencyController@index')->name('competency.index');
         Route::get('competency/gap', 'Api\v2\EmployerCompetencyController@competency')->name('competency.skill');
 
         Route::patch('employee/{id}/archive', 'Api\v2\EmployeeController@archive')->name('employee.archive');
         Route::patch('employee/{id}/unarchive', 'Api\v2\EmployeeController@unarchive')->name('employee.unarchive');
-        Route::patch('jobcode/{id}/managers', 'Api\v2\JobCodeController@update_managers')->name('jobcode.managers');
-        Route::patch('jobcode/{id}/archive', 'Api\v2\JobCodeController@archive')->name('jobcode.archive');
-        Route::patch('jobcode/{id}/unarchive', 'Api\v2\JobCodeController@unarchive')->name('jobcode.unarchive');
+        // Route::patch('jobcode/{id}/managers', 'Api\v2\JobCodeController@update_managers')->name('jobcode.managers');
+        // Route::patch('jobcode/{id}/archive', 'Api\v2\JobCodeController@archive')->name('jobcode.archive');
+        // Route::patch('jobcode/{id}/unarchive', 'Api\v2\JobCodeController@unarchive')->name('jobcode.unarchive');
     });
 
     Route::middleware('auth:sanctum')->group( function () {

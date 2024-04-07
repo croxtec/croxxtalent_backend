@@ -8,7 +8,7 @@ use App\Models\EmployerJobcode as Department;
 use App\Models\DepartmentRole;
 
 
-class JobCodeController extends Controller
+class DepartmentController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -30,7 +30,7 @@ class JobCodeController extends Controller
         $department = Department::where('employer_id', $company->id)
         ->when($search, function($query) use ($search) {
             $query->where('id', 'LIKE', "%{$search}%");
-        })
+        })->with('roles')
         ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
@@ -42,7 +42,7 @@ class JobCodeController extends Controller
 
         $response = collect([
             'status' => true,
-            'message' => "Successful."
+            'message' => ""
         ])->merge($department)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
     }

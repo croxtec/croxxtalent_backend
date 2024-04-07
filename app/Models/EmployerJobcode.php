@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\DepartmentRole;
 
 class EmployerJobcode extends Model
 {
@@ -23,12 +24,16 @@ class EmployerJobcode extends Model
     //     'total_assessment'
     // ];
 
-    protected function managers(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($value) => json_decode($value, true),
-            set: fn ($value) => json_encode($value),
-        );
+    // protected function managers(): Attribute
+    // {
+    //     return Attribute::make(
+    //         get: fn ($value) => json_decode($value, true),
+    //         set: fn ($value) => json_encode($value),
+    //     );
+    // }
+
+    public function roles(){
+        return $this->hasMany(DepartmentRole::class, 'department_id', 'id');
     }
 
     public function employee(){
