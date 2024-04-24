@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('level')->nullable();
             $table->foreignId('supervisor_id')->nullable();
             $table->timestamp('hired_date')->nullable();
-            $table->text('location')->nullable();
+            // $table->text('location')->nullable();
         });
     }
 
