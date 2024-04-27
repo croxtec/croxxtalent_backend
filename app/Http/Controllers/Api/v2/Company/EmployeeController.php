@@ -59,7 +59,7 @@ class EmployeeController extends Controller
 
         $response = collect([
             'status' => true,
-            "data" => $employee,
+            "data" => $employees,
             'message' => ""
         ])->merge($employees)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
