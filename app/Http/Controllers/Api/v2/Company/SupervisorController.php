@@ -52,7 +52,8 @@ class SupervisorController extends Controller
             'status' => true,
             "data" => $supervisor,
             'message' => ""
-        ])->merge(['draw' => $datatable_draw]);
+        ])->merge($supervisor)
+          ->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
     }
 

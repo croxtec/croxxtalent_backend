@@ -124,7 +124,7 @@ class User extends Authenticatable
 
     public function getNameAttribute()
     {
-        return "{$this->first_name} {$this->last_name}";
+        return "{$this?->first_name} {$this?->last_name}";
     }
 
     public function getDisplayNameAttribute()
@@ -132,18 +132,18 @@ class User extends Authenticatable
         if ($this->company_name) {
             return "{$this->company_name}";
         }
-        return "{$this->first_name} {$this->last_name}";
+        return "{$this?->first_name} {$this?->last_name}";
     }
 
     public function getNameInitialsAttribute()
     {
-        return strtoupper("{$this->first_name[0]}{$this->last_name[0]}");
+        return strtoupper("{$this?->first_name[0]}{?$this->last_name[0]}");
     }
 
     public function getPhotoUrlAttribute()
     {
         // return $this->photo ? url(Storage::url($this->photo)) : null;
-        return $this->photo ? cloud_asset($this->photo) : null;
+        return $this->photo ? cloud_asset($this?->photo) : null;
     }
 
     public function getCvAttribute()
