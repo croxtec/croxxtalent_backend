@@ -47,7 +47,7 @@ class EmployeeController extends Controller
             }
         })->where( function($query) use ($search) {
             $query->where('name', 'LIKE', "%{$search}%");
-        })->with('department','department_role', 'employer', 'talent')
+        })->with('department','department_role', 'talent')
         ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
@@ -85,7 +85,6 @@ class EmployeeController extends Controller
                     'employer_id' => $validatedData['employer_id'],
                     'job_code' => $validatedData['job_code']
                 ]);
-                info(['Department Created ',$department]);
                 $validatedData['job_code_id'] = $department->id;
 
             }
@@ -96,7 +95,6 @@ class EmployeeController extends Controller
                     'department_id' => $validatedData['job_code_id'],
                     'name' => $validatedData['department_role']
                 ]);
-                info(['Department Role Created ', $department_role]);
                 $validatedData['department_role_id'] = $department_role->id;
             }
 
@@ -113,7 +111,7 @@ class EmployeeController extends Controller
                 $verification = $employee->verifications()->save($verification);
 
                 if ($verification) {
-                    // Mail::to($validatedData['email'])->send(new WelcomeEmployee($employee, $employer, $verification));
+                    Mail::to($validatedData['email'])->send(new WelcomeEmployee($employee, $employer, $verification));
                 }
 
                 return response()->json([
@@ -137,12 +135,14 @@ class EmployeeController extends Controller
     }
 
 
-    public function importEmployee(Request $request)
+    public function importEmployees(Request $request)
     {
         $employer = $request->user();
+        // info('FILE UPLOAD');importEmployee
         $this->validate($request, [
             'file' => 'required|file|mimes:xlsx,xls'
         ]);
+
 
         if ($request->hasFile('file')){
             $path = $request->file('file');
@@ -158,8 +158,6 @@ class EmployeeController extends Controller
                 'message' => "Could not upload file, please try again.",
             ], 400);
         }
-
-        // file_get_contents();
     }
 
     /**
@@ -170,7 +168,7 @@ class EmployeeController extends Controller
      */
     public function show(Request $request, $id)
     {
-        $employee = Employee::with('job_code', 'employer', 'talent')->findOrFail($id);
+        $employee = Employee::with('department', 'department_role', 'talent')->findOrFail($id);
 
         // $this->authorize('view', [Employee::class, $employee]);
 

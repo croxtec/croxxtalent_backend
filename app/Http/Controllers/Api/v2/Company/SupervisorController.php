@@ -78,7 +78,6 @@ class SupervisorController extends Controller
             $supervisor =  Supervisor::create($validatedData);
 
             // Send Email
-
             return response()->json([
                 'status' => true,
                 'message' => "Supervisor added successfully.",

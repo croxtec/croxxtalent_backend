@@ -79,7 +79,8 @@ class AuthController extends Controller
             $login_field = 'email'; // phone
         }
 
-        $user = User::where($login_field, $validatedData['login'])->first();
+        $user = User::where($login_field, $validatedData['login'])
+                         ->whereIn('type', ['talent', 'admin'])->first();
         // || !Hash::check($validatedData['password'], $user->password)
         if ( !$user ) {
             return response()->json([

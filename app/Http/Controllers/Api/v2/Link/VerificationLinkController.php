@@ -55,6 +55,7 @@ class VerificationLinkController extends Controller
             if ($employee && $user) {
                 // $employee->email_verified_at = Carbon::now();
                 $employee->user_id = $user->id;
+                $employee->status = 1;
                 $employee->save();
                 // delete token after verification
                 $verification->delete();
@@ -66,7 +67,7 @@ class VerificationLinkController extends Controller
 
                 $verified = true;
             }else{
-                return  redirect()->to("https://croxxtalent.com/register/talent-register?email=$employee->email");
+                return  redirect()->to("https://croxxtalent.com/register?email=$employee->email");
             }
         }
         return  redirect()->to('https://croxxtalent.com/login');
