@@ -82,7 +82,7 @@ class EmployeeImport implements ToModel, WithHeadingRow
 
 
                 $employee = Employee::create($data);
-                info(['EMployee Created ', $employee]);
+                // info(['EMployee Created ', $employee]);
 
                 if($employee){
                     $verification = new Verification();
@@ -109,7 +109,7 @@ class EmployeeImport implements ToModel, WithHeadingRow
                                 'type' => 'department'
                             ]);
 
-                            info(['Supervisor Created ', $supervisor]);
+                            // info(['Supervisor Created ', $supervisor]);
                         }
                     }
                 }
@@ -130,7 +130,7 @@ class EmployeeImport implements ToModel, WithHeadingRow
                             'type' => 'department'
                         ]);
 
-                        info(['Supervisor Created ', $supervisor]);
+                        // info(['Supervisor Created ', $supervisor]);
                     }
                 }
             }
