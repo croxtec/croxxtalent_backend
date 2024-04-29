@@ -49,7 +49,6 @@ class EmployeeImport implements ToModel, WithHeadingRow
                 'email' =>  $email,
             ])->first();
 
-            info(['E >>', $email, !$isEmployer]);
 
             if(!$isEmployer){
                 $data = [
@@ -116,6 +115,24 @@ class EmployeeImport implements ToModel, WithHeadingRow
                 }
 
                 return $employee;
+            }
+
+            if(isset($supervisor)){
+                if(strtolower(trim($supervisor)) == 'yes '){
+                    $isSupervisor = Supervisor::where('supervisor_id',  $isEmployer->id)
+                                            ->where('employer_id', $this->employer->id)->first();
+
+                    if(!$isSupervisor){
+                        $supervisor =  Supervisor::create([
+                            'employer_id' => $this->employer->id,
+                            'supervisor_id'=> $isEmployer->id,
+                            'department_id' => $isEmployer->job_code_id,
+                            'type' => 'department'
+                        ]);
+
+                        info(['Supervisor Created ', $supervisor]);
+                    }
+                }
             }
             return $isEmployer;
         } else {
