@@ -155,29 +155,39 @@ class TalentCVController extends Controller
         // Authorization was declared in the Form Request
         $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
-        // Validate and store the uploaded PDF file
+        // Validate the uploaded file
         $request->validate([
-            'resume' => 'required|mimes:pdf',
+            'resume' => 'required|max:2048',
         ]);
 
-        // $resumePath = $resumeFile->storeAs('local/resumes', $filename);
+        // Get the uploaded file
+        $resumeFile = $request->file('resume');
 
-        // $resumeFile = $request->file('resume');
-        // $filename =  time() . '-' . Str::random(32).'.'. $resumeFile->extension();
-        // $resumePath = $resumeFile->store('resumes');
+        // Determine the file type
+        $fileExtension = $resumeFile->getClientOriginalExtension();
+        info($fileExtension);
 
-        // Extract text from the PDF
-        // info(cloud_asset());
-        $resumePath = public_path("/resumes/2023.pdf");
-        $text = (new Pdf())->getText($resumePath);
-        // $url = ('https://croxxtalent-uploads.fra1.digitaloceanspaces.com/resumes/9zWfZbrawQro7kw97cDheGgrwEbKJh38nQAdIM5F.pdf');
-        // $text = (new Pdf())->getText($url);
+        // Extract text content based on file type
+        $extractedContent = '';
+        if ($fileExtension === 'pdf') {
+            // Extract text content from PDF
+            $extractedContent = Pdf::getText($resumeFile->path());
+        } elseif ($fileExtension === 'docx') {
+            // Extract text content from Word document
+            $phpWord = IOFactory::load($resumeFile->path());
+            $extractedContent = $phpWord->getText();
+        } else {
+            return response()->json(['error' => 'Unsupported file format'], 422);
+        }
 
+        // Store the extracted content in a text file
+        $fileName = 'extracted_resume_' . time() . '.txt';
+        Storage::disk('local')->put($fileName, $extractedContent);
 
 
         return response()->json([
             'status' => true,
-            'message' => "CV profile saved successfully.",
+            'message' => "Resume uploaded successfully.",
             'data' => $text
         ], 200);
     }
