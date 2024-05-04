@@ -18,6 +18,7 @@ use App\Models\Cv;
 use App\Models\Audit;
 use App\Libraries\LinkedIn;
 use Spatie\PdfToText\Pdf;
+use PhpOffice\PhpWord\IOFactory;
 
 class TalentCVController extends Controller
 {
@@ -165,7 +166,7 @@ class TalentCVController extends Controller
 
         // Determine the file type
         $fileExtension = $resumeFile->getClientOriginalExtension();
-        info($fileExtension);
+        info($resumeFile);
 
         // Extract text content based on file type
         $extractedContent = '';
@@ -175,14 +176,15 @@ class TalentCVController extends Controller
         } elseif ($fileExtension === 'docx') {
             // Extract text content from Word document
             $phpWord = IOFactory::load($resumeFile->path());
+            info($phpWord);
             $extractedContent = $phpWord->getText();
         } else {
             return response()->json(['error' => 'Unsupported file format'], 422);
         }
 
         // Store the extracted content in a text file
-        $fileName = 'extracted_resume_' . time() . '.txt';
-        Storage::disk('local')->put($fileName, $extractedContent);
+        // $fileName = 'extracted_resume_' . time() . '.txt';
+        // Storage::disk('local')->put($fileName, $extractedContent);
 
 
         return response()->json([

@@ -35,7 +35,7 @@ class TalentCompetencyController extends Controller
                     ->get()->toArray();
 
         foreach($assesments as $assessment){
-            // $assessment = $this->assessment_percentage($user, $assessment);
+            // $assessment =p $this->assessment_percentage($user, $assessment);
             $groups[$assessment['assesment_id']] = $assessment;
         }
 
