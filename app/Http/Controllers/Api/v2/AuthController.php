@@ -102,6 +102,8 @@ class AuthController extends Controller
         }
 
         if ($user->is_active !== true) {
+            $user->is_active = true;
+            $user->save();
             return response()->json([
                 'status' => false,
                 'message' => 'Your account is inactive, please contact support admin.'
@@ -163,7 +165,7 @@ class AuthController extends Controller
                 $message = $validator->errors()->toJson();
                 return response()->json(compact('status', 'message') , 400);
             }
-            $validatedData['is_active'] = 0;
+            $validatedData['is_active'] = true;
             $validatedData['company_name'] = $request->company_name;
             $validatedData['phone'] = $request->phone;
             $validatedData['company_size'] = $request->company_size;
@@ -182,7 +184,7 @@ class AuthController extends Controller
                 return response()->json(compact('status', 'message') , 400);
             }
             $validatedData['referral_code'] = (string) Str::orderedUuid();
-            $validatedData['is_active'] = 0;
+            $validatedData['is_active'] = true;
             $validatedData['company_name'] = $request->company_name;
             $validatedData['company_affiliate'] = $request->company_affiliate;
             $validatedData['phone'] = $request->phone;
