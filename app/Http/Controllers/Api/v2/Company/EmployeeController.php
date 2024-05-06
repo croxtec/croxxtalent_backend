@@ -99,8 +99,13 @@ class EmployeeController extends Controller
             }
 
 
-            info(['Valid Data  ',$validatedData]);
+          
             $employee =  Employee::create($validatedData);
+
+            if(isset($employer->onboarding_stage) && $employer->onboarding_stage == 1){
+                $employer->onboarding_stage = 2;
+                $employer->save();
+            }
 
             if($employee){
                 $verification = new Verification();
@@ -147,6 +152,11 @@ class EmployeeController extends Controller
         if ($request->hasFile('file')){
             $path = $request->file('file');
             $data = Excel::import(new EmployeeImport($employer), $request->file);
+
+            if(isset($employer->onboarding_stage) && $employer->onboarding_stage == 1){
+                $employer->onboarding_stage = 2;
+                $employer->save();
+            }
 
             return response()->json([
                 'status' => true,
