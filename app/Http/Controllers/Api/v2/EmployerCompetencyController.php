@@ -88,4 +88,20 @@ class EmployerCompetencyController extends Controller
             'message' => 'Data imported successfully.'
         ], 200);
     }
+
+    public function storeCompetency(Request $request){
+        $employer = $request->user();
+
+        if(isset($employer->onboarding_stage) && $employer->onboarding_stage == 2){
+            $employer->onboarding_stage = 3;
+            $employer->save();
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => "Competency matched successfully.",
+            'data' => []
+        ], 201);
+
+    }
 }

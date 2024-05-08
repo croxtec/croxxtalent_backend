@@ -89,13 +89,19 @@ class DepartmentController extends Controller
      */
     public function show(Request $request, $id)
     {
-        $company = $request->user();
-        $job_code = Department::findOrFail($id);
+        $employer = $request->user();
+        $department = Department::findOrFail($id);
+
+
+        $employees = Employee::where('employer_id', $employer->id)
+                        ->where('job_code_id', $department->id)
+                        ->get();
+
 
         return response()->json([
             'status' => true,
             'message' => "Successful.",
-            'data' => $job_code
+            'data' => compact('department', 'employees')
         ], 200);
 
     }

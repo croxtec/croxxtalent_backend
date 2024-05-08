@@ -172,28 +172,27 @@ class AuthController extends Controller
             $validatedData['services'] = $request->services;
         }
 
-        if ($validatedData['type'] == 'affiliate') {
-            $validator = Validator::make($request->all(),[
-                'company_name' => 'required',
-                'company_affiliate' => 'required',
-                'phone' => 'required|max:25',
-            ]);
-            if($validator->fails()){
-                $status = false;
-                $message = $validator->errors()->toJson();
-                return response()->json(compact('status', 'message') , 400);
-            }
-            $validatedData['referral_code'] = (string) Str::orderedUuid();
-            $validatedData['is_active'] = true;
-            $validatedData['company_name'] = $request->company_name;
-            $validatedData['company_affiliate'] = $request->company_affiliate;
-            $validatedData['phone'] = $request->phone;
-        }
+        // if ($validatedData['type'] == 'affiliate') {
+        //     $validator = Validator::make($request->all(),[
+        //         'company_name' => 'required',
+        //         'company_affiliate' => 'required',
+        //         'phone' => 'required|max:25',
+        //     ]);
+        //     if($validator->fails()){
+        //         $status = false;
+        //         $message = $validator->errors()->toJson();
+        //         return response()->json(compact('status', 'message') , 400);
+        //     }
+        //     $validatedData['referral_code'] = (string) Str::orderedUuid();
+        //     $validatedData['is_active'] = true;
+        //     $validatedData['company_name'] = $request->company_name;
+        //     $validatedData['company_affiliate'] = $request->company_affiliate;
+        //     $validatedData['phone'] = $request->phone;
+        // }
 
         $user = User::create($validatedData);
-        // Log::info($user); return;
-        if ($user) {
 
+        if ($user) {
             $abilities = [];
             // update the sanctum token expiration to the custom highest_expiration if the requested token is for a long-lived token
             $long_lived_access_token = isset($validatedData['long_lived_access_token']) ? true : false;
@@ -277,16 +276,16 @@ class AuthController extends Controller
                 'message' => 'Invalid login credentials.'
             ], 401);
         }
-        // Checking If A Password Needs To Be Rehashed
+        // Checking If A Password Needs To Be Rehashed// $user->saved();
         // if the work factor used by the hasher has changed since the password was hashed
         if (Hash::needsRehash($user->password)) {
             $user->password = bcrypt($validatedData['password']);
-            // $user->saved();
             $user->save();
         }
 
         if (!$user->username) {
-            // $user->password = bcrypt($validatedData['password']);
+            // $total = User::count();
+            // $user->username = strtolower($user->display_name)+$total;
             // $user->save();
         }
 

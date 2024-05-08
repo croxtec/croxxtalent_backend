@@ -137,7 +137,10 @@ class User extends Authenticatable
 
     public function getNameInitialsAttribute()
     {
-        return strtoupper("{$this->first_name[0]}{?$this->last_name[0]}");
+        $firstInitial = strtoupper(empty($this->first_name) ? '' : $this->first_name[0]);
+        $lastInitial = strtoupper($this->last_name[0] ?? '');
+    
+        return $firstInitial . $lastInitial;
     }
 
     public function getPhotoUrlAttribute()
