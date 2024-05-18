@@ -92,7 +92,9 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
     // Authenticated requests API
     Route::middleware('auth:sanctum')->name('api.')->group( function () {
 
-        Route::prefix('talent')->name('cvs.work_experience.')->group( function () {
+        Route::prefix('talent')->name('talent')->group( function () {
+            
+            Route::get('company', 'Api\v2\Talent\TalentCompanyController@index')->name('company.index');
             // Competence
             Route::get('competence', 'Api\v2\TalentCompetencyController@index')->name('competence.index');
             Route::get('competence/skill', 'Api\v2\TalentCompetencyController@skill')->name('competence.skill');

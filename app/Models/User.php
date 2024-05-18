@@ -9,6 +9,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Cv;
+use App\Models\Employee;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -112,12 +113,12 @@ class User extends Authenticatable
 
     /**
      * The custom attributes that will be appened to the model results.
-     *
+     *'recent_audits',
      * @var array
      */
     protected $appends = [
-        'name', 'display_name', 'name_initials', 'photo_url', 'cv', 'unread_notifications',// 'full_name', 'salutation_name',
-        'recent_audits', 'total_affiliates', 'permissions',
+        'name', 'display_name', 'name_initials', 'photo_url', 'cv', 'unread_notifications',
+        'total_companies','total_affiliates', 'permissions',
     ];
 
     // Get Model Attributes
@@ -139,7 +140,7 @@ class User extends Authenticatable
     {
         $firstInitial = strtoupper(empty($this->first_name) ? '' : $this->first_name[0]);
         $lastInitial = strtoupper($this->last_name[0] ?? '');
-    
+
         return $firstInitial . $lastInitial;
     }
 
@@ -268,6 +269,8 @@ class User extends Authenticatable
     public function getTotalAffiliatesAttribute()
     {
         $user = $this;
+        $count = User::where('referral_user_id', $this->id)->count();
+        return $count;
         if ($this->type === 'affiliate') {
             // $count = Cv::where( function ($query) use ($user) {
             //     $query->whereHas('user', function($sub_query) use ($user) {
@@ -275,10 +278,14 @@ class User extends Authenticatable
             //         return $sub_query;
             //     });
             // })->count();
-            $count = User::where('referral_user_id', $this->id)->count();
-            return $count;
+
         }
         return false;
+    }
+
+    public  function getTotalCompaniesAttribute()
+    {
+        return  Employee::where('user_id', $this->id)->count();
     }
 
     public function getAffiliateRewardPointsAttribute()

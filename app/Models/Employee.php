@@ -38,7 +38,7 @@ class Employee extends Model
 
     public function employer(){
         return $this->belongsTo('App\Models\User', 'employer_id', 'id')
-                    ->select(['id','photo', 'company_name']);
+                    ->select(['id','photo', 'first_name','last_name','company_name']);
     }
 
     public function talent(){
