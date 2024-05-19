@@ -17,9 +17,9 @@
             margin-top: 15px;
             margin-bottom: 0px;
         }
-        body { 
+        body {
             margin: 0px;
-            background-color: #0040a1;
+            background-color: #f58a07;
         }
         .container{
             width: 100%;
@@ -28,7 +28,7 @@
             float: left;
             width: 26%;
             height: 10000% !important;
-            background-color:#0040a1;
+            background-color:#f58a07;
             padding: 20px;
             color: #ffffff;
         }
@@ -84,11 +84,11 @@
             margin-bottom: 40px;
         }
         .cv-section-heading {
-            border-bottom: 2px solid #000000; 
+            border-bottom: 2px solid #000000;
             font-weight: 300;
         }
         .cv-section-content {
-            margin: 4px 20px 4px 4px;            
+            margin: 4px 20px 4px 4px;
         }
         .star-image {
             margin-top: 3px;
@@ -112,7 +112,7 @@
                 <p class="email-text">
                     {{-- <img src="{{ $mail_image_url }}" alt="Email" class="profile-mail" /> <br>  --}}
                     {{ $cv->email }}
-                </p> 
+                </p>
             </div>
             <div class="profile-email">
                 <p class="email-text">
@@ -126,7 +126,7 @@
                     {{ $cv->address . ", " . $cv->city . ", " . $cv->state_name . " " . $cv->postal_code . ", " . $cv->country_name }}
                 </p>
             </div>
-            
+
             @if(is_object($cv->skills) && $cv->skills->isNotEmpty())
                 <div style="margin-bottom: 30px;">
                     <div style="border-bottom: 2px solid white; width: 70px;">SKILLS</div>
@@ -142,13 +142,13 @@
                                     {{-- <img src="{{ $star2_image_url }}" alt="2 Stars" /> --}}
                                 @else
                                     {{-- <img src="{{ $star1_image_url }}" alt="1 Star" /> --}}
-                                @endif                            
+                                @endif
                             </div>
                         @endif
                     @endforeach
                 </div>
             @endif
-                        
+
             @if(is_object($cv->hobbies) && $cv->hobbies->isNotEmpty())
                 <div style="margin-bottom: 30px;">
                     <div style="border-bottom: 2px solid white; width: 90px;">HOBBIES</div>
@@ -158,7 +158,7 @@
                     @endforeach
                 </div>
             @endif
-            
+
             @if(is_object($cv->languages) && $cv->languages->isNotEmpty())
                 <div style="margin-bottom: 30px;">
                     <div style="border-bottom: 2px solid white; width: 100px;">LANGUAGES</div>
@@ -173,11 +173,11 @@
                                 {{-- <img src="{{ $star2_image_url }}" alt="2 Stars" /> --}}
                             @else
                                 {{-- <img src="{{ $star1_image_url }}" alt="1 Star" /> --}}
-                            @endif                            
+                            @endif
                         </div>
                     @endforeach
                 </div>
-            @endif            
+            @endif
         </div>
 
         <div class="right">
@@ -189,14 +189,14 @@
             </div>
             <div>
                 <div class="cv-section">
-                    <h4 class="cv-section-heading">CAREER SUMMARY</h4> 
+                    <h4 class="cv-section-heading">CAREER SUMMARY</h4>
                     <div class="cv-section-content justify-content">
                         {{ $cv->career_summary }}
                     </div>
                 </div>
 
                 <div class="cv-section">
-                    <h4 class="cv-section-heading">WORK EXPERIENCE</h4> 
+                    <h4 class="cv-section-heading">WORK EXPERIENCE</h4>
                     <div class="cv-section-content">
                         @if(is_object($cv->workExperiences) && $cv->workExperiences->isNotEmpty())
                             @foreach ($cv->workExperiences as $workExperience)
@@ -254,7 +254,7 @@
                 </div>
 
                 <div class="cv-section">
-                    <h4 class="cv-section-heading">CERTIFICATIONS</h4> 
+                    <h4 class="cv-section-heading">CERTIFICATIONS</h4>
                     <div class="cv-section-content">
                         @if(is_object($cv->certifications) && $cv->certifications->isNotEmpty())
                             @foreach ($cv->certifications as $certification)
@@ -283,7 +283,7 @@
                 </div>
 
                 <div class="cv-section">
-                    <h4 class="cv-section-heading">HONOURS & AWARDS</h4> 
+                    <h4 class="cv-section-heading">HONOURS & AWARDS</h4>
                     <div class="cv-section-content">
                     @if(is_object($cv->awards) && $cv->awards->isNotEmpty())
                             @foreach ($cv->awards as $award)
@@ -307,7 +307,7 @@
 
                 <div class="cv-section">
                     <h4 class="cv-section-heading">SKILLS</h4>
-                    <div class="cv-section-content">                  
+                    <div class="cv-section-content">
                         @if(is_object($cv->skills) && $cv->skills->isNotEmpty())
                             <ul>
                                 @foreach ($cv->skills as $skill)
@@ -320,11 +320,11 @@
 
                 <div class="cv-section page">
                     <h4 class="cv-section-heading">REFERENCES</h4>
-                    <div class="cv-section-content">                  
+                    <div class="cv-section-content">
                         @if(is_object($cv->references) && $cv->references->isNotEmpty())
                             @foreach ($cv->references as $reference)
                                 <p>
-                                    <strong>{{ $reference->name }}</strong> 
+                                    <strong>{{ $reference->name }}</strong>
                                     @if ($reference->is_approved)
                                         {{-- <img src="{{ $cv_reference_approved_image_url }}" alt="Reference Approved" style="width: 16px;" /> --}}
                                     @endif
@@ -336,7 +336,7 @@
                                     {{ $reference->phone }}
                                 </p>
                             @endforeach
-                        @else 
+                        @else
                             <p>References available upon request.</p>
                         @endif
                     </div>
@@ -344,15 +344,15 @@
 
                 <div class="cv-section">
                     <h4 class="cv-section-heading" style="padding-top: 50px;">REFERENCES QUESTIONNAIRE</h4>
-                    <div class="cv-section-content">                  
+                    <div class="cv-section-content">
                         @if(is_object($cv->references) && $cv->references->isNotEmpty())
                             @foreach ($cv->references as $reference)
                                 <p>
                                     @if (!$loop->first)
                                         <hr style="margin-top: 60px;">
-                                    @endif                                    
+                                    @endif
                                     <div style="text-align: center">
-                                        <strong>QUESTIONNAIRE FOR {{ strtoupper($reference->name) }}</strong> 
+                                        <strong>QUESTIONNAIRE FOR {{ strtoupper($reference->name) }}</strong>
                                     </div>
                                     <br />
                                     <strong>Name:</strong> {{ $reference->name }}
@@ -365,7 +365,7 @@
                                     <br />
                                     <strong>Phone:</strong> {{ $reference->phone }}
                                     <br /><br />
-                                    <strong>FEEDBACK:</strong><br />                                    
+                                    <strong>FEEDBACK:</strong><br />
                                     @if ($reference->is_approved)
                                         <i>Submitted on {{ (new Carbon\Carbon($reference->approved_at))->toDayDateTimeString() }} </i><br />
                                         @if(is_array($reference->feedback) && $cv->references->isNotEmpty())
@@ -379,17 +379,17 @@
                                         @endif
                                     @else
                                         <i>Reference request not yet approved by {{ $reference->name }}.</i>
-                                    @endif                                    
+                                    @endif
                                 </p>
                             @endforeach
-                        @else 
+                        @else
                             <p>References available upon request.</p>
                         @endif
                     </div>
                 </div>
-                 
+
             </div>
         </div>
-    </div> 
+    </div>
 </body>
 </html>
