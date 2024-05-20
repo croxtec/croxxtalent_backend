@@ -32,13 +32,19 @@ class EmployerJobcode extends Model
     //     );
     // }
 
-    public function roles(){
-        return $this->hasMany(DepartmentRole::class, 'department_id', 'id');
-    }
-
-    public function employee(){
+    public function employees(){
         return $this->hasMany('App\Models\Employee', 'job_code_id', 'id');
     }
+
+    public function getEmployeeCountAttribute()
+    {
+        return $this->employees()->count();
+    }
+
+    public function roles(){
+        return $this->hasMany(DepartmentRole::class, 'department_id', 'id')->withCount('employees');
+    }
+
 
     public function assessment(){
         return $this->hasMany('App\Models\Assesment', 'job_code_id', 'id');
