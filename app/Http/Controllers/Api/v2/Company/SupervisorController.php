@@ -70,14 +70,15 @@ class SupervisorController extends Controller
         $validatedData = $request->validated();
         $validatedData['employer_id'] = $employer->id;
 
+        $employee = Employee::where('id', $validatedData['supervisor_id'])->first();
         $isSupervisor = Supervisor::where('supervisor_id', $validatedData['supervisor_id'])
                              ->where('employer_id', $employer->id)->first();
 
         if(!$isSupervisor){
-
             $supervisor =  Supervisor::create($validatedData);
+            $employee->supervisor_id = $supervisor->id;
+            $employee->save();
 
-            // Send Email
             return response()->json([
                 'status' => true,
                 'message' => "Supervisor added successfully.",
@@ -89,7 +90,6 @@ class SupervisorController extends Controller
                 "message" => 'Supervisor already exist'
             ], 422);
         }
-
     }
 
     /**

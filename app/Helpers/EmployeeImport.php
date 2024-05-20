@@ -60,8 +60,6 @@ class EmployeeImport implements ToModel, WithHeadingRow
                     'location' => $location,
                 ];
 
-                info(['Good >>',   $data]);
-
                 if(isset($department)){
                     $department = Department::firstOrCreate([
                         'employer_id' => $this->employer->id,
@@ -90,26 +88,28 @@ class EmployeeImport implements ToModel, WithHeadingRow
                     $verification->sent_to = $email;
                     $verification->metadata = null;
                     $verification->is_otp = false;
-                    $verification = $employee->verifications()->save($verification);
-                    if ($verification) {
-                        // Mail::to($email)->send(new WelcomeEmployee($employee, $this->employer, $verification));
-                    }
+                    // $verification = $employee->verifications()->save($verification);
+                    // if ($verification) {
+                    //     // Mail::to($email)->send(new WelcomeEmployee($employee, $this->employer, $verification));
+                    // }
                 }
 
                 if(isset($supervisor)){
                     if(strtolower($supervisor) == 'yes'){
+                        $employee = Employee::where('id', $employee->id)->first();
                         $isSupervisor = Supervisor::where('supervisor_id', $employee->id)
                                                 ->where('employer_id', $this->employer->id)->first();
 
                         if(!$isSupervisor){
                             $supervisor =  Supervisor::create([
+                                'type' => 'department',
                                 'employer_id' => $this->employer->id,
                                 'supervisor_id'=> $employee->id,
-                                'department_id' => $data['job_code_id'],
-                                'type' => 'department'
+                                'department_id' => $data['job_code_id']
                             ]);
 
-                            // info(['Supervisor Created ', $supervisor]);
+                            $employee->supervisor_id = $supervisor->id;
+                            $employee->save();
                         }
                     }
                 }

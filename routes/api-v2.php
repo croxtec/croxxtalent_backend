@@ -263,6 +263,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::resources([
             'assesments' => 'Api\v2\AssesmentController',
             'campaigns' => 'Api\v2\CampaignController',
+            'goals' => 'Api\v2\GoalController',
         ]);
         // Assesment Options
         Route::patch('assesments/{id}/archive', 'Api\v2\AssesmentController@archive')->name('assesments.archive');

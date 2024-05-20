@@ -42,7 +42,7 @@ class TalentCompanyController extends Controller
         $user = $request->user();
         $companies = Employee::where('user_id', $user->id)->get();
 
-        $default_company =  null;
+        $myinfo =  null;
 
         if (count($companies)) {
             // Get the first company's employer_id as the default
@@ -50,15 +50,20 @@ class TalentCompanyController extends Controller
 
             // Retrieve the id from the request or use the first company's id as default
             $defaultCompanyId = $request->input('company', $firstCompanyEmployerId);
+            // Employerr
+            $myinfo = $companies->firstWhere('id', $defaultCompanyId);
 
-            $default_company = $companies->firstWhere('id', $defaultCompanyId);
-
-            if($default_company->supervisor_id){
-                $supervisor = Supervisor::where('supervisor_id', $default_company->supervisor_id)->first();
+            if($myinfo->supervisor_id){
+                // Get Supervisor Info
+                $supervisor = Supervisor::where('supervisor_id', $myinfo->id)->first();
+                // Supervisor Detail
+                $team_structure =  Employee::where('employer_id', $supervisor->employer_id)
+                                     ->where('job_code_id',  $supervisor->department_id)
+                                     ->whereNull('supervisor_id')->get();
 
                 return response()->json([
                     'status' => true,
-                    'data' => compact('supervisor'),
+                    'data' => compact('supervisor', 'team_structure'),
                     'message' => ''
                 ], 200);
             }

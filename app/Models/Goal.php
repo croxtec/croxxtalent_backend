@@ -8,4 +8,16 @@ use Illuminate\Database\Eloquent\Model;
 class Goal extends Model
 {
     use HasFactory;
+
+
+    protected $fillable = [
+        'user_id',
+        'employee_id',
+        'supervisor_id',
+        'employer_id',
+        'title',
+        'period',
+        'reminder',
+        'metric'
+    ];
 }

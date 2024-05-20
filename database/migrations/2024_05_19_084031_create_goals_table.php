@@ -16,7 +16,8 @@ return new class extends Migration
         Schema::create('goals', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id');
-            $table->foreignId('admin_id')->nullable(); //supervisor, or created for
+            $table->foreignId('employee_id')->nullable(); //supervisor, or created for
+            $table->foreignId('supervisor_id')->nullable(); //supervisor, or created for
             $table->foreignId('employer_id')->nullable();
 
             $table->string('title');
@@ -25,6 +26,8 @@ return new class extends Migration
             $table->text('metric')->nullable();
             $table->enum('status', ['pending', 'done', 'missed'])->default('pending');
             $table->integer('score')->nullable();
+            $table->timestamp('archived_at')->nullable();
+            // $table->boolean('is_published')->default(false);
             $table->timestamps();
         });
     }
