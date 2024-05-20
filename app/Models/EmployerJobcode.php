@@ -36,13 +36,9 @@ class EmployerJobcode extends Model
         return $this->hasMany('App\Models\Employee', 'job_code_id', 'id');
     }
 
-    public function getEmployeeCountAttribute()
-    {
-        return $this->employees()->count();
-    }
 
     public function roles(){
-        return $this->hasMany(DepartmentRole::class, 'department_id', 'id')->withCount('employees');
+        return $this->hasMany(DepartmentRole::class, 'department_id', 'id');
     }
 
 
