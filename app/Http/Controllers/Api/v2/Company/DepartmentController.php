@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\EmployerJobcode as Department;
 use App\Models\DepartmentRole;
 use App\Models\Employee;
+use App\Models\Supervisor;
+use Illuminate\Support\Str;
 
 class DepartmentController extends Controller
 {
@@ -27,23 +29,35 @@ class DepartmentController extends Controller
         $search = $request->input('search');
         $datatable_draw = $request->input('draw'); // if any
 
-        $department = Department::where('employer_id', $company->id)
+        $departments = Department::where('employer_id', $company->id)
         ->when($search, function($query) use ($search) {
             $query->where('id', 'LIKE', "%{$search}%");
         })->with('roles')
         ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
-            $results = $department->get();
-            $department = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
+            $results = $departments->get();
+            $departments = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
         } else {
-            $department = $department->paginate($per_page);
+            $departments = $departments->paginate($per_page);
         }
+
+        foreach($departments as $department){
+            if(!$department->job_title){
+                $title =  $department->id . Str::random(10);
+                $department->job_title = $title;
+                $department->save();
+            }
+            foreach($department->roles as $role){
+                $role->total_employees = Employee::where('department_role_id', $role->id)->count();
+            }
+        }
+
 
         $response = collect([
             'status' => true,
             'message' => ""
-        ])->merge($department)->merge(['draw' => $datatable_draw]);
+        ])->merge($departments)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
     }
 
@@ -90,18 +104,28 @@ class DepartmentController extends Controller
     public function show(Request $request, $id)
     {
         $employer = $request->user();
-        $department = Department::findOrFail($id);
 
+        if (is_numeric($id)) {
+            $department = Department::where('id', $id)->where('employer_id', $employer->id)
+                ->select(['id','job_code', 'job_title', 'description'])->firstOrFail();
+        } else {
+            $department = Department::where('job_title', $id)->where('employer_id', $employer->id)
+                ->select(['id','job_code', 'job_title', 'description'])->firstOrFail();
+        }
 
-        $employees = Employee::where('employer_id', $employer->id)
-                        ->where('job_code_id', $department->id)
-                        ->get();
+        $department->roles;
+
+        foreach($department->roles as $role){
+            $role->total_employees = Employee::where('department_role_id', $role->id)->count();
+            $role->supervisor = Supervisor::where('department_role_id', $role->id)
+                                    ->orWhere('department_id',$department->id)->get();
+        }
 
 
         return response()->json([
             'status' => true,
             'message' => "Successful.",
-            'data' => compact('department', 'employees')
+            'data' => compact('department')
         ], 200);
 
     }

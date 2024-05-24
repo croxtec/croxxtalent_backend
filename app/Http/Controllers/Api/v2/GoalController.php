@@ -84,7 +84,6 @@ class GoalController extends Controller
             $validatedData['user_id'] = $employee->employer_id;
         }
 
-
         $goal = Goal::create($validatedData);
 
         if($goal){

@@ -92,6 +92,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
     // Authenticated requests API
     Route::middleware('auth:sanctum')->name('api.')->group( function () {
 
+
         Route::prefix('talent')->name('talent')->group( function () {
 
             Route::get('company', 'Api\v2\Talent\TalentCompanyController@index')->name('company.employee');

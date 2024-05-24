@@ -171,7 +171,11 @@ class AuthController extends Controller
             $validatedData['company_size'] = $request->company_size;
             $validatedData['services'] = $request->services;
         }
-
+        // Generate Default Username
+        $default_username = ($validatedData['company_name']) ? strtolower($validatedData['company_name']) : strtolower($validatedData['first_name'])."_".strtolower($validatedData['last_name']);
+        $total = User::where('username', $default_username)->count();
+        if($total) $default_username = $default_username."_".$total;
+        $validatedData['username'] = $default_username;
         // if ($validatedData['type'] == 'affiliate') {
         //     $validator = Validator::make($request->all(),[
         //         'company_name' => 'required',
@@ -264,7 +268,7 @@ class AuthController extends Controller
         if (filter_var($validatedData['login'], FILTER_VALIDATE_EMAIL)) {
             $login_field = 'email';
         } else{
-            $login_field = 'email'; // phone
+            $login_field = 'email'; // username
         }
 
         $user = User::where($login_field, $validatedData['login'])
@@ -284,9 +288,11 @@ class AuthController extends Controller
         }
 
         if (!$user->username) {
-            // $total = User::count();
-            // $user->username = strtolower($user->display_name)+$total;
-            // $user->save();
+            $default_username = ($user->company_name) ? strtolower($user->company_name) : strtolower($user->first_name)."_".strtolower($user->last_name);
+            $total = User::where('username', $default_username)->count();
+            if($total) $default_username = $default_username."_".$total;
+            $user->username = $default_username;
+            $user->save();
         }
 
         if ($user->is_active !== true) {

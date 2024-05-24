@@ -38,7 +38,8 @@ class EmployerJobcode extends Model
 
 
     public function roles(){
-        return $this->hasMany(DepartmentRole::class, 'department_id', 'id');
+        return $this->hasMany(DepartmentRole::class, 'department_id', 'id')
+            ->select(['id', 'name', 'description']);
     }
 
 
