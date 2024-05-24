@@ -26,17 +26,36 @@ class EmployeeController extends Controller
     {
         $employer = $request->user();
         // $this->authorize('view-any', Employee::class);
-
         $per_page = $request->input('per_page', 100);
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'desc');
         $search = $request->input('search');
         $archived = $request->input('archived');
+        $role = $request->input('role');
+        $department = $request->input('department');
         $datatable_draw = $request->input('draw'); // if any
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
 
-        $employees = Employee::where('employer_id', $employer->id)
+        $employees = Employee::when($employer->type  == 'employer',
+            function($query) use($employer){
+            return  $query->where('employer_id', $employer->id);
+        })->when($department || $role,function ($query) use ($department, $role) {
+            if ($department !== null  && is_numeric($department)) {
+               $query->where('job_code_id', $department);
+               if ($role !== null  && is_numeric($role)) {
+
+               }
+            }
+        })->when( $archived ,function ($query) use ($archived) {
+            if ($archived !== null  ) {
+                if ($archived === true ) {
+                    $query->whereNotNull('archived_at');
+                } else {
+                    $query->whereNull('archived_at');
+                }
+            }
+        })
         ->when( $archived ,function ($query) use ($archived) {
             if ($archived !== null ) {
                 if ($archived === true ) {
@@ -99,7 +118,7 @@ class EmployeeController extends Controller
             }
 
 
-          
+
             $employee =  Employee::create($validatedData);
 
             if(isset($employer->onboarding_stage) && $employer->onboarding_stage == 1){

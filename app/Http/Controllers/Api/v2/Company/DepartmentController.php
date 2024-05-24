@@ -114,11 +114,10 @@ class DepartmentController extends Controller
         }
 
         $department->roles;
-
+        $department->team_supervisor = Supervisor::where('department_id', $department->id)->get();
         foreach($department->roles as $role){
             $role->total_employees = Employee::where('department_role_id', $role->id)->count();
-            $role->supervisor = Supervisor::where('department_role_id', $role->id)
-                                    ->orWhere('department_id',$department->id)->get();
+            $role->role_supervisor = Supervisor::where('department_role_id', $role->id)->get();
         }
 
 

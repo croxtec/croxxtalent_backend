@@ -27,7 +27,12 @@ class GoalController extends Controller
         $archived = $request->input('archived');
         $employee = $request->input('employee');
         $datatable_draw = $request->input('draw'); // if any
+        $period = [now()->startOfMonth(), now()->endOfMonth()];
 
+        info($period);
+// ->when($user_type == 'empoyee', function($query) use ($employee){
+//             $query->where('employee_id', $employee);
+//         })
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
 
         $goals = Goal::where( function ($query) use ($archived) {
@@ -40,12 +45,14 @@ class GoalController extends Controller
             }
         })->when($user_type == 'career', function($query) use ($user){
             $query->where('user_id', $user->id);
-        })->when($user_type == 'empoyee', function($query) use ($employee){
-            $query->where('employee_id', $employee);
+        })->when($period, function($query) use($period){
+            $query->whereBetween('created_at', $period);
         })
         ->where( function($query) use ($search) {
             $query->where('title', 'LIKE', "%{$search}%");
         })->orderBy($sort_by, $sort_dir);
+
+
 
         if ($per_page === 'all' || $per_page <= 0 ) {
             $results = $goals->get();
