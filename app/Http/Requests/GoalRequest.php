@@ -23,8 +23,9 @@ class GoalRequest extends FormRequest
             //     // return $this->user()->can('create', Goal::class);
             case 'PUT':
             case 'PATCH':
-                $goal = Goal::findOrFail($this->id);
-                return $this->user()->can('update', [Goal::class, $goal]);
+                return true;
+                // $goal = Goal::findOrFail($this->id);
+                // return $this->user()->can('update', [Goal::class, $goal]);
             case 'DELETE':
                 return false;
             default:break;
@@ -38,6 +39,23 @@ class GoalRequest extends FormRequest
      */
     public function rules()
     {
+         // Define the available reminder options
+         $reminderOptions = [
+            '5 Minutes before',
+            '10 Minutes before',
+            '15 Minutes before',
+            '30 Minutes before',
+            '1 Hour before',
+            '2 Hours before',
+            '3 Hours before' ,
+            '1 Day before',
+            '2 Days before',
+            '3 Days before',
+        ];
+
+        // Create the validation rule string for reminder options
+        $reminderValidation = implode(',', $reminderOptions);
+
         switch($this->method()) {
             case 'GET':
                 return [];
@@ -66,7 +84,7 @@ class GoalRequest extends FormRequest
                             }
                         }
                     ],
-                    'reminder' => 'required|string',
+                    'reminder' => 'required|string|in:' . $reminderValidation,
                     'metric' => 'nullable|max:250',
                 ];
             case 'PUT':

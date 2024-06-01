@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests\GoalRequest;
 use App\Models\Goal;
 use App\Models\Employee;
+use Illuminate\Support\Carbon;
 
 class GoalController extends Controller
 {
@@ -82,6 +83,24 @@ class GoalController extends Controller
 
         // Retrieve the validated input data...
         $validatedData = $request->validated();
+        $reminderOffsets = [
+            '5 Minutes before' => '-5 minutes',
+            '10 Minutes before' => '-10 minutes',
+            '15 Minutes before' => '-15 minutes',
+            '30 Minutes before' => '-30 minutes',
+            '1 Hour before' => '-1 hour',
+            '2 Hours before' => '-2 hours',
+            '3 Hours before' => '-3 hours',
+            '6 Hours before' => '-6 hours',
+            '1 Day before' => '-1 day',
+            '2 Days before' => '-2 days',
+            '3 Days before' => '-3 days',
+        ];
+        $period = Carbon::createFromFormat('Y-m-d H:i', $validatedData['period']);
+        $reminder = $validatedData['reminder'];
+        $reminderOffset = $reminderOffsets[$reminder];
+        $validatedData['reminder_date'] = $period->copy()->modify($reminderOffset);
+
         if($validatedData['type'] == 'career'){
             $validatedData['user_id'] = $user->id;
         }
@@ -91,6 +110,7 @@ class GoalController extends Controller
             $validatedData['employer_id'] = $employee->employer_id;
             $validatedData['user_id'] = $employee->employer_id;
         }
+
 
         $goal = Goal::create($validatedData);
 
@@ -131,17 +151,15 @@ class GoalController extends Controller
     {
         $employer = $request->user();
         $validatedData = $request->validated();
-
         $goal = Goal::findOrfail($id);
         if($goal->status === 'pending'){
             $goal->status = $validatedData['status'];
             $goal->save();
         }
-
         return response()->json([
             'status' => true,
-            'message' => "Employee \"{$employee->name}\" updated successfully.",
-            'data' => Goal::find($employee->id)
+            'message' => "Goal updated successfully.",
+            'data' => Goal::find($goal->id)
         ], 201);
     }
 
@@ -153,6 +171,7 @@ class GoalController extends Controller
      */
     public function archive($id)
     {
+        info($id);
         $goal = Goal::findOrFail($id);
 
         // $this->authorize('delete', [Goal::class, $goal]);
