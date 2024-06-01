@@ -48,6 +48,7 @@ class GoalRequest extends FormRequest
             '1 Hour before',
             '2 Hours before',
             '3 Hours before' ,
+            '6 Hours before',
             '1 Day before',
             '2 Days before',
             '3 Days before',
