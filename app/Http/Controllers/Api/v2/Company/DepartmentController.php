@@ -44,10 +44,11 @@ class DepartmentController extends Controller
 
         foreach($departments as $department){
             if(!$department->job_title){
-                $title =  $department->id . Str::random(10);
-                $department->job_title = $title;
+                $title =  $department->id . Str::random(12);
+                $department->job_title = strtolower($title);
                 $department->save();
             }
+
             foreach($department->roles as $role){
                 $role->total_employees = Employee::where('department_role_id', $role->id)->count();
             }
@@ -72,7 +73,6 @@ class DepartmentController extends Controller
         $company = $request->user();
         $rules = [
             'job_code' => 'required',
-            'job_title' => 'nullable',
             'description' => 'nullable'
         ];
 
@@ -129,32 +129,6 @@ class DepartmentController extends Controller
 
     }
 
-     /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update_managers(Request $request, $id)
-    {
-        $company = $request->user();
-        $job_code = Department::findOrFail($id);
-        $rules = [
-            'managers' => 'required|array',
-            'managers.*' => 'required|integer|exists:employees,id'
-        ];
-
-        $validatedData = $request->validate($rules);
-        $job_code->managers = $validatedData['managers'];
-        $job_code->save();
-
-        return response()->json([
-            'status' => true,
-            'message' => "Successful.",
-            'data' => $job_code
-        ], 200);
-
-    }
 
     /**
      * Update the specified resource in storage.
@@ -165,22 +139,21 @@ class DepartmentController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $company = $request->user();
+        $employer  = $request->user();
+        
         $rules = [
             'job_code' => 'required',
-            'job_title' => 'nullable',
             'description' => 'nullable'
         ];
 
         $validatedData = $request->validate($rules);
 
-        $job_code = Department::findOrFail($id);
-
+        $job_code = Department::where('id',$id)->where('employer_id', $employer->id)->first();
         $job_code->update($request->all());
 
         return response()->json([
             'status' => true,
-            'message' => "Job Code updated successfully.",
+            'message' => "Department updated successfully.",
             'data' =>  Department::findOrFail($id)
         ], 201);
     }

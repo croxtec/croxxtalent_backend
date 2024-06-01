@@ -15,9 +15,12 @@ class Goal extends Model
         'employee_id',
         'supervisor_id',
         'employer_id',
+        'type',
+
         'title',
         'period',
         'reminder',
+        'reminder_date',
         'metric'
     ];
 }

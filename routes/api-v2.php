@@ -247,7 +247,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             'employee' => 'Api\v2\Company\EmployeeController',
             'supervisor' => 'Api\v2\Company\SupervisorController',
             'department' => 'Api\v2\Company\DepartmentController'
-        ]);//->name('.employee');
+        ]);
 
         Route::get('competency', 'Api\v2\EmployerCompetencyController@index')->name('competency.index');
         Route::get('competency/gap', 'Api\v2\EmployerCompetencyController@competency')->name('competency.skill');

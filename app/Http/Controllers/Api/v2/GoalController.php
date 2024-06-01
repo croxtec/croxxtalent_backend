@@ -25,14 +25,16 @@ class GoalController extends Controller
         $sort_dir = $request->input('sort_dir', 'desc');
         $search = $request->input('search');
         $archived = $request->input('archived');
-        $employee = $request->input('employee');
-        $datatable_draw = $request->input('draw'); // if any
-        $period = [now()->startOfMonth(), now()->endOfMonth()];
+        $datatable_draw = $request->input('draw');
+        $month = $request->input('month', 'current');
+        $period = null;
 
-        info($period);
-// ->when($user_type == 'empoyee', function($query) use ($employee){
-//             $query->where('employee_id', $employee);
-//         })
+        if($month == 'current'){
+           $period = [now()->startOfMonth(), now()->endOfMonth()];
+        }else if($month === 'all'){
+            $period = null;
+        }
+
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
 
         $goals = Goal::where( function ($query) use ($archived) {
@@ -45,14 +47,13 @@ class GoalController extends Controller
             }
         })->when($user_type == 'career', function($query) use ($user){
             $query->where('user_id', $user->id);
-        })->when($period, function($query) use($period){
+        })
+        ->when($period, function($query) use($period){
             $query->whereBetween('created_at', $period);
         })
         ->where( function($query) use ($search) {
             $query->where('title', 'LIKE', "%{$search}%");
         })->orderBy($sort_by, $sort_dir);
-
-
 
         if ($per_page === 'all' || $per_page <= 0 ) {
             $results = $goals->get();
@@ -105,7 +106,6 @@ class GoalController extends Controller
                 'message' => "Could not complete request.",
             ], 400);
         }
-
     }
 
     /**
@@ -119,16 +119,6 @@ class GoalController extends Controller
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
 
     /**
      * Update the specified resource in storage.
@@ -137,9 +127,66 @@ class GoalController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(GoalRequest $request, $id)
     {
-        //
+        $employer = $request->user();
+        $validatedData = $request->validated();
+
+        $goal = Goal::findOrfail($id);
+        if($goal->status === 'pending'){
+            $goal->status = $validatedData['status'];
+            $goal->save();
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => "Employee \"{$employee->name}\" updated successfully.",
+            'data' => Goal::find($employee->id)
+        ], 201);
+    }
+
+    /**
+     * Archive the specified resource from active list.
+     *
+     * @param  string  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function archive($id)
+    {
+        $goal = Goal::findOrFail($id);
+
+        // $this->authorize('delete', [Goal::class, $goal]);
+
+        $goal->archived_at = now();
+        $goal->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => "Goal has been archived successfully.",
+            'data' => Goal::find($goal->id)
+        ], 200);
+    }
+
+    /**
+     * Unarchive the specified resource from archived storage.
+     *
+     * @param  string  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function unarchive($id)
+    {
+        $goal = Goal::findOrFail($id);
+
+        // $this->authorize('delete', [Goal::class, $goal]);
+
+        $goal->archived_at = null;
+        $goal->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => "Goal has been unarchived successfully.",
+            'data' => Goal::find($goal->id)
+        ], 200);
     }
 
     /**

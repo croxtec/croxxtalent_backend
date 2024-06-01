@@ -17,7 +17,9 @@ class Employee extends Model
         'phone',
         'birth_date',
         'job_code_id',
-        'department_role_id'
+        'department_role_id',
+        //
+        'code', 'gender', 'work_type', 'language'
     ];
 
     // DOB, Job title, job code, employee number and a lot more;

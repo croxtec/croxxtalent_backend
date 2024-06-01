@@ -72,11 +72,11 @@ class GoalRequest extends FormRequest
             case 'PUT':
             case 'PATCH':
                 return [
-                    'type' => 'sometimes|required|in:career,supervisor,company',
-                    'title' => 'sometimes|required|max:50',
-                    'period' => 'sometimes|required|date',
-                    'reminder' => 'sometimes|required|string',
-                    'metric' => 'nullable|max:250',
+                    // 'type' => 'sometimes|required|in:career,supervisor,company',
+                    // 'title' => 'sometimes|required|max:50',
+                    // 'period' => 'sometimes|required|date',
+                    // 'reminder' => 'sometimes|required|string',
+                    'status' => 'required|in:done,missed',
                 ];
             case 'DELETE':
                 return [];

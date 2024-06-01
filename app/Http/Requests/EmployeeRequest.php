@@ -68,12 +68,16 @@ class EmployeeRequest extends FormRequest
             case 'PUT':
             case 'PATCH':
                 return [
-                    'name' => 'required|max:100',
-                    'phone' => 'required|max:100',
-                    'level' => 'required|in:beginner,intermediate,advance,expert',
-                    'job_code_id' => 'required|exists:employer_jobcodes,id',
-                    'department_role_id' => 'required|exists:department_roles,id',
-                    'location' => 'nullable'
+                    'name' => 'sometimes|required|max:100',
+                    'phone' => 'sometimes|required|max:100',
+                    'level' => 'sometimes|required|in:beginner,intermediate,advance,expert',
+                    'location' => 'nullable',
+                    'work_type' =>  'nullable|in:contract,fulltime,parttime,internship',
+                    'gender' =>  'nullable',
+                    'language' =>  'nullable',
+                    'language' =>  'nullable',
+                    'hired_date' =>  'nullable|date',
+                    'birth_date' =>  'nullable|date',
                 ];
             default:break;
         }

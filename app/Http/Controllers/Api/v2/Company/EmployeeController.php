@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\EmployerJobcode as Department;
 use App\Models\DepartmentRole;
+use Illuminate\Support\Str;
+use App\Models\Goal;
 
 class EmployeeController extends Controller
 {
@@ -76,6 +78,14 @@ class EmployeeController extends Controller
             $employees = $employees->paginate($per_page);
         }
 
+        foreach($employees as $employee){
+            if(!$employee->code){
+                $code =  $employee->id . Str::random(15);
+                $employee->code = strtolower($code);
+                $employee->save();
+            }
+        }
+
         $response = collect([
             'status' => true,
             'message' => ""
@@ -116,8 +126,6 @@ class EmployeeController extends Controller
                 ]);
                 $validatedData['department_role_id'] = $department_role->id;
             }
-
-
 
             $employee =  Employee::create($validatedData);
 
@@ -197,9 +205,24 @@ class EmployeeController extends Controller
      */
     public function show(Request $request, $id)
     {
-        $employee = Employee::with('department', 'department_role', 'talent')->findOrFail($id);
+        $employer = $request->user();
 
         // $this->authorize('view', [Employee::class, $employee]);
+
+        if (is_numeric($id)) {
+            $employee = Employee::where('id', $id)->where('employer_id', $employer->id)->firstOrFail();
+        } else {
+            $employee = Employee::where('code', $id)->where('employer_id', $employer->id)->firstOrFail();
+        }
+
+        $goals = Goal::where('employee_id', $employee->id)
+                    ->where('employer_id', $employee->employer_id)
+                    ->get();
+
+        $employee->department;
+        $employee->department_role;
+        $employee->talent;
+        $employee->goals = $goals;
 
         return response()->json([
             'status' => true,
@@ -220,14 +243,14 @@ class EmployeeController extends Controller
         $employer = $request->user();
         $validatedData = $request->validated();
 
-        $employee = Employee::findOrFail($id);
+        $employee = Employee::where('id',$id)->where('employer_id', $employer->id)->firstOrFail();
         $employee->update($validatedData);
 
         return response()->json([
             'status' => true,
             'message' => "Employee \"{$employee->name}\" updated successfully.",
             'data' => Employee::find($employee->id)
-        ], 200);
+        ], 201);
     }
 
     /**
