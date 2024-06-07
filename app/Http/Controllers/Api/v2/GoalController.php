@@ -21,7 +21,7 @@ class GoalController extends Controller
         $user = $request->user();
         // $this->authorize('view-any', Goal::class);
         $user_type = $request->input('user_type', 'career');
-        $per_page = $request->input('per_page', 100);
+        $per_page = $request->input('per_page', 5);
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'desc');
         $search = $request->input('search');
@@ -70,6 +70,63 @@ class GoalController extends Controller
         return response()->json($response, 200);
     }
 
+
+    public function overview(Request $request){
+        $user = $request->user();
+        $user_type = $request->input('user_type', 'career');
+        $period = [now()->startOfMonth(), now()->endOfMonth()];
+
+        $totalDone = 0;
+        $totalMissed = 0;
+        $totalPending = 0;
+
+        $goals = Goal::when($user_type == 'career', function($query) use ($user){
+            $query->where('user_id', $user->id);
+        })->whereNull('archived_at')
+        ->when($period, function($query) use($period){
+            $query->whereBetween('created_at', $period);
+        })
+        ->select(['id','user_id', 'type','status'])->get();
+
+        foreach ($goals as $goal) {
+            switch ($goal->status) {
+                case 'done':
+                    $totalDone++;
+                    break;
+                case 'missed':
+                    $totalMissed++;
+                    break;
+                case 'pending':
+                    $totalPending++;
+                    break;
+            }
+        }
+
+        // Calculate percentage of done tasks against missed tasks
+        $totalCompletion = $totalDone + $totalMissed;
+
+        // Calculate percentage of done tasks against total completed tasks
+        $percentageDone = ($totalCompletion > 0) ? ($totalDone / $totalCompletion) * 100 : 0;
+
+        // Retrieve pending tasks
+        $pendingTasks = $goals->where('status', 'pending')->count();
+
+        $performance = [
+            'totalDone' => $totalDone,
+            'totalMissed' => $totalMissed,
+            'totalPending' => $totalPending,
+            'percentageDone' => $percentageDone,
+            'inProgress' => $pendingTasks,
+        ];
+
+        $response = collect([
+            'status' => true,
+            'message' => "Successful.",
+            'performance' => $performance
+        ]);
+
+        return response()->json($response, 200);
+    }
 
     /**
      * Store a newly created resource in storage.

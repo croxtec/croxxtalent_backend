@@ -266,6 +266,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             'campaigns' => 'Api\v2\CampaignController',
             'goals' => 'Api\v2\GoalController',
         ]);
+        Route::get('goals/performance/overview', 'Api\v2\GoalController@overview')->name('goals.overview');
         Route::patch('goals/{id}/archive', 'Api\v2\GoalController@archive')->name('goals.archive');
         Route::patch('goals/{id}/unarchive', 'Api\v2\GoalController@unarchive')->name('goals.unarchive');
         // Assesment Options
