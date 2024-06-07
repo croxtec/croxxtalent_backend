@@ -13,7 +13,8 @@ class TalentCompanyController extends Controller
     public function index(Request $request){
 
         $user = $request->user();
-        $companies = Employee::where('user_id', $user->id)->get();
+        $companies = Employee::where('user_id', $user->id)
+            ->with('department', 'department_role', 'employer')->get();
         $default_company =  null;
 
         if (count($companies)) {
@@ -24,11 +25,11 @@ class TalentCompanyController extends Controller
             $defaultCompanyId = $request->input('company', $firstCompanyEmployerId);
 
             $default_company = $companies->firstWhere('id', $defaultCompanyId);
-            if($default_company){
-                $default_company->department;
-                $default_company->department_role;
-                $default_company->employer;
-            }
+            // if($default_company){
+            //     $default_company->department;
+            //     $default_company->department_role;
+            //     $default_company->employer;
+            // }
         }
 
         return response()->json([
