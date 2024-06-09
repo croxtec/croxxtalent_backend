@@ -260,8 +260,8 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::resources([
             'campaigns' => 'Api\v2\CampaignController',
             'goals' => 'Api\v2\GoalController',
-            'assessments/competency' => '\Api\v2\Operations\CompetencyAssessmentController',
-            'assessments/evaluation' => '\Api\v2\Operations\EvaluationAssessmentController',
+            'assessments/evaluation' => 'Api\v2\Operations\EvaluationAssessmentController',
+            'assessments' => 'Api\v2\Operations\ExperienceAssessmentController',
         ]);
         Route::get('goals/performance/overview', 'Api\v2\GoalController@overview')->name('goals.overview');
         Route::patch('goals/{id}/archive', 'Api\v2\GoalController@archive')->name('goals.archive');

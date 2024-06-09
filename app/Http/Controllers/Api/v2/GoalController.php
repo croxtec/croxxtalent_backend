@@ -165,7 +165,7 @@ class GoalController extends Controller
         if($validatedData['type'] == 'supervisor'){
             $employee = Employee::where('id', $validatedData['supervisor_id'])->first();
             $validatedData['employer_id'] = $employee->employer_id;
-            $validatedData['user_id'] = $employee->employer_id;
+            $validatedData['user_id'] = $validatedData['supervisor_id'];
         }
 
 

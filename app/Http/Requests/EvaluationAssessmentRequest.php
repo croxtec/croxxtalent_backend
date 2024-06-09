@@ -17,7 +17,8 @@ class EvaluationAssessmentRequest extends FormRequest
             case 'GET':
                 return false;
             case 'POST':
-                return true;//$this->user()->can('create', Assesment::class);
+                return true;
+                //$this->user()->can('create', Assesment::class);
             case 'PUT':
             case 'PATCH':
                 return  true;
@@ -41,7 +42,7 @@ class EvaluationAssessmentRequest extends FormRequest
                 return [];
             case 'POST':
                 return [
-                    'type' => 'required|in:company,vetting,training,competency_match',
+                    'type' => 'required|in:company,supervisor,vetting,training,competency_match',
                     'category' => 'required|in:competency_evaluation',
                     'level' => 'required|in:beginner,intermediate,advance,expert',
                     'name' => 'required|max:100',
@@ -50,19 +51,22 @@ class EvaluationAssessmentRequest extends FormRequest
                     'expected_score' => 'required|integer',
 
                     'questions' => 'required|array',
-                    'questions.*.type' => 'required|in:text,reference,radio,checkbox,file',
+                    'questions.*.type' => 'required|in:text,multi_choice',
                     'questions.*.question' => 'required|min:10',
                     'questions.*.option1' => 'required|max:50',
                     'questions.*.option2' => 'required|max:50',
                     'questions.*.option3' => 'nullable|max:50',
                     'questions.*.option4' => 'nullable|max:50',
-                    'questions.*.answer' => 'required|max:50',
+                    'questions.*.answer' => 'required|in:option1,option2,option3,option4',
 
                     'department_id' => 'required_if:type,company|integer',
                     'career_id' => 'required_if:type,vetting,competency_match|integer',
+                    'supervisor_id' => 'required_if:type,supervisor|array',
                     'department_role_id' => 'nullable|integer',
-                    'employees.*' => 'required_if:type,company|integer|exists:employees,id',
-                    'supervisors.*' => 'required_if:type,company|integer|exists:employees,id',
+                    'employees' => 'required_if:type,company,supervisor|array',
+                    'supervisors' => 'required_if:type,company|array',
+                    'employees.*' => 'integer|exists:employees,id',
+                    'supervisors.*' => 'integer|exists:employees,id',
                     'delivery_type' => 'nullable|in:quiz,classroom,on_the_job,assessment,experience,exam,external',
                 ];
             case 'PUT':

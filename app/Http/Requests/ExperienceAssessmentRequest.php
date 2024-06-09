@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class EvaluationAssessmentRequest extends FormRequest
+class ExperienceAssessmentRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -41,7 +41,7 @@ class EvaluationAssessmentRequest extends FormRequest
                 return [];
             case 'POST':
                 return [
-                    'type' => 'required|in:company,vetting',
+                    'type' => 'required|in:company,supervisor,vetting',
                     'category' => 'required|in:peer_review,experience',
                     'level' => 'required|in:beginner,intermediate,advance,expert',
                     'name' => 'required|max:100',
@@ -51,7 +51,7 @@ class EvaluationAssessmentRequest extends FormRequest
 
                     'questions' => 'required|array',
                     'questions.*.question' => 'required|min:10',
-                    'questions.*.desctiption' => 'nullable',
+                    'questions.*.desctiption' => 'required',
                     // 'career_id'
                     'employees.*' => 'required_if:type,company|integer|exists:employees,id',
                     'supervisors.*' => 'required_if:type,company|integer|exists:employees,id',

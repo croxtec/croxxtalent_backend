@@ -45,14 +45,8 @@ class SupervisorRequest extends FormRequest
                 return [
                     'supervisor_id' => 'required|exists:employees,id',
                     'type' => 'required|in:department,role,employees',
-                    'department_id' => [
-                        'required_if:type,department,role',
-                        'exists:employer_jobcodes,id'
-                    ],
-                    'department_role_id' => [
-                        'required_if:type,role',
-                        'exists:department_roles,id'
-                    ],
+                    'department_id' => 'required_if:type,department,role|exists:employer_jobcodes,id',
+                    'department_role_id' =>  'required_if:type,role|exists:department_roles,id'
                 ];
             case 'PUT':
             case 'PATCH':

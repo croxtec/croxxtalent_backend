@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\v2\Operations;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Requests\ExperienceAssessmentRequest;
 
 class ExperienceAssessmentController extends Controller
 {
@@ -23,9 +24,18 @@ class ExperienceAssessmentController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(ExperienceAssessmentRequest $request)
     {
-        //
+
+        $user = $request->user();
+        // Authorization is declared in the Form Request
+        $validatedData = $request->validated();
+        $validatedData['user_id'] = $user->id;
+        // $validatedData['employer_id'] = $user->id;
+        $validatedData['code'] = $user->id.md5(time());
+
+        info($validatedData);
+
     }
 
     /**
