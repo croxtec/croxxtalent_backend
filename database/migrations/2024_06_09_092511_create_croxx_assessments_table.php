@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('level');
             $table->string('category');
             $table->string('type')->default('company');
-           
+
             $table->string('name');
             $table->text('description')->nullable();
             $table->timestamp('validity_period')->nullable();

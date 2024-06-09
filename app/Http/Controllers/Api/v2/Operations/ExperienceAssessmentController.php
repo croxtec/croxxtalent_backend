@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api\v2\Operations;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-class CompanyAssessmentController extends Controller
+class ExperienceAssessmentController extends Controller
 {
     /**
      * Display a listing of the resource.

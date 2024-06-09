@@ -13,16 +13,14 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('competency_questions', function (Blueprint $table) {
+        Schema::create('assigned_employees', function (Blueprint $table) {
             $table->id();
             $table->foreignId('assessment_id');
-            $table->enum('state', ['bank', 'publish'])->default('publish');
-            $table->text('question');
-            $table->text('description')->nullable();
-            
-            $table->json('files')->nullable();
-            $table->integer('duration')->nullable();
-            $table->timestamp('archived_at')->nullable();
+            $table->foreignId('employee_id');
+            $table->foreignId('talent_id')->nullable();
+            $table->boolean('is_supervisor')->default(false);
+            $table->foreignId('employer_id')->nullable();
+            $table->json('meta')->nullable();
             $table->timestamps();
         });
     }
@@ -34,6 +32,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('competency_questions');
+        Schema::dropIfExists('assigned_employees');
     }
 };
