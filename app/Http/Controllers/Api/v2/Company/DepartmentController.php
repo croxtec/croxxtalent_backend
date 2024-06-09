@@ -140,7 +140,7 @@ class DepartmentController extends Controller
     public function update(Request $request, $id)
     {
         $employer  = $request->user();
-        
+
         $rules = [
             'job_code' => 'required',
             'description' => 'nullable'
