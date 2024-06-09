@@ -97,6 +97,8 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
 
             Route::get('company', 'Api\v2\Talent\TalentCompanyController@index')->name('company.employee');
             Route::get('company/supervisor', 'Api\v2\Talent\TalentCompanyController@supervisor')->name('company.supervisor');
+            Route::get('company/employee/{id}', 'Api\v2\Talent\TalentCompanyController@employeeInformation')->name('company.employee');
+            Route::get('company/team/performance', 'Api\v2\Talent\TalentCompanyController@teamPerformanceProgress')->name('company.performance');
             // Competence
             Route::get('competence', 'Api\v2\TalentCompetencyController@index')->name('competence.index');
             Route::get('competence/skill', 'Api\v2\TalentCompetencyController@skill')->name('competence.skill');

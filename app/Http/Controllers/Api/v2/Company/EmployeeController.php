@@ -206,14 +206,13 @@ class EmployeeController extends Controller
     public function show(Request $request, $id)
     {
         $employer = $request->user();
-
-        // $this->authorize('view', [Employee::class, $employee]);
-
         if (is_numeric($id)) {
             $employee = Employee::where('id', $id)->where('employer_id', $employer->id)->firstOrFail();
         } else {
             $employee = Employee::where('code', $id)->where('employer_id', $employer->id)->firstOrFail();
         }
+
+        // $this->authorize('view', [Employee::class, $employee]);
 
         $goals = Goal::where('employee_id', $employee->id)
                     ->where('employer_id', $employee->employer_id)
@@ -222,6 +221,7 @@ class EmployeeController extends Controller
         $employee->department;
         $employee->department_role;
         $employee->talent;
+        $employee->supervisor;
         $employee->goals = $goals;
 
         return response()->json([

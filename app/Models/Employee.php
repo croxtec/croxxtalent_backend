@@ -48,6 +48,10 @@ class Employee extends Model
                     ->select(['id','first_name','last_name','photo']);
     }
 
+    public function supervisor(){
+        return $this->belongsTo('App\Models\Supervisor', 'supervisor_id', 'id');
+    }
+
     public function verifications()
     {
         return $this->morphMany('App\Models\Verification', 'verifiable');
