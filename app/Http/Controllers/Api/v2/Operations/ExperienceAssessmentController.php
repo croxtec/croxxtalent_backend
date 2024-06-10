@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Assessment\CompetencyQuestion;
+use App\Models\Assessment\EvaluationQuestion;
 use App\Http\Requests\ExperienceAssessmentRequest;
 use App\Models\Assessment\CroxxAssessment;
 use App\Models\Assessment\AssignedEmployee;
@@ -157,7 +158,7 @@ class ExperienceAssessmentController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $user = $request->user();
 
@@ -167,7 +168,14 @@ class ExperienceAssessmentController extends Controller
             $assessment = CroxxAssessment::where('code', $id)->where('employer_id', $user->id)->firstOrFail();
         }
 
-       $assessment->questions;
+        if ($assessment->category == 'competency_evaluation') {
+           $questions = EvaluationQuestion::where('assessment_id', $assessment->id)
+                    ->whereNull('archived_at')->get();
+        } else {
+            // return $this->competencyQuestions();
+        }
+
+        info($questions);
 
        return response()->json([
             'status' => true,
