@@ -51,10 +51,16 @@ class ExperienceAssessmentRequest extends FormRequest
 
                     'questions' => 'required|array',
                     'questions.*.question' => 'required|min:10',
-                    'questions.*.desctiption' => 'required',
+                    'questions.*.desctiption' => 'nullable',
                     // 'career_id'
-                    'employees.*' => 'required_if:type,company|integer|exists:employees,id',
-                    'supervisors.*' => 'required_if:type,company|integer|exists:employees,id',
+                    'department_id' => 'required_if:type,company|integer',
+                    'career_id' => 'required_if:type,vetting,competency_match|integer',
+                    'supervisor_id' => 'required_if:type,supervisor|integer|exists:employees,id',
+                    'department_role_id' => 'nullable|integer',
+                    'employees' => 'required_if:type,company,supervisor|array',
+                    'supervisors' => 'required_if:type,company|array',
+                    'employees.*' => 'integer|exists:employees,id',
+                    'supervisors.*' => 'nullable|integer|exists:employees,id',
                     'delivery_type' => 'nullable|in:quiz,classroom,on_the_job,assessment,experience,exam,external',
                 ];
             case 'PUT':

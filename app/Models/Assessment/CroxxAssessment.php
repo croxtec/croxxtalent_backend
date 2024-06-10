@@ -28,4 +28,35 @@ class CroxxAssessment extends Model
     ];
 
 
+    public function department(){
+        return $this->belongsTo('App\Models\EmployerJobcode', 'department_id', 'id')
+                    ->select(['id','job_code', 'job_title']);
+    }
+
+    public function department_role(){
+        return $this->belongsTo('App\Models\DepartmentRole', 'department_role_id', 'id')
+                    ->select(['id','name']);
+    }
+
+
+
+    public function evaluationQuestions()
+    {
+        return $this->hasMany('App\Modelss\Assessment\EvaluationQuestion', 'assessment_id', 'id')->whereNull('archived_at');
+    }
+
+    public function competencyQuestions()
+    {
+        return $this->hasMany('App\Modelss\Assessment\CompetencyQuestion', 'assessment_id', 'id')->whereNull('archived_at');
+    }
+
+    public function getQuestionsAttribute()
+    {
+        if ($this->category == 'competency_evaluation') {
+            return $this->evaluationQuestions();
+        } else {
+            return $this->competencyQuestions();
+        }
+    }
+
 }

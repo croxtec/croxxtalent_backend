@@ -4,7 +4,13 @@ namespace App\Http\Controllers\Api\v2\Operations;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use App\Models\Assessment\CompetencyQuestion;
 use App\Http\Requests\ExperienceAssessmentRequest;
+use App\Models\Assessment\CroxxAssessment;
+use App\Models\Assessment\AssignedEmployee;
+use App\Models\Employee;
+use App\Models\Supervisor;
 
 class ExperienceAssessmentController extends Controller
 {
@@ -13,9 +19,48 @@ class ExperienceAssessmentController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
+        $user = $request->user();
+        $user_type = $user->type;
+        $per_page = $request->input('per_page', 100);
+        $sort_by = $request->input('sort_by', 'created_at');
+        $sort_dir = $request->input('sort_dir', 'desc');
+        $search = $request->input('search');
+        $archived = $request->input('archived');
+        $datatable_draw = $request->input('draw'); // if any
+
+        $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
         //
+
+        $assesments = CroxxAssessment::where('user_id', $user->id)
+            ->when($archived ,function ($query) use ($archived) {
+            if ($archived !== null ) {
+                if ($archived === true ) {
+                    $query->whereNotNull('archived_at');
+                } else {
+                    $query->whereNull('archived_at');
+                }
+            }
+        })
+        ->where( function($query) use ($search) {
+            $query->where('code', 'LIKE', "%{$search}%");
+        })->with('department', 'department_role')
+        ->orderBy($sort_by, $sort_dir);
+
+        if ($per_page === 'all' || $per_page <= 0 ) {
+            $results = $assesments->get();
+            $assesments = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
+        } else {
+            $assesments = $assesments->paginate($per_page);
+        }
+
+        $response = collect([
+            'status' => true,
+            'data' => $assesments,
+            'message' => "Successful."
+        ]);
+        return response()->json($response, 200);
     }
 
     /**
@@ -27,15 +72,83 @@ class ExperienceAssessmentController extends Controller
     public function store(ExperienceAssessmentRequest $request)
     {
 
-        $user = $request->user();
-        // Authorization is declared in the Form Request
-        $validatedData = $request->validated();
-        $validatedData['user_id'] = $user->id;
-        // $validatedData['employer_id'] = $user->id;
-        $validatedData['code'] = $user->id.md5(time());
+         // Start a transaction
+         DB::beginTransaction();
 
-        info($validatedData);
+         try {
+             $user = $request->user();
+             $validatedData = $request->validated();
+             $validatedData['code'] = $user->id . md5(time());
 
+             if ($validatedData['type'] == 'company') {
+                 $validatedData['user_id'] = $user->id;
+                 $validatedData['employer_id'] = $user->id;
+             }
+
+             if ($validatedData['type'] == 'supervisor') {
+                 $employee = Supervisor::where('supervisor_id', $validatedData['supervisor_id'])->firstOrFail();
+                 $validatedData['employer_id'] = $employee->employer_id;
+                 $validatedData['user_id'] = $validatedData['supervisor_id'];
+             }
+
+             // Create assessment
+             $assessment = CroxxAssessment::create($validatedData);
+
+             // Create questions
+             $questions = $validatedData['questions'];
+             foreach ($questions as $question) {
+                 $question['assessment_id'] = $assessment->id;
+                 CompetencyQuestion::create($question);
+             }
+
+             // Create assigned employees
+             $employees = $validatedData['employees'];
+             foreach ($employees as $employee) {
+                 AssignedEmployee::create([
+                     'assessment_id' => $assessment->id,
+                     'employee_id' => $employee,
+                 ]);
+             }
+
+             if ($validatedData['type'] == 'company') {
+                 // Create assigned supervisors
+                 $supervisors = $validatedData['supervisors'];
+                 foreach ($supervisors as $supervisor) {
+                     AssignedEmployee::create([
+                         'assessment_id' => $assessment->id,
+                         'employee_id' => $supervisor,
+                         'is_supervisor' => true
+                     ]);
+                 }
+             }
+
+             if ($validatedData['type'] == 'supervisor') {
+                 AssignedEmployee::create([
+                     'assessment_id' => $assessment->id,
+                     'employee_id' => $validatedData['supervisor_id'],
+                     'is_supervisor' => true
+                 ]);
+             }
+
+
+             // Commit the transaction
+             DB::commit();
+
+             return response()->json([
+                 'status' => true,
+                 'message' => "Assessment created successfully.",
+                 'data' => CroxxAssessment::find($assessment->id),
+             ], 201);
+
+         } catch (\Exception $e) {
+             // Rollback the transaction on error
+             DB::rollBack();
+
+             return response()->json([
+                 'status' => false,
+                 'message' => "Could not complete request. " . $e->getMessage(),
+             ], 400);
+         }
     }
 
     /**
@@ -46,7 +159,21 @@ class ExperienceAssessmentController extends Controller
      */
     public function show($id)
     {
-        //
+        $user = $request->user();
+
+        if (is_numeric($id)) {
+            $assessment = CroxxAssessment::where('id', $id)->where('employer_id', $user->id)->firstOrFail();
+        } else {
+            $assessment = CroxxAssessment::where('code', $id)->where('employer_id', $user->id)->firstOrFail();
+        }
+
+       $assessment->questions;
+
+       return response()->json([
+            'status' => true,
+            'message' => "Successful.",
+            'data' => $assessment
+        ], 200);
     }
 
     /**

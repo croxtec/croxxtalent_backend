@@ -8,4 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 class CompetencyQuestion extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'assessment_id',
+        'type',
+        'question',
+        'description',
+        'files'
+    ];
 }

@@ -19,9 +19,9 @@ class EvaluationAssessmentController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        return 'Hi';
+
     }
 
     /**
@@ -34,64 +34,76 @@ class EvaluationAssessmentController extends Controller
     {
         // Start a transaction
         DB::beginTransaction();
-    
+
         try {
             $user = $request->user();
             $validatedData = $request->validated();
-            $validatedData['user_id'] = $user->id;
             $validatedData['code'] = $user->id . md5(time());
-    
+
             if ($validatedData['type'] == 'company') {
                 $validatedData['user_id'] = $user->id;
+                $validatedData['employer_id'] = $user->id;
             }
-    
+
             if ($validatedData['type'] == 'supervisor') {
-                $employee = Supervisor::where('id', $validatedData['supervisor_id'])->first();
+                $employee = Supervisor::where('supervisor_id', $validatedData['supervisor_id'])->firstOrFail();
                 $validatedData['employer_id'] = $employee->employer_id;
                 $validatedData['user_id'] = $validatedData['supervisor_id'];
             }
-    
+
             // Create assessment
             $assessment = CroxxAssessment::create($validatedData);
-    
+
             // Create questions
             $questions = $validatedData['questions'];
             foreach ($questions as $question) {
                 $question['assessment_id'] = $assessment->id;
                 EvaluationQuestion::create($question);
             }
-    
+
             // Create assigned employees
             $employees = $validatedData['employees'];
             foreach ($employees as $employee) {
                 AssignedEmployee::create([
                     'assessment_id' => $assessment->id,
-                    'employee_id' => $employee['id'],
+                    'employee_id' => $employee,
                 ]);
             }
-    
-            // Create assigned supervisors
-            $supervisors = $validatedData['supervisors'];
-            foreach ($supervisors as $supervisor) {
-                AssignedSupervisor::create([
+
+            if ($validatedData['type'] == 'company') {
+                // Create assigned supervisors
+                $supervisors = $validatedData['supervisors'];
+                foreach ($supervisors as $supervisor) {
+                    AssignedEmployee::create([
+                        'assessment_id' => $assessment->id,
+                        'employee_id' => $supervisor,
+                        'is_supervisor' => true
+                    ]);
+                }
+            }
+
+            if ($validatedData['type'] == 'supervisor') {
+                AssignedEmployee::create([
                     'assessment_id' => $assessment->id,
-                    'supervisor_id' => $supervisor['id'],
+                    'employee_id' => $validatedData['supervisor_id'],
+                    'is_supervisor' => true
                 ]);
             }
-    
+
+
             // Commit the transaction
             DB::commit();
-    
+
             return response()->json([
                 'status' => true,
                 'message' => "Assessment created successfully.",
                 'data' => CroxxAssessment::find($assessment->id),
             ], 201);
-    
+
         } catch (\Exception $e) {
             // Rollback the transaction on error
             DB::rollBack();
-    
+
             return response()->json([
                 'status' => false,
                 'message' => "Could not complete request. " . $e->getMessage(),

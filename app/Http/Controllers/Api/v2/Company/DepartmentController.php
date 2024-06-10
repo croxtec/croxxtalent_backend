@@ -124,7 +124,7 @@ class DepartmentController extends Controller
         return response()->json([
             'status' => true,
             'message' => "Successful.",
-            'data' => compact('department')
+            'data' => $department
         ], 200);
 
     }
