@@ -260,7 +260,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::resources([
             'campaigns' => 'Api\v2\CampaignController',
             'goals' => 'Api\v2\GoalController',
-            'assessments/evaluation' => 'Api\v2\Operations\EvaluationAssessmentController',
+             'assessments/evaluation' => 'Api\v2\Operations\EvaluationAssessmentController',
             'assessments' => 'Api\v2\Operations\ExperienceAssessmentController',
         ]);
         Route::get('goals/overview/performance', 'Api\v2\GoalController@overview')->name('goals.overview');

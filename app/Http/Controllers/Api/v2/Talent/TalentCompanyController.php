@@ -29,7 +29,6 @@ class TalentCompanyController extends Controller
                 $user->save();
             }else{
                 $user->token = $firstCompanyEmployerId;
-                $user->save();
             }
 
             $default_company = $companies->firstWhere('id', $user->token);
