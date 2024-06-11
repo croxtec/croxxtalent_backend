@@ -22,11 +22,17 @@ class TalentCompanyController extends Controller
         if (count($companies)) {
             // Get the first company's employer_id as the default
             $firstCompanyEmployerId = $companies->first()->id;
+            // $defaultCompanyId = $request->input('employer', $firstCompanyEmployerId);
 
-            // Retrieve the id from the request or use the first company's id as default
-            $defaultCompanyId = $request->input('employer', $firstCompanyEmployerId);
+            if($request->input('employer')) {
+                $user->token = $request->input('employer');
+                $user->save();
+            }else{
+                $user->token = $firstCompanyEmployerId;
+                $user->save();
+            }
 
-            $default_company = $companies->firstWhere('id', $defaultCompanyId);
+            $default_company = $companies->firstWhere('id', $user->token);
         }
 
         return response()->json([
@@ -49,7 +55,7 @@ class TalentCompanyController extends Controller
             // Retrieve the id from the request or use the first company's id as default
             $defaultCompanyId = $request->input('employer', $firstCompanyEmployerId);
             // Employerr
-            $myinfo = $companies->firstWhere('id', $defaultCompanyId);
+            $myinfo = $companies->firstWhere('id', $user->token);
 
             if(isset($myinfo->supervisor_id)){
                 // Get Supervisor Info
@@ -88,7 +94,7 @@ class TalentCompanyController extends Controller
         if (count($companies)) {
             $firstCompanyEmployerId = $companies->first()->id;
             $defaultCompanyId = $request->input('employer', $firstCompanyEmployerId);
-            $myinfo = $companies->firstWhere('id', $defaultCompanyId);
+            $myinfo = $companies->firstWhere('id', $user->token);
 
             if(isset($myinfo->supervisor_id)){
 
@@ -138,7 +144,7 @@ class TalentCompanyController extends Controller
             $per_page = $request->input('per_page', 4);
             $defaultCompanyId = $request->input('employer', $firstCompanyEmployerId);
 
-            $myinfo = $companies->firstWhere('id', $defaultCompanyId);
+            $myinfo = $companies->firstWhere('id', $user->token);
 
             if(isset($myinfo->supervisor_id)){
                 $supervisor = Supervisor::where('supervisor_id', $myinfo->id)->first();

@@ -8,6 +8,7 @@ use App\Http\Requests\GoalRequest;
 use App\Models\Goal;
 use App\Models\Employee;
 use Illuminate\Support\Carbon;
+use Carbon\Carbon;
 
 class GoalController extends Controller
 {
@@ -147,8 +148,8 @@ class GoalController extends Controller
                 'id' => $goal->id,
                 'title' => $goal->title,
                 'status' => $goal->status,
-                'start' => $goal->reminder_date,
-                'end' => $goal->period,
+                'start' => Carbon::parse($goal->reminder_date)->format('Y-m-d H:i'),
+                'end' => Carbon::parse($goal->period)->format('Y-m-d H:i'),
             ];
         });
 
