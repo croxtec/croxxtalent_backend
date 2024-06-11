@@ -32,7 +32,7 @@ class DepartmentController extends Controller
         $departments = Department::where('employer_id', $company->id)
         ->when($search, function($query) use ($search) {
             $query->where('id', 'LIKE', "%{$search}%");
-        })->with('roles')
+        })
         ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
@@ -48,7 +48,7 @@ class DepartmentController extends Controller
                 $department->job_title = strtolower($title);
                 $department->save();
             }
-
+            $department->roles;
             foreach($department->roles as $role){
                 $role->total_employees = Employee::where('department_role_id', $role->id)->count();
             }

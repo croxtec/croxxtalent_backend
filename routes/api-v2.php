@@ -263,7 +263,8 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             'assessments/evaluation' => 'Api\v2\Operations\EvaluationAssessmentController',
             'assessments' => 'Api\v2\Operations\ExperienceAssessmentController',
         ]);
-        Route::get('goals/performance/overview', 'Api\v2\GoalController@overview')->name('goals.overview');
+        Route::get('goals/overview/performance', 'Api\v2\GoalController@overview')->name('goals.overview');
+        Route::get('goals/overview/calendar', 'Api\v2\GoalController@calendarOverview')->name('goals.overview.calendar');
         Route::patch('goals/{id}/archive', 'Api\v2\GoalController@archive')->name('goals.archive');
         Route::patch('goals/{id}/unarchive', 'Api\v2\GoalController@unarchive')->name('goals.unarchive');
         // Assesment Options

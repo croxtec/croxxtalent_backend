@@ -128,6 +128,41 @@ class GoalController extends Controller
         return response()->json($response, 200);
     }
 
+    public function calendarOverview(Request $request){
+        $user = $request->user();
+        $user_type = $request->input('user_type', 'career');
+        // $period = [Carbon::now()->subMonth(), Carbon::now()]; // Example period, adjust as needed
+        $period = [now()->startOfMonth(), now()->endOfMonth()];
+
+
+        $goals = Goal::whereNull('archived_at')
+            ->when($period, function($query) use($period){
+                $query->whereBetween('created_at', $period);
+            })
+            ->orderBy('reminder_date') // Sort by reminder_date
+            ->get();
+
+        $calendar = $goals->map(function($goal) {
+            return [
+                'id' => $goal->id,
+                'title' => $goal->title,
+                'status' => $goal->status,
+                'start' => $goal->reminder_date,
+                'end' => $goal->period,
+            ];
+        });
+
+        $response = collect([
+            'status' => true,
+            'message' => "Successful.",
+            'data' => $calendar
+        ]);
+
+        return response()->json($response, 200);
+
+    }
+
+
     /**
      * Store a newly created resource in storage.
      *
