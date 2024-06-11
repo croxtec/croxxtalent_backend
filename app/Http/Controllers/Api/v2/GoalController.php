@@ -8,7 +8,6 @@ use App\Http\Requests\GoalRequest;
 use App\Models\Goal;
 use App\Models\Employee;
 use Illuminate\Support\Carbon;
-use Carbon\Carbon;
 
 class GoalController extends Controller
 {
