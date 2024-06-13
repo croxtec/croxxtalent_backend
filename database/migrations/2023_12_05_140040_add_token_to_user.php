@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('username')->nullable();
             $table->string('token')->nullable();
             $table->integer('onboarding_stage')->default(1);
+            $table->foreignId('default_company_id')->nullable();
         });
     }
 
