@@ -104,4 +104,20 @@ class EmployerCompetencyController extends Controller
         ], 201);
 
     }
+
+    public function confirmWelcome(Request $request){
+        $employer = $request->user();
+
+        if(isset($employer->onboarding_stage) && $employer->onboarding_stage >= 2){
+            $employer->onboarding_stage = 4;
+            $employer->save();
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => "Competency matched successfully.",
+            'data' => []
+        ], 201);
+
+    }
 }
