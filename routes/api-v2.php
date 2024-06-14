@@ -248,6 +248,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             'supervisor' => 'Api\v2\Company\SupervisorController',
             'department' => 'Api\v2\Company\DepartmentController'
         ]);
+        Route::post('onboarding/welcome', 'Api\v2\EmployerCompetencyController@sconfirmWelcome')->name('confirm.welcome');
 
         Route::get('competency', 'Api\v2\EmployerCompetencyController@index')->name('competency.index');
         Route::get('competency/gap', 'Api\v2\EmployerCompetencyController@competency')->name('competency.skill');
