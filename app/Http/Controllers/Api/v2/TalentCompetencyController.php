@@ -14,9 +14,34 @@ use App\Models\EmployerJobcode as JobCode;
 use App\Models\JobInvitation;
 use App\Models\AssesmentQuestion;
 use App\Models\AssesmentTalentAnswer;
+use App\Models\Competency\CompetencySetup;
 
 class TalentCompetencyController extends Controller
 {
+
+    public function suggestion(Request $request){
+        $user = $request->user();
+        $suggestion = [];
+
+        if(isset($user->cv?->job_title_name)){
+            $list =  CompetencySetup::where('industry_id',  $user->cv?->industry_id)->get()->toArray();
+
+                //$list = array_filter($competencies, function($competency) use ($user) {
+                //    return $competency['industry'] === $user->cv?->industry_name;
+                //});
+
+            shuffle($list);
+            $suggestion = array_slice($list,0,5);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' =>   $suggestion,
+            'message' => ''
+        ], 200);
+    }
+
+
     public function index(Request $request){
         $user = $request->user();
 

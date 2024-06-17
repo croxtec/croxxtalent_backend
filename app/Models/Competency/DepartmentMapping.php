@@ -8,4 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 class DepartmentMapping extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'department',
+        'competency',
+        'competency_role',
+        'description'
+    ];
+
 }

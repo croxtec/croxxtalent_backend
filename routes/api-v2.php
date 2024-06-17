@@ -91,14 +91,13 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
 
     // Authenticated requests API
     Route::middleware('auth:sanctum')->name('api.')->group( function () {
-
-
         Route::prefix('talent')->name('talent')->group( function () {
             Route::get('company', 'Api\v2\Talent\TalentCompanyController@index')->name('company.employee');
             Route::get('company/supervisor', 'Api\v2\Talent\TalentCompanyController@supervisor')->name('company.supervisor');
             Route::get('company/employee/{id}', 'Api\v2\Talent\TalentCompanyController@employeeInformation')->name('company.employee');
             Route::get('company/team/performance', 'Api\v2\Talent\TalentCompanyController@teamPerformanceProgress')->name('company.performance');
             // Competence
+            Route::get('career/suggestion', 'Api\v2\TalentCompetencyController@suggestion')->name('competence.suggestion');
             Route::get('competence', 'Api\v2\TalentCompetencyController@index')->name('competence.index');
             Route::get('competence/skill', 'Api\v2\TalentCompetencyController@skill')->name('competence.skill');
             Route::get('competence/experience', 'Api\v2\TalentCompetencyController@experience')->name('competence.experience');
@@ -207,7 +206,6 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
 
         Route::get('users/{id}/notifications', 'Api\v2\UserController@notifications')->name('users.notifications');
         Route::get('notifications/seen/{id}', 'Api\v2\UserController@seenNotification')->name('users.notifications');
-
     });
 
     Route::get('jobs', 'Api\v2\CroxxJobsController@index')->name('jobs.index');
@@ -248,20 +246,20 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             'supervisor' => 'Api\v2\Company\SupervisorController',
             'department' => 'Api\v2\Company\DepartmentController'
         ]);
+        Route::get('competency/mapping', 'Api\v2\EmployerCompetencyController@index')->name('competency.index');
+        Route::post('competency/add', 'Api\v2\EmployerCompetencyController@storeCompetency')->name('competency.store');
         Route::post('onboarding/welcome', 'Api\v2\EmployerCompetencyController@confirmWelcome')->name('confirm.welcome');
 
-        Route::get('competency', 'Api\v2\EmployerCompetencyController@index')->name('competency.index');
-        Route::get('competency/gap', 'Api\v2\EmployerCompetencyController@competency')->name('competency.skill');
-        Route::post('competency/add', 'Api\v2\EmployerCompetencyController@storeCompetency')->name('competency.store');
-        Route::patch('employee/{id}/archive', 'Api\v2\EmployeeController@archive')->name('employee.archive');
-        Route::patch('employee/{id}/unarchive', 'Api\v2\EmployeeController@unarchive')->name('employee.unarchive');
+        // Route::get('competency/gap', 'Api\v2\EmployerCompetencyController@competency')->name('competency.skill');
+        // Route::patch('employee/{id}/archive', 'Api\v2\EmployeeController@archive')->name('employee.archive');
+        // Route::patch('employee/{id}/unarchive', 'Api\v2\EmployeeController@unarchive')->name('employee.unarchive');
     });
 
     Route::middleware('auth:sanctum')->group( function () {
         Route::resources([
             'campaigns' => 'Api\v2\CampaignController',
             'goals' => 'Api\v2\GoalController',
-             'assessments/evaluation' => 'Api\v2\Operations\EvaluationAssessmentController',
+            'assessments/evaluation' => 'Api\v2\Operations\EvaluationAssessmentController',
             'assessments' => 'Api\v2\Operations\ExperienceAssessmentController',
         ]);
         Route::get('goals/overview/performance', 'Api\v2\GoalController@overview')->name('goals.overview');
