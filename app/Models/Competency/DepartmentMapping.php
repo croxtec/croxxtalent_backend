@@ -10,7 +10,8 @@ class DepartmentMapping extends Model
     use HasFactory;
 
     protected $fillable = [
-        'department',
+        'employer_id',
+        'department_id',
         'competency',
         'competency_role',
         'description'

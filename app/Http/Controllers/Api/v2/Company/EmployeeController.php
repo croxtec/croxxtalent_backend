@@ -223,6 +223,10 @@ class EmployeeController extends Controller
         $employee->talent;
         $employee->supervisor;
         $employee->goals = $goals;
+        $employee->competencies = [
+            'technical_skill' => $employee->department->technical_skill,
+            'soft_skill' => $employee->department->soft_skill
+        ];
 
         return response()->json([
             'status' => true,

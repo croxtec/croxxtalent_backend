@@ -247,7 +247,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             'department' => 'Api\v2\Company\DepartmentController'
         ]);
         Route::get('competency/mapping', 'Api\v2\EmployerCompetencyController@index')->name('competency.index');
-        Route::post('competency/add', 'Api\v2\EmployerCompetencyController@storeCompetency')->name('competency.store');
+        Route::post('competency/mapping/{id}', 'Api\v2\EmployerCompetencyController@storeCompetency')->name('competency.store');
         Route::post('onboarding/welcome', 'Api\v2\EmployerCompetencyController@confirmWelcome')->name('confirm.welcome');
 
         // Route::get('competency/gap', 'Api\v2\EmployerCompetencyController@competency')->name('competency.skill');

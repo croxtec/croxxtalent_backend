@@ -49,6 +49,8 @@ class DepartmentController extends Controller
                 $department->save();
             }
             $department->roles;
+            $department->technical_skill;
+            $department->soft_skill;
             foreach($department->roles as $role){
                 $role->total_employees = Employee::where('department_role_id', $role->id)->count();
             }
@@ -114,6 +116,8 @@ class DepartmentController extends Controller
         }
 
         $department->roles;
+        $department->technical_skill;
+        $department->soft_skill;
         $department->head_count = Employee::where('job_code_id', $department->id)->count();
         $department->team_supervisor = Supervisor::where('department_id', $department->id)->get();
         foreach($department->roles as $role){

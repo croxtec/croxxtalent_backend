@@ -60,4 +60,14 @@ class EmployerJobcode extends Model
         return $this->assessment->count();
     }
 
+    public function technical_skill(){
+        return $this->hasMany('App\Models\Competency\DepartmentMapping', 'department_id', 'id')
+            ->where('competency_role', 'technical_skill');
+    }
+
+    public function soft_skill(){
+        return $this->hasMany('App\Models\Competency\DepartmentMapping', 'department_id', 'id')
+            ->where('competency_role', 'soft_skill');
+    }
+
 }

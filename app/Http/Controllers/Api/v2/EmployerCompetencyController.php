@@ -10,14 +10,13 @@ use App\Models\Employee;
 use App\Models\AssesmentSummary;
 use App\Models\Assesment;
 use App\Models\VettingSummary;
-use App\Models\EmployerJobcode as JobCode;
+use App\Models\EmployerJobcode as Department;
+use App\Models\Competency\DepartmentMapping;
 
 class EmployerCompetencyController extends Controller
 {
-    public function index(Request $request)
-    {
-        $user = $request->user();
-        $competencies = [
+    protected static function competencies(){
+        return[
             // Human Resources
             ['department' => 'human_resources', 'competency' => 'talent_acquisition', 'competency_role' => 'technical_skill', 'description' => 'Ability to identify, attract, and recruit top talent.'],
             ['department' => 'human_resources', 'competency' => 'employee_relations', 'competency_role' => 'soft_skill', 'description' => 'Managing relationships between the employer and employees.'],
@@ -66,6 +65,13 @@ class EmployerCompetencyController extends Controller
             ['department' => 'research_and_development', 'competency' => 'data_analysis', 'competency_role' => 'technical_skill', 'description' => 'Analyzing data to inform R&D decisions.'],
             ['department' => 'research_and_development', 'competency' => 'prototyping', 'competency_role' => 'technical_skill', 'description' => 'Creating prototypes for testing and development.']
         ];
+    }
+
+    public function index(Request $request)
+    {
+        $user = $request->user();
+
+        $competencies = EmployerCompetencyController::competencies();
 
         // Separate technical and soft skills
         $technical_skills = array_filter($competencies, function($competency) {
@@ -92,15 +98,6 @@ class EmployerCompetencyController extends Controller
         //     return $competency['department'] === 'operations';
         // });
 
-        // // Separate technical and soft skills
-        // $technical_skills = array_filter($operations_competencies, function($competency) {
-        //     return $competency['competency_role'] === 'technical_skill';
-        // });
-
-        // $soft_skills = array_filter($operations_competencies, function($competency) {
-        //     return $competency['competency_role'] === 'soft_skill';
-        // });
-
         return response()->json([
             'status' => true,
             'data' => compact('technical_skills','soft_skills'),
@@ -108,73 +105,48 @@ class EmployerCompetencyController extends Controller
         ], 200);
     }
 
-    public function competency(Request $request)
-    {
-        $user = $request->user();
-        // Old Index
-        // $groups = array();
-
-        // $per_page = $request->input('per_page', -1);
-        // $sort_by = $request->input('sort_by', 'created_at');
-        // $sort_dir = $request->input('sort_dir', 'asc');
-        // $search = $request->input('search');
-
-
-        // $companySkills = Assesment::
-        //                 where( function($query) use ($search) {
-        //                     $query->where('id', 'LIKE', "%{$search}%");
-        //                 })
-        //                 ->where('admin_id', $user->id)
-        //                 ->distinct('skill_id')
-        //                 ->select(['id', 'domain_id','core_id', 'code','skill_id'])
-        //                 ->get()->toArray();
-
-        // $competency = croxxtalent_competency_tree($companySkills);
-        $groups = array();
-
-        $per_page = $request->input('per_page', -1);
-        $skill_gap = $request->input('skill_gap');
-        $jobcode_gap = $request->input('jobcode_gap');
-        $search = $request->input('search');
-
-        $assessments = Assesment::join('assesment_summaries',
-                    'assesment_summaries.assesment_id', '=', 'assesments.id')
-                    ->where('assesments.admin_id', $user->id)
-                    ->when($skill_gap, function($query) use ($skill_gap){
-                        info($skill_gap);
-                        $query ->where('assesments.skill_id', $skill_gap);
-                     })
-                     ->when($jobcode_gap, function($query) use ($jobcode_gap){
-                        // info($jobcode_gap);
-                        $query ->where('assesments.job_code_id', $jobcode_gap);
-                     })
-                    ->get()->toArray();
-
-
-
-        foreach($assessments as $skill){
-            $groups[$skill['talent_id']]['assesments'][] = $skill;
-        }
-
-        foreach($groups as $key => $competency ){
-            $score = array_column($groups[$key]['assesments'], 'score_average');
-            $groups[$key]['talent'] = Employee::where('user_id',$key)->with('job_code')->first();
-            $groups[$key]['info'] = [
-                'total_assesments' =>  count($groups[$key]['assesments']),
-                'score_average' =>  array_sum($score)
-            ];
-        }
-
-        $groups = array_values($groups);
-        return response()->json([
-            'status' => true,
-            'data' => $groups,
-            'message' => 'Data imported successfully.'
-        ], 200);
-    }
-
-    public function storeCompetency(Request $request){
+    public function storeCompetency(Request $request, $id){
         $employer = $request->user();
+
+        if (is_numeric($id)) {
+            $department = Department::where('id', $id)->where('employer_id', $employer->id)
+                ->select(['id','job_code', 'job_title', 'description'])->firstOrFail();
+        } else {
+            $department = Department::where('job_title', $id)->where('employer_id', $employer->id)
+                ->select(['id','job_code', 'job_title', 'description'])->firstOrFail();
+        }
+
+        $competencies = EmployerCompetencyController::competencies();
+
+
+        // $this->validate($request, [
+        //     'mapping' => 'required|array'
+        // ]);
+        $mapping = [];
+
+        foreach ($request->mapping as $map) {
+            $cp = array_filter($competencies, function($competency) use ($map) {
+                return $competency['competency'] === $map;
+            });
+
+            // If array_filter returns an array, we need to merge it into $mapping
+            if (!empty($cp)) {
+                $mapping = array_merge($mapping, $cp);
+            }
+        }
+
+        if(count($mapping)){
+            foreach($mapping as $map){
+                DepartmentMapping::firstOrCreate([
+                    'employer_id' => $employer->id,
+                    'department_id' => $department->id,
+                    'competency' => $map['competency'],
+                ],[
+                    'competency_role' => $map['competency_role'],
+                    'description' => $map['description'],
+                ]);
+            }
+        }
 
         if(isset($employer->onboarding_stage) && $employer->onboarding_stage == 2){
             $employer->onboarding_stage = 3;
@@ -184,7 +156,7 @@ class EmployerCompetencyController extends Controller
         return response()->json([
             'status' => true,
             'message' => "Competency matched successfully.",
-            'data' => []
+            'data' => $mapping
         ], 201);
 
     }
