@@ -1,18 +1,18 @@
 <?php
 
-namespace App\Http\Controllers\Api\v2;
+namespace App\Http\Controllers\Api\v2\Resume;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Http\Requests\CvAwardRequest;
+use App\Http\Requests\CvReferenceRequest;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Cv;
-use App\Models\CvAward;
+use App\Models\CvReference;
 
-class CvAwardController extends Controller
+class CvReferenceController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -28,39 +28,39 @@ class CvAwardController extends Controller
         $this->authorize('view-any', Cv::class);
 
         $per_page = $request->input('per_page', 100);
-        $sort_by = $request->input('sort_by', 'date');
-        $sort_dir = $request->input('sort_dir', 'desc');
+        $sort_by = $request->input('sort_by', 'name');
+        $sort_dir = $request->input('sort_dir', 'asc');
         $search = $request->input('search');
         $datatable_draw = $request->input('draw'); // if any
 
-        $cvAwards = CvAward::where('cv_id', $cv->id)
+        $cvReferences = CvReference::where('cv_id', $cv->id)
         ->where( function($query) use ($search) {
-            $query->where('title', 'LIKE', "%{$search}%")
-                    ->orWhere('organization', 'LIKE', "%{$search}%");
+            $query->where('name', 'LIKE', "%{$search}%")
+                    ->orWhere('company', 'LIKE', "%{$search}%");
         })->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
-            $results = $cvAwards->get();
-            $cvAwards = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
+            $results = $cvReferences->get();
+            $cvReferences = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
         } else {
-            $cvAwards = $cvAwards->paginate($per_page);
+            $cvReferences = $cvReferences->paginate($per_page);
         }
 
         $response = collect([
             'status' => true,
             'message' => "Successful."
-        ])->merge($cvAwards)->merge(['draw' => $datatable_draw]);
+        ])->merge($cvReferences)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \App\Models\Http\Requests\CvAwardRequest  $request
+     * @param  \App\Models\Http\Requests\CvReferenceRequest  $request
      * @param  string  $cv_id
      * @return \Illuminate\Http\Response
      */
-    public function store(CvAwardRequest $request)
+    public function store(CvReferenceRequest $request)
     {
         $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
@@ -70,12 +70,12 @@ class CvAwardController extends Controller
         // Retrieve the validated input data...
         $validatedData = $request->validated();
         $validatedData['cv_id'] = $cv->id;
-        $cvAward = CvAward::create($validatedData);
-        if ($cvAward) {
+        $cvReference = CvReference::create($validatedData);
+        if ($cvReference) {
             return response()->json([
                 'status' => true,
-                'message' => "Award created successfully.",
-                'data' => $cvAward
+                'message' => "Reference created successfully.",
+                'data' => $cvReference
             ], 201);
         } else {
             return response()->json([
@@ -89,15 +89,15 @@ class CvAwardController extends Controller
      * Display the specified resource.
      *
      * @param  string  $cv_id
-     * @param  string  $cv_award_id
+     * @param  string  $cv_reference_id
      * @return \Illuminate\Http\Response
      */
-    public function show(Request $request, $cv_award_id)
+    public function show(Request $request, $cv_reference_id)
     {
         $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
-        $cvAward = CvAward::findOrFail($cv_award_id);
-        if ($cv->id != $cvAward->cv_id) {
+        $cvReference = CvReference::findOrFail($cv_reference_id);
+        if ($cv->id != $cvReference->cv_id) {
             return response()->json([
                 'status' => false,
                 'message' => "Unrelated request.",
@@ -108,24 +108,24 @@ class CvAwardController extends Controller
         return response()->json([
             'status' => true,
             'message' => "Successful.",
-            'data' => $cvAward
+            'data' => $cvReference
         ], 200);
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  \App\Models\Http\Requests\CvAwardRequest  $request
+     * @param  \App\Models\Http\Requests\CvReferenceRequest  $request
      * @param  string  $cv_id
-     * @param  string  $cv_award_id
+     * @param  string  $cv_reference_id
      * @return \Illuminate\Http\Response
      */
-    public function update(CvAwardRequest $request, $cv_award_id)
+    public function update(CvReferenceRequest $request, $cv_reference_id)
     {
         $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
-        $cvAward = CvAward::findOrFail($cv_award_id);
-        if ($cv->id != $cvAward->cv_id) {
+        $cvReference = CvReference::findOrFail($cv_reference_id);
+        if ($cv->id != $cvReference->cv_id) {
             return response()->json([
                 'status' => false,
                 'message' => "Unrelated request.",
@@ -136,11 +136,11 @@ class CvAwardController extends Controller
 
         // Retrieve the validated input data....
         $validatedData = $request->validated();
-        $cvAward->update($validatedData);
+        $cvReference->update($validatedData);
         return response()->json([
             'status' => true,
-            'message' => "Award updated successfully.",
-            'data' => CvAward::findOrFail($cvAward->id)
+            'message' => "Reference updated successfully.",
+            'data' => CvReference::findOrFail($cvReference->id)
         ], 200);
     }
 
@@ -148,15 +148,15 @@ class CvAwardController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  string  $id
-     * @param  string  $cv_award_id
+     * @param  string  $cv_reference_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Request $request, $cv_award_id)
+    public function destroy(Request $request, $cv_reference_id)
     {
         $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
-        $cvAward = CvAward::findOrFail($cv_award_id);
-        if ($cv->id != $cvAward->cv_id) {
+        $cvReference = CvReference::findOrFail($cv_reference_id);
+        if ($cv->id != $cvReference->cv_id) {
             return response()->json([
                 'status' => false,
                 'message' => "Unrelated request.",
@@ -165,10 +165,10 @@ class CvAwardController extends Controller
 
         $this->authorize('delete', [Cv::class, $cv]);
 
-        $cvAward->delete();
+        $cvReference->delete();
         return response()->json([
             'status' => true,
-            'message' => "Award deleted successfully.",
+            'message' => "Reference deleted successfully.",
         ], 200);
     }
 }

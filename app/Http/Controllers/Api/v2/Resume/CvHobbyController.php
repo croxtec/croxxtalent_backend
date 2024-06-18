@@ -1,18 +1,18 @@
 <?php
 
-namespace App\Http\Controllers\Api\v2;
+namespace App\Http\Controllers\Api\v2\Resume;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Http\Requests\CvWorkExperienceRequest;
+use App\Http\Requests\CvHobbyRequest;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Cv;
-use App\Models\CvWorkExperience;
+use App\Models\CvHobby;
 
-class CvWorkExperienceController extends Controller
+class CvHobbyController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -22,70 +22,59 @@ class CvWorkExperienceController extends Controller
      */
     public function index(Request $request)
     {
-        $user = $request->user();
-
+       $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
-        // $cv = Cv::findOrFail($cv_id);
 
         $this->authorize('view-any', Cv::class);
 
         $per_page = $request->input('per_page', 100);
-        $sort_by = $request->input('sort_by', 'start_date');
-        $sort_dir = $request->input('sort_dir', 'desc');
+        $sort_by = $request->input('sort_by', 'name');
+        $sort_dir = $request->input('sort_dir', 'asc');
         $search = $request->input('search');
-        $current = $request->input('current');
         $datatable_draw = $request->input('draw'); // if any
 
-        $current = $current == 'yes' ? true : ($current == 'no' ? false : null);
-
-        $cvWorkExperiences = CvWorkExperience::where('cv_id', $cv->id)
-        ->where( function ($query) use ($current) {
-            if ($current !== null ) {
-                $query->where('is_current', $current);
-            }
-        })->where( function($query) use ($search) {
-            $query->where('employer', 'LIKE', "%{$search}%");
+        $cvHobbies = CvHobby::where('cv_id', $cv->id)
+        ->where( function($query) use ($search) {
+            $query->where('name', 'LIKE', "%{$search}%");
         })->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
-            $results = $cvWorkExperiences->get();
-            $cvWorkExperiences = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
+            $results = $cvHobbies->get();
+            $cvHobbies = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
         } else {
-            $cvWorkExperiences = $cvWorkExperiences->paginate($per_page);
+            $cvHobbies = $cvHobbies->paginate($per_page);
         }
 
         $response = collect([
             'status' => true,
             'message' => "Successful."
-        ])->merge($cvWorkExperiences)->merge(['draw' => $datatable_draw]);
+        ])->merge($cvHobbies)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \App\Models\Http\Requests\CvWorkExperienceRequest  $request
+     * @param  \App\Models\Http\Requests\CvHobbyRequest  $request
      * @param  string  $cv_id
      * @return \Illuminate\Http\Response
      */
-    public function store(CvWorkExperienceRequest $request)
+    public function store(CvHobbyRequest $request)
     {
-        $user = $request->user();
-
+       $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
-        // $cv = Cv::findOrFail($cv_id);
 
         // Authorization was declared in the Form Request
 
         // Retrieve the validated input data...
         $validatedData = $request->validated();
         $validatedData['cv_id'] = $cv->id;
-        $cvWorkExperience = CvWorkExperience::create($validatedData);
-        if ($cvWorkExperience) {
+        $cvHobby = CvHobby::create($validatedData);
+        if ($cvHobby) {
             return response()->json([
                 'status' => true,
-                'message' => "Work experience created successfully.",
-                'data' => $cvWorkExperience
+                'message' => "Hobby created successfully.",
+                'data' => $cvHobby
             ], 201);
         } else {
             return response()->json([
@@ -99,17 +88,15 @@ class CvWorkExperienceController extends Controller
      * Display the specified resource.
      *
      * @param  string  $cv_id
-     * @param  string  $cv_work_experience_id
+     * @param  string  $cv_skill_id
      * @return \Illuminate\Http\Response
      */
-    public function show(Request $request, $cv_work_experience_id)
+    public function show(Request $request, $cv_skill_id)
     {
-        $user = $request->user();
-
+       $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
-
-        $cvWorkExperience = CvWorkExperience::findOrFail($cv_work_experience_id);
-        if ($cv->id != $cvWorkExperience->cv_id) {
+        $cvHobby = CvHobby::findOrFail($cv_skill_id);
+        if ($cv->id != $cvHobby->cv_id) {
             return response()->json([
                 'status' => false,
                 'message' => "Unrelated request.",
@@ -120,26 +107,24 @@ class CvWorkExperienceController extends Controller
         return response()->json([
             'status' => true,
             'message' => "Successful.",
-            'data' => $cvWorkExperience
+            'data' => $cvHobby
         ], 200);
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  \App\Models\Http\Requests\CvWorkExperienceRequest  $request
+     * @param  \App\Models\Http\Requests\CvHobbyRequest  $request
      * @param  string  $cv_id
-     * @param  string  $cv_work_experience_id
+     * @param  string  $cv_skill_id
      * @return \Illuminate\Http\Response
      */
-    public function update(CvWorkExperienceRequest $request,  $cv_work_experience_id)
+    public function update(CvHobbyRequest $request, $cv_skill_id)
     {
-        $user = $request->user();
-
+       $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
-
-        $cvWorkExperience = CvWorkExperience::findOrFail($cv_work_experience_id);
-        if ($cv->id != $cvWorkExperience->cv_id) {
+        $cvHobby = CvHobby::findOrFail($cv_skill_id);
+        if ($cv->id != $cvHobby->cv_id) {
             return response()->json([
                 'status' => false,
                 'message' => "Unrelated request.",
@@ -150,11 +135,11 @@ class CvWorkExperienceController extends Controller
 
         // Retrieve the validated input data....
         $validatedData = $request->validated();
-        $cvWorkExperience->update($validatedData);
+        $cvHobby->update($validatedData);
         return response()->json([
             'status' => true,
-            'message' => "Work experience updated successfully.",
-            'data' => CvWorkExperience::findOrFail($cvWorkExperience->id)
+            'message' => "Hobby updated successfully.",
+            'data' => CvHobby::findOrFail($cvHobby->id)
         ], 200);
     }
 
@@ -162,17 +147,15 @@ class CvWorkExperienceController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  string  $id
-     * @param  string  $cv_work_experience_id
+     * @param  string  $cv_skill_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Request $request, $cv_work_experience_id)
+    public function destroy(Request $request, $cv_skill_id)
     {
-        $user = $request->user();
-
+       $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
-
-        $cvWorkExperience = CvWorkExperience::findOrFail($cv_work_experience_id);
-        if ($cv->id != $cvWorkExperience->cv_id) {
+        $cvHobby = CvHobby::findOrFail($cv_skill_id);
+        if ($cv->id != $cvHobby->cv_id) {
             return response()->json([
                 'status' => false,
                 'message' => "Unrelated request.",
@@ -181,10 +164,10 @@ class CvWorkExperienceController extends Controller
 
         $this->authorize('delete', [Cv::class, $cv]);
 
-        $cvWorkExperience->delete();
+        $cvHobby->delete();
         return response()->json([
             'status' => true,
-            'message' => "Work experience deleted successfully.",
+            'message' => "Hobby deleted successfully.",
         ], 200);
     }
 }

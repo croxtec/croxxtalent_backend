@@ -1,18 +1,18 @@
 <?php
 
-namespace App\Http\Controllers\Api\v2;
+namespace App\Http\Controllers\Api\v2\Resume;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Http\Requests\CvLanguageRequest;
+use App\Http\Requests\CvCertificationRequest;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Cv;
-use App\Models\CvLanguage;
+use App\Models\CvCertification;
 
-class CvLanguageController extends Controller
+class CvCertificationController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -28,56 +28,62 @@ class CvLanguageController extends Controller
         $this->authorize('view-any', Cv::class);
 
         $per_page = $request->input('per_page', 100);
-        $sort_by = $request->input('sort_by', 'created_at');
-        $sort_dir = $request->input('sort_dir', 'asc');
+        $sort_by = $request->input('sort_by', 'start_date');
+        $sort_dir = $request->input('sort_dir', 'desc');
         $search = $request->input('search');
+        $current = $request->input('current');
         $datatable_draw = $request->input('draw'); // if any
 
-        $cvLanguages = CvLanguage::where('cv_id', $cv->id)
-        ->where( function($query) use ($search) {
-            $query->where('id', 'LIKE', "%{$search}%");
+        $current = $current == 'yes' ? true : ($current == 'no' ? false : null);
+
+        $cvCertifications = CvCertification::where('cv_id', $cv->id)
+        ->where( function ($query) use ($current) {
+            if ($current !== null ) {
+                $query->where('is_current', $current);
+            }
+        })->where( function($query) use ($search) {
+            $query->where('institution', 'LIKE', "%{$search}%");
+                    // ->orWhere('course', 'LIKE', "%{$search}%");
         })->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
-            $results = $cvLanguages->get();
-            $cvLanguages = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
+            $results = $cvCertifications->get();
+            $cvCertifications = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
         } else {
-            $cvLanguages = $cvLanguages->paginate($per_page);
+            $cvCertifications = $cvCertifications->paginate($per_page);
         }
 
         $response = collect([
             'status' => true,
             'message' => "Successful."
-        ])->merge($cvLanguages)->merge(['draw' => $datatable_draw]);
+        ])->merge($cvCertifications)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \App\Models\Http\Requests\CvLanguageRequest  $request
+     * @param  \App\Models\Http\Requests\CvCertificationRequest  $request
      * @param  string  $cv_id
      * @return \Illuminate\Http\Response
      */
-    public function store(CvLanguageRequest $request)
+    public function store(CvCertificationRequest $request)
     {
         $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
+
 
         // Authorization was declared in the Form Request
 
         // Retrieve the validated input data...
         $validatedData = $request->validated();
         $validatedData['cv_id'] = $cv->id;
-        $cvLanguage = CvLanguage::updateOrCreate(
-            ['cv_id' => $validatedData['cv_id'], 'language_id' => $validatedData['language_id']],
-            $validatedData
-        );
-        if ($cvLanguage) {
+        $cvCertification = CvCertification::create($validatedData);
+        if ($cvCertification) {
             return response()->json([
                 'status' => true,
-                'message' => "Language created successfully.",
-                'data' => $cvLanguage
+                'message' => "Certification created successfully.",
+                'data' => $cvCertification
             ], 201);
         } else {
             return response()->json([
@@ -91,16 +97,16 @@ class CvLanguageController extends Controller
      * Display the specified resource.
      *
      * @param  string  $cv_id
-     * @param  string  $cv_language_id
+     * @param  string  $cv_certification_id
      * @return \Illuminate\Http\Response
      */
-    public function show(Request $request,$cv_language_id)
+    public function show(Request $request, $cv_certification_id)
     {
         $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
-        $cvLanguage = CvLanguage::findOrFail($cv_language_id);
 
-        if ($cv->id != $cvLanguage->cv_id) {
+        $cvCertification = CvCertification::findOrFail($cv_certification_id);
+        if ($cv->id != $cvCertification->cv_id) {
             return response()->json([
                 'status' => false,
                 'message' => "Unrelated request.",
@@ -111,24 +117,25 @@ class CvLanguageController extends Controller
         return response()->json([
             'status' => true,
             'message' => "Successful.",
-            'data' => $cv
+            'data' => $cvCertification
         ], 200);
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  \App\Models\Http\Requests\CvLanguageRequest  $request
+     * @param  \App\Models\Http\Requests\CvCertificationRequest  $request
      * @param  string  $cv_id
-     * @param  string  $cv_language_id
+     * @param  string  $cv_certification_id
      * @return \Illuminate\Http\Response
      */
-    public function update(CvLanguageRequest $request, $cv_language_id)
+    public function update(CvCertificationRequest $request, $cv_certification_id)
     {
         $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
-                $cvLanguage = CvLanguage::findOrFail($cv_language_id);
-        if ($cv->id != $cvLanguage->cv_id) {
+
+        $cvCertification = CvCertification::findOrFail($cv_certification_id);
+        if ($cv->id != $cvCertification->cv_id) {
             return response()->json([
                 'status' => false,
                 'message' => "Unrelated request.",
@@ -139,11 +146,11 @@ class CvLanguageController extends Controller
 
         // Retrieve the validated input data....
         $validatedData = $request->validated();
-        $cvLanguage->update($validatedData);
+        $cvCertification->update($validatedData);
         return response()->json([
             'status' => true,
-            'message' => "Language updated successfully.",
-            'data' => CvLanguage::findOrFail($cvLanguage->id)
+            'message' => "Certification updated successfully.",
+            'data' => CvCertification::findOrFail($cvCertification->id)
         ], 200);
     }
 
@@ -151,15 +158,16 @@ class CvLanguageController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  string  $id
-     * @param  string  $cv_language_id
+     * @param  string  $cv_certification_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Request $request, $cv_language_id)
+    public function destroy(Request $request, $cv_certification_id)
     {
         $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
-                $cvLanguage = CvLanguage::findOrFail($cv_language_id);
-        if ($cv->id != $cvLanguage->cv_id) {
+
+        $cvCertification = CvCertification::findOrFail($cv_certification_id);
+        if ($cv->id != $cvCertification->cv_id) {
             return response()->json([
                 'status' => false,
                 'message' => "Unrelated request.",
@@ -168,10 +176,10 @@ class CvLanguageController extends Controller
 
         $this->authorize('delete', [Cv::class, $cv]);
 
-        $cvLanguage->delete();
+        $cvCertification->delete();
         return response()->json([
             'status' => true,
-            'message' => "Language deleted successfully.",
+            'message' => "Certification deleted successfully.",
         ], 200);
     }
 }

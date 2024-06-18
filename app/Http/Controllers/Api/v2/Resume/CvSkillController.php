@@ -1,18 +1,19 @@
 <?php
 
-namespace App\Http\Controllers\Api\v2;
+namespace App\Http\Controllers\Api\v2\Resume;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Http\Requests\CvCertificationRequest;
+use App\Http\Requests\CvSkillRequest;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Cv;
-use App\Models\CvCertification;
+use App\Models\CvSkill;
+use App\Models\VettingSummary;
 
-class CvCertificationController extends Controller
+class CvSkillController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -23,67 +24,85 @@ class CvCertificationController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+
         $cv = CV::where('user_id', $user->id)->firstorFail();
 
         $this->authorize('view-any', Cv::class);
 
         $per_page = $request->input('per_page', 100);
-        $sort_by = $request->input('sort_by', 'start_date');
-        $sort_dir = $request->input('sort_dir', 'desc');
+        $sort_by = $request->input('sort_by', 'created_at');
+        $sort_dir = $request->input('sort_dir', 'asc');
         $search = $request->input('search');
-        $current = $request->input('current');
         $datatable_draw = $request->input('draw'); // if any
 
-        $current = $current == 'yes' ? true : ($current == 'no' ? false : null);
-
-        $cvCertifications = CvCertification::where('cv_id', $cv->id)
-        ->where( function ($query) use ($current) {
-            if ($current !== null ) {
-                $query->where('is_current', $current);
-            }
-        })->where( function($query) use ($search) {
-            $query->where('institution', 'LIKE', "%{$search}%");
-                    // ->orWhere('course', 'LIKE', "%{$search}%");
+        $cvSkills = CvSkill::where('cv_id', $cv->id)
+        ->where( function($query) use ($search) {
+            $query->where('id', 'LIKE', "%{$search}%");
         })->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
-            $results = $cvCertifications->get();
-            $cvCertifications = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
+            $results = $cvSkills->get();
+            $cvSkills = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
         } else {
-            $cvCertifications = $cvCertifications->paginate($per_page);
+            $cvSkills = $cvSkills->paginate($per_page);
+        }
+
+        foreach ($cvSkills as $skill) {
+            $skill->secondary;
+            $skill->tertiary;
+            $skill->extra = 1;
         }
 
         $response = collect([
             'status' => true,
             'message' => "Successful."
-        ])->merge($cvCertifications)->merge(['draw' => $datatable_draw]);
+        ])->merge($cvSkills)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \App\Models\Http\Requests\CvCertificationRequest  $request
+     * @param  \App\Models\Http\Requests\CvSkillRequest  $request
      * @param  string  $cv_id
      * @return \Illuminate\Http\Response
      */
-    public function store(CvCertificationRequest $request)
+    public function store(CvSkillRequest $request)
     {
         $user = $request->user();
-        $cv = CV::where('user_id', $user->id)->firstorFail();
 
+        $cv = CV::where('user_id', $user->id)->firstorFail();
 
         // Authorization was declared in the Form Request
 
         // Retrieve the validated input data...
         $validatedData = $request->validated();
+
         $validatedData['cv_id'] = $cv->id;
-        $cvCertification = CvCertification::create($validatedData);
-        if ($cvCertification) {
+        // info($validatedData);
+
+        $cvSkill = CvSkill::updateOrCreate(
+            [
+                'cv_id' => $validatedData['cv_id'],
+                'domain_id' => $validatedData['domain_id'],
+                'core_id' => $validatedData['core_id'],
+                'skill_id' => $validatedData['skill_id'],
+                'level' => $request->level
+            ],
+            $validatedData
+        );
+
+        $vetting = VettingSummary::create([
+            'cv_skill' => $cvSkill->id,
+            'assesment_id' => 1,
+            'talent_id' => $user->id
+        ]);
+
+        if ($cvSkill) {
             return response()->json([
                 'status' => true,
-                'message' => "Certification created successfully.",
-                'data' => $cvCertification
+                'message' => "Competence created successfully.",
+                'data' => $cvSkill
             ], 201);
         } else {
             return response()->json([
@@ -95,18 +114,18 @@ class CvCertificationController extends Controller
 
     /**
      * Display the specified resource.
-     *
+     *3
      * @param  string  $cv_id
-     * @param  string  $cv_certification_id
+     * @param  string  $cv_skill_id
      * @return \Illuminate\Http\Response
      */
-    public function show(Request $request, $cv_certification_id)
+    public function show(Request $request,  $cv_skill_id)
     {
         $user = $request->user();
-        $cv = CV::where('user_id', $user->id)->firstorFail();
 
-        $cvCertification = CvCertification::findOrFail($cv_certification_id);
-        if ($cv->id != $cvCertification->cv_id) {
+        $cv = CV::where('user_id', $user->id)->firstorFail();
+        $cvSkill = CvSkill::findOrFail($cv_skill_id);
+        if ($cv->id != $cvSkill->cv_id) {
             return response()->json([
                 'status' => false,
                 'message' => "Unrelated request.",
@@ -117,25 +136,25 @@ class CvCertificationController extends Controller
         return response()->json([
             'status' => true,
             'message' => "Successful.",
-            'data' => $cvCertification
+            'data' => $cvSkill
         ], 200);
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  \App\Models\Http\Requests\CvCertificationRequest  $request
+     * @param  \App\Models\Http\Requests\CvSkillRequest  $request
      * @param  string  $cv_id
-     * @param  string  $cv_certification_id
+     * @param  string  $cv_skill_id
      * @return \Illuminate\Http\Response
      */
-    public function update(CvCertificationRequest $request, $cv_certification_id)
+    public function update(CvSkillRequest $request,  $cv_skill_id)
     {
         $user = $request->user();
-        $cv = CV::where('user_id', $user->id)->firstorFail();
 
-        $cvCertification = CvCertification::findOrFail($cv_certification_id);
-        if ($cv->id != $cvCertification->cv_id) {
+        $cv = CV::where('user_id', $user->id)->firstorFail();
+        $cvSkill = CvSkill::findOrFail($cv_skill_id);
+        if ($cv->id != $cvSkill->cv_id) {
             return response()->json([
                 'status' => false,
                 'message' => "Unrelated request.",
@@ -146,11 +165,11 @@ class CvCertificationController extends Controller
 
         // Retrieve the validated input data....
         $validatedData = $request->validated();
-        $cvCertification->update($validatedData);
+        $cvSkill->update($validatedData);
         return response()->json([
             'status' => true,
-            'message' => "Certification updated successfully.",
-            'data' => CvCertification::findOrFail($cvCertification->id)
+            'message' => "Competence updated successfully.",
+            'data' => CvSkill::findOrFail($cvSkill->id)
         ], 200);
     }
 
@@ -158,16 +177,16 @@ class CvCertificationController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  string  $id
-     * @param  string  $cv_certification_id
+     * @param  string  $cv_skill_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Request $request, $cv_certification_id)
+    public function destroy(Request $request, $cv_skill_id)
     {
         $user = $request->user();
-        $cv = CV::where('user_id', $user->id)->firstorFail();
 
-        $cvCertification = CvCertification::findOrFail($cv_certification_id);
-        if ($cv->id != $cvCertification->cv_id) {
+        $cv = CV::where('user_id', $user->id)->firstorFail();
+        $cvSkill = CvSkill::findOrFail($cv_skill_id);
+        if ($cv->id != $cvSkill->cv_id) {
             return response()->json([
                 'status' => false,
                 'message' => "Unrelated request.",
@@ -176,10 +195,10 @@ class CvCertificationController extends Controller
 
         $this->authorize('delete', [Cv::class, $cv]);
 
-        $cvCertification->delete();
+        $cvSkill->delete();
         return response()->json([
             'status' => true,
-            'message' => "Certification deleted successfully.",
+            'message' => "Competence deleted successfully.",
         ], 200);
     }
 }

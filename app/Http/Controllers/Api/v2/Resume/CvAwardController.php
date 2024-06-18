@@ -1,18 +1,18 @@
 <?php
 
-namespace App\Http\Controllers\Api\v2;
+namespace App\Http\Controllers\Api\v2\Resume;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Http\Requests\CvHobbyRequest;
+use App\Http\Requests\CvAwardRequest;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Cv;
-use App\Models\CvHobby;
+use App\Models\CvAward;
 
-class CvHobbyController extends Controller
+class CvAwardController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -22,46 +22,47 @@ class CvHobbyController extends Controller
      */
     public function index(Request $request)
     {
-       $user = $request->user();
+        $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
 
         $this->authorize('view-any', Cv::class);
 
         $per_page = $request->input('per_page', 100);
-        $sort_by = $request->input('sort_by', 'name');
-        $sort_dir = $request->input('sort_dir', 'asc');
+        $sort_by = $request->input('sort_by', 'date');
+        $sort_dir = $request->input('sort_dir', 'desc');
         $search = $request->input('search');
         $datatable_draw = $request->input('draw'); // if any
 
-        $cvHobbies = CvHobby::where('cv_id', $cv->id)
+        $cvAwards = CvAward::where('cv_id', $cv->id)
         ->where( function($query) use ($search) {
-            $query->where('name', 'LIKE', "%{$search}%");
+            $query->where('title', 'LIKE', "%{$search}%")
+                    ->orWhere('organization', 'LIKE', "%{$search}%");
         })->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
-            $results = $cvHobbies->get();
-            $cvHobbies = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
+            $results = $cvAwards->get();
+            $cvAwards = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
         } else {
-            $cvHobbies = $cvHobbies->paginate($per_page);
+            $cvAwards = $cvAwards->paginate($per_page);
         }
 
         $response = collect([
             'status' => true,
             'message' => "Successful."
-        ])->merge($cvHobbies)->merge(['draw' => $datatable_draw]);
+        ])->merge($cvAwards)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \App\Models\Http\Requests\CvHobbyRequest  $request
+     * @param  \App\Models\Http\Requests\CvAwardRequest  $request
      * @param  string  $cv_id
      * @return \Illuminate\Http\Response
      */
-    public function store(CvHobbyRequest $request)
+    public function store(CvAwardRequest $request)
     {
-       $user = $request->user();
+        $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
 
         // Authorization was declared in the Form Request
@@ -69,12 +70,12 @@ class CvHobbyController extends Controller
         // Retrieve the validated input data...
         $validatedData = $request->validated();
         $validatedData['cv_id'] = $cv->id;
-        $cvHobby = CvHobby::create($validatedData);
-        if ($cvHobby) {
+        $cvAward = CvAward::create($validatedData);
+        if ($cvAward) {
             return response()->json([
                 'status' => true,
-                'message' => "Hobby created successfully.",
-                'data' => $cvHobby
+                'message' => "Award created successfully.",
+                'data' => $cvAward
             ], 201);
         } else {
             return response()->json([
@@ -88,15 +89,15 @@ class CvHobbyController extends Controller
      * Display the specified resource.
      *
      * @param  string  $cv_id
-     * @param  string  $cv_skill_id
+     * @param  string  $cv_award_id
      * @return \Illuminate\Http\Response
      */
-    public function show(Request $request, $cv_skill_id)
+    public function show(Request $request, $cv_award_id)
     {
-       $user = $request->user();
+        $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
-        $cvHobby = CvHobby::findOrFail($cv_skill_id);
-        if ($cv->id != $cvHobby->cv_id) {
+        $cvAward = CvAward::findOrFail($cv_award_id);
+        if ($cv->id != $cvAward->cv_id) {
             return response()->json([
                 'status' => false,
                 'message' => "Unrelated request.",
@@ -107,24 +108,24 @@ class CvHobbyController extends Controller
         return response()->json([
             'status' => true,
             'message' => "Successful.",
-            'data' => $cvHobby
+            'data' => $cvAward
         ], 200);
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  \App\Models\Http\Requests\CvHobbyRequest  $request
+     * @param  \App\Models\Http\Requests\CvAwardRequest  $request
      * @param  string  $cv_id
-     * @param  string  $cv_skill_id
+     * @param  string  $cv_award_id
      * @return \Illuminate\Http\Response
      */
-    public function update(CvHobbyRequest $request, $cv_skill_id)
+    public function update(CvAwardRequest $request, $cv_award_id)
     {
-       $user = $request->user();
+        $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
-        $cvHobby = CvHobby::findOrFail($cv_skill_id);
-        if ($cv->id != $cvHobby->cv_id) {
+        $cvAward = CvAward::findOrFail($cv_award_id);
+        if ($cv->id != $cvAward->cv_id) {
             return response()->json([
                 'status' => false,
                 'message' => "Unrelated request.",
@@ -135,11 +136,11 @@ class CvHobbyController extends Controller
 
         // Retrieve the validated input data....
         $validatedData = $request->validated();
-        $cvHobby->update($validatedData);
+        $cvAward->update($validatedData);
         return response()->json([
             'status' => true,
-            'message' => "Hobby updated successfully.",
-            'data' => CvHobby::findOrFail($cvHobby->id)
+            'message' => "Award updated successfully.",
+            'data' => CvAward::findOrFail($cvAward->id)
         ], 200);
     }
 
@@ -147,15 +148,15 @@ class CvHobbyController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  string  $id
-     * @param  string  $cv_skill_id
+     * @param  string  $cv_award_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Request $request, $cv_skill_id)
+    public function destroy(Request $request, $cv_award_id)
     {
-       $user = $request->user();
+        $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
-        $cvHobby = CvHobby::findOrFail($cv_skill_id);
-        if ($cv->id != $cvHobby->cv_id) {
+        $cvAward = CvAward::findOrFail($cv_award_id);
+        if ($cv->id != $cvAward->cv_id) {
             return response()->json([
                 'status' => false,
                 'message' => "Unrelated request.",
@@ -164,10 +165,10 @@ class CvHobbyController extends Controller
 
         $this->authorize('delete', [Cv::class, $cv]);
 
-        $cvHobby->delete();
+        $cvAward->delete();
         return response()->json([
             'status' => true,
-            'message' => "Hobby deleted successfully.",
+            'message' => "Award deleted successfully.",
         ], 200);
     }
 }

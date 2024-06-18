@@ -1,18 +1,18 @@
 <?php
 
-namespace App\Http\Controllers\Api\v2;
+namespace App\Http\Controllers\Api\v2\Resume;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Http\Requests\CvEducationRequest;
+use App\Http\Requests\CvWorkExperienceRequest;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Cv;
-use App\Models\CvEducation;
+use App\Models\CvWorkExperience;
 
-class CvEducationController extends Controller
+class CvWorkExperienceController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -25,6 +25,7 @@ class CvEducationController extends Controller
         $user = $request->user();
 
         $cv = CV::where('user_id', $user->id)->firstorFail();
+        // $cv = Cv::findOrFail($cv_id);
 
         $this->authorize('view-any', Cv::class);
 
@@ -37,53 +38,54 @@ class CvEducationController extends Controller
 
         $current = $current == 'yes' ? true : ($current == 'no' ? false : null);
 
-        $cvEducations = CvEducation::where('cv_id', $cv->id)
+        $cvWorkExperiences = CvWorkExperience::where('cv_id', $cv->id)
         ->where( function ($query) use ($current) {
             if ($current !== null ) {
                 $query->where('is_current', $current);
             }
         })->where( function($query) use ($search) {
-            $query->where('school', 'LIKE', "%{$search}%");
+            $query->where('employer', 'LIKE', "%{$search}%");
         })->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
-            $results = $cvEducations->get();
-            $cvEducations = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
+            $results = $cvWorkExperiences->get();
+            $cvWorkExperiences = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
         } else {
-            $cvEducations = $cvEducations->paginate($per_page);
+            $cvWorkExperiences = $cvWorkExperiences->paginate($per_page);
         }
 
         $response = collect([
             'status' => true,
             'message' => "Successful."
-        ])->merge($cvEducations)->merge(['draw' => $datatable_draw]);
+        ])->merge($cvWorkExperiences)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \App\Models\Http\Requests\CvEducationRequest  $request
+     * @param  \App\Models\Http\Requests\CvWorkExperienceRequest  $request
      * @param  string  $cv_id
      * @return \Illuminate\Http\Response
      */
-    public function store(CvEducationRequest $request)
+    public function store(CvWorkExperienceRequest $request)
     {
         $user = $request->user();
 
         $cv = CV::where('user_id', $user->id)->firstorFail();
+        // $cv = Cv::findOrFail($cv_id);
 
         // Authorization was declared in the Form Request
 
         // Retrieve the validated input data...
         $validatedData = $request->validated();
         $validatedData['cv_id'] = $cv->id;
-        $cvEducation = CvEducation::create($validatedData);
-        if ($cvEducation) {
+        $cvWorkExperience = CvWorkExperience::create($validatedData);
+        if ($cvWorkExperience) {
             return response()->json([
                 'status' => true,
-                'message' => "Education created successfully.",
-                'data' => $cvEducation
+                'message' => "Work experience created successfully.",
+                'data' => $cvWorkExperience
             ], 201);
         } else {
             return response()->json([
@@ -97,17 +99,17 @@ class CvEducationController extends Controller
      * Display the specified resource.
      *
      * @param  string  $cv_id
-     * @param  string  $cv_education_id
+     * @param  string  $cv_work_experience_id
      * @return \Illuminate\Http\Response
      */
-    public function show(Request $request, $cv_education_id)
+    public function show(Request $request, $cv_work_experience_id)
     {
         $user = $request->user();
+
         $cv = CV::where('user_id', $user->id)->firstorFail();
 
-        $cvEducation = CvEducation::findOrFail($cv_education_id);
-
-        if ($cv->id != $cvEducation->cv_id) {
+        $cvWorkExperience = CvWorkExperience::findOrFail($cv_work_experience_id);
+        if ($cv->id != $cvWorkExperience->cv_id) {
             return response()->json([
                 'status' => false,
                 'message' => "Unrelated request.",
@@ -118,40 +120,41 @@ class CvEducationController extends Controller
         return response()->json([
             'status' => true,
             'message' => "Successful.",
-            'data' => $cvEducation
+            'data' => $cvWorkExperience
         ], 200);
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  \App\Models\Http\Requests\CvEducationRequest  $request
+     * @param  \App\Models\Http\Requests\CvWorkExperienceRequest  $request
      * @param  string  $cv_id
-     * @param  string  $cv_education_id
+     * @param  string  $cv_work_experience_id
      * @return \Illuminate\Http\Response
      */
-    public function update(CvEducationRequest $request, $cv_education_id)
+    public function update(CvWorkExperienceRequest $request,  $cv_work_experience_id)
     {
         $user = $request->user();
+
         $cv = CV::where('user_id', $user->id)->firstorFail();
 
-
-        $cvEducation = CvEducation::findOrFail($cv_education_id);
-        if ($cv->id != $cvEducation->cv_id) {
+        $cvWorkExperience = CvWorkExperience::findOrFail($cv_work_experience_id);
+        if ($cv->id != $cvWorkExperience->cv_id) {
             return response()->json([
                 'status' => false,
                 'message' => "Unrelated request.",
             ], 400);
         }
+
         // Authorization was declared in the Form Request
 
         // Retrieve the validated input data....
         $validatedData = $request->validated();
-        $cvEducation->update($validatedData);
+        $cvWorkExperience->update($validatedData);
         return response()->json([
             'status' => true,
-            'message' => "Education updated successfully.",
-            'data' => CvEducation::findOrFail($cvEducation->id)
+            'message' => "Work experience updated successfully.",
+            'data' => CvWorkExperience::findOrFail($cvWorkExperience->id)
         ], 200);
     }
 
@@ -159,16 +162,17 @@ class CvEducationController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  string  $id
-     * @param  string  $cv_education_id
+     * @param  string  $cv_work_experience_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Request $request, $cv_education_id)
+    public function destroy(Request $request, $cv_work_experience_id)
     {
         $user = $request->user();
+
         $cv = CV::where('user_id', $user->id)->firstorFail();
 
-        $cvEducation = CvEducation::findOrFail($cv_education_id);
-        if ($cv->id != $cvEducation->cv_id) {
+        $cvWorkExperience = CvWorkExperience::findOrFail($cv_work_experience_id);
+        if ($cv->id != $cvWorkExperience->cv_id) {
             return response()->json([
                 'status' => false,
                 'message' => "Unrelated request.",
@@ -177,10 +181,10 @@ class CvEducationController extends Controller
 
         $this->authorize('delete', [Cv::class, $cv]);
 
-        $cvEducation->delete();
+        $cvWorkExperience->delete();
         return response()->json([
             'status' => true,
-            'message' => "Education deleted successfully.",
+            'message' => "Work experience deleted successfully.",
         ], 200);
     }
 }

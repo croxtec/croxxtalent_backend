@@ -1,18 +1,18 @@
 <?php
 
-namespace App\Http\Controllers\Api\v2;
+namespace App\Http\Controllers\Api\v2\Resume;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Http\Requests\CvReferenceRequest;
+use App\Http\Requests\CvLanguageRequest;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Cv;
-use App\Models\CvReference;
+use App\Models\CvLanguage;
 
-class CvReferenceController extends Controller
+class CvLanguageController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -28,39 +28,38 @@ class CvReferenceController extends Controller
         $this->authorize('view-any', Cv::class);
 
         $per_page = $request->input('per_page', 100);
-        $sort_by = $request->input('sort_by', 'name');
+        $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'asc');
         $search = $request->input('search');
         $datatable_draw = $request->input('draw'); // if any
 
-        $cvReferences = CvReference::where('cv_id', $cv->id)
+        $cvLanguages = CvLanguage::where('cv_id', $cv->id)
         ->where( function($query) use ($search) {
-            $query->where('name', 'LIKE', "%{$search}%")
-                    ->orWhere('company', 'LIKE', "%{$search}%");
+            $query->where('id', 'LIKE', "%{$search}%");
         })->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
-            $results = $cvReferences->get();
-            $cvReferences = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
+            $results = $cvLanguages->get();
+            $cvLanguages = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
         } else {
-            $cvReferences = $cvReferences->paginate($per_page);
+            $cvLanguages = $cvLanguages->paginate($per_page);
         }
 
         $response = collect([
             'status' => true,
             'message' => "Successful."
-        ])->merge($cvReferences)->merge(['draw' => $datatable_draw]);
+        ])->merge($cvLanguages)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \App\Models\Http\Requests\CvReferenceRequest  $request
+     * @param  \App\Models\Http\Requests\CvLanguageRequest  $request
      * @param  string  $cv_id
      * @return \Illuminate\Http\Response
      */
-    public function store(CvReferenceRequest $request)
+    public function store(CvLanguageRequest $request)
     {
         $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
@@ -70,12 +69,15 @@ class CvReferenceController extends Controller
         // Retrieve the validated input data...
         $validatedData = $request->validated();
         $validatedData['cv_id'] = $cv->id;
-        $cvReference = CvReference::create($validatedData);
-        if ($cvReference) {
+        $cvLanguage = CvLanguage::updateOrCreate(
+            ['cv_id' => $validatedData['cv_id'], 'language_id' => $validatedData['language_id']],
+            $validatedData
+        );
+        if ($cvLanguage) {
             return response()->json([
                 'status' => true,
-                'message' => "Reference created successfully.",
-                'data' => $cvReference
+                'message' => "Language created successfully.",
+                'data' => $cvLanguage
             ], 201);
         } else {
             return response()->json([
@@ -89,15 +91,16 @@ class CvReferenceController extends Controller
      * Display the specified resource.
      *
      * @param  string  $cv_id
-     * @param  string  $cv_reference_id
+     * @param  string  $cv_language_id
      * @return \Illuminate\Http\Response
      */
-    public function show(Request $request, $cv_reference_id)
+    public function show(Request $request,$cv_language_id)
     {
         $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
-        $cvReference = CvReference::findOrFail($cv_reference_id);
-        if ($cv->id != $cvReference->cv_id) {
+        $cvLanguage = CvLanguage::findOrFail($cv_language_id);
+
+        if ($cv->id != $cvLanguage->cv_id) {
             return response()->json([
                 'status' => false,
                 'message' => "Unrelated request.",
@@ -108,24 +111,24 @@ class CvReferenceController extends Controller
         return response()->json([
             'status' => true,
             'message' => "Successful.",
-            'data' => $cvReference
+            'data' => $cv
         ], 200);
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  \App\Models\Http\Requests\CvReferenceRequest  $request
+     * @param  \App\Models\Http\Requests\CvLanguageRequest  $request
      * @param  string  $cv_id
-     * @param  string  $cv_reference_id
+     * @param  string  $cv_language_id
      * @return \Illuminate\Http\Response
      */
-    public function update(CvReferenceRequest $request, $cv_reference_id)
+    public function update(CvLanguageRequest $request, $cv_language_id)
     {
         $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
-        $cvReference = CvReference::findOrFail($cv_reference_id);
-        if ($cv->id != $cvReference->cv_id) {
+                $cvLanguage = CvLanguage::findOrFail($cv_language_id);
+        if ($cv->id != $cvLanguage->cv_id) {
             return response()->json([
                 'status' => false,
                 'message' => "Unrelated request.",
@@ -136,11 +139,11 @@ class CvReferenceController extends Controller
 
         // Retrieve the validated input data....
         $validatedData = $request->validated();
-        $cvReference->update($validatedData);
+        $cvLanguage->update($validatedData);
         return response()->json([
             'status' => true,
-            'message' => "Reference updated successfully.",
-            'data' => CvReference::findOrFail($cvReference->id)
+            'message' => "Language updated successfully.",
+            'data' => CvLanguage::findOrFail($cvLanguage->id)
         ], 200);
     }
 
@@ -148,15 +151,15 @@ class CvReferenceController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  string  $id
-     * @param  string  $cv_reference_id
+     * @param  string  $cv_language_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Request $request, $cv_reference_id)
+    public function destroy(Request $request, $cv_language_id)
     {
         $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
-        $cvReference = CvReference::findOrFail($cv_reference_id);
-        if ($cv->id != $cvReference->cv_id) {
+                $cvLanguage = CvLanguage::findOrFail($cv_language_id);
+        if ($cv->id != $cvLanguage->cv_id) {
             return response()->json([
                 'status' => false,
                 'message' => "Unrelated request.",
@@ -165,10 +168,10 @@ class CvReferenceController extends Controller
 
         $this->authorize('delete', [Cv::class, $cv]);
 
-        $cvReference->delete();
+        $cvLanguage->delete();
         return response()->json([
             'status' => true,
-            'message' => "Reference deleted successfully.",
+            'message' => "Language deleted successfully.",
         ], 200);
     }
 }
