@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('talent_competencies', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id');
+            $table->foreignId('cv_id');
             $table->string('competency');
             $table->string('level');
             $table->integer('match_percentage')->nullable();

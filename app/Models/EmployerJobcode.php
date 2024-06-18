@@ -62,12 +62,14 @@ class EmployerJobcode extends Model
 
     public function technical_skill(){
         return $this->hasMany('App\Models\Competency\DepartmentMapping', 'department_id', 'id')
-            ->where('competency_role', 'technical_skill');
+            ->where('competency_role', 'technical_skill')
+            ->select(['id', 'employer_id', 'department_id', 'competency','competency_role']);
     }
 
     public function soft_skill(){
         return $this->hasMany('App\Models\Competency\DepartmentMapping', 'department_id', 'id')
-            ->where('competency_role', 'soft_skill');
+            ->where('competency_role', 'soft_skill')
+            ->select(['id', 'employer_id', 'department_id', 'competency','competency_role']);
     }
 
 }

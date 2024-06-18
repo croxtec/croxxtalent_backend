@@ -30,6 +30,29 @@ class TalentCompanyController extends Controller
             }
 
             $default_company = $companies->firstWhere('id', $user->default_company_id);
+            if($default_company){
+                $default_company->department;
+                if($default_company->department && !$default_company->supervisor_id){
+                    $default_company->department->technical_skill;
+                    $default_company->department->soft_skill;
+
+                    $technical_skills = array_column($default_company->department->technical_skill->toArray(0),'competency');
+                    $assessment_distribution = [];
+                    $trainings_distribution = [];
+
+                    if(count($technical_skills)){
+                        foreach($technical_skills as $skill){
+                            array_push($assessment_distribution, mt_rand(0, 10));
+                        }
+                    }
+
+                    $default_company->technical_distribution = [
+                        'categories' => $technical_skills,
+                        'assessment_distribution' =>  $assessment_distribution,
+                        'trainings_distribution' =>  $assessment_distribution,
+                    ];
+                }
+            }
         }
 
         return response()->json([
@@ -101,15 +124,52 @@ class TalentCompanyController extends Controller
                     $employee = Employee::where('code', $id)->where('employer_id', $myinfo->employer_id)->firstOrFail();
                 }
 
-                $goals = Goal::where('employee_id', $employee->id)
-                              ->where('employer_id', $employee->employer_id)
-                              ->get();
+                // $goals = Goal::where('employee_id', $employee->id)
+                //               ->where('employer_id', $employee->employer_id)
+                //               ->get();
+                // $employee->goals = $goals;
 
                 $employee->department;
                 $employee->department_role;
                 $employee->talent;
                 $employee->supervisor;
-                $employee->goals = $goals;
+
+                $technical_skills = array_column($employee->department->technical_skill->toArray(0),'competency');
+                $assessment_distribution = [];
+                $trainings_distribution = [];
+
+                if(count($technical_skills)){
+                    foreach($technical_skills as $skill){
+                        array_push($assessment_distribution, mt_rand(0, 10));
+                    }
+                }
+
+                $employee->technical_distribution = [
+                    'categories' => $technical_skills,
+                    'assessment_distribution' =>  $assessment_distribution,
+                    'trainings_distribution' =>  $assessment_distribution,
+                ];
+
+
+                $goals_taken =  Goal::where('employee_id', $employee->id)
+                                    ->where('employer_id', $employee->employer_id)->count();
+
+                $employee->proficiency = [
+                    'total' =>  '90%',
+                    'assessment' => [
+                        'taken' => 8,
+                        'performance' => '27%'
+                    ],
+                    'goals' => [
+                        'taken' => $goals_taken,
+                        'performance' => '80%'
+                    ],
+                    'trainings' => [
+                        'taken' => 12,
+                        'performance' => '70%'
+                    ],
+                ];
+
 
                 return response()->json([
                     'status' => true,

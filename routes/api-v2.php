@@ -138,11 +138,11 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             });
             // CV Competency Skills
             Route::prefix('resume/competence')->name('resume.competence.')->group( function () {
-                Route::get('/', 'Api\v2\Resume\CvSkillController@index')->name('index');
-                Route::get('/{cv_skill_id}', 'Api\v2\Resume\CvSkillController@show')->name('show');
-                Route::post('/', 'Api\v2\Resume\CvSkillController@store')->name('store');
-                Route::put('/{cv_skill_id}', 'Api\v2\Resume\CvSkillController@update')->name('update');
-                Route::delete('/{cv_skill_id}', 'Api\v2\Resume\CvSkillController@destroy')->name('destroy');
+                Route::get('/', 'Api\v2\Resume\CvCompetencyController@index')->name('index');
+                Route::post('/', 'Api\v2\Resume\CvCompetencyController@store')->name('store');
+                // Route::get('/{cv_skill_id}', 'Api\v2\Resume\CvCompetencyController@show')->name('show');
+                // Route::put('/{cv_skill_id}', 'Api\v2\Resume\CvCompetencyController@update')->name('update');
+                // Route::delete('/{cv_skill_id}', 'Api\v2\Resume\CvCompetencyController@destroy')->name('destroy');
             });
             // CV Hobbies
             Route::prefix('resume/hobbies')->name('resume.hobbies.')->group( function () {

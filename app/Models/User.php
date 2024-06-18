@@ -138,9 +138,17 @@ class User extends Authenticatable
 
     public function getNameInitialsAttribute()
     {
+        if ($this->company_name) {
+            $company_name = explode(" ",$this->company_name);
+
+            $first_letters = array_map(function($word) {
+                return strtoupper($word[0]);
+            }, $company_name);
+
+            return  implode("", $first_letters);
+         }
         $firstInitial = strtoupper(empty($this->first_name) ? '' : $this->first_name[0]);
         $lastInitial = strtoupper($this->last_name[0] ?? '');
-
         return $firstInitial . $lastInitial;
     }
 
