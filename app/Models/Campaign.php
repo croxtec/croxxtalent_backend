@@ -28,8 +28,9 @@ class Campaign extends Model
         'industry_id',
         'job_title',
         'assessment_id',
-        'domain_id',
-        'core_id',
+        'department_id',
+        // 'domain_id',
+        // 'core_id',
         // 'job_title_id',
         'work_type',
         'minimum_degree_id',
@@ -71,7 +72,7 @@ class Campaign extends Model
         'skill_ids', 'skills','total_applications', 'currency_symbol',
         // 'certificate_course_ids', 'certificate_courses',
         'course_of_study_ids', 'course_of_studies',
-        'language_ids', 'languages',
+        'language_ids', 'languages', 'department_name',
         'user_name', 'user_display_name',
     ];
 
@@ -121,7 +122,17 @@ class Campaign extends Model
         return $this->industry_id ? $this->industry->name : null;
     }
 
-     public function getCurrencySymbolAttribute()
+    public function department()
+    {
+        return $this->belongsTo('App\Models\EmployerJobcode', 'department_id', 'id');
+    }
+
+    public function getDepartmentNameAttribute()
+    {
+        return $this->department_id ? $this->department->job_code : null;
+    }
+
+    public function getCurrencySymbolAttribute()
     {
         $symbol = '';
         if($this->currency_code == 'USD') $symbol = '$';
@@ -181,12 +192,12 @@ class Campaign extends Model
 
     public function skills()
     {
-        return $this->belongsToMany('App\Models\SkillTertiary', 'campaign_skill', 'campaign_id', 'skill_id');
+        return $this->belongsToMany('App\Models\Competency\DepartmentMapping', 'campaign_skill', 'campaign_id', 'skill_id');
     }
 
     public function getSkillsAttribute()
     {
-        return null;//$this->skills()->get();
+        return $this->skills()->get();
     }
 
     public function getSkillIdsAttribute()

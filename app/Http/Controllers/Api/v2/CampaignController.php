@@ -77,12 +77,13 @@ class CampaignController extends Controller
         // Retrieve the validated input data...
         $validatedData = $request->validated();
         $validatedData['user_id'] = $user->id;
+        $validatedData['code'] = $user->id.md5(time());
 
         $skill_ids = $validatedData['skill_ids'];
         $course_of_study_ids = $validatedData['course_of_study_ids'];
         $language_ids = $validatedData['language_ids'];
         unset($validatedData['skill_ids'], $validatedData['course_of_study_ids'], $validatedData['language_ids']);
-
+        // return $validatedData;
         $campaign = Campaign::create($validatedData);
         if ($campaign) {
             // save records to pivot table
@@ -112,7 +113,12 @@ class CampaignController extends Controller
      */
     public function show($id)
     {
-        $campaign = Campaign::findOrFail($id);
+        if (is_numeric($id)) {
+          $campaign = Campaign::findOrFail($id);
+        }else{
+            $campaign = Campaign::where('code', $id)->firstOrFail();
+        }
+
         $campaign->applications;
         foreach ($campaign->applications as $application) {
             $application->cv = Cv::find($application->talent_cv_id);
