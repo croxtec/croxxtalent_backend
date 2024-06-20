@@ -35,27 +35,58 @@ class CroxxJobsController extends Controller
         $sort_dir = $request->input('sort_dir', 'desc');
         $search = $request->input('search');
         $industry = $request->input('industry');
-        $country = $request->input('country');
         $qualifications = $request->input('qualifications');
         $experience = $request->input('experience');
-        $employer = $request->input('employer');
-        $employment_type = $request->input('employment_type');
-        $salary_currency = $request->input('salary_currency');
-        $salary_salary = $request->input('salary_salary');
-        $salary_end = $request->input('salary_end');
-        $date_start = $request->input('date_start');
-        $date_end = $request->input('date_end');
+        $employers = $request->input('employers');
+        $employment_types = $request->input('employment_types');
+        // $country = $request->input('country');
+        // $salary_currency = $request->input('salary_currency');
+        // $salary_salary = $request->input('salary_salary');
+        // $salary_end = $request->input('salary_end');
+        $qualifications = $request->input('qualifications');
         $languages = $request->input('languages');
+        $date_filter = $request->input('date_filter');
 
         $datatable_draw = $request->input('draw'); // if any
 
 
-        $campaigns = Campaign::where('is_published', 1)
-        ->where( function($query) use ($search) {
-            $query->where('title', 'LIKE', "%{$search}%");
+        $campaigns = Campaign::where( function($query) use ($search) {
+            $query->where('title', 'LIKE', "%{$search}%")
+                   ->orWhere('job_title', 'LIKE', "%{$search}%");
         })
-        // Filters
-        // ->when
+        ->when($employment_types, function($query) use($employment_types){
+            $query->whereIn('work_type', $employment_types);
+        })
+        ->when($industry, function($query) use($industry){
+            $query->whereIn('industry_id', $industry);
+        })
+        ->when($employers, function($query) use($employers){
+            $query->whereIn('user_id', $employers);
+        })
+        ->when($qualifications, function($query) use($qualifications){
+            $query->whereIn('minimum_degree_id', $qualifications);
+        })
+        ->when($date_filter, function($query) use ($date_filter) {
+            echo($date_filter);
+            switch ($date_filter) {
+                case 'past_24_hours':
+                    $query->where('created_at', '>=', Carbon::now()->subDay());
+                    break;
+                case 'past_week':
+                    $query->where('created_at', '>=', Carbon::now()->subWeek());
+                    break;
+                case 'past_month':
+                    $query->where('created_at', '>=', Carbon::now()->subMonth());
+                    break;
+            }
+        })
+        ->when($languages, function($query) use ($languages) {
+            $query->whereHas('languages', function($q) use ($languages) {
+                $q->whereIn('language_id', $languages);
+            });
+        })
+        ->where('is_published', 1)
+        // ->whereNull('archived_at')
         ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
@@ -65,17 +96,10 @@ class CroxxJobsController extends Controller
             $campaigns = $campaigns->paginate($per_page);
         }
 
-        // foreach($campaigns as $campaign){
-        //     $campaign->applied = AppliedJob::where('campaign_id', $campaign->id)->where('talent_user_id', $user->id)->first();
-        // }
-
-
         $response = collect([
             'status' => true,
-            'data' => $campaigns,
             'message' => "Successful."
-        ]);
-        // ->merge($campaigns)->merge(['draw' => $datatable_draw]);
+        ]) ->merge($campaigns)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
     }
 
@@ -89,9 +113,10 @@ class CroxxJobsController extends Controller
     {
         $campaign = Campaign::findOrFail($id);
         $campaign->applications;
-        foreach ($campaign->applications as $application) {
-            $application->cv = Cv::find($application->talent_cv_id);
-        }
+
+        // foreach ($campaign->applications as $application) {
+        //     $application->cv = Cv::find($application->talent_cv_id);
+        // }
 
         return response()->json([
             'status' => true,
