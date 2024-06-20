@@ -249,7 +249,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         ]);
         Route::get('competency/mapping', 'Api\v2\EmployerCompetencyController@index')->name('competency.index');
         Route::post('competency/mapping/{id}', 'Api\v2\EmployerCompetencyController@storeCompetency')->name('competency.store');
-        Route::post('onboarding/welcome', 'Api\v2\EmployerCompetencyController@confirmWelcome')->name('confirm.welcome');
+        Route::get('onboarding/welcome', 'Api\v2\EmployerCompetencyController@confirmWelcome')->name('confirm.welcome');
 
         // Route::get('competency/gap', 'Api\v2\EmployerCompetencyController@competency')->name('competency.skill');
         // Route::patch('employee/{id}/archive', 'Api\v2\EmployeeController@archive')->name('employee.archive');
