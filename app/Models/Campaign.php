@@ -29,6 +29,8 @@ class Campaign extends Model
         'job_title',
         'assessment_id',
         'department_id',
+        'experience_level',
+        'work_site',
         // 'domain_id',
         // 'core_id',
         // 'job_title_id',

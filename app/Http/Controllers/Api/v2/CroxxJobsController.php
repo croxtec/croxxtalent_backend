@@ -35,7 +35,6 @@ class CroxxJobsController extends Controller
         $sort_dir = $request->input('sort_dir', 'desc');
         $search = $request->input('search');
         $industry = $request->input('industry');
-        $qualifications = $request->input('qualifications');
         $experience = $request->input('experience');
         $employers = $request->input('employers');
         $employment_types = $request->input('employment_types');
@@ -67,7 +66,6 @@ class CroxxJobsController extends Controller
             $query->whereIn('minimum_degree_id', $qualifications);
         })
         ->when($date_filter, function($query) use ($date_filter) {
-            echo($date_filter);
             switch ($date_filter) {
                 case 'past_24_hours':
                     $query->where('created_at', '>=', Carbon::now()->subDay());
@@ -209,6 +207,8 @@ class CroxxJobsController extends Controller
     {
         $user = $request->user();
         // $this->authorize('view-any', Campaign::class);
+        // info($user->id);
+        // $cv = CV::where('user_id', $user->id)->firstorFail();
 
 
         $per_page = $request->input('per_page', 100);
@@ -234,7 +234,7 @@ class CroxxJobsController extends Controller
         $campaigns = Campaign::where('is_published', 1)
         ->where( function($query) use ($search) {
             $query->where('title', 'LIKE', "%{$search}%");
-        }) // ->when
+        })
         ->orderBy($sort_by, $sort_dir);
 
         $results = $campaigns->limit(18)->get();

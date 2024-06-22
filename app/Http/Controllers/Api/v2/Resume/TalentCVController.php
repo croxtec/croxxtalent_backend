@@ -19,9 +19,17 @@ use App\Models\Audit;
 use App\Libraries\LinkedIn;
 use Spatie\PdfToText\Pdf;
 use PhpOffice\PhpWord\IOFactory;
+use Cloudinary\Cloudinary;
 
 class TalentCVController extends Controller
 {
+    protected $cloudinary;
+
+    public function __construct(Cloudinary $cloudinary)
+    {
+        $this->cloudinary = $cloudinary;
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -194,6 +202,8 @@ class TalentCVController extends Controller
         ], 200);
     }
 
+
+
      /**
     * Upload and update photo.
     *
@@ -201,43 +211,64 @@ class TalentCVController extends Controller
     * @param  string  $id
     * @return \Illuminate\Http\Response
     */
-    public function photo(Request $request, $id)
+    public function photo(Request $request)
     {
+        $user = $request->user();
         // Authorization was declared in the CvPhotoRequest
-
         // Retrieve the validated input data....
         // $validatedData = $request->validated();
-        $cv = Cv::findOrFail($id);
+        $cv = CV::where('user_id', $user->id)->firstorFail();
+
+        $request->validate([
+            'photo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
 
         if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
-            $extension = $request->file('photo')->extension();
+            $file = $request->file('photo');
+            $extension = $file->extension();
+            $fileSize = $file->getSize(); // size in bytes
+            $transformation = [];
+
+            // Check if the file size is greater than 700KB (700 * 1024 bytes)
+            if ($fileSize > 700 * 1024) {
+                // Reduce the size by 75%
+                $transformation['quality'] = '60';
+            }
+
+            // Attach Filename
             $filename = $cv->id . '-' . time() . '-' . Str::random(32);
             $filename = "{$filename}.$extension";
             $year = date('Y');
-            $month = date('m');
-            $rel_upload_path    = "profile/{$year}/{$month}";
-            if ( config('app.env') == 'local') {
+            $rel_upload_path  = "croxx_pshvscs/profile/{$year}";
+            if (config('app.env') == 'local') {
                 $rel_upload_path = "local/{$rel_upload_path}"; // dir for dev environment test uploads
             }
-            // do upload
-            $uploaded_file_path = $request->file('photo')->storeAs($rel_upload_path, $filename);
-            Storage::setVisibility($uploaded_file_path, 'public'); //set file visibility to  "public"
-            // delete previously uploaded file if any
+
+            // Delete previously uploaded file if any
             if ($cv->photo) {
-                Storage::delete($cv->photo);
+                $public_id = pathinfo($cv->photo, PATHINFO_FILENAME); // Extract public_id from URL
+                info(['Public ID', $public_id]);
+                $this->cloudinary->uploadApi()->destroy($public_id);
             }
+
+            // Upload new photo
+            $result = $this->cloudinary->uploadApi()->upload($file->getRealPath(), [
+                'folder' => $rel_upload_path, // Specify a folder
+            ]);
+
             // Update with the newly update file
-            $cv->photo = $uploaded_file_path;
+            $cv->photo = $result['secure_url'];
             $cv->save();
 
             return response()->json([
                 'status' => true,
                 'message' => 'Photo uploaded successfully.',
                 'data' => [
-                    'photo_url' => cloud_asset($uploaded_file_path),
+                    'photo_url' => $result['secure_url'],
                     'cv' => $cv
                 ]
             ], 200);
+
         }
         return response()->json([
             'status' => true,
