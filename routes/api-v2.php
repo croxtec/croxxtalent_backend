@@ -209,9 +209,6 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::get('notifications/seen/{id}', 'Api\v2\UserController@seenNotification')->name('users.notifications');
     });
 
-    Route::get('jobs', 'Api\v2\CroxxJobsController@index')->name('jobs.index');
-    Route::get('jobs/{id}', 'Api\v2\CroxxJobsController@show')->name('jobs.show');
-
     // Croxx Jobs
     Route::middleware('auth:sanctum')->name('api.')->group( function () {
         Route::get('jobs/recommendations', 'Api\v2\CroxxJobsController@recommendations')->name('jobs.recommendations');
@@ -238,6 +235,8 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::post('candidate/{id}/withdraw', 'Api\v2\CandidateController@withdraw')->name('candidate.withdraw');
         Route::post('candidate/{id}/result', 'Api\v2\CandidateController@result')->name('candidate.result');
     });
+    Route::get('jobs', 'Api\v2\CroxxJobsController@index')->name('jobs.index');
+    Route::get('jobs/{id}', 'Api\v2\CroxxJobsController@show')->name('jobs.show');
 
     // Company
     Route::middleware('auth:sanctum')->prefix('employers')->name('employers.')->group( function () {
