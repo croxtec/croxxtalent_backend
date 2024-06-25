@@ -44,22 +44,21 @@ class JobInvitationRequest extends FormRequest
                     'employer_user_id' => 'required|exists:users,id',
                     'talent_user_id' => 'required|exists:users,id',
                     'talent_cv_id' => 'required|exists:cvs,id',
-                    'talent_cv_id' => 'required|exists:cvs,id',
-                    'interview_at' =>'required|date|after:yesterday'
+                    'interview_at' =>'nullable|date|after:yesterday'
                 ];
             case 'PUT':
                 return [
                     'employer_user_id' => 'required|exists:users,id',
                     'talent_user_id' => 'required|exists:users,id',
                     'talent_cv_id' => 'required|exists:cvs,id',
-                    'interview_at' =>'required|date|after:yesterday'
+                    'interview_at' =>'nullable|date|after:yesterday'
                 ];
             case 'PATCH':
             case 'DELETE':
                 return [];
             default:break;
         }
-        
+
     }
 
     /**

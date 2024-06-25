@@ -213,7 +213,9 @@ class TalentCompanyController extends Controller
 
                 $employeeIds =  $employees->pluck('id');
                 // Query the goals with the specified employee IDs
-                $goals = Goal::whereIn('employee_id', $employeeIds)->get();
+                $goals = Goal::whereIn('employee_id', $employeeIds)
+                                ->orderBy('created_at', 'desc')
+                                ->limit(3)->get();
 
                 $groupedGoals = $goals->groupBy('employee_id');
 

@@ -28,7 +28,7 @@ class CandidateController extends Controller
         $sort_dir = $request->input('sort_dir', 'desc');
         $search = $request->input('search');
         $archived = $request->input('archived');
-        $rating = $request->input('rating');
+        $rating = $request->input('rating', 0);
         $datatable_draw = $request->input('draw'); // if any
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
@@ -67,7 +67,7 @@ class CandidateController extends Controller
         $applied = AppliedJob::findOrFail($id);
 
         $request->validate([
-            'rating' => 'required|integer|between:1,5',
+            'rating' => 'required|integer|between:1,3',
         ]);
 
         $applied->rating = $request->rating;
@@ -106,14 +106,14 @@ class CandidateController extends Controller
                 }
             }
             // Send Push notification
-            // $display_name = $jobInvitation->employerUser->display_name;
-            // $notification = new Notification();
-            // $notification->user_id = $request->talent_user_id;
-            // $notification->action = '/my-job';
-            // $notification->title = 'Job Invitation';
-            // $notification->message = "You have a new job invitation/offer from <b>$display_name</b>.";
-            // $notification->save();
-            // event(new NewNotification($notification->user_id,$notification));
+            $display_name = $jobInvitation->employerUser->display_name;
+            $notification = new Notification();
+            $notification->user_id = $request->talent_user_id;
+            $notification->action = '/my-job';
+            $notification->title = 'Job Invitation';
+            $notification->message = "You have a new job invitation/offer from <b>$display_name</b>.";
+            $notification->save();
+            event(new NewNotification($notification->user_id,$notification));
             return response()->json([
                 'status' => true,
                 'message' => "An invitation has been sent to {$jobInvitation->talentCv->name}.",

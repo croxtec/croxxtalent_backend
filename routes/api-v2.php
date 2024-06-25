@@ -228,12 +228,12 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         // Route::put('job-invitations/{id}', 'Api\v2\JobInvitationController@update')->name('job_invitations.update');
 
         Route::get('candidate/{id}', 'Api\v2\CandidateController@index')->name('candidate.index');
-        Route::post('candidate/check', 'Api\v2\CandidateController@check')->name('job_invitations.check');
-        Route::get('candidate/invited', 'Api\v2\CandidateController@index')->name('candidate.index');
+        // Route::post('candidate/check', 'Api\v2\CandidateController@check')->name('job_invitations.check');
+        // Route::get('candidate/invited', 'Api\v2\CandidateController@index')->name('candidate.index');
         Route::post('candidate/{id}/rating', 'Api\v2\CandidateController@rateCandidate')->name('candidate.rating');
         Route::post('candidate/{id}/invite', 'Api\v2\CandidateController@invite')->name('candidate.invite');
         Route::post('candidate/{id}/withdraw', 'Api\v2\CandidateController@withdraw')->name('candidate.withdraw');
-        Route::post('candidate/{id}/result', 'Api\v2\CandidateController@result')->name('candidate.result');
+        // Route::post('candidate/{id}/result', 'Api\v2\CandidateController@result')->name('candidate.result');
     });
     Route::get('jobs', 'Api\v2\CroxxJobsController@index')->name('jobs.index');
     Route::get('jobs/{id}', 'Api\v2\CroxxJobsController@show')->name('jobs.show');
