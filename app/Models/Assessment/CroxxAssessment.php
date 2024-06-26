@@ -15,6 +15,7 @@ class CroxxAssessment extends Model
         'code',
         'type',   //company,vetting,trainings,competency
         'category', // competency_evaluation, peer_review, experience
+        'is_published',
 
         'name',
         'description',

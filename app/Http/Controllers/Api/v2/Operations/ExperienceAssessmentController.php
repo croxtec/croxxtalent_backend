@@ -34,7 +34,7 @@ class ExperienceAssessmentController extends Controller
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
         //
 
-        $assesments = CroxxAssessment::where('user_id', $user->id)
+        $assessment = CroxxAssessment::where('user_id', $user->id)
             ->when($archived ,function ($query) use ($archived) {
             if ($archived !== null ) {
                 if ($archived === true ) {
@@ -50,16 +50,16 @@ class ExperienceAssessmentController extends Controller
         ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
-            $results = $assesments->get();
-            $assesments = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
+            $results = $assessment->get();
+            $assessment = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
         } else {
-            $assesments = $assesments->paginate($per_page);
+            $assessment = $assessment->paginate($per_page);
         }
 
         $response = collect([
             'status' => true,
-            'data' => $assesments,
-            'message' => "Successful."
+            'data' => $assessment,
+            'message' => ""
         ]);
         return response()->json($response, 200);
     }
@@ -175,13 +175,78 @@ class ExperienceAssessmentController extends Controller
             // return $this->competencyQuestions();
         }
 
-        info($questions);
 
        return response()->json([
             'status' => true,
-            'message' => "Successful.",
+            'message' => "",
             'data' => $assessment
         ], 200);
+    }
+
+    /**
+     * Display the Employee resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function employee(Request $request, $code)
+    {
+        $user = $request->user();
+
+        $employee = Employee::where('code', $code)->firstOrFail();
+
+        if($user->type == 'talent'){
+           if(!$this->validateEmployee($user,$employee)){
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unautourized Access'
+                ], 401);
+           }
+        }
+
+        $assessments = DB::table('croxx_assessments')
+                        ->join('assigned_employees', 'croxx_assessments.id', '=', 'assigned_employees.assessment_id')
+                        ->where('croxx_assessments.employer_id', $employee->employer_id)
+                        ->where('assigned_employees.employee_id', $employee->id)
+                        ->select('croxx_assessments.*')
+                        ->get();
+
+        if ($assessment->category == 'competency_evaluation') {
+           $questions = EvaluationQuestion::where('assessment_id', $assessment->id)
+                    ->whereNull('archived_at')->get();
+        } else {
+            // return $this->competencyQuestions();
+        }
+
+
+       return response()->json([
+            'status' => true,
+            'message' => "",
+            'data' => $assessments
+        ], 200);
+    }
+
+    private function validateEmployee($user, $employee){
+        // Get The current employee information
+        $current_company = Employee::where('id', $user->default_company_id)
+                    ->where('user_id', $user->id)->with('supervisor')->first();
+
+        if($current_company->id === $employee->id){
+            return true;
+        }
+        if($current_company->supervisor) {
+            $supervisor =  $$current_company->supervisor;
+            info([$supervisor, $employee]);
+            return true;
+            if($supervisor->type == 'role' && $employee->department_role_id === $supervisor->department_role_id){
+                return true;
+            }
+            if($supervisor->type == 'department' && $employee->job_code_id === $supervisor->department_id){
+                return true;
+            }
+            return false;
+        }
+        return false;
     }
 
     /**
@@ -195,6 +260,30 @@ class ExperienceAssessmentController extends Controller
     {
         //
     }
+
+    public function publish(Request $request, $id)
+    {
+        $user = $request->user();
+        // $this->authorize('update', [Assesment::class, $assessment]);
+
+        if (is_numeric($id)) {
+            $assessment = CroxxAssessment::where('id', $id)->where('employer_id', $user->id)->firstOrFail();
+        } else {
+            $assessment = CroxxAssessment::where('code', $id)->where('employer_id', $user->id)->firstOrFail();
+        }
+
+        if($assessment->is_published != true){
+            $assessment->is_published = true;
+            $assessment->save();
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => "Assessment \"{$assessment->name}\" publish successfully.",
+            'data' => CroxxAssessment::find($assessment->id)
+        ], 200);
+    }
+
 
     /**
      * Remove the specified resource from storage.

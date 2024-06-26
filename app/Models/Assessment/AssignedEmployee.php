@@ -14,4 +14,11 @@ class AssignedEmployee extends Model
         'employee_id',
         'is_supervisor'
     ];
+
+
+
+    public function employee(){
+        return $this->belongsTo('App\Models\Employee', 'employee_id', 'id');
+    }
+
 }

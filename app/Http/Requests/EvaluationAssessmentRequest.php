@@ -49,6 +49,7 @@ class EvaluationAssessmentRequest extends FormRequest
                     'description' => 'nullable|max:250',
                     'validity_period' => 'nullable|date',
                     'expected_score' => 'required|integer',
+                    'is_published' => 'required|boolean',
 
                     'questions' => 'required|array',
                     'questions.*.type' => 'required|in:text,multi_choice',

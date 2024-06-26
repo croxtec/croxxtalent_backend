@@ -7,26 +7,38 @@ use Illuminate\Http\Request;
 use App\Models\AssesmentTalentAnswer as TalentAnswer;
 use App\Models\AssesmentScoreSheet as ScoreSheet;
 use App\Models\AssesmentQuestion as Question;
-use App\Models\AssesmentSummary;
-use App\Models\Assesment;
 use App\Models\Employee;
+use App\Models\AssesmentSummary;
+use App\Models\Assessment\CroxxAssessment;
+use App\Models\Assessment\AssignedEmployee;
 
 class ScoresheetController extends Controller
 {
 
     public function employeeList(Request $request, $id){
         $user = $request->user();
-        $assesment = Assesment::where('id', $id)->firstOrFail();
 
+        if (is_numeric($id)) {
+            $assessment = CroxxAssessment::where('id', $id)->where('is_published', 1)->firstOrFail();
+        }else{
+            $assessment = CroxxAssessment::where('code', $id)->where('is_published', 1)->firstOrFail();
+        }
+
+        $user_type = $user->type;
         $per_page = $request->input('per_page', 100);
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'desc');
         $search = $request->input('search');
         $archived = $request->input('archived');
+        $supervisor = $request->input('supervisor', "no");
 
-        $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
+        if($user->type == "employer"){
+            $supervisor = $supervisor == 'yes' ? true : ($archived == 'no' ? false : null);
+            $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
+        }
 
-        $summaries = AssesmentSummary::where('assesment_id', $id)
+        $summaries = AssignedEmployee::where('assessment_id', $assessment->id)
+            ->where('is_supervisor', $supervisor)
             ->when($archived ,function ($query) use ($archived) {
             if ($archived !== null ) {
                 if ($archived === true ) {
@@ -35,9 +47,10 @@ class ScoresheetController extends Controller
                     $query->whereNull('archived_at');
                 }
             }
-        })->when( $search,function($query) use ($search) {
+        })->when($search,function($query) use ($search) {
             $query->where('assesment_id', 'LIKE', "%{$search}%");
-        })->with('assesment_code')
+        })
+        ->with('employee')
         ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
@@ -48,22 +61,22 @@ class ScoresheetController extends Controller
         }
 
 
-        foreach ($summaries as $submitted) {
-            $submitted->talent =  Employee::where('user_id',$submitted->talent_id)->with('job_code')->first();
-        }
+        // foreach ($summaries as $submitted) {
+        //     $submitted->talent =  Employee::where('user_id',$submitted->talent_id)->with('job_code')->first();
+        // }
 
         return response()->json([
             'status' => true,
             'message' => "Successful.",
-            'data' => compact('summaries','assesment')
+            'data' => compact('summaries','assessment')
         ], 200);
     }
 
     public function assesmentResult(Request $request, $code, $talent){
         $user = $request->user();
-        $assesment = Assesment::where('id', $code)->with('questions')->firstOrFail();
+        $assessment = Assesment::where('id', $code)->with('questions')->firstOrFail();
 
-        foreach ($assesment->questions as $question) {
+        foreach ($assessment->questions as $question) {
             // info($question->id);
             $question->answer = TalentAnswer::where([
                     'assesment_question_id' => $question->id,
@@ -202,7 +215,7 @@ class ScoresheetController extends Controller
     public function publishTalentAnswers(Request $request, $id)
     {
         $user = $request->user();
-        // $this->authorize('update', [Assesment::class, $assesment]);
+        // $this->authorize('update', [Assesment::class, $assessment]);
         $summary = AssesmentSummary::where([
             'assesment_id' => $id,
             'talent_id' => $user->id
@@ -214,7 +227,7 @@ class ScoresheetController extends Controller
 
         return response()->json([
             'status' => true,
-            // 'message' => "Assesment \"{$assesment->name}\" publish successfully.",
+            // 'message' => "Assesment \"{$assessment->name}\" publish successfully.",
             'data' =>$summary
         ], 200);
     }
@@ -222,7 +235,7 @@ class ScoresheetController extends Controller
     public function publishManagementFeedback(Request $request, $id)
     {
         $user = $request->user();
-        // $this->authorize('update', [Assesment::class, $assesment]);
+        // $this->authorize('update', [Assesment::class, $assessment]);
         $summary = AssesmentSummary::where([
             'assesment_id' => $id,
             'talent_id' => $request->talent

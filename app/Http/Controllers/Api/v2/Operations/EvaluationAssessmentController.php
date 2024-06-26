@@ -32,7 +32,6 @@ class EvaluationAssessmentController extends Controller
      */
     public function store(EvaluationAssessmentRequest $request)
     {
-        // Start a transaction
         DB::beginTransaction();
 
         try {
