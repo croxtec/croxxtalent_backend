@@ -239,7 +239,7 @@ class TalentCVController extends Controller
             $filename = $cv->id . '-' . time() . '-' . Str::random(32);
             $filename = "{$filename}.$extension";
             $year = date('Y');
-            $rel_upload_path  = "croxx_pshvscs/profile/{$year}";
+            $rel_upload_path  = "CroxxPH/CV/{$year}";
             if (config('app.env') == 'local') {
                 $rel_upload_path = "local/{$rel_upload_path}"; // dir for dev environment test uploads
             }
@@ -247,7 +247,7 @@ class TalentCVController extends Controller
             // Delete previously uploaded file if any
             if ($cv->photo) {
                 $public_id = pathinfo($cv->photo, PATHINFO_FILENAME); // Extract public_id from URL
-                info(['Public ID', $public_id]);
+                // info(['Public ID', $public_id]);
                 $this->cloudinary->uploadApi()->destroy($public_id);
             }
 

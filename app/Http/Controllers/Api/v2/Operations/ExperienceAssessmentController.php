@@ -211,12 +211,12 @@ class ExperienceAssessmentController extends Controller
                         ->select('croxx_assessments.*')
                         ->get();
 
-        if ($assessment->category == 'competency_evaluation') {
-           $questions = EvaluationQuestion::where('assessment_id', $assessment->id)
-                    ->whereNull('archived_at')->get();
-        } else {
-            // return $this->competencyQuestions();
-        }
+        // if ($assessment->category == 'competency_evaluation') {
+        //    $questions = EvaluationQuestion::where('assessment_id', $assessment->id)
+        //             ->whereNull('archived_at')->get();
+        // } else {
+        //     // return $this->competencyQuestions();
+        // }
 
 
        return response()->json([
