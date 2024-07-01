@@ -124,10 +124,6 @@ class TalentCompanyController extends Controller
                     $employee = Employee::where('code', $id)->where('employer_id', $myinfo->employer_id)->firstOrFail();
                 }
 
-                // $goals = Goal::where('employee_id', $employee->id)
-                //               ->where('employer_id', $employee->employer_id)
-                //               ->get();
-                // $employee->goals = $goals;
 
                 $employee->department;
                 $employee->department_role;

@@ -262,6 +262,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             'assessments/evaluation' => 'Api\v2\Operations\EvaluationAssessmentController',
             'assessments' => 'Api\v2\Operations\ExperienceAssessmentController',
         ]);
+        Route::get('goals/employee/{code}', 'Api\v2\GoalController@employee');//->name('assesments.index');
         Route::get('goals/overview/performance', 'Api\v2\GoalController@overview')->name('goals.overview');
         Route::get('goals/overview/calendar', 'Api\v2\GoalController@calendarOverview')->name('goals.overview.calendar');
         Route::patch('goals/{id}/archive', 'Api\v2\GoalController@archive')->name('goals.archive');
@@ -275,17 +276,17 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::get('assessments/employee/{code}', 'Api\v2\Operations\ExperienceAssessmentController@employee');//->name('assesments.index');
         Route::post('assessments/talent/answer', 'Api\v2\ScoresheetController@storeTalentAnswer');//->name('assessments.index');
         Route::patch('assessments/{id}/talent/publish', 'Api\v2\ScoresheetController@publishTalentAnswers');//->name('assessments.index');
+        // Manage Assesment
+        Route::get('assessments/{id}/assigned/employees', 'Api\v2\ScoresheetController@employeeList');//->name('assessments.index');
+        Route::patch('assessments/{id}/supervisor/feedback', 'Api\v2\ScoresheetController@publishSupervisorFeedback');//->name('assesments.index');
+        Route::post('assessments/{id}/supervisor/scoresheet', 'Api\v2\ScoresheetController@storeAssessmentScoreSheet');//->name('assesments.index');
+        Route::get('assessments/{code}/result/{talent}', 'Api\v2\ScoresheetController@assessmentResult');//->name('assessments.index');
+        Route::get('assessments/{code}/feedback/{talent}', 'Api\v2\ScoresheetController@assesmentFeedback');//->name('assessments.index');
         // Assesment Questions
         Route::post('assesments/questions', 'Api\v2\AssesmentQuestionController@store');//->name('assesments.index');
         Route::patch('assesments/questions/{id}/archive', 'Api\v2\AssesmentQuestionController@archive')->name('assesments.archive');
         Route::patch('assesments/questions/{id}/unarchive', 'Api\v2\AssesmentQuestionController@unarchive')->name('assesments.unpublish');
         Route::delete('assesments/questions/{id}', 'Api\v2\AssesmentQuestionController@destroy');//->name('assesments.index');
-        // Manage Assesment
-        Route::get('assessments/{id}/assigned/employees', 'Api\v2\ScoresheetController@employeeList');//->name('assessments.index');
-        Route::post('assessments/management/scoresheet', 'Api\v2\ScoresheetController@storeAssessmentScoreSheet');//->name('assesments.index');
-        Route::patch('assesments/{id}/management/feedback', 'Api\v2\ScoresheetController@publishManagementFeedback');//->name('assesments.index');
-        Route::get('assessments/{code}/result/{talent}', 'Api\v2\ScoresheetController@assesmentResult');//->name('assessments.index');
-        Route::get('assessments/{code}/feedback/{talent}', 'Api\v2\ScoresheetController@assesmentResult');//->name('assessments.index');
 
         // Campaigns
         Route::post('campaigns/{id}/photo', 'Api\v2\CampaignController@photo')->name('campaigns.update_photo');

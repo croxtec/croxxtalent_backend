@@ -226,11 +226,55 @@ class GoalController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function employee(Request $request, $code)
     {
-        //
+        $user = $request->user();
+
+        $employee = Employee::where('code', $code)->firstOrFail();
+
+        if($user->type == 'talent'){
+           if(!$this->validateEmployee($user,$employee)){
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unautourized Access'
+                ], 401);
+           }
+        }
+
+        $goals = Goal::where('employee_id', $employee->id)
+                            ->where('employer_id', $employee->employer_id)
+                            ->get();
+
+
+        return response()->json([
+            'status' => true,
+            'message' => "",
+            'data' => $goals
+        ], 200);
     }
 
+    private function validateEmployee($user, $employee){
+        // Get The current employee information
+        $current_company = Employee::where('id', $user->default_company_id)
+                    ->where('user_id', $user->id)->with('supervisor')->first();
+
+        if($current_company->id === $employee->id){
+            return true;
+        }
+        if($current_company->supervisor) {
+            $supervisor =  $$current_company->supervisor;
+            // info([$supervisor, $employee]);
+            return true;
+            if($supervisor->type == 'role' && $employee->department_role_id === $supervisor->department_role_id){
+                return true;
+            }
+            if($supervisor->type == 'department' && $employee->job_code_id === $supervisor->department_id){
+                return true;
+            }
+            return false;
+        }
+        return false;
+    }
 
     /**
      * Update the specified resource in storage.
@@ -263,7 +307,6 @@ class GoalController extends Controller
      */
     public function archive($id)
     {
-        info($id);
         $goal = Goal::findOrFail($id);
 
         // $this->authorize('delete', [Goal::class, $goal]);

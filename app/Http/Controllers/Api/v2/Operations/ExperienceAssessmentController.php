@@ -189,7 +189,6 @@ class ExperienceAssessmentController extends Controller
             }
         }
 
-
         if ($assessment->category == 'competency_evaluation') {
            $questions = EvaluationQuestion::where('assessment_id', $assessment->id)
                     ->whereNull('archived_at')->get();
@@ -234,13 +233,6 @@ class ExperienceAssessmentController extends Controller
                         ->where('assigned_employees.employee_id', $employee->id)
                         ->select('croxx_assessments.*')
                         ->get();
-
-        // if ($assessment->category == 'competency_evaluation') {
-        //    $questions = EvaluationQuestion::where('assessment_id', $assessment->id)
-        //             ->whereNull('archived_at')->get();
-        // } else {
-        //     // return $this->competencyQuestions();
-        // }
 
 
        return response()->json([

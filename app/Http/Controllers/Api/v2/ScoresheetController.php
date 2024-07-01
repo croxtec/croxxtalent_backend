@@ -73,7 +73,7 @@ class ScoresheetController extends Controller
         ], 200);
     }
 
-    public function assesmentResult(Request $request, $code, $talent){
+    public function assessmentResult(Request $request, $code, $talent){
         $user = $request->user();
 
         if (is_numeric($code)) {
@@ -106,6 +106,29 @@ class ScoresheetController extends Controller
             'status' => true,
             'message' => "",
             'data' => compact('assessment')
+        ], 200);
+    }
+
+    public function assessmentFeedback(Request $request, $code, $talent){
+        $user = $request->user();
+
+        if (is_numeric($code)) {
+            $assessment = CroxxAssessment::where('id', $code)->where('is_published', 1)
+                    ->firstOrFail();
+        }else{
+            $assessment = CroxxAssessment::where('code', $code)->where('is_published', 1)
+                    ->firstOrFail();
+        }
+
+        $summary = AssesmentSummary::where([
+            'assesment_id' => $id,
+            'talent_id' => $talent
+        ])->first();
+
+        return response()->json([
+            'status' => true,
+            'message' => "",
+            'data' => compact('summary','assessment')
         ], 200);
     }
 
@@ -196,10 +219,16 @@ class ScoresheetController extends Controller
             'talent_id' => $user->id
         ]);
 
-        if($summary->is_published){
+        if(!$summary->is_published){
             $summary->talent_feedback = $request->feedback;
             $summary->is_published = true;
             $summary->save();
+        }else{
+            return response()->json([
+                'status' => false,
+                'message' => "Assessment already submited.",
+                'data' => ""
+            ], 400);
         }
 
         return response()->json([
@@ -247,30 +276,40 @@ class ScoresheetController extends Controller
     }
 
 
-    public function publishManagementFeedback(Request $request, $id)
+    public function publishSupervisorFeedback(Request $request, $id)
     {
         $user = $request->user();
+
         // $this->authorize('update', [Assesment::class, $assessment]);
+
+        $rules =[
+            'talent_id' => 'required|exists:users,id',
+            'feedback' => 'required|string|min:10|max:256',
+            'goal_id' => 'nullable|exists:goals,id',
+        ];
+
+        $validatedData = $request->validate($rules);
+
         $summary = AssesmentSummary::where([
             'assesment_id' => $id,
-            'talent_id' => $request->talent
+            'talent_id' => $validatedData['talent_id']
         ])->firstOrFail();
 
-        $total_question = Question::where('assesment_id', $id)->count();
-        $total_score = $total_question * 5;
+        // $total_question = Question::where('assesment_id', $id)->count();
+        // $total_score = $total_question * 5;
 
-        $talent_score = ScoreSheet::where([
-            'talent_id' => $request->talent,  'assesment_id' => $id
-        ])->sum('score');
+        // $talent_score = ScoreSheet::where([
+        //     'talent_id' => $request->talent,  'assesment_id' => $id
+        // ])->sum('score');
 
-        $score_average = ((int)$talent_score / $total_score) * 5;
+        // $score_average = ((int)$talent_score / $total_score) * 5;
 
         $summary->manager_id = $user->id;
         $summary->is_published = 1;
-        $summary->total_score = $total_score;
-        $summary->talent_score = $talent_score;
-        $summary->score_average = $score_average;
-        $summary->manager_feedback = $request->feedback;
+        // $summary->total_score = $total_score;
+        // $summary->talent_score = $talent_score;
+        // $summary->score_average = $score_average;
+        $summary->manager_feedback = $validatedData['feedback'];
         $summary->save();
 
         return response()->json([
