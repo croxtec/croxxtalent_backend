@@ -161,20 +161,44 @@ class ExperienceAssessmentController extends Controller
     public function show(Request $request, $id)
     {
         $user = $request->user();
+        $user_type = $user->type;
+        $employerId = ($user_type == 'employer') ? $user->id: null;
+
+        // Validate Employee Access
+        if($user_type == 'talent'){
+            $employee = Employee::where('user_id', $user->id)->where('id', $user->default_company_id)->firstOrFail();
+            $employerId = $employee->employer_id;
+        }
 
         if (is_numeric($id)) {
-            $assessment = CroxxAssessment::where('id', $id)->where('employer_id', $user->id)->firstOrFail();
+            $assessment = CroxxAssessment::where('id', $id)->where('employer_id', $employerId)->firstOrFail();
         } else {
-            $assessment = CroxxAssessment::where('code', $id)->where('employer_id', $user->id)->firstOrFail();
+            $assessment = CroxxAssessment::where('code', $id)->where('employer_id', $employerId)->firstOrFail();
         }
+
+         // Confirm if employee is assigned
+        if($user_type == 'talent'){
+            $isAssigned = AssignedEmployee::where('employee_id', $employee->id)
+                ->where('assessment_id', $assessment->id)->first();
+
+            if(!$isAssigned){
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unautourized Access'
+                ], 401);
+            }
+        }
+
 
         if ($assessment->category == 'competency_evaluation') {
            $questions = EvaluationQuestion::where('assessment_id', $assessment->id)
                     ->whereNull('archived_at')->get();
         } else {
-            // return $this->competencyQuestions();
+            $questions = CompetencyQuestion::where('assessment_id', $assessment->id)
+                    ->whereNull('archived_at')->get();
         }
 
+        $assessment->questions = $questions;
 
        return response()->json([
             'status' => true,
@@ -236,7 +260,7 @@ class ExperienceAssessmentController extends Controller
         }
         if($current_company->supervisor) {
             $supervisor =  $$current_company->supervisor;
-            info([$supervisor, $employee]);
+            // info([$supervisor, $employee]);
             return true;
             if($supervisor->type == 'role' && $employee->department_role_id === $supervisor->department_role_id){
                 return true;

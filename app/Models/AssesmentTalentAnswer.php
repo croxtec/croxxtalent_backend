@@ -12,8 +12,8 @@ class AssesmentTalentAnswer extends Model
 
     protected $fillable = [
         'talent_id',
-        'assesment_id',
-        'assesment_question_id',
+        'assessment_id',
+        'assessment_question_id',
 
         'comment',
         'period',

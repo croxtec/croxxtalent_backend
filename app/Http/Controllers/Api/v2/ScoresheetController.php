@@ -11,6 +11,8 @@ use App\Models\Employee;
 use App\Models\AssesmentSummary;
 use App\Models\Assessment\CroxxAssessment;
 use App\Models\Assessment\AssignedEmployee;
+use App\Models\Assessment\CompetencyQuestion;
+use App\Models\Assessment\EvaluationQuestion;
 
 class ScoresheetController extends Controller
 {
@@ -60,7 +62,6 @@ class ScoresheetController extends Controller
             $summaries = $summaries->paginate($per_page);
         }
 
-
         // foreach ($summaries as $submitted) {
         //     $submitted->talent =  Employee::where('user_id',$submitted->talent_id)->with('job_code')->first();
         // }
@@ -74,27 +75,37 @@ class ScoresheetController extends Controller
 
     public function assesmentResult(Request $request, $code, $talent){
         $user = $request->user();
-        $assessment = Assesment::where('id', $code)->with('questions')->firstOrFail();
+
+        if (is_numeric($code)) {
+            $assessment = CroxxAssessment::where('id', $code)->where('is_published', 1)
+                    ->firstOrFail();
+        }else{
+            $assessment = CroxxAssessment::where('code', $code)->where('is_published', 1)
+                    ->firstOrFail();
+        }
+
+        info($assessment);
+        $assessment->questions;
 
         foreach ($assessment->questions as $question) {
-            // info($question->id);
+            info($question->id);
             $question->answer = TalentAnswer::where([
                     'assesment_question_id' => $question->id,
                     'talent_id' => $talent,
-                    'assesment_id' => $code
+                    'assesment_id' => $assessment->id
              ])->first();
 
-            $question->result = ScoreSheet::where([
-                    'assesment_question_id' => $question->id,
-                    'talent_id' => $talent,
-                    'assesment_id' => $code
-             ])->first();
+            // $question->result = ScoreSheet::where([
+            //         'assesment_question_id' => $question->id,
+            //         'talent_id' => $talent,
+            //         'assesment_id' => $code
+            //  ])->first();
         }
 
         return response()->json([
             'status' => true,
-            'message' => "Successful.",
-            'data' => compact('assesment')
+            'message' => "",
+            'data' => compact('assessment')
         ], 200);
     }
 
@@ -109,39 +120,37 @@ class ScoresheetController extends Controller
         $user = $request->user();
 
         $rules =[
-            'assesment_id' => 'required|exists:assesments,id',
-            'question_id' => 'required|exists:assesment_questions,id'
+            'assessment_id' => 'required|exists:assesments,id',
+            'question_id' => 'required'
+            // 'question_id' => 'required|exists:assesment_questions,id'
         ];
 
         $searchData = $request->validate($rules);
         $searchData['talent_id'] = $user->id;
-        $searchData['assesment_question_id'] = $searchData['question_id'];
+        $searchData['assessment_question_id'] = $searchData['question_id'];
         unset($searchData['question_id']);
 
-        $question = Question::find($searchData['assesment_question_id']);
+        $assessment = CroxxAssessment::where('id', $searchData['assessment_id'])
+                            ->where('is_published', 1)->firstOrFail();
+
+        if ($assessment->category == 'competency_evaluation') {
+            $question = EvaluationQuestion::where('assessment_id', $assessment->id)
+                            ->where('id', $searchData['assessment_question_id'])->firstOrFail();
+        } else {
+            $question = CompetencyQuestion::where('assessment_id', $assessment->id)
+                            ->where('id', $searchData['assessment_question_id'])->firstOrFail();
+        }
+
+        // info($searchData);
         $answer = TalentAnswer::firstOrCreate($searchData);
 
-        if($question->type == 'text') {
-            $request->validate([ 'answer' => 'required|min:10|max:250' ]);
-            $answer->comment = $request->answer;
-        }
-        if($question->type == 'reference') {
-            $regex = '/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/';
-            $request->validate([ 'answer' => 'required|regex:'.$regex ]);
-            $answer->comment = $request->answer;
-        }
-        if($question->type == 'radio'){
-            $request->validate([ 'answer' => 'required|in:option1,option2,option3,option4' ]);
-            $answer->option = $request->answer;
-        }
-        if($question->type == 'checkbox'){
+        if($assessment->category != 'competency_evaluation') {
             $request->validate([
-                'answer' => 'required|array',
-                'answer.*' => 'in:option1,option2,option3,option4'
-            ]);
-            $answer->options = $request->answer; //json
-        }
-        if($question->type == 'file'){
+                'answer' => 'required|min:10|max:250'
+             ]);
+
+            $answer->comment = $request->answer;
+
             if ($request->hasFile('file') && $request->file('file')->isValid()) {
                 $extension = $request->file('file')->extension();
                 $filename = $user->id . '-' . time() . '-' . Str::random(32);
@@ -157,13 +166,15 @@ class ScoresheetController extends Controller
 
                 // Update with the newly update file
                 $answer->upload = $request->comment;
-            }else{
-                return response()->json([
-                    'status' => false,
-                    'message' => 'File is not valid'
-                ]);
             }
+        }
 
+        if($assessment->category == 'competency_evaluation'){
+            $request->validate([
+                'answer' => 'required|in:option1,option2,option3,option4'
+            ]);
+
+            $answer->option = $request->answer;
         }
 
         $answer->save();
@@ -171,8 +182,31 @@ class ScoresheetController extends Controller
         return response()->json([
             'status' => true,
             'data' => $answer,
-            'message' => "Assesment Answer submited"
+            'message' => ""
         ], 201);
+    }
+
+
+    public function publishTalentAnswers(Request $request, $id)
+    {
+        $user = $request->user();
+        // $this->authorize('update', [Assesment::class, $assessment]);
+        $summary = AssesmentSummary::firstOrCreate([
+            'assesment_id' => $id,
+            'talent_id' => $user->id
+        ]);
+
+        if($summary->is_published){
+            $summary->talent_feedback = $request->feedback;
+            $summary->is_published = true;
+            $summary->save();
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => "Assessment submitted.",
+            'data' =>$summary
+        ], 200);
     }
 
     /**
@@ -212,25 +246,6 @@ class ScoresheetController extends Controller
 
     }
 
-    public function publishTalentAnswers(Request $request, $id)
-    {
-        $user = $request->user();
-        // $this->authorize('update', [Assesment::class, $assessment]);
-        $summary = AssesmentSummary::where([
-            'assesment_id' => $id,
-            'talent_id' => $user->id
-        ])->firstOrFail();
-
-        $summary->talent_feedback = $request->feedback;
-        $summary->is_published = true;
-        $summary->save();
-
-        return response()->json([
-            'status' => true,
-            // 'message' => "Assesment \"{$assessment->name}\" publish successfully.",
-            'data' =>$summary
-        ], 200);
-    }
 
     public function publishManagementFeedback(Request $request, $id)
     {
