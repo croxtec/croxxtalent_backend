@@ -84,22 +84,22 @@ class ScoresheetController extends Controller
                     ->firstOrFail();
         }
 
-        info($assessment);
         $assessment->questions;
 
         foreach ($assessment->questions as $question) {
-            info($question->id);
             $question->answer = TalentAnswer::where([
-                    'assesment_question_id' => $question->id,
+                    'assessment_question_id' => $question->id,
                     'talent_id' => $talent,
-                    'assesment_id' => $assessment->id
+                    'assessment_id' => $assessment->id
              ])->first();
 
-            // $question->result = ScoreSheet::where([
-            //         'assesment_question_id' => $question->id,
-            //         'talent_id' => $talent,
-            //         'assesment_id' => $code
-            //  ])->first();
+            if($assessment->category != 'competency_evaluation'){
+                $question->result = ScoreSheet::where([
+                        'assessment_question_id' => $question->id,
+                        'talent_id' => $talent,
+                        'assessment_id' => $code
+                 ])->first();
+            }
         }
 
         return response()->json([

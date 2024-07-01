@@ -51,7 +51,7 @@ class CroxxAssessment extends Model
         return $this->hasMany('App\Models\Assessment\CompetencyQuestion', 'assessment_id', 'id')->whereNull('archived_at');
     }
 
-    public function getQuestionsAttribute()
+    public function questions()
     {
         if ($this->category == 'competency_evaluation') {
             return $this->evaluationQuestions();

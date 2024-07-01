@@ -282,9 +282,10 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::delete('assesments/questions/{id}', 'Api\v2\AssesmentQuestionController@destroy');//->name('assesments.index');
         // Manage Assesment
         Route::get('assessments/{id}/assigned/employees', 'Api\v2\ScoresheetController@employeeList');//->name('assessments.index');
-        Route::get('assessments/{code}/result/{talent}', 'Api\v2\ScoresheetController@assesmentResult');//->name('assessments.index');
         Route::post('assessments/management/scoresheet', 'Api\v2\ScoresheetController@storeAssessmentScoreSheet');//->name('assesments.index');
         Route::patch('assesments/{id}/management/feedback', 'Api\v2\ScoresheetController@publishManagementFeedback');//->name('assesments.index');
+        Route::get('assessments/{code}/result/{talent}', 'Api\v2\ScoresheetController@assesmentResult');//->name('assessments.index');
+        Route::get('assessments/{code}/feedback/{talent}', 'Api\v2\ScoresheetController@assesmentResult');//->name('assessments.index');
 
         // Campaigns
         Route::post('campaigns/{id}/photo', 'Api\v2\CampaignController@photo')->name('campaigns.update_photo');
