@@ -15,9 +15,10 @@ return new class extends Migration
     {
         Schema::create('assesment_talent_answers', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('talent_id');
-            $table->foreignId('assesment_id');
-            $table->foreignId('assesment_question_id');
+            $table->foreignId('assessment_id');
+            $table->foreignId('assessment_question_id');
+            $table->foreignId('talent_id')->nullable();
+            $table->foreignId('employee_id')->nullable();
 
             $table->text('comment')->nullable();
             $table->dateTime('period')->nullable();

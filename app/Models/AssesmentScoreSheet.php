@@ -10,13 +10,13 @@ class AssesmentScoreSheet extends Model
     use HasFactory;
 
     protected $fillable = [
-        'manager_id',
-        'assesment_id',
-        'talent_id',
+        'supervisor_id',
+        'assessment_id',
+        'employee_id',
         'assesment_question_id',
 
-        'comment',
         'score',
+        'comment',
         'attachment'
     ];
 }

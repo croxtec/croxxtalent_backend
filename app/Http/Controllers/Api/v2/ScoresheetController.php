@@ -132,119 +132,6 @@ class ScoresheetController extends Controller
         ], 200);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function storeTalentAnswer(Request $request)
-    {
-        $user = $request->user();
-
-        $rules =[
-            'assessment_id' => 'required|exists:assesments,id',
-            'question_id' => 'required'
-            // 'question_id' => 'required|exists:assesment_questions,id'
-        ];
-
-        $searchData = $request->validate($rules);
-        $searchData['talent_id'] = $user->id;
-        $searchData['assessment_question_id'] = $searchData['question_id'];
-        unset($searchData['question_id']);
-
-        $assessment = CroxxAssessment::where('id', $searchData['assessment_id'])
-                            ->where('is_published', 1)->firstOrFail();
-
-        if ($assessment->category == 'competency_evaluation') {
-            $question = EvaluationQuestion::where('assessment_id', $assessment->id)
-                            ->where('id', $searchData['assessment_question_id'])->firstOrFail();
-        } else {
-            $question = CompetencyQuestion::where('assessment_id', $assessment->id)
-                            ->where('id', $searchData['assessment_question_id'])->firstOrFail();
-        }
-
-        // info($searchData);
-        $answer = TalentAnswer::firstOrCreate($searchData);
-
-        if($assessment->category != 'competency_evaluation') {
-            $request->validate([
-                'answer' => 'required|min:10|max:250'
-             ]);
-
-            $answer->comment = $request->answer;
-
-            if ($request->hasFile('file') && $request->file('file')->isValid()) {
-                $extension = $request->file('file')->extension();
-                $filename = $user->id . '-' . time() . '-' . Str::random(32);
-                $filename = "{$filename}.$extension";
-                $year = date('Y');
-                $month = date('m');
-                $rel_upload_path    = "assesment/{$year}/{$month}";
-                if ( config('app.env') == 'local')  $rel_upload_path = "local/{$rel_upload_path}"; // dir for dev environment test uploads
-
-                // do upload
-                $uploaded_file_path = $request->file('file')->storeAs($rel_upload_path, $filename);
-                Storage::setVisibility($uploaded_file_path, 'public'); //set file visibility to  "public"
-
-                // Update with the newly update file
-                $answer->upload = $request->comment;
-            }
-        }
-
-        if($assessment->category == 'competency_evaluation'){
-            $request->validate([
-                'answer' => 'required|in:option1,option2,option3,option4'
-            ]);
-
-            $answer->option = $request->answer;
-        }
-
-        $answer->save();
-
-        return response()->json([
-            'status' => true,
-            'data' => $answer,
-            'message' => ""
-        ], 201);
-    }
-
-
-    public function publishTalentAnswers(Request $request, $id)
-    {
-        $user = $request->user();
-        // $this->authorize('update', [Assesment::class, $assessment]);
-        $summary = AssesmentSummary::firstOrCreate([
-            'assesment_id' => $id,
-            'talent_id' => $user->id
-        ]);
-
-        if(!$summary->is_published){
-            $summary->talent_feedback = $request->feedback;
-            $summary->is_published = true;
-            $summary->save();
-        }else{
-            return response()->json([
-                'status' => false,
-                'message' => "Assessment already submited.",
-                'data' => ""
-            ], 400);
-        }
-
-        return response()->json([
-            'status' => true,
-            'message' => "Assessment submitted.",
-            'data' =>$summary
-        ], 200);
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function storeAssesmentScoreSheet(Request $request)
     {
         $user = $request->user();
@@ -274,7 +161,6 @@ class ScoresheetController extends Controller
         ], 201);
 
     }
-
 
     public function publishSupervisorFeedback(Request $request, $id)
     {

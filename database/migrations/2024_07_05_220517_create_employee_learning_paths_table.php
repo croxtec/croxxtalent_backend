@@ -13,15 +13,15 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('assesment_score_sheets', function (Blueprint $table) {
+        Schema::create('employee_learning_paths', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('supervisor_id');
-            $table->foreignId('assessment_id');
+            $table->foreignId('employer_user_id');
             $table->foreignId('employee_id');
-            $table->foreignId('assesment_question_id');
-            $table->integer('score');
-            $table->string('comment')->nullable();
-            $table->text('attachment')->nullable();
+            $table->foreignId('assessment_feedback_id')->nullable();
+
+            $table->foreignId('training_id')->nullable();
+            $table->integer('progress')->default(0);
+            $table->timestamp('archived_at')->nullable();
             $table->timestamps();
         });
     }
@@ -33,6 +33,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('assesment_score_sheets');
+        Schema::dropIfExists('employee_learning_paths');
     }
 };

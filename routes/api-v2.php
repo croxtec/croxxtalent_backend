@@ -273,9 +273,9 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::patch('assessments/{id}/archive', 'Api\v2\AssesmentController@archive')->name('assessments.archive');
         Route::patch('assessments/{id}/unarchive', 'Api\v2\AssesmentController@unarchive')->name('assessments.unarchive');
         // Employee Assessment
-        Route::get('assessments/employee/{code}', 'Api\v2\Operations\ExperienceAssessmentController@employee');//->name('assesments.index');
-        Route::post('assessments/talent/answer', 'Api\v2\ScoresheetController@storeTalentAnswer');//->name('assessments.index');
-        Route::patch('assessments/{id}/talent/publish', 'Api\v2\ScoresheetController@publishTalentAnswers');//->name('assessments.index');
+        Route::get('assessments/employee/{code}', 'Api\v2\Operations\EmployeeAssessmentController@employee');//->name('assesments.index');
+        Route::post('assessments/talent/answer', 'Api\v2\EmployeeAssessmentController@storeTalentAnswer');//->name('assessments.index');
+        Route::patch('assessments/{id}/talent/publish', 'Api\v2\EmployeeAssessmentController@publishTalentAnswers');//->name('assessments.index');
         // Manage Assesment
         Route::get('assessments/{id}/assigned/employees', 'Api\v2\ScoresheetController@employeeList');//->name('assessments.index');
         Route::patch('assessments/{id}/supervisor/feedback', 'Api\v2\ScoresheetController@publishSupervisorFeedback');//->name('assesments.index');

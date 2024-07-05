@@ -11,7 +11,7 @@ class AssesmentSummary extends Model
 
     protected $fillable = [
         'assesment_id',
-        'talent_id',
+        'employee_id',
         'employer_id'
     ];
 
