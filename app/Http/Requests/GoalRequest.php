@@ -68,13 +68,13 @@ class GoalRequest extends FormRequest
                         Rule::requiredIf(function () {
                             return in_array(request()->input('type'), ['supervisor']);
                         }),
-                        'exists:employees,code'
+                        'nullable|exists:employees,code'
                     ],
                     'employee_code' => [
                         Rule::requiredIf(function () {
                             return in_array(request()->input('type'), ['supervisor']);
                         }),
-                        'exists:employees,code'
+                        'nullable|exists:employees,code'
                     ],
                     'period' => ['required',
                         'date_format:Y-m-d H:i',
