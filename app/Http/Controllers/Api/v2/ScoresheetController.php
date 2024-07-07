@@ -6,9 +6,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\AssesmentTalentAnswer as TalentAnswer;
 use App\Models\AssesmentScoreSheet as ScoreSheet;
-use App\Models\AssesmentQuestion as Question;
+
 use App\Models\Employee;
-use App\Models\AssesmentSummary;
+use App\Models\Supervisor;
+use App\Models\Assessment\CompetencyQuestion;
 use App\Models\Assessment\CroxxAssessment;
 use App\Models\Assessment\AssignedEmployee;
 use App\Models\Assessment\EmployerAssessmentFeedback;
@@ -107,7 +108,6 @@ class ScoresheetController extends Controller
             }
         }
 
-
         return response()->json([
             'status' => true,
             'message' => "",
@@ -140,28 +140,34 @@ class ScoresheetController extends Controller
         ], 200);
     }
 
-    public function storeAssessmentScoreSheet(Request $request)
+    public function gradeAssessmentScoreSheet(Request $request, $id)
     {
         $user = $request->user();
+        $assessment = CroxxAssessment::where('id', $id)->where('is_published', 1)->firstOrFail();
 
-        $rules =[
-            'assesment_id' => 'required|exists:assesments,id',
-            'talent_id' => 'required|exists:users,id',
-            'question_id' => 'required|exists:assesment_questions,id',
-            'score' => 'required|integer|between:1,5'
+        $rules = [
+            // 'assessment_id' => 'required|exists:assesments,id',
+            'employee_code' => 'required',
+            'question_id' => 'required',
+            'score' => 'required|integer|between:0,4',
+            'comment' => 'nullable|max:256'
         ];
 
-        $searchData = $request->validate($rules);
-        $searchData['manager_id'] = $user->id;
-        $searchData['assesment_question_id'] = $searchData['question_id'];
-        unset($searchData['question_id']);
+        $validatedData = $request->validate($rules);
+        $validatedData['assessment_question_id'] = $validatedData['question_id'];
 
-        $question = Question::find($searchData['assesment_question_id']);
-        $score = ScoreSheet::firstOrCreate($searchData);
+        $employee = Employee::where('code', $validatedData['employee_code'])->first();
+        $question = CompetencyQuestion::where('assessment_id', $assessment->id)
+                             ->where('id', $validatedData['assessment_question_id'])->first();
 
-        $score->comment = $request->comment;
+        $validatedData['assessment_id'] = $assessment->id;
+        $validatedData['supervisor_id'] = $user->default_company_id;
+        $score['comment'] =  $validatedData['comment'] ;
+        $score['employee_id'] = $employee->id ;
 
-        $score->save();
+        unset($validatedData['employee_code']);
+        unset($validatedData['question_id']);
+        $score = ScoreSheet::firstOrCreate($validatedData);
 
         return response()->json([
             'status' => true,
@@ -173,6 +179,7 @@ class ScoresheetController extends Controller
     public function publishSupervisorFeedback(Request $request, $id)
     {
         $user = $request->user();
+        $assessment = CroxxAssessment::where('id', $id)->where('is_published', 1)->firstOrFail();
 
         // $this->authorize('update', [Assesment::class, $assessment]);
 
@@ -183,8 +190,6 @@ class ScoresheetController extends Controller
         ];
 
         $validatedData = $request->validate($rules);
-
-        $assessment = CroxxAssessment::where('id', $id)->where('is_published', 1)->firstOrFail();
         $employee = Employee::where('code', $validatedData['employee_code'])->first();
 
         $feedback = EmployerAssessmentFeedback::where([

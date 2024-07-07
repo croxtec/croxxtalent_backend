@@ -281,7 +281,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::get('assessments/{id}/assigned/employees', 'Api\v2\ScoresheetController@employeeList');//->name('assessments.index');
         Route::get('assessments/{code}/result/{talent}', 'Api\v2\ScoresheetController@assessmentResult');//->name('assessments.index');
         Route::get('assessments/{code}/feedback/{talent}', 'Api\v2\ScoresheetController@assessmentFeedback');//->name('assessments.index');
-        Route::post('assessments/{id}/supervisor/scoresheet', 'Api\v2\ScoresheetController@storeAssessmentScoreSheet');//->name('assesments.index');
+        Route::post('assessments/{id}/supervisor/scoresheet', 'Api\v2\ScoresheetController@gradeAssessmentScoreSheet');//->name('assesments.index');
         Route::patch('assessments/{id}/supervisor/feedback', 'Api\v2\ScoresheetController@publishSupervisorFeedback');//->name('assesments.index');
         // Assesment Questions
         Route::post('assesments/questions', 'Api\v2\AssesmentQuestionController@store');//->name('assesments.index');

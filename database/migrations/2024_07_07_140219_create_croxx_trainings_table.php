@@ -13,25 +13,26 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('croxx_assessments', function (Blueprint $table) {
+        Schema::create('croxx_trainings', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id');
             $table->foreignId('employer_id');
             $table->string('code');
-            $table->string('level');
-            $table->string('category');
-            $table->string('type')->default('company');
+            $table->enum('type', ['company', 'competency', 'training'])->default('company'); //competency
 
-            $table->string('name');
-            $table->text('description')->nullable();
-            $table->timestamp('validity_period')->nullable();
-            $table->text('delivery_type')->nullable();
-            $table->integer('expected_percentage')->nullable();
+            $table->string('title');
+            $table->string('experience_level');
+            $table->longText('objective')->nullable();
+            $table->string('assessment_level')->nullable();
+            $table->boolean('is_free')->default(true);
+            $table->decimal('price', 8, 2)->default(0);
+            $table->string('currency')->nullable();
+            $table->integer('ratings')->default(0);
 
+            $table->string('cover_photo')->nullable();
             $table->foreignId('department_id')->nullable();
             $table->foreignId('career_id')->nullable();
-            $table->foreignId('department_role_id')->nullable();
-            $table->json('roles')->nullable();
+            $table->foreignId('assessment_id')->nullable();
             $table->boolean('is_published')->default(false);
             $table->timestamp('archived_at')->nullable();
             $table->timestamps();
@@ -45,6 +46,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('croxx_assessments');
+        Schema::dropIfExists('croxx_trainings');
     }
 };

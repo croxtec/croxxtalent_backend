@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\v2\Operations;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use App\Models\Assessment\CompetencyQuestion;
 use App\Models\Assessment\EvaluationQuestion;

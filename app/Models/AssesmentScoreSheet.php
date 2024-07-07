@@ -10,10 +10,11 @@ class AssesmentScoreSheet extends Model
     use HasFactory;
 
     protected $fillable = [
-        'supervisor_id',
         'assessment_id',
+        'supervisor_id',
         'employee_id',
-        'assesment_question_id',
+        'talent_id',
+        'assessment_question_id',
 
         'score',
         'comment',

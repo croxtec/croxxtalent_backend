@@ -43,6 +43,7 @@ class EmployeeAssessmentController extends Controller
                         ->where('croxx_assessments.employer_id', $employee->employer_id)
                         ->where('assigned_employees.employee_id', $employee->id)
                         ->select('croxx_assessments.*')
+                        ->latest()
                         ->get();
 
        return response()->json([
@@ -90,9 +91,7 @@ class EmployeeAssessmentController extends Controller
            }
         }
 
-
         if ($supervisor == "yes") {
-            info('Supervisor');
             $feedbacks = EmployerAssessmentFeedback::where('supervisor_id', $employee->id)->get();
         } else {
             $feedbacks = EmployerAssessmentFeedback::where('employee_id', $employee->id)->get();
