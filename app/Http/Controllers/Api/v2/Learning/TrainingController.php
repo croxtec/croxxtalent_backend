@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\v2\Learning;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Http\Requests\TrainingRequest;
+use App\Models\Training\CroxxTraining;
+
 
 class TrainingController extends Controller
 {
