@@ -15,9 +15,9 @@ class AssesmentTalentAnswer extends Model
         'employee_id',
         'assessment_id',
         'assessment_question_id',
+        'evaluation_result',
 
         'comment',
-        'period',
         'option',
         'options',
         'upload',

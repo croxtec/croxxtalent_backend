@@ -7,8 +7,13 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Assessment\CroxxAssessment;
 use App\Models\Assessment\AssignedEmployee;
+use App\Models\AssesmentTalentAnswer as TalentAnswer;
 use App\Models\Employee;
 use App\Models\Supervisor;
+use App\Models\Assessment\CompetencyQuestion;
+use App\Models\Assessment\EvaluationQuestion;
+use App\Models\Assessment\EmployerAssessmentFeedback;
+
 
 class EmployeeAssessmentController extends Controller
 {
@@ -40,7 +45,6 @@ class EmployeeAssessmentController extends Controller
                         ->select('croxx_assessments.*')
                         ->get();
 
-
        return response()->json([
             'status' => true,
             'message' => "",
@@ -71,6 +75,37 @@ class EmployeeAssessmentController extends Controller
         return false;
     }
 
+    public function feedbacks(Request $request, $code)
+    {
+        $user = $request->user();
+        $supervisor = $request->input('supervisor', "no"); // Default to false if not provided
+
+        $employee = Employee::where('code', $code)->firstOrFail();
+        if($user->type == 'talent'){
+           if(!$this->validateEmployee($user,$employee)){
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unautourized Access'
+                ], 401);
+           }
+        }
+
+
+        if ($supervisor == "yes") {
+            info('Supervisor');
+            $feedbacks = EmployerAssessmentFeedback::where('supervisor_id', $employee->id)->get();
+        } else {
+            $feedbacks = EmployerAssessmentFeedback::where('employee_id', $employee->id)->get();
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => "",
+            'data' => $feedbacks
+        ], 200);
+
+    }
+
       /**
      * Store a newly created resource in storage.
      *
@@ -81,29 +116,36 @@ class EmployeeAssessmentController extends Controller
     {
         $user = $request->user();
 
-        $rules =[
+        $rules = [
             'assessment_id' => 'required|exists:assesments,id',
-            'question_id' => 'required'
+            'question_id' => 'required',
             // 'question_id' => 'required|exists:assesment_questions,id'
         ];
 
         $searchData = $request->validate($rules);
-        $searchData['talent_id'] = $user->id;
+        $assessment = CroxxAssessment::where('id', $searchData['assessment_id'])
+                            ->where('is_published', 1)->firstOrFail();
         $searchData['assessment_question_id'] = $searchData['question_id'];
         unset($searchData['question_id']);
 
-        $assessment = CroxxAssessment::where('id', $searchData['assessment_id'])
-                            ->where('is_published', 1)->firstOrFail();
+        if($assessment->type == 'company'){
+            $employee = Employee::where('id', $user->default_company_id)
+                     ->where('user_id', $user->id)->first();
+            $searchData['employee_id'] = $employee->id;
+        } else{
+            $searchData['talent_id'] = $user->id;
+        }
 
         if ($assessment->category == 'competency_evaluation') {
             $question = EvaluationQuestion::where('assessment_id', $assessment->id)
                             ->where('id', $searchData['assessment_question_id'])->firstOrFail();
-        } else {
+        }
+
+        if($assessment->category != 'competency_evaluation') {
             $question = CompetencyQuestion::where('assessment_id', $assessment->id)
                             ->where('id', $searchData['assessment_question_id'])->firstOrFail();
         }
 
-        // info($searchData);
         $answer = TalentAnswer::firstOrCreate($searchData);
 
         if($assessment->category != 'competency_evaluation') {
@@ -137,6 +179,7 @@ class EmployeeAssessmentController extends Controller
             ]);
 
             $answer->option = $request->answer;
+            $answer->evaluation_result = ($question->answer  === $request->answer);
         }
 
         $answer->save();
@@ -148,20 +191,25 @@ class EmployeeAssessmentController extends Controller
         ], 201);
     }
 
-
     public function publishTalentAnswers(Request $request, $id)
     {
         $user = $request->user();
         // $this->authorize('update', [Assesment::class, $assessment]);
-        $summary = AssesmentSummary::firstOrCreate([
-            'assesment_id' => $id,
-            'talent_id' => $user->id
+
+        $assessment = CroxxAssessment::where('id', $id)->where('is_published', 1)->firstOrFail();
+        $employee = Employee::where('id', $user->default_company_id)->where('user_id', $user->id)->first();
+
+        $feedback = EmployerAssessmentFeedback::firstOrCreate([
+            'assessment_id' => $assessment->id,
+            'employee_id' => $employee->id,
+            'employer_user_id' => $assessment->employer_id
         ]);
 
-        if(!$summary->is_published){
-            $summary->talent_feedback = $request->feedback;
-            $summary->is_published = true;
-            $summary->save();
+        if(!$feedback->is_published){
+            $feedback->employee_feedback = $request->feedback;
+            $feedback->time_taken = $request->time_taken;
+            $feedback->is_published = true;
+            $feedback->save();
         }else{
             return response()->json([
                 'status' => false,
@@ -173,7 +221,7 @@ class EmployeeAssessmentController extends Controller
         return response()->json([
             'status' => true,
             'message' => "Assessment submitted.",
-            'data' =>$summary
+            'data' =>$feedback
         ], 200);
     }
 

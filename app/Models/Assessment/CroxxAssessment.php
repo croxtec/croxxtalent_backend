@@ -39,8 +39,6 @@ class CroxxAssessment extends Model
                     ->select(['id','name']);
     }
 
-
-
     public function evaluationQuestions()
     {
         return $this->hasMany('App\Models\Assessment\EvaluationQuestion', 'assessment_id', 'id')->whereNull('archived_at');

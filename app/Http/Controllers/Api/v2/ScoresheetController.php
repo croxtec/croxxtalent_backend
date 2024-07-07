@@ -11,12 +11,11 @@ use App\Models\Employee;
 use App\Models\AssesmentSummary;
 use App\Models\Assessment\CroxxAssessment;
 use App\Models\Assessment\AssignedEmployee;
-use App\Models\Assessment\CompetencyQuestion;
-use App\Models\Assessment\EvaluationQuestion;
+use App\Models\Assessment\EmployerAssessmentFeedback;
+
 
 class ScoresheetController extends Controller
 {
-
     public function employeeList(Request $request, $id){
         $user = $request->user();
 
@@ -73,34 +72,41 @@ class ScoresheetController extends Controller
         ], 200);
     }
 
-    public function assessmentResult(Request $request, $code, $talent){
+    public function assessmentResult(Request $request, $code, $talent) {
         $user = $request->user();
 
         if (is_numeric($code)) {
-            $assessment = CroxxAssessment::where('id', $code)->where('is_published', 1)
-                    ->firstOrFail();
-        }else{
-            $assessment = CroxxAssessment::where('code', $code)->where('is_published', 1)
-                    ->firstOrFail();
+            $assessment = CroxxAssessment::where('id', $code)->where('is_published', 1)->firstOrFail();
+        } else {
+            $assessment = CroxxAssessment::where('code', $code)->where('is_published', 1)->firstOrFail();
+        }
+
+        if (is_numeric($talent)) {
+            $talentField = 'talent_id';
+        } else {
+            $talentField = 'employee_id';
+            $employee = Employee::where('code', $talent)->first();
+            $talent = $employee->id;
         }
 
         $assessment->questions;
 
         foreach ($assessment->questions as $question) {
-            $question->answer = TalentAnswer::where([
-                    'assessment_question_id' => $question->id,
-                    'talent_id' => $talent,
-                    'assessment_id' => $assessment->id
-             ])->first();
+            $question->response = TalentAnswer::where([
+                'assessment_question_id' => $question->id,
+                $talentField => $talent,
+                'assessment_id' => $assessment->id
+            ])->first();
 
-            if($assessment->category != 'competency_evaluation'){
+            if ($assessment->category != 'competency_evaluation') {
                 $question->result = ScoreSheet::where([
-                        'assessment_question_id' => $question->id,
-                        'talent_id' => $talent,
-                        'assessment_id' => $code
-                 ])->first();
+                    'assessment_question_id' => $question->id,
+                    $talentField => $talent,
+                    'assessment_id' => $code
+                ])->first();
             }
         }
+
 
         return response()->json([
             'status' => true,
@@ -111,6 +117,7 @@ class ScoresheetController extends Controller
 
     public function assessmentFeedback(Request $request, $code, $talent){
         $user = $request->user();
+        $employee = Employee::where('code', $talent)->first();
 
         if (is_numeric($code)) {
             $assessment = CroxxAssessment::where('id', $code)->where('is_published', 1)
@@ -120,19 +127,20 @@ class ScoresheetController extends Controller
                     ->firstOrFail();
         }
 
-        $summary = AssesmentSummary::where([
-            'assesment_id' => $id,
-            'talent_id' => $talent
+        $feedback = EmployerAssessmentFeedback::where([
+            'assessment_id' => $assessment->id,
+            'employee_id' => $employee->id,
+            'employer_user_id' => $assessment->employer_id
         ])->first();
 
         return response()->json([
             'status' => true,
             'message' => "",
-            'data' => compact('summary','assessment')
+            'data' => compact('feedback','assessment')
         ], 200);
     }
 
-    public function storeAssesmentScoreSheet(Request $request)
+    public function storeAssessmentScoreSheet(Request $request)
     {
         $user = $request->user();
 
@@ -169,16 +177,20 @@ class ScoresheetController extends Controller
         // $this->authorize('update', [Assesment::class, $assessment]);
 
         $rules =[
-            'talent_id' => 'required|exists:users,id',
+            'employee_code' => 'required',
             'feedback' => 'required|string|min:10|max:256',
             'goal_id' => 'nullable|exists:goals,id',
         ];
 
         $validatedData = $request->validate($rules);
 
-        $summary = AssesmentSummary::where([
-            'assesment_id' => $id,
-            'talent_id' => $validatedData['talent_id']
+        $assessment = CroxxAssessment::where('id', $id)->where('is_published', 1)->firstOrFail();
+        $employee = Employee::where('code', $validatedData['employee_code'])->first();
+
+        $feedback = EmployerAssessmentFeedback::where([
+            'assessment_id' => $assessment->id,
+            'employee_id' => $employee->id,
+            'employer_user_id' => $assessment->employer_id
         ])->firstOrFail();
 
         // $total_question = Question::where('assesment_id', $id)->count();
@@ -189,19 +201,26 @@ class ScoresheetController extends Controller
         // ])->sum('score');
 
         // $score_average = ((int)$talent_score / $total_score) * 5;
-
-        $summary->manager_id = $user->id;
-        $summary->is_published = 1;
-        // $summary->total_score = $total_score;
-        // $summary->talent_score = $talent_score;
-        // $summary->score_average = $score_average;
-        $summary->manager_feedback = $validatedData['feedback'];
-        $summary->save();
+        if(!$feedback->supervisor_id){
+            $feedback->supervisor_id = $user->default_company_id;
+            $feedback->supervisor_feedback = $validatedData['feedback'];
+            $feedback->goal_id = $validatedData['goal_id'] ?? null;
+            // $feedback->total_score = $total_score;
+            // $feedback->talent_score = $talent_score;
+            // $feedback->score_average = $score_average;
+            $feedback->save();
+        }else{
+            return response()->json([
+                'status' => false,
+                'message' => "Feedback already submited.",
+                'data' => ""
+            ], 400);
+        }
 
         return response()->json([
             'status' => true,
             'message' => "Assesment Scoresheet  has been recorded for this talent.",
-            'data' =>$summary
+            'data' => $feedback
         ], 200);
     }
 }
