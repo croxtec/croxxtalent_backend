@@ -24,7 +24,7 @@ class ExperienceAssessmentController extends Controller
     {
         $user = $request->user();
         $user_type = $user->type;
-        $per_page = $request->input('per_page', 100);
+        $per_page = $request->input('per_page', 25);
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'desc');
         $search = $request->input('search');
@@ -108,6 +108,7 @@ class ExperienceAssessmentController extends Controller
                  AssignedEmployee::create([
                      'assessment_id' => $assessment->id,
                      'employee_id' => $employee,
+                     'is_supervisor' => false
                  ]);
              }
 

@@ -62,9 +62,15 @@ class ScoresheetController extends Controller
             $summaries = $summaries->paginate($per_page);
         }
 
-        // foreach ($summaries as $submitted) {
-        //     $submitted->talent =  Employee::where('user_id',$submitted->talent_id)->with('job_code')->first();
-        // }
+        foreach ($summaries as $summary) {
+            $exists = EmployerAssessmentFeedback::where([
+                'assessment_id' => $summary->assessment_id,
+                'employee_id' => $summary->employee_id,
+                'employer_user_id' => $assessment->employer_id
+            ])->exists();
+
+            $summary->is_submited = $exists;
+        }
 
         return response()->json([
             'status' => true,

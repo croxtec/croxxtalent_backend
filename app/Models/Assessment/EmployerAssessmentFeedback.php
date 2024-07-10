@@ -17,4 +17,24 @@ class EmployerAssessmentFeedback extends Model
           'time_taken',
           'graded_score'
     ];
+
+    protected $hidden = [
+        'updated_at',
+    ];
+
+
+
+    public function employee(){
+        return $this->belongsTo('App\Models\Employee', 'employee_id', 'id')
+                    ->with('department','department_role')
+                    ->select(['id','name', 'job_code_id', 'department_role_id']);
+    }
+
+    public function supervisor(){
+        return $this->belongsTo('App\Models\Employee', 'supervisor_id', 'id')
+                    ->with('department','department_role')
+                    ->select(['id','name', 'job_code_id', 'department_role_id']);
+    }
+
+
 }

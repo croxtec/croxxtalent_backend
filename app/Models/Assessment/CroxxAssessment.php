@@ -28,6 +28,10 @@ class CroxxAssessment extends Model
         'is_published'
     ];
 
+    protected $appends = [
+        // 'total_questions'
+    ];
+
 
     public function department(){
         return $this->belongsTo('App\Models\EmployerJobcode', 'department_id', 'id')
@@ -57,5 +61,10 @@ class CroxxAssessment extends Model
             return $this->competencyQuestions();
         }
     }
+
+
+    // public function getTotalQuestionsAttribute(){
+    //     return $this->questions->count();
+    // }
 
 }

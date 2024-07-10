@@ -26,6 +26,7 @@ class EmployeeAssessmentController extends Controller
     public function employee(Request $request, $code)
     {
         $user = $request->user();
+        $show = $request->input('show', "personal");
 
         $employee = Employee::where('code', $code)->firstOrFail();
 
@@ -38,13 +39,33 @@ class EmployeeAssessmentController extends Controller
            }
         }
 
-        $assessments = DB::table('croxx_assessments')
+        $assessments = CroxxAssessment::with('questions')
                         ->join('assigned_employees', 'croxx_assessments.id', '=', 'assigned_employees.assessment_id')
                         ->where('croxx_assessments.employer_id', $employee->employer_id)
-                        ->where('assigned_employees.employee_id', $employee->id)
-                        ->select('croxx_assessments.*')
+                        ->when($show == 'personal', function($query) use ($employee){
+                            $query->where('assigned_employees.employee_id', $employee->id)
+                                    ->where('assigned_employees.is_supervisor', 0);
+                        })
+                        ->when($show == 'supervisor', function($query) use ($employee){
+                            $query->where('assigned_employees.employee_id', $employee->id)
+                                    ->where('assigned_employees.is_supervisor', 1);
+                        })
+                        ->select('croxx_assessments.*', 'assigned_employees.is_supervisor')
                         ->latest()
                         ->get();
+
+
+        foreach ($assessments as $assessment) {
+            $total_duration_seconds = $assessment->questions->sum('duration');
+            // Convert the total duration in minutes to hours, minutes, and seconds
+            $minutes = floor($total_duration_seconds / 60);
+            $seconds = $total_duration_seconds % 60;
+
+            $estimated_time = sprintf('%d minutes %d seconds', $minutes, $seconds);
+
+            $assessment->estimated_time = $estimated_time;
+            $assessment->total_questions = $assessment->questions->count();
+        }
 
        return response()->json([
             'status' => true,
@@ -79,7 +100,9 @@ class EmployeeAssessmentController extends Controller
     public function feedbacks(Request $request, $code)
     {
         $user = $request->user();
-        $supervisor = $request->input('supervisor', "no"); // Default to false if not provided
+
+        $per_page = $request->input('per_page', 5);
+        $show = $request->input('show', "personal");
 
         $employee = Employee::where('code', $code)->firstOrFail();
         if($user->type == 'talent'){
@@ -91,10 +114,12 @@ class EmployeeAssessmentController extends Controller
            }
         }
 
-        if ($supervisor == "yes") {
-            $feedbacks = EmployerAssessmentFeedback::where('supervisor_id', $employee->id)->get();
+        if ($show == "supervisor") {
+            $feedbacks = EmployerAssessmentFeedback::where('supervisor_id', $employee->id)
+                ->with('employee', 'supervisor')->paginate($per_page);
         } else {
-            $feedbacks = EmployerAssessmentFeedback::where('employee_id', $employee->id)->get();
+            $feedbacks = EmployerAssessmentFeedback::where('employee_id', $employee->id)
+                ->with('employee', 'supervisor')->paginate($per_page);
         }
 
         return response()->json([
