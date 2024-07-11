@@ -58,14 +58,21 @@ class EmployeeAssessmentController extends Controller
 
         foreach ($assessments as $assessment) {
             $total_duration_seconds = $assessment->questions->sum('duration');
+            $assessment->total_questions = $assessment->questions->count();
+
+            $total_answered = TalentAnswer::where([
+                'employee_id' => $employee->id,
+                'assessment_id' => $assessment->id
+            ])->count();
+
+            $assessment->percentage = ($total_answered / $assessment->total_questions) * 100;
             // Convert the total duration in minutes to hours, minutes, and seconds
             $minutes = floor($total_duration_seconds / 60);
             $seconds = $total_duration_seconds % 60;
 
             $estimated_time = sprintf('%d minutes %d seconds', $minutes, $seconds);
-
             $assessment->estimated_time = $estimated_time;
-            $assessment->total_questions = $assessment->questions->count();
+
             unset($assessment->questions);
         }
 

@@ -32,15 +32,15 @@ class ScoresheetController extends Controller
         $sort_dir = $request->input('sort_dir', 'desc');
         $search = $request->input('search');
         $archived = $request->input('archived');
-        $supervisor = $request->input('supervisor', "no");
+        $supervisor = $request->input('supervisor', 0);
 
         if($user->type == "employer"){
-            $supervisor = $supervisor == 'yes' ? true : ($archived == 'no' ? false : null);
+            $supervisor = $supervisor == 'yes' ? 1 : 0;
             $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
         }
 
         $summaries = AssignedEmployee::where('assessment_id', $assessment->id)
-            ->where('is_supervisor', $supervisor)
+            ->where('is_supervisor',  $supervisor)
             ->when($archived ,function ($query) use ($archived) {
             if ($archived !== null ) {
                 if ($archived === true ) {
