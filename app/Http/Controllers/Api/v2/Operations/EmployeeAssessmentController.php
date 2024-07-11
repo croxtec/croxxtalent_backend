@@ -27,6 +27,7 @@ class EmployeeAssessmentController extends Controller
     {
         $user = $request->user();
         $show = $request->input('show', "personal");
+        $per_page = $request->input('per_page', 12);
 
         $employee = Employee::where('code', $code)->firstOrFail();
 
@@ -39,7 +40,7 @@ class EmployeeAssessmentController extends Controller
            }
         }
 
-        $assessments = CroxxAssessment::with('questions')
+        $assessments = CroxxAssessment::withCount('questions')
                         ->join('assigned_employees', 'croxx_assessments.id', '=', 'assigned_employees.assessment_id')
                         ->where('croxx_assessments.employer_id', $employee->employer_id)
                         ->when($show == 'personal', function($query) use ($employee){
@@ -52,7 +53,7 @@ class EmployeeAssessmentController extends Controller
                         })
                         ->select('croxx_assessments.*', 'assigned_employees.is_supervisor')
                         ->latest()
-                        ->get();
+                        ->paginate($per_page);
 
 
         foreach ($assessments as $assessment) {
@@ -65,6 +66,7 @@ class EmployeeAssessmentController extends Controller
 
             $assessment->estimated_time = $estimated_time;
             $assessment->total_questions = $assessment->questions->count();
+            unset($assessment->questions);
         }
 
        return response()->json([

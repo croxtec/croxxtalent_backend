@@ -34,7 +34,10 @@ class ExperienceAssessmentController extends Controller
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
         //
 
-        $assessment = CroxxAssessment::where('user_id', $user->id)
+        $assessment = CroxxAssessment::withCount('questions')
+            ->when($user_type == 'employer', function($query) use ($user){
+                $query->where('user_id', $user->id);
+            })
             ->when($archived ,function ($query) use ($archived) {
             if ($archived !== null ) {
                 if ($archived === true ) {
@@ -54,6 +57,20 @@ class ExperienceAssessmentController extends Controller
             $assessment = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
         } else {
             $assessment = $assessment->paginate($per_page);
+        }
+
+        foreach ($assessment as $record) {
+            $record->total_questions = $record->questions->count();
+            $total_duration_seconds = $record->questions->sum('duration');
+            // Convert the total duration in minutes to hours, minutes, and seconds
+            $minutes = floor($total_duration_seconds / 60);
+            $seconds = $total_duration_seconds % 60;
+
+            $estimated_time = sprintf('%d minutes %d seconds', $minutes, $seconds);
+
+            $record->estimated_time = $estimated_time;
+
+            unset($record->questions);
         }
 
         $response = collect([
