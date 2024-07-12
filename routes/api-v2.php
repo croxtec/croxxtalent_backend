@@ -261,7 +261,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             'goals' => 'Api\v2\GoalController',
             'assessments/evaluation' => 'Api\v2\Operations\EvaluationAssessmentController',
             'assessments' => 'Api\v2\Operations\ExperienceAssessmentController',
-            'trainings' => 'Api\v2\Learning\TrainingController',
+            'courses' => 'Api\v2\Learning\TrainingController',
         ]);
         Route::get('goals/employee/{code}', 'Api\v2\GoalController@employee');//->name('assesments.index');
         Route::get('goals/overview/performance', 'Api\v2\GoalController@overview')->name('goals.overview');

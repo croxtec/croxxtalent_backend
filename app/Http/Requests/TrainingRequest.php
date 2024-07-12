@@ -13,7 +13,21 @@ class TrainingRequest extends FormRequest
      */
     public function authorize()
     {
-        return false;
+        switch($this->method()) {
+            case 'GET':
+                return false;
+            case 'POST':
+                return true;
+                //$this->user()->can('create', Assesment::class);
+            case 'PUT':
+            case 'PATCH':
+                return  true;
+                // $assessment = Assessment::findOrFail(1);
+                // return $this->user()->can('update', [Assessment::class, $assessment]);
+            case 'DELETE':
+                return false;
+            default:break;
+        }
     }
 
     /**
@@ -23,8 +37,31 @@ class TrainingRequest extends FormRequest
      */
     public function rules()
     {
-        return [
-            //
-        ];
+        switch($this->method()) {
+            case 'GET':
+                return [];
+            case 'POST':
+                return [
+                    'type' => 'required|in:company,training,competency',
+                    'experience_level' => 'required|in:beginner,intermediate,advance,expert',
+                    'title' => 'required|max:100',
+                    'objective' => 'required|max:250',
+                    'assessment_level' => 'nullable',
+                    'department_id' => 'required_if:type,company|integer',
+                    'career_id' => 'required_if:type,training,competency|integer',
+                ];
+
+            case 'PUT':
+            case 'PATCH':
+                return [
+                    'experience_level' => 'sometimes|required|in:beginner,intermediate,advance,expert',
+                    'title' => 'sometimes|required|max:100',
+                    'objective' => 'sometimes|required|max:250',
+                    'assessment_level' => 'nullable',
+                ];
+            case 'DELETE':
+                return [];
+            default:break;
+        }
     }
 }

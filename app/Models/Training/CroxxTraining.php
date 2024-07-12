@@ -12,7 +12,18 @@ class CroxxTraining extends Model
 
     protected $fillable = [
         'user_id',
+        'employer_id',
+        'code',
+        'type',   //company, training,competency
+        'title',
+        'experience_level',
+        'objective',
 
+        'department_id',
+        'career_id',
+        'assessment_level',
+        'assessment_id',
+        'is_published'
     ];
 
 }

@@ -20,9 +20,11 @@ return new class extends Migration
             $table->string('title');
             $table->longText('description');
             $table->text('video')->nullable();
+            $table->text('pdf')->nullable();
 
             $table->json('resources')->nullable();
-            $table->string('keywords')->nullable();
+            $table->json('tags')->nullable();
+            $table->string('keyword')->nullable();
             $table->string('cover_photo')->nullable();
             $table->timestamp('archived_at')->nullable();
             $table->timestamps();

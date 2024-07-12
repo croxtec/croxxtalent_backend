@@ -22,8 +22,8 @@ class EvaluationAssessmentRequest extends FormRequest
             case 'PUT':
             case 'PATCH':
                 return  true;
-                $assessment = Assessment::findOrFail(1);
-                return $this->user()->can('update', [Assessment::class, $assessment]);
+                // $assessment = Assessment::findOrFail(1);
+                // return $this->user()->can('update', [Assessment::class, $assessment]);
             case 'DELETE':
                 return false;
             default:break;
