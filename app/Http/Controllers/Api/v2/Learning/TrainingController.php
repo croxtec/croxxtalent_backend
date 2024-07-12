@@ -41,7 +41,7 @@ class TrainingController extends Controller
             }
         })
         ->where( function($query) use ($search) {
-            $query->where('code', 'LIKE', "%{$search}%");
+            $query->where('title', 'LIKE', "%{$search}%");
         })
         ->orderBy($sort_by, $sort_dir);
 

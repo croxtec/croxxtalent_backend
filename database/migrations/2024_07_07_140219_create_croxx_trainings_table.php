@@ -29,6 +29,8 @@ return new class extends Migration
             $table->string('currency')->nullable();
             $table->integer('ratings')->default(0);
 
+
+            $table->json('tags')->nullable();
             $table->string('cover_photo')->nullable();
             $table->foreignId('department_id')->nullable();
             $table->foreignId('career_id')->nullable();

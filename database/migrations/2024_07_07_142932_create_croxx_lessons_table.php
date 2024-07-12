@@ -16,14 +16,13 @@ return new class extends Migration
         Schema::create('croxx_lessons', function (Blueprint $table) {
             $table->id();
             $table->foreignId('training_id');
-            $table->string('code');
             $table->string('title');
+            $table->string('alias');
             $table->longText('description');
             $table->text('video')->nullable();
             $table->text('pdf')->nullable();
 
             $table->json('resources')->nullable();
-            $table->json('tags')->nullable();
             $table->string('keyword')->nullable();
             $table->string('cover_photo')->nullable();
             $table->timestamp('archived_at')->nullable();

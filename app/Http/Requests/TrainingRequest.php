@@ -47,7 +47,7 @@ class TrainingRequest extends FormRequest
                     'title' => 'required|max:100',
                     'objective' => 'required|max:250',
                     'assessment_level' => 'nullable',
-                    'department_id' => 'required_if:type,company|integer',
+                    'department_id' => 'required_if:type,company|integer|exists:employer_jobcodes,id',
                     'career_id' => 'required_if:type,training,competency|integer',
                 ];
 

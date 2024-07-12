@@ -262,6 +262,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             'assessments/evaluation' => 'Api\v2\Operations\EvaluationAssessmentController',
             'assessments' => 'Api\v2\Operations\ExperienceAssessmentController',
             'courses' => 'Api\v2\Learning\TrainingController',
+            'lessons' => 'Api\v2\Learning\LessonController',
         ]);
         Route::get('goals/employee/{code}', 'Api\v2\GoalController@employee');//->name('assesments.index');
         Route::get('goals/overview/performance', 'Api\v2\GoalController@overview')->name('goals.overview');
@@ -438,7 +439,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
     Route::fallback(function () {
         return response()->json([
             'status' => false,
-            'message' => "V2 Resource not found",
+            'message' => "Resource not found",
         ], 404);
     });
     // Nothing more, this is just route for direct access to the API domain

@@ -26,4 +26,17 @@ class CroxxTraining extends Model
         'is_published'
     ];
 
+    protected $appends = [
+        'total_lessons'
+    ];
+ 
+
+
+    public function getTotalLessonsAttribute()
+    {
+        return $this->hasMany('App\Models\Training\CroxxLesson', 'training_id', 'id')
+            ->whereNull('archived_at')->count();
+    }
+
+
 }

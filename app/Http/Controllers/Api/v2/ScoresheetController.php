@@ -177,7 +177,7 @@ class ScoresheetController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => "Assesment Answer submited"
+            'message' => ""
         ], 201);
 
     }
