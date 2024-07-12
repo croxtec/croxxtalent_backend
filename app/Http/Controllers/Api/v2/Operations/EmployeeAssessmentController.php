@@ -150,9 +150,8 @@ class EmployeeAssessmentController extends Controller
         $user = $request->user();
 
         $rules = [
-            'assessment_id' => 'required|exists:croxx_assesments,id',
+            'assessment_id' => 'required',
             'question_id' => 'required',
-            // 'question_id' => 'required|exists:assesment_questions,id'
         ];
 
         $searchData = $request->validate($rules);

@@ -38,7 +38,7 @@ class CurrateLessonRequest extends FormRequest
                     ],
                     'keyword' => 'nullable|string|max:255',
                     'cover_photo' => 'nullable|image|max:512',
-                    'video' => 'nullable|mimetypes:video/mp4,video/quicktime|max:61440', // 60MB in kilobytes
+                    'video' => 'nullable|mimetypes:video/mp4|max:61440', // 60MB in kilobytes
                 ];
 
             case 'PUT':

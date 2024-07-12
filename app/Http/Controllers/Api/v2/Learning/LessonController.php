@@ -8,9 +8,18 @@ use Illuminate\Http\Request;
 use App\Models\Training\CroxxTraining;
 use App\Models\Training\CroxxLesson;
 use App\Http\Requests\CurrateLessonRequest;
+use Cloudinary\Cloudinary;
+
 
 class LessonController extends Controller
 {
+    protected $cloudinary;
+
+    public function __construct(Cloudinary $cloudinary)
+    {
+        $this->cloudinary = $cloudinary;
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -85,6 +94,61 @@ class LessonController extends Controller
                 'status' => false,
                 'message' => "Lesson already available",
             ], 400);
+        }
+
+        if ($request->hasFile('cover_photo') && $request->file('cover_photo')->isValid()) {
+            $file = $request->file('cover_photo');
+            $extension = $file->extension();
+
+            $filename = time() . '-' . Str::random(32);
+            $filename = "{$filename}.$extension";
+            $year = date('Y');
+            $rel_upload_path  = "CroxxPH/TRAINING/{$year}";
+            if (config('app.env') == 'local') {
+                $rel_upload_path = "local/{$rel_upload_path}"; // dir for dev environment test uploads
+            }
+
+            // Delete previously uploaded file if any
+            // if ($cv->photo) {
+            //     $public_id = pathinfo($cv->photo, PATHINFO_FILENAME); // Extract public_id from URL
+            //     info(['Public ID', $public_id]);
+            //     $this->cloudinary->uploadApi()->destroy($public_id);
+            // }
+
+            $result = $this->cloudinary->uploadApi()->upload($file->getRealPath(), [
+                'folder' => $rel_upload_path, // Specify a folder
+            ]);
+
+            // Update with the newly update file
+            $validatedData['cover_photo'] = $result['secure_url'];
+        }
+
+        if ($request->hasFile('video') && $request->file('video')->isValid()) {
+            $file = $request->file('video');
+            $extension = $file->extension();
+
+            $filename = time() . '-' . Str::random(32);
+            $filename = "{$filename}.$extension";
+            $year = date('Y');
+            $rel_upload_path = "CroxxVD/TRAINING/{$year}";
+            if (config('app.env') == 'local') {
+                $rel_upload_path = "local/{$rel_upload_path}"; // dir for dev environment test uploads
+            }
+
+            // Delete previously uploaded file if any
+            // if ($cv->photo) {
+            //     $public_id = pathinfo($cv->photo, PATHINFO_FILENAME); // Extract public_id from URL
+            //     info(['Public ID', $public_id]);
+            //     $this->cloudinary->uploadApi()->destroy($public_id);
+            // }
+
+            $result = $this->cloudinary->uploadApi()->upload($file->getRealPath(), [
+                'folder' => $rel_upload_path, // Specify a folder
+                'resource_type' => 'video', // Specify the resource type as video
+            ]);
+
+            // Update with the newly uploaded file
+            $validatedData['video'] = $result['secure_url'];
         }
 
         $lesson = CroxxLesson::create($validatedData);
