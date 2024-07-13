@@ -81,20 +81,20 @@ class LessonController extends Controller
         $user = $request->user();
         $validatedData = $request->validated();
 
-        $validatedData['training_id'] = $validatedData['training_id'];
         $validatedData['alias'] = Str::slug($validatedData['title']);
+        $training = CroxxTraining::findOrFail($validatedData['training_id']);
 
         $isLesson = CroxxLesson::where([
             'training_id' =>  $validatedData['training_id'],
             'alias' =>  $validatedData['alias']
         ])->exists();
 
-        if($isLesson){
-            return response()->json([
-                'status' => false,
-                'message' => "Lesson already available",
-            ], 400);
-        }
+        // if($isLesson){
+        //     return response()->json([
+        //         'status' => false,
+        //         'message' => "Lesson already available",
+        //     ], 400);
+        // }
 
         if ($request->hasFile('cover_photo') && $request->file('cover_photo')->isValid()) {
             $file = $request->file('cover_photo');
@@ -121,7 +121,12 @@ class LessonController extends Controller
 
             // Update with the newly update file
             $validatedData['cover_photo'] = $result['secure_url'];
+            if(!$training->cover_photo){
+                $training->cover_photo  =  $result['secure_url'];
+                $training->save();
+            }
         }
+
 
         if ($request->hasFile('video') && $request->file('video')->isValid()) {
             $file = $request->file('video');
@@ -130,25 +135,27 @@ class LessonController extends Controller
             $filename = time() . '-' . Str::random(32);
             $filename = "{$filename}.$extension";
             $year = date('Y');
-            $rel_upload_path = "CroxxVD/TRAINING/{$year}";
+            $rel_upload_path = "CroxxPH/TRAINING/{$year}";
             if (config('app.env') == 'local') {
                 $rel_upload_path = "local/{$rel_upload_path}"; // dir for dev environment test uploads
             }
 
-            // Delete previously uploaded file if any
-            // if ($cv->photo) {
-            //     $public_id = pathinfo($cv->photo, PATHINFO_FILENAME); // Extract public_id from URL
-            //     info(['Public ID', $public_id]);
-            //     $this->cloudinary->uploadApi()->destroy($public_id);
-            // }
+            try {
+                $result = $this->cloudinary->uploadApi()->upload($file->getRealPath(), [
+                    'folder' => $rel_upload_path, // Specify a folder
+                    'resource_type' => 'video', // Specify the resource type as video
+                ]);
 
-            $result = $this->cloudinary->uploadApi()->upload($file->getRealPath(), [
-                'folder' => $rel_upload_path, // Specify a folder
-                'resource_type' => 'video', // Specify the resource type as video
-            ]);
+                // Update with the newly uploaded file
+                $validatedData['video_url'] = $result['secure_url'];
+            } catch (\Exception $e) {
 
-            // Update with the newly uploaded file
-            $validatedData['video'] = $result['secure_url'];
+                return response()->json([
+                    'status' => false,
+                    'message' => 'The video failed to upload.',
+                    'errors' => ['video' => ['The video failed to upload.']]
+                ], 422);
+            }
         }
 
         $lesson = CroxxLesson::create($validatedData);

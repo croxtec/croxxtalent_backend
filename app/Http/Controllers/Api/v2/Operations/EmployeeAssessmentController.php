@@ -160,7 +160,7 @@ class EmployeeAssessmentController extends Controller
         $searchData['assessment_question_id'] = $searchData['question_id'];
         unset($searchData['question_id']);
 
-        if($assessment->type == 'company'){
+        if($assessment->type == 'company' || $assessment->type == 'supervisor'){
             $employee = Employee::where('id', $user->default_company_id)
                      ->where('user_id', $user->id)->first();
             $searchData['employee_id'] = $employee->id;
@@ -236,6 +236,18 @@ class EmployeeAssessmentController extends Controller
             'employee_id' => $employee->id,
             'employer_user_id' => $assessment->employer_id
         ]);
+
+        // $total_question =  $assessment->questions->count();
+        // $total_score = $total_question * 4;
+
+        // $talent_score = ScoreSheet::where([
+        //    'employee_id' => $employee->id,
+        //    'assessment_id' =>  $assessment->id
+        // ])->sum('score');
+        // $score_average = ((int)$talent_score / $total_score) * 100;
+        // $feedback->total_score = $total_score;
+        // $feedback->talent_score = $talent_score;
+        // $feedback->score_average = $score_average;
 
         if(!$feedback->is_published){
             $feedback->employee_feedback = $request->feedback;

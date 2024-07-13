@@ -37,8 +37,8 @@ class CurrateLessonRequest extends FormRequest
                         'regex:/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be|vimeo\.com)\/.+$/'
                     ],
                     'keyword' => 'nullable|string|max:255',
-                    'cover_photo' => 'nullable|image|max:512',
-                    'video' => 'nullable|mimetypes:video/mp4|max:61440', // 60MB in kilobytes
+                    'cover_photo' => 'nullable|image|max:512', // 512KB
+                    // 'video' => 'nullable|mimetypes:video/mp4|max:61440', // 60MB in kilobytes
                 ];
 
             case 'PUT':

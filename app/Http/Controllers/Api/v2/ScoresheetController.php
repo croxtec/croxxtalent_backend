@@ -11,6 +11,7 @@ use App\Models\Employee;
 use App\Models\Supervisor;
 use App\Models\Assessment\CompetencyQuestion;
 use App\Models\Assessment\CroxxAssessment;
+use App\Models\Assessment\EmployeeLearningPath;
 use App\Models\Assessment\AssignedEmployee;
 use App\Models\Assessment\EmployerAssessmentFeedback;
 
@@ -186,13 +187,13 @@ class ScoresheetController extends Controller
     {
         $user = $request->user();
         $assessment = CroxxAssessment::where('id', $id)->where('is_published', 1)->firstOrFail();
-
         // $this->authorize('update', [Assesment::class, $assessment]);
-
         $rules =[
             'employee_code' => 'required',
             'feedback' => 'required|string|min:10|max:256',
             'goal_id' => 'nullable|exists:goals,id',
+            'learning_path' => 'nullable|array',
+            'learning_path.*' => 'nullable|integer'
         ];
 
         $validatedData = $request->validate($rules);
@@ -204,22 +205,28 @@ class ScoresheetController extends Controller
             'employer_user_id' => $assessment->employer_id
         ])->firstOrFail();
 
-        // $total_question = Question::where('assesment_id', $id)->count();
-        // $total_score = $total_question * 5;
 
-        // $talent_score = ScoreSheet::where([
-        //     'talent_id' => $request->talent,  'assesment_id' => $id
-        // ])->sum('score');
-
-        // $score_average = ((int)$talent_score / $total_score) * 5;
         if(!$feedback->supervisor_id){
+            $paths = $validatedData['learning_path'];
+            foreach ($paths as $path) {
+                EmployeeLearningPath::firstOrCreate([
+                    'employee_id' => $employee->id,
+                    'assessment_feedback_id' => $feedback->id,
+                    'employer_user_id' => $assessment->employer_id,
+                    'training_id' => $path
+                ]);
+            }
+
             $feedback->supervisor_id = $user->default_company_id;
             $feedback->supervisor_feedback = $validatedData['feedback'];
             $feedback->goal_id = $validatedData['goal_id'] ?? null;
-            // $feedback->total_score = $total_score;
-            // $feedback->talent_score = $talent_score;
-            // $feedback->score_average = $score_average;
             $feedback->save();
+
+            return response()->json([
+                'status' => true,
+                'message' => "Assesment Scoresheet  has been recorded for this talent.",
+                'data' => $feedback
+            ], 200);
         }else{
             return response()->json([
                 'status' => false,
@@ -228,10 +235,5 @@ class ScoresheetController extends Controller
             ], 400);
         }
 
-        return response()->json([
-            'status' => true,
-            'message' => "Assesment Scoresheet  has been recorded for this talent.",
-            'data' => $feedback
-        ], 200);
     }
 }

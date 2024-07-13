@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('title');
             $table->string('alias');
             $table->longText('description');
-            $table->text('video')->nullable();
+            $table->text('video_url')->nullable();
             $table->text('pdf')->nullable();
 
             $table->json('resources')->nullable();

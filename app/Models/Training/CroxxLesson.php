@@ -14,7 +14,7 @@ class CroxxLesson extends Model
         'title',
         'alias',
         'description',
-        'video',
+        'video_url',
         'resources',
         'cover_photo',
         'keyword'

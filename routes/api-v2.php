@@ -269,6 +269,8 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::get('goals/overview/calendar', 'Api\v2\GoalController@calendarOverview')->name('goals.overview.calendar');
         Route::patch('goals/{id}/archive', 'Api\v2\GoalController@archive')->name('goals.archive');
         Route::patch('goals/{id}/unarchive', 'Api\v2\GoalController@unarchive')->name('goals.unarchive');
+        // Course
+        Route::patch('courses/{id}/publish', 'Api\v2\Learning\TrainingController@publish')->name('courses.publish');
         // Assesment Options
         // Route::patch('assessments/{id}/unpublish', 'Api\v2\AssesmentController@unpublish')->name('assessments.unpublish');
         Route::patch('assessments/{id}/publish', 'Api\v2\Operations\ExperienceAssessmentController@publish')->name('assessments.publish');

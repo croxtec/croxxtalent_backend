@@ -66,7 +66,7 @@ class ExperienceAssessmentController extends Controller
             $minutes = floor($total_duration_seconds / 60);
             $seconds = $total_duration_seconds % 60;
 
-            $estimated_time = sprintf('%d minutes %d seconds', $minutes, $seconds);
+            $estimated_time = sprintf('%d minutes', $minutes);
 
             $record->estimated_time = $estimated_time;
 

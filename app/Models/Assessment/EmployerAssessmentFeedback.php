@@ -22,8 +22,6 @@ class EmployerAssessmentFeedback extends Model
         'updated_at',
     ];
 
-
-
     public function employee(){
         return $this->belongsTo('App\Models\Employee', 'employee_id', 'id')
                     ->with('department','department_role')

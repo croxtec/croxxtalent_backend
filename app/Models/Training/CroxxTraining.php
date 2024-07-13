@@ -19,6 +19,7 @@ class CroxxTraining extends Model
         'experience_level',
         'objective',
 
+        'cover_photo',
         'department_id',
         'career_id',
         'assessment_level',
@@ -29,7 +30,7 @@ class CroxxTraining extends Model
     protected $appends = [
         'total_lessons'
     ];
- 
+
 
 
     public function getTotalLessonsAttribute()
