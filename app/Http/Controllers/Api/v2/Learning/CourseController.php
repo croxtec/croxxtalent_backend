@@ -8,7 +8,7 @@ use App\Http\Requests\TrainingRequest;
 use App\Models\Training\CroxxTraining;
 
 
-class TrainingController extends Controller
+class CourseController extends Controller
 {
     /**
      * Display a listing of the resource.

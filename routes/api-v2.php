@@ -177,6 +177,9 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
                 Route::delete('/{cv_reference_id}', 'Api\v2\Resume\CvReferenceController@destroy')->name('destroy');
             });
         });
+        // Training & Learning Path
+        Route::get('trainings/employee/{code}', 'Api\v2\Learning\TrainingHubController@employee');//->name('assesments.index');
+        Route::get('trainings/paths', 'Api\v2\Learning\TrainingHubController@paths');//->name('assesments.index');
 
         // CVs
         Route::get('cvs', 'Api\v2\CvController@index')->name('cvs.index');
@@ -261,7 +264,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             'goals' => 'Api\v2\GoalController',
             'assessments/evaluation' => 'Api\v2\Operations\EvaluationAssessmentController',
             'assessments' => 'Api\v2\Operations\ExperienceAssessmentController',
-            'courses' => 'Api\v2\Learning\TrainingController',
+            'courses' => 'Api\v2\Learning\CourseController',
             'lessons' => 'Api\v2\Learning\LessonController',
         ]);
         Route::get('goals/employee/{code}', 'Api\v2\GoalController@employee');//->name('assesments.index');
@@ -270,7 +273,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::patch('goals/{id}/archive', 'Api\v2\GoalController@archive')->name('goals.archive');
         Route::patch('goals/{id}/unarchive', 'Api\v2\GoalController@unarchive')->name('goals.unarchive');
         // Course
-        Route::patch('courses/{id}/publish', 'Api\v2\Learning\TrainingController@publish')->name('courses.publish');
+        Route::patch('courses/{id}/publish', 'Api\v2\Learning\CourseController@publish')->name('courses.publish');
         // Assesment Options
         // Route::patch('assessments/{id}/unpublish', 'Api\v2\AssesmentController@unpublish')->name('assessments.unpublish');
         Route::patch('assessments/{id}/publish', 'Api\v2\Operations\ExperienceAssessmentController@publish')->name('assessments.publish');
