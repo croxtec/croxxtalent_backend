@@ -190,8 +190,8 @@ class TrainingHubController extends Controller
                 'training_id' => $course->id
             ])->firstOrFail();
 
-            // $learning->current_lesson = 1;
-            // $learning->save();
+            $learning->current_lesson = $lesson->order;
+            $learning->save();
             $course->learning = $learning;
         }
 

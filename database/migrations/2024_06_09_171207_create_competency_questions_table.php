@@ -19,7 +19,7 @@ return new class extends Migration
             $table->enum('state', ['bank', 'publish'])->default('publish');
             $table->text('question');
             $table->text('description')->nullable();
-            
+            $table->integer('order')->default(1);
             $table->json('files')->nullable();
             $table->integer('duration')->nullable();
             $table->timestamp('archived_at')->nullable();

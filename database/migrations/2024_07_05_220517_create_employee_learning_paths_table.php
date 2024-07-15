@@ -21,6 +21,7 @@ return new class extends Migration
 
             $table->foreignId('training_id')->nullable();
             $table->integer('current_lesson')->default(0);
+            $table->integer('order')->default(1);
             $table->timestamp('archived_at')->nullable();
             $table->timestamps();
         });

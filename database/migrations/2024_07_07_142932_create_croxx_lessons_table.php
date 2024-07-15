@@ -22,6 +22,7 @@ return new class extends Migration
             $table->text('video_url')->nullable();
             $table->text('pdf')->nullable();
 
+            $table->integer('order')->default(1);
             $table->json('resources')->nullable();
             $table->string('keyword')->nullable();
             $table->string('cover_photo')->nullable();

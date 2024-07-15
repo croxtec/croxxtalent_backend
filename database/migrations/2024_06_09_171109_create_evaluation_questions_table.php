@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('option4')->nullable();
             $table->string('answer')->nullable();
             $table->text('file')->nullable();
-
+            $table->integer('order')->default(1);
             $table->integer('duration')->nullable();
             $table->timestamp('archived_at')->nullable();
             $table->timestamps();
