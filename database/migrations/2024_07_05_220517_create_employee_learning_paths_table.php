@@ -20,7 +20,7 @@ return new class extends Migration
             $table->foreignId('assessment_feedback_id')->nullable();
 
             $table->foreignId('training_id')->nullable();
-            $table->integer('progress')->default(0);
+            $table->integer('current_lesson')->default(0);
             $table->timestamp('archived_at')->nullable();
             $table->timestamps();
         });

@@ -31,7 +31,10 @@ class CroxxTraining extends Model
         'total_lessons'
     ];
 
-
+    public function author(){
+        return $this->belongsTo('App\Models\User', 'user_id', 'id')
+                 ->select(['id','photo', 'first_name','last_name','company_name']);
+    }
 
     public function getTotalLessonsAttribute()
     {
@@ -39,5 +42,14 @@ class CroxxTraining extends Model
             ->whereNull('archived_at')->count();
     }
 
+    public function review_lessons(){
+        return $this->hasMany('App\Models\Training\CroxxLesson', 'training_id', 'id')
+                 ->whereNull('archived_at')->select(['id','title','alias','description']);
+    }
+
+    public function lessons(){
+        return $this->hasMany('App\Models\Training\CroxxLesson', 'training_id', 'id')
+                 ->whereNull('archived_at');
+    }
 
 }

@@ -210,8 +210,8 @@ class ScoresheetController extends Controller
             $paths = $validatedData['learning_path'];
             foreach ($paths as $path) {
                 EmployeeLearningPath::firstOrCreate([
-                    'employee_id' => $employee->id,
                     'assessment_feedback_id' => $feedback->id,
+                    'employee_id' => $employee->id,
                     'employer_user_id' => $assessment->employer_id,
                     'training_id' => $path
                 ]);

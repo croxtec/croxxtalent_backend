@@ -177,10 +177,13 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
                 Route::delete('/{cv_reference_id}', 'Api\v2\Resume\CvReferenceController@destroy')->name('destroy');
             });
         });
-        // Training & Learning Path
-        Route::get('trainings/employee/{code}', 'Api\v2\Learning\TrainingHubController@employee');//->name('assesments.index');
-        Route::get('trainings/paths', 'Api\v2\Learning\TrainingHubController@paths');//->name('assesments.index');
-
+        // Trainings & Learning Path
+        Route::get('trainings/employee/{code}', 'Api\v2\Learning\TrainingHubController@employee')->name('trainings.employee');
+        Route::get('trainings', 'Api\v2\Learning\TrainingHubController@index')->name('trainings.index');
+        Route::get('trainings/recommended', 'Api\v2\Learning\TrainingHubController@recommended')->name('trainings.recommended');
+        Route::get('trainings/paths', 'Api\v2\Learning\TrainingHubController@paths')->name('trainings.paths');
+        Route::get('trainings/review/{code}', 'Api\v2\Learning\TrainingHubController@show')->name('trainings.course');
+        Route::get('trainings/lesson/{code}/{alias}', 'Api\v2\Learning\TrainingHubController@lesson')->name('trainings.lesson');
         // CVs
         Route::get('cvs', 'Api\v2\CvController@index')->name('cvs.index');
         Route::get('cvs/{id}', 'Api\v2\CvController@show')->name('cvs.show');

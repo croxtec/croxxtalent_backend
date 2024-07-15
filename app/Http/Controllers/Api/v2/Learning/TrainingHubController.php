@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api\v2\Learning;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Training\CroxxTraining;
 use App\Models\Employee;
+use App\Models\Training\CroxxTraining;
+use App\Models\Assessment\EmployeeLearningPath;
+use App\Models\Training\CroxxLesson as Lesson;
 
 
 class TrainingHubController extends Controller
@@ -20,7 +22,6 @@ class TrainingHubController extends Controller
     public function employee(Request $request, $code)
     {
         $user = $request->user();
-        $show = $request->input('show', "personal");
         $per_page = $request->input('per_page', 12);
 
         $employee = Employee::where('code', $code)->firstOrFail();
@@ -85,9 +86,22 @@ class TrainingHubController extends Controller
         $per_page = $request->input('per_page', 12);
         $employeeIds = Employee::where('user_id', $user->id)->pluck('id')->toArray();
 
-        $trainings = CroxxTraining::all();
+        $trainings = CroxxTraining::paginate($per_page);
 
+        return response()->json([
+            'status' => true,
+            'message' => "",
+            'data' => $trainings
+        ], 200);
+    }
 
+    public function recommended(Request $request)
+    {
+        $user = $request->user();
+        $per_page = $request->input('per_page', 12);
+        $employeeIds = Employee::where('user_id', $user->id)->pluck('id')->toArray();
+
+        $trainings = CroxxTraining::paginate($per_page);
 
         return response()->json([
             'status' => true,
@@ -107,13 +121,11 @@ class TrainingHubController extends Controller
         $per_page = $request->input('per_page', 12);
         $employeeIds = Employee::where('user_id', $user->id)->pluck('employer_id')->toArray();
 
-        $trainings = CroxxTraining::
-                        join('employee_learning_paths', 'croxx_trainings.id', '=', 'employee_learning_paths.training_id')
+        $trainings = CroxxTraining::join('employee_learning_paths', 'croxx_trainings.id', '=', 'employee_learning_paths.training_id')
                         ->whereIn('employee_learning_paths.employer_user_id', $employeeIds)
                         ->latest()
                         ->select('croxx_trainings.*')
                         ->paginate($per_page);
-
 
         return response()->json([
             'status' => true,
@@ -124,47 +136,77 @@ class TrainingHubController extends Controller
 
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
      * Display the specified resource.
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Request $request, $code)
     {
-        //
+        $user = $request->user();
+        $course = CroxxTraining::where('code', $code)
+                        ->with('author')->firstOrFail();
+        $course_type = $course->type;
+        $company = $request->input('employee', $user?->default_company_id ?? null);
+
+
+        if($course_type == 'company'){
+            $employee = Employee::where('user_id', $user->id)->where('id',$company)->firstOrFail();
+            // info($employee);
+            $learning = EmployeeLearningPath::where([
+                // 'employee_id' => $employee->id,
+                'employer_user_id' => $employee->employer_id,
+                'training_id' => $course->id
+            ])->firstOrFail();
+
+            $course->learning = $learning;
+        }
+
+        $course->review_lessons;
+        $percentage = ($learning->current_lesson / $course->total_lessons) * 100;
+        $course->percentage = round($percentage);
+
+        return response()->json([
+            'status' => true,
+            'message' => "",
+            'data' => $course
+        ], 200);
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
+    public function lesson(Request $request, $code, $alias)
     {
-        //
+        $user = $request->user();
+        $course = CroxxTraining::where('code', $code)->firstOrFail();
+        $lesson = Lesson::where('training_id', $course->id)->where('alias',$alias)->firstOrFail();
+        $course_type = $course->type;
+        $company = $request->input('employee', $user?->default_company_id ?? null);
+
+        if($course_type == 'company'){
+            $employee = Employee::where('user_id', $user->id)->where('id',$company)->firstOrFail();
+            // info($employee);
+            $learning = EmployeeLearningPath::where([
+                // 'employee_id' => $employee->id,
+                'employer_user_id' => $employee->employer_id,
+                'training_id' => $course->id
+            ])->firstOrFail();
+
+            // $learning->current_lesson = 1;
+            // $learning->save();
+            $course->learning = $learning;
+        }
+
+        $course->review_lessons;
+        $percentage = ($learning->current_lesson / $course->total_lessons) * 100;
+        $course->percentage = round($percentage);
+
+        return response()->json([
+            'status' => true,
+            'message' => "",
+            'data' => compact('lesson','course')
+        ], 200);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
-    }
+
+
+
 }
