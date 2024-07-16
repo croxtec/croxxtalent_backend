@@ -190,8 +190,6 @@ class GoalController extends Controller
         ];
 
         $period = Carbon::createFromFormat('Y-m-d H:i', $validatedData['period']);
-        $supervisor = Employee::where('code', $validatedData['supervisor_code'])->first();
-        $employee = Employee::where('code', $validatedData['employee_code'])->first();
 
         $reminder = $validatedData['reminder'];
         $reminderOffset = $reminderOffsets[$reminder];
@@ -202,10 +200,13 @@ class GoalController extends Controller
         }
 
         if($validatedData['type'] == 'supervisor'){
-            $validatedData['supervisor_id'] = $supervisor->id;
+            $current_company = Employee::where('id', $user->default_company_id)
+                             ->where('user_id', $user->id)->with('supervisor')->first();
+            $employee = Employee::where('code', $validatedData['employee_code'])->first();
+            $validatedData['supervisor_id'] = $current_company->id;
             $validatedData['employee_id'] = $employee->id;
-            $owner = Employee::where('id', $validatedData['supervisor_id'])->first();
-            $validatedData['employer_id'] = $owner->employer_id;
+
+            $validatedData['employer_id'] = $current_company->employer_id;
             $validatedData['user_id'] = $validatedData['supervisor_id'];
         }
 
@@ -269,7 +270,6 @@ class GoalController extends Controller
         }
         if($current_company->supervisor) {
             $supervisor =  $current_company->supervisor;
-            // info([$supervisor, $employee]);
             return true;
             if($supervisor->type == 'role' && $employee->department_role_id === $supervisor->department_role_id){
                 return true;

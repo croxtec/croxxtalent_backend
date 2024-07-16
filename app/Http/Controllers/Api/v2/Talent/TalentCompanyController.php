@@ -249,4 +249,7 @@ class TalentCompanyController extends Controller
         ], 404);
     }
 
+
+
+
 }

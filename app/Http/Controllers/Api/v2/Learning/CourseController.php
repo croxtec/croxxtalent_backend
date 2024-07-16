@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Api\v2\Learning;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Employee;
 use App\Http\Requests\TrainingRequest;
 use App\Models\Training\CroxxTraining;
-
 
 class CourseController extends Controller
 {
@@ -292,4 +292,40 @@ class CourseController extends Controller
             'message' => "{$deleted_count} Trainings deleted successfully.",
         ], 200);
     }
+
+    public function courses(Request $request)
+    {
+        $user = $request->user();
+        $per_page = $request->input('per_page', 12);
+        $search = $request->input('search');
+        $current_company = Employee::where('id', $user->default_company_id)
+                             ->where('user_id', $user->id)->with('supervisor')->firstOrFail();
+
+        if(!$current_company->supervisor){
+            return response()->json([
+                'status' => false,
+                'message' => 'Unautourized Access'
+            ], 401);
+        }
+
+        $trainings = CroxxTraining::where('employer_id', $current_company->employer_id)
+                    ->when($search,function($query) use ($search) {
+                        $query->where('title', 'LIKE', "%{$search}%");
+                    })
+                    ->latest();
+        if ($per_page === 'all' || $per_page <= 0 ) {
+            $results = $trainings->get();
+            $trainings = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
+        } else {
+            $trainings = $trainings->paginate($per_page);
+        }
+
+        $response = collect([
+            'status' => true,
+            'data' => $trainings,
+            'message' => ""
+        ]);
+        return response()->json($response, 200);
+    }
+
 }
