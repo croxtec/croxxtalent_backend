@@ -13,7 +13,7 @@ class CroxxAssessment extends Model
         'user_id', //created by [S]
         'employer_id',
         'code',
-        'type',   //company,vetting,trainings,competency
+        'type',   //company,vetting,pre-jobs,competency
         'category', // competency_evaluation, peer_review, experience
         'is_published',
 

@@ -17,9 +17,9 @@ class CreateUserSettingsTable extends Migration
             $table->id();
             $table->foreignId('user_id');
             $table->string('key', 191);
-			$table->longText('value');
+			$table->json('value');
             $table->timestamps();
-            
+
             $table->index('user_id');
             $table->index(['user_id', 'key']);
 			$table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');

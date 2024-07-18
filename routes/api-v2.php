@@ -184,6 +184,10 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::get('trainings/paths', 'Api\v2\Learning\TrainingHubController@paths')->name('trainings.paths');
         Route::get('trainings/review/{code}', 'Api\v2\Learning\TrainingHubController@show')->name('trainings.course');
         Route::get('trainings/lesson/{code}/{alias}', 'Api\v2\Learning\TrainingHubController@lesson')->name('trainings.lesson');
+        // Profile & Settings
+        Route::get('settings', 'Api\v2\CroxxProfileController@settings')->name('profile.settings');
+
+
         // CVs
         Route::get('cvs', 'Api\v2\CvController@index')->name('cvs.index');
         Route::get('cvs/{id}', 'Api\v2\CvController@show')->name('cvs.show');
@@ -241,9 +245,10 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::post('candidate/{id}/withdraw', 'Api\v2\CandidateController@withdraw')->name('candidate.withdraw');
         // Route::post('candidate/{id}/result', 'Api\v2\CandidateController@result')->name('candidate.result');
     });
+
     Route::get('jobs', 'Api\v2\CroxxJobsController@index')->name('jobs.index');
     Route::get('jobs/{id}', 'Api\v2\CroxxJobsController@show')->name('jobs.show');
-
+    Route::get('{username}', 'Api\v2\CroxxProfileController@index')->name('profile');
     // Company
     Route::middleware('auth:sanctum')->prefix('employers')->name('employers.')->group( function () {
         Route::post('employee/import', 'Api\v2\Company\EmployeeController@importEmployees')->name('employee.import');

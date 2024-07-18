@@ -14,7 +14,7 @@ class CroxxTraining extends Model
         'user_id',
         'employer_id',
         'code',
-        'type',   //company, training,competency
+        'type',   //company, training, competency
         'title',
         'experience_level',
         'objective',

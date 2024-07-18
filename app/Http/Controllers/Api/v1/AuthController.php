@@ -112,7 +112,7 @@ class AuthController extends Controller
         Audit::log($user->id, 'login', $old_values, $new_values, User::class, $user->id);
 
         $responseData = $this->tokenData($token);
-        $responseData['user'] = $user;
+        // $responseData['user'] = $user;
 
         // send response
         return response()->json([
@@ -218,7 +218,7 @@ class AuthController extends Controller
             }
             // format token data
             $responseData = $this->tokenData($token);
-            $responseData['user'] = $user;
+            // $responseData['user'] = $user;
 
             return response()->json([
                 'status' => true,
@@ -297,7 +297,7 @@ class AuthController extends Controller
             $token =  $user->createToken('access-token', $abilities)->plainTextToken;
 
             $responseData = $this->tokenData($token);
-            $responseData['user'] = $user;
+            // $responseData['user'] = $user;
 
             return response()->json([
                 'status' => true,
