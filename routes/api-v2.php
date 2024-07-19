@@ -257,8 +257,14 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             'supervisor' => 'Api\v2\Company\SupervisorController',
             'department' => 'Api\v2\Company\DepartmentController'
         ]);
+        // Overview
         Route::get('overview', 'Api\v2\Company\CompanyReportController@overview')->name('company.insights');
         Route::get('overview/department', 'Api\v2\Company\CompanyReportController@summary')->name('company.summary');
+        Route::get('overview/assessment/feedback', 'Api\v2\Company\CompanyReportController@recentFeedback')->name('company.assessment.feedback');
+        Route::get('overview/assessment/chart', 'Api\v2\Company\CompanyReportController@assessmentChart')->name('company.assessment.chart');
+        Route::get('overview/employees/gap', 'Api\v2\Company\CompanyReportController@gapAnalysisReport')->name('company.employyes.gap');
+        Route::get('overview/courses/chart', 'Api\v2\Company\CompanyReportController@coursesChart')->name('company.courses.chart');
+
         // Mapping
         Route::get('competency/mapping', 'Api\v2\EmployerCompetencyController@index')->name('competency.index');
         Route::post('competency/mapping/{id}', 'Api\v2\EmployerCompetencyController@storeCompetency')->name('competency.store');
@@ -284,6 +290,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::patch('goals/{id}/archive', 'Api\v2\GoalController@archive')->name('goals.archive');
         Route::patch('goals/{id}/unarchive', 'Api\v2\GoalController@unarchive')->name('goals.unarchive');
         // Course
+        Route::get('courses/progres', 'Api\v2\Learning\CourseController@progres')->name('courses.progress');
         Route::get('company/courses', 'Api\v2\Learning\CourseController@courses')->name('company.courses');
         Route::patch('courses/{id}/publish', 'Api\v2\Learning\CourseController@publish')->name('courses.publish');
         // Assesment Options

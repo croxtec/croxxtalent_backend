@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Employee;
 use App\Http\Requests\TrainingRequest;
 use App\Models\Training\CroxxTraining;
+use App\Models\Assessment\EmployeeLearningPath;
 
 class CourseController extends Controller
 {
@@ -29,7 +30,8 @@ class CourseController extends Controller
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
 
         $training = CroxxTraining::when($user_type == 'employer', function($query) use ($user){
-                $query->where('user_id', $user->id);
+                $query->where('user_id', $user->id)
+                      ->where('type', 'company');
             })
             ->when($archived ,function ($query) use ($archived) {
             if ($archived !== null ) {
@@ -326,6 +328,31 @@ class CourseController extends Controller
             'message' => ""
         ]);
         return response()->json($response, 200);
+    }
+
+    public function progress(Request $request){
+        $employer = $request->user();
+        $per_page = $request->input('per_page', 25);
+        $sort_by = $request->input('sort_by', 'current_lesson');
+        $sort_dir = $request->input('sort_dir', 'desc');
+
+        $paths = EmployeeLearningPath::where('employer_user_id', $employer->id)
+                    // ->with('employee','supervisor')
+                    ->orderBy($sort_by, $sort_dir);
+
+        if ($per_page === 'all' || $per_page <= 0 ) {
+            $results = $paths->get();
+            $paths = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
+        } else {
+            $paths = $paths->paginate($per_page);
+        }
+
+
+        return response()->json([
+            'status' => true,
+            'data' => $paths,
+            'message' => ''
+        ], 200);
     }
 
 }
