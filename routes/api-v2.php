@@ -246,9 +246,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         // Route::post('candidate/{id}/result', 'Api\v2\CandidateController@result')->name('candidate.result');
     });
 
-    Route::get('jobs', 'Api\v2\CroxxJobsController@index')->name('jobs.index');
-    Route::get('jobs/{id}', 'Api\v2\CroxxJobsController@show')->name('jobs.show');
-    Route::get('{username}', 'Api\v2\CroxxProfileController@index')->name('profile');
+
     // Company
     Route::middleware('auth:sanctum')->prefix('employers')->name('employers.')->group( function () {
         Route::post('employee/import', 'Api\v2\Company\EmployeeController@importEmployees')->name('employee.import');
@@ -458,7 +456,9 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         });
     });
 
-
+    Route::get('jobs', 'Api\v2\CroxxJobsController@index')->name('jobs.index');
+    Route::get('jobs/{id}', 'Api\v2\CroxxJobsController@show')->name('jobs.show');
+    Route::get('{username}', 'Api\v2\CroxxProfileController@index')->name('profile');
     // The fallback route should always be the last route registered by your application.
     Route::fallback(function () {
         return response()->json([
