@@ -51,6 +51,7 @@ class EvaluationAssessmentRequest extends FormRequest
                     'expected_score' => 'required|integer',
                     'is_published' => 'required|boolean',
 
+                    'competency_ids.*' => 'required|integer|exists:department_mappings,id',
                     'questions' => 'required|array',
                     'questions.*.type' => 'required|in:text,multi_choice',
                     'questions.*.question' => 'required|min:10',

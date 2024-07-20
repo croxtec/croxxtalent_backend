@@ -50,6 +50,7 @@ class ExperienceAssessmentRequest extends FormRequest
                     'expected_score' => 'required|integer',
                     'is_published' => 'required|boolean',
 
+                    'competency_ids.*' => 'required|integer|exists:department_mappings,id',
                     'questions' => 'required|array',
                     'questions.*.question' => 'required|min:10',
                     'questions.*.desctiption' => 'nullable',

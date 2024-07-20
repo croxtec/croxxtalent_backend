@@ -294,8 +294,8 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         // Assesment Options
         // Route::patch('assessments/{id}/unpublish', 'Api\v2\AssesmentController@unpublish')->name('assessments.unpublish');
         Route::patch('assessments/{id}/publish', 'Api\v2\Operations\ExperienceAssessmentController@publish')->name('assessments.publish');
-        Route::patch('assessments/{id}/archive', 'Api\v2\AssesmentController@archive')->name('assessments.archive');
-        Route::patch('assessments/{id}/unarchive', 'Api\v2\AssesmentController@unarchive')->name('assessments.unarchive');
+        Route::patch('assessments/{id}/archive', 'Api\v2\Operations\ExperienceAssessmentController@archive')->name('assessments.archive');
+        Route::patch('assessments/{id}/unarchive', 'Api\v2\Operations\ExperienceAssessmentController@unarchive')->name('assessments.unarchive');
         // Employee Assessment
         Route::get('assessments/employee/{code}', 'Api\v2\Operations\EmployeeAssessmentController@employee');//->name('assesments.index');
         Route::get('assessments/feedbacks/{code}', 'Api\v2\Operations\EmployeeAssessmentController@feedbacks');//->name('assesments.index');

@@ -28,6 +28,8 @@ class EvaluationAssessmentController extends Controller
             $user = $request->user();
             $validatedData = $request->validated();
             $validatedData['code'] = $user->id . md5(time());
+            $competency_ids = $validatedData['competency_ids'];
+            unset($validatedData['competency_ids']);
 
             if ($validatedData['type'] == 'company') {
                 $validatedData['user_id'] = $user->id;
@@ -42,6 +44,7 @@ class EvaluationAssessmentController extends Controller
 
             // Create assessment
             $assessment = CroxxAssessment::create($validatedData);
+            $assessment->competencies()->attach($competency_ids);
 
             // Create questions
             $questions = $validatedData['questions'];
@@ -56,6 +59,7 @@ class EvaluationAssessmentController extends Controller
                 AssignedEmployee::create([
                     'assessment_id' => $assessment->id,
                     'employee_id' => $employee,
+                    'is_supervisor' => false
                 ]);
             }
 

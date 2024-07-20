@@ -11,6 +11,7 @@ use App\Models\AssesmentSummary;
 use App\Models\Assesment;
 use App\Models\VettingSummary;
 use App\Models\EmployerJobcode as Department;
+use  App\Models\Competency\DepartmentMapping;
 
 class EmployerCompetencyController extends Controller
 {

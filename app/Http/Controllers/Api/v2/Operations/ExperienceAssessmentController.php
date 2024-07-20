@@ -97,6 +97,8 @@ class ExperienceAssessmentController extends Controller
              $user = $request->user();
              $validatedData = $request->validated();
              $validatedData['code'] = $user->id . md5(time());
+             $competency_ids = $validatedData['competency_ids'];
+             unset($validatedData['competency_ids']);
 
              if ($validatedData['type'] == 'company') {
                  $validatedData['user_id'] = $user->id;
@@ -111,6 +113,7 @@ class ExperienceAssessmentController extends Controller
 
              // Create assessment
              $assessment = CroxxAssessment::create($validatedData);
+             $assessment->competencies()->attach($competency_ids);
 
              // Create questions
              $questions = $validatedData['questions'];
@@ -241,7 +244,7 @@ class ExperienceAssessmentController extends Controller
     public function publish(Request $request, $id)
     {
         $user = $request->user();
-        // $this->authorize('update', [Assesment::class, $assessment]);
+        // $this->authorize('update', [CroxxAssessment::class, $assessment]);
 
         if (is_numeric($id)) {
             $assessment = CroxxAssessment::where('id', $id)->where('employer_id', $user->id)->firstOrFail();
@@ -261,6 +264,43 @@ class ExperienceAssessmentController extends Controller
         ], 200);
     }
 
+    public function archive($id)
+    {
+        $assessment = CroxxAssessment::findOrFail($id);
+
+        // $this->authorize('delete', [CroxxAssessment::class, $assessment]);
+
+        $assessment->archived_at = now();
+        $assessment->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => "Assessment \"{$assessment->name}\" archived successfully.",
+            'data' => CroxxAssessment::find($assessment->id)
+        ], 200);
+    }
+
+    /**
+     * Unarchive the specified resource from archived storage.
+     *
+     * @param  string  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function unarchive($id)
+    {
+        $assessment = CroxxAssessment::findOrFail($id);
+
+        // $this->authorize('delete', [CroxxAssessment::class, $assessment]);
+
+        $assessment->archived_at = null;
+        $assessment->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => "Assessment \"{$assessment->name}\" unarchived successfully.",
+            'data' => CroxxAssessment::find($assessment->id)
+        ], 200);
+    }
 
     /**
      * Remove the specified resource from storage.

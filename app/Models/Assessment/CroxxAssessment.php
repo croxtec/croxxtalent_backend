@@ -32,6 +32,10 @@ class CroxxAssessment extends Model
         // 'total_questions'
     ];
 
+    public function competencies()
+    {
+        return $this->belongsToMany('App\Models\Competency\DepartmentMapping', 'assessment_competency');
+    }
 
     public function department(){
         return $this->belongsTo('App\Models\EmployerJobcode', 'department_id', 'id')
