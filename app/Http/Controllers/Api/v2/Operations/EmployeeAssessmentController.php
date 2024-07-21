@@ -41,6 +41,7 @@ class EmployeeAssessmentController extends Controller
         }
 
         $assessments = CroxxAssessment::withCount('questions')
+                        ->with('competencies')
                         ->join('assigned_employees', 'croxx_assessments.id', '=', 'assigned_employees.assessment_id')
                         ->where('croxx_assessments.employer_id', $employee->employer_id)
                         ->when($show == 'personal', function($query) use ($employee){
@@ -54,6 +55,7 @@ class EmployeeAssessmentController extends Controller
                         ->select('croxx_assessments.*', 'assigned_employees.is_supervisor')
                         ->latest()
                         ->paginate($per_page);
+
 
 
         foreach ($assessments as $assessment) {
@@ -149,6 +151,7 @@ class EmployeeAssessmentController extends Controller
     {
         $user = $request->user();
 
+
         $rules = [
             'assessment_id' => 'required',
             'question_id' => 'required',
@@ -157,6 +160,7 @@ class EmployeeAssessmentController extends Controller
         $searchData = $request->validate($rules);
         $assessment = CroxxAssessment::where('id', $searchData['assessment_id'])
                             ->where('is_published', 1)->firstOrFail();
+
         $searchData['assessment_question_id'] = $searchData['question_id'];
         unset($searchData['question_id']);
 
@@ -164,6 +168,21 @@ class EmployeeAssessmentController extends Controller
             $employee = Employee::where('id', $user->default_company_id)
                      ->where('user_id', $user->id)->first();
             $searchData['employee_id'] = $employee->id;
+
+            $isPublished = EmployerAssessmentFeedback::where([
+                'assessment_id' => $assessment->id,
+                'employee_id' => $employee->id,
+                'employer_user_id' => $assessment->employer_id,
+                'is_published' => true
+            ])->exists();
+
+            if ($isPublished) {
+                return response()->json([
+                    'status' => false,
+                    'message' => "Assessment already submitted.",
+                    'data' => ""
+                ], 400);
+            }
         } else{
             $searchData['talent_id'] = $user->id;
         }

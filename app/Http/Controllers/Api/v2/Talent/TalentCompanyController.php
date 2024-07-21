@@ -7,16 +7,25 @@ use Illuminate\Http\Request;
 use App\Models\Employee;
 use App\Models\Supervisor;
 use App\Models\Goal;
-
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Carbon\Carbon;
+use Cloudinary\Cloudinary;
 
 class TalentCompanyController extends Controller
 {
+    protected $cloudinary;
+
+    public function __construct(Cloudinary $cloudinary)
+    {
+        $this->cloudinary = $cloudinary;
+    }
 
     public function index(Request $request){
 
         $user = $request->user();
-        $companies = Employee::where('user_id', $user->id)
-                        ->with('department', 'department_role', 'employer')->get();
+        $companies = Employee::where('user_id', $user->id)->with('employer')
+                        ->select(['id', 'employer_id', 'user_id', 'name', 'photo_url', 'photo_updated_at','job_code_id','level'])->get();
         $default_company =  null;
 
         if (count($companies)) {
@@ -32,6 +41,8 @@ class TalentCompanyController extends Controller
             $default_company = $companies->firstWhere('id', $user->default_company_id);
             if($default_company){
                 $default_company->department;
+                $default_company->department_role;
+                $default_company->employer;
                 if($default_company->department && !$default_company->supervisor_id){
                     $default_company->department->technical_skill;
                     $default_company->department->soft_skill;
@@ -250,6 +261,57 @@ class TalentCompanyController extends Controller
     }
 
 
+    public function photo(Request $request)
+    {
+        $user = $request->user();
 
+        $myinfo = Employee::where('user_id', $user->id)->where('id', $user->default_company_id)->firstOrFail();
+
+        if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
+            $file = $request->file('photo');
+            $extension = $file->extension();
+            $fileSize = $file->getSize(); // size in bytes
+            $transformation = [];
+
+            // Check if the file size is greater than 700KB (700 * 1024 bytes)
+            if ($fileSize > 700 * 1024) {
+                $transformation['quality'] = '60';
+            }
+
+            $filename = time() . '-' . Str::random(32);
+            $filename = "{$filename}.$extension";
+            $rel_upload_path  = "CroxxCompany/{$myinfo->employer_id}";
+
+            // Delete previously uploaded file if any
+            if ($myinfo->photo) {
+                $public_id = pathinfo($myinfo->photo, PATHINFO_FILENAME); // Extract public_id from URL
+                info(['Public ID', $public_id]);
+                $this->cloudinary->uploadApi()->destroy($public_id);
+            }
+
+            // Upload new photo
+            $result = $this->cloudinary->uploadApi()->upload($file->getRealPath(), [
+                'folder' => $rel_upload_path, // Specify a folder
+            ]);
+
+            $myinfo->photo_url = $result['secure_url'];
+            $myinfo->photo_updated_at = Carbon::now();
+            $myinfo->save();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Photo uploaded successfully.',
+                'data' => [
+                    'photo_url' => $result['secure_url'],
+                    'employee' => $myinfo
+                ]
+            ], 200);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => "Could not upload photo, please try again.",
+        ], 400);
+    }
 
 }

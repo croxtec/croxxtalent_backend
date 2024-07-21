@@ -25,13 +25,13 @@ class EmployerAssessmentFeedback extends Model
     public function employee(){
         return $this->belongsTo('App\Models\Employee', 'employee_id', 'id')
                     ->with('department','department_role')
-                    ->select(['id','name', 'job_code_id', 'department_role_id']);
+                    ->select(['id','name', 'job_code_id', 'department_role_id', 'photo_url', 'code']);
     }
 
     public function supervisor(){
         return $this->belongsTo('App\Models\Employee', 'supervisor_id', 'id')
                     ->with('department','department_role')
-                    ->select(['id','name', 'job_code_id', 'department_role_id']);
+                    ->select(['id','name', 'job_code_id', 'department_role_id', 'photo_url', 'code']);
     }
 
 

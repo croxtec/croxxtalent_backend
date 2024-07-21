@@ -35,6 +35,7 @@ class ExperienceAssessmentController extends Controller
         //
 
         $assessment = CroxxAssessment::withCount('questions')
+            ->with('competencies')
             ->when($user_type == 'employer', function($query) use ($user){
                 $query->where('employer_id', $user->id);
             })
@@ -218,6 +219,7 @@ class ExperienceAssessmentController extends Controller
                     ->whereNull('archived_at')->get();
         }
 
+        $assessment->competencies;
         $assessment->questions = $questions;
 
        return response()->json([

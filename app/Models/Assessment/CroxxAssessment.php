@@ -34,7 +34,8 @@ class CroxxAssessment extends Model
 
     public function competencies()
     {
-        return $this->belongsToMany('App\Models\Competency\DepartmentMapping', 'assessment_competency');
+        return $this->belongsToMany('App\Models\Competency\DepartmentMapping', 'assessment_competency', 'assessment_id', 'competency_id');
+            // ->select(['id', 'competency']);
     }
 
     public function department(){

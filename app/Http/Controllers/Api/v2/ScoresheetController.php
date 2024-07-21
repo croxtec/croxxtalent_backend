@@ -14,7 +14,7 @@ use App\Models\Assessment\CroxxAssessment;
 use App\Models\Assessment\AssignedEmployee;
 use App\Models\Assessment\EmployeeLearningPath;
 use App\Models\Assessment\EmployerAssessmentFeedback;
-
+use App\Http\Resources\AssignedEmployeeResouce;
 
 class ScoresheetController extends Controller
 {
@@ -53,6 +53,7 @@ class ScoresheetController extends Controller
         })->when($search,function($query) use ($search) {
             $query->where('assesment_id', 'LIKE', "%{$search}%");
         })
+        // ->select([''])
         ->with('employee')
         ->orderBy($sort_by, $sort_dir);
 
@@ -64,13 +65,14 @@ class ScoresheetController extends Controller
         }
 
         foreach ($summaries as $summary) {
-            $exists = EmployerAssessmentFeedback::where([
+            $feedback = EmployerAssessmentFeedback::where([
                 'assessment_id' => $summary->assessment_id,
                 'employee_id' => $summary->employee_id,
                 'employer_user_id' => $assessment->employer_id
-            ])->exists();
+            ])->first();
 
-            $summary->is_submited = $exists;
+            $summary->is_submited = $feedback ? true : false;
+            $summary->feedback = $feedback;
         }
 
         return response()->json([
@@ -110,7 +112,7 @@ class ScoresheetController extends Controller
                 $question->result = ScoreSheet::where([
                     'assessment_question_id' => $question->id,
                     $talentField => $talent,
-                    'assessment_id' => $code
+                    'assessment_id' => $assessment->id
                 ])->first();
             }
         }
@@ -167,19 +169,51 @@ class ScoresheetController extends Controller
         $question = CompetencyQuestion::where('assessment_id', $assessment->id)
                              ->where('id', $validatedData['assessment_question_id'])->first();
 
-        $validatedData['assessment_id'] = $assessment->id;
-        $validatedData['supervisor_id'] = $user->default_company_id;
-        $score['comment'] =  $validatedData['comment'] ;
-        $score['employee_id'] = $employee->id ;
+        $feedback = EmployerAssessmentFeedback::where([
+            'assessment_id' => $assessment->id,
+            'employee_id' => $employee->id,
+            'employer_user_id' => $assessment->employer_id,
+            'is_published' => true
+        ])->first();
 
-        unset($validatedData['employee_code']);
-        unset($validatedData['question_id']);
-        $score = ScoreSheet::firstOrCreate($validatedData);
+        if($feedback){
+            $score = ScoreSheet::firstOrCreate(
+                [
+                    'assessment_id' => $assessment->id,
+                    'employee_id' => $employee->id,
+                ],[
+                    'score' => $validatedData['score'],
+                    'score' => $validatedData['comment'] ?? '',
+                    'supervisor_id' => $user->default_company_id
+                ]
+            );
 
-        return response()->json([
-            'status' => true,
-            'message' => ""
-        ], 201);
+            $employee_score = ScoreSheet::where([
+               'employee_id' => $employee->id,
+               'assessment_id' =>  $assessment->id
+            ])->sum('score');
+
+            $total_question =  $assessment->questions->count();
+            $total_score = $total_question * 4;
+            $graded_score = ((int)$employee_score / $total_score) * 100;
+
+            $feedback->total_score = $total_score;
+            $feedback->employee_score = (int)$employee_score;
+            $feedback->graded_score = round($graded_score);
+            $feedback->save();
+
+            return response()->json([
+                'status' => true,
+                'data' => $feedback,
+                'message' => ""
+            ], 201);
+        }else{
+            return response()->json([
+                'status' => false,
+                'message' => "Assessment has not been submited.",
+                'data' => ""
+            ], 400);
+        }
 
     }
 
@@ -217,6 +251,11 @@ class ScoresheetController extends Controller
                 ]);
             }
 
+            $message = sprintf('You aced it! You got %d out of %d points in this assessment, that\'s a whopping %d%%! Great job!',
+                            $feedback->employee_score, $feedback->total_score . ' (total possible)',
+                            $feedback->graded_score);
+
+            $feedback->summary = $message;
             $feedback->supervisor_id = $user->default_company_id;
             $feedback->supervisor_feedback = $validatedData['feedback'];
             $feedback->goal_id = $validatedData['goal_id'] ?? null;

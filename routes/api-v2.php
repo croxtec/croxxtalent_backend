@@ -93,6 +93,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
     Route::middleware('auth:sanctum')->name('api.')->group( function () {
         Route::prefix('talent')->name('talent')->group( function () {
             Route::get('company', 'Api\v2\Talent\TalentCompanyController@index')->name('company.employee');
+            Route::post('company/photo', 'Api\v2\Talent\TalentCompanyController@photo')->name('company.employee.photo');
             Route::get('company/supervisor', 'Api\v2\Talent\TalentCompanyController@supervisor')->name('company.supervisor');
             Route::get('company/employee/{id}', 'Api\v2\Talent\TalentCompanyController@employeeInformation')->name('company.employee');
             Route::get('company/team/performance', 'Api\v2\Talent\TalentCompanyController@teamPerformanceProgress')->name('company.performance');
@@ -199,15 +200,16 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::delete('cvs/{id}', 'Api\v2\CvController@destroy')->name('cvs.destroy');
         Route::post('cvs/delete-multiple', 'Api\v2\CvController@destroyMultiple')->name('cvs.destroy_multiple');
         // Users
+        Route::put('users/{id}', 'Api\v2\UserController@update')->name('users.update');
+        Route::post('users/{id}/photo', 'Api\v2\UserController@photo')->name('users.update_photo');
+        Route::post('users/{id}/resend-verification', 'Api\v2\UserController@resendVerification')->name('users.resend_verification');
+
         Route::get('users', 'Api\v2\UserController@index')->name('users.index');
         Route::get('users/{id}', 'Api\v2\UserController@show')->name('users.show');
         Route::post('users', 'Api\v2\UserController@store')->name('users.store');
-        Route::put('users/{id}', 'Api\v2\UserController@update')->name('users.update');
         Route::delete('users/{id}', 'Api\v2\UserController@destroy')->name('users.destroy');
         Route::post('users/delete-multiple', 'Api\v2\UserController@destroyMultiple')->name('users.destroy_multiple');
-        Route::post('users/{id}/resend-verification', 'Api\v2\UserController@resendVerification')->name('users.resend_verification');
         Route::patch('users/{id}/password', 'Api\v2\UserController@password')->name('users.update_password');
-        Route::post('users/{id}/photo', 'Api\v2\UserController@photo')->name('users.update_photo');
         Route::patch('users/{id}/activate', 'Api\v2\UserController@activate')->name('users.activate');
         Route::patch('users/{id}/archive', 'Api\v2\UserController@archive')->name('users.archive');
         Route::patch('users/{id}/unarchive', 'Api\v2\UserController@unarchive')->name('users.unarchive');

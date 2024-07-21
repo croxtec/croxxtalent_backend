@@ -382,7 +382,8 @@ class CvController extends Controller
             $filename = "{$filename}.$extension";
             $year = date('Y');
             $month = date('m');
-            $rel_upload_path    = "profile/{$year}/{$month}";
+            // $rel_upload_path    = "profile/{$year}";
+            $rel_upload_path    = "profile/";
             if ( config('app.env') == 'local') {
                 $rel_upload_path = "local/{$rel_upload_path}"; // dir for dev environment test uploads
             }

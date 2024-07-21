@@ -236,13 +236,10 @@ class TalentCVController extends Controller
             }
 
             // Attach Filename
-            $filename = $cv->id . '-' . time() . '-' . Str::random(32);
+            $filename = time() . '-' . Str::random(32);
             $filename = "{$filename}.$extension";
             $year = date('Y');
-            $rel_upload_path  = "CroxxPH/CV/{$year}";
-            if (config('app.env') == 'local') {
-                $rel_upload_path = "local/{$rel_upload_path}"; // dir for dev environment test uploads
-            }
+            $rel_upload_path  = "CroxxPH/CV";
 
             // Delete previously uploaded file if any
             if ($cv->photo) {

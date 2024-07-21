@@ -405,7 +405,7 @@ class UserController extends Controller
     }
 
 
-    public function photo(UserPhotoRequest $request, $id)
+    public function photo(UserPhotoRequest $request)
     {
         // Authorization was declared in the UserPhotoRequest
 
