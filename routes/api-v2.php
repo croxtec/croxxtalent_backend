@@ -187,7 +187,9 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::get('trainings/lesson/{code}/{alias}', 'Api\v2\Learning\TrainingHubController@lesson')->name('trainings.lesson');
         // Profile & Settings
         Route::get('settings', 'Api\v2\CroxxProfileController@settings')->name('profile.settings');
-
+        Route::put('profile', 'Api\v2\CroxxProfileController@update')->name('users.update');
+        Route::post('profile/photo', 'Api\v2\CroxxProfileController@photo')->name('users.update_photo');
+        Route::post('users/{id}/resend-verification', 'Api\v2\UserController@resendVerification')->name('users.resend_verification');
 
         // CVs
         Route::get('cvs', 'Api\v2\CvController@index')->name('cvs.index');
@@ -199,11 +201,9 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         // Route::patch('cvs/{id}/unpublish', 'Api\v2\CvController@unpublish')->name('cvs.unpublish');
         Route::delete('cvs/{id}', 'Api\v2\CvController@destroy')->name('cvs.destroy');
         Route::post('cvs/delete-multiple', 'Api\v2\CvController@destroyMultiple')->name('cvs.destroy_multiple');
-        // Users
-        Route::put('users/{id}', 'Api\v2\UserController@update')->name('users.update');
-        Route::post('users/{id}/photo', 'Api\v2\UserController@photo')->name('users.update_photo');
-        Route::post('users/{id}/resend-verification', 'Api\v2\UserController@resendVerification')->name('users.resend_verification');
 
+
+        // Users
         Route::get('users', 'Api\v2\UserController@index')->name('users.index');
         Route::get('users/{id}', 'Api\v2\UserController@show')->name('users.show');
         Route::post('users', 'Api\v2\UserController@store')->name('users.store');

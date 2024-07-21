@@ -18,10 +18,11 @@ class UserPhotoRequest extends FormRequest
             case 'GET':
                 return false;
             case 'POST':
-                $user = User::findOrFail($this->id);
-                return $this->user()->can('update', [User::class, $user]);
+                return true;
+                // $user = User::findOrFail($this->id);
+                // return $this->user()->can('update', [User::class, $user]);
             case 'PUT':
-            case 'PATCH':                
+            case 'PATCH':
             case 'DELETE':
                 return false;
             default:
@@ -44,7 +45,7 @@ class UserPhotoRequest extends FormRequest
                     'photo' => 'required|mimes:jpeg,jpg,png,gif,bmp|max:5120',
                 ];
             case 'PUT':
-            case 'PATCH':                
+            case 'PATCH':
             case 'DELETE':
                 return [];
             default:

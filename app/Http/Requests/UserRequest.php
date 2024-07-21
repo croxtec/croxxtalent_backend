@@ -44,14 +44,14 @@ class UserRequest extends FormRequest
                     'type' => 'required|in:admin,talent,employer,affiliate', // optional for admin
                     'first_name' => 'required|max:30',
                     'last_name' => 'required|max:30',
-                    'email' => 'required|email|max:150|unique:users,email',
+                    // 'email' => 'required|email|max:150|unique:users,email',
                 ];
             case 'PUT':
             case 'PATCH':
                 return [
                     'first_name' => 'required|max:30',
                     'last_name' => 'required|max:30',
-                    'email' => 'required|email|max:150|unique:users,email,' . $this->id,
+                    // 'email' => 'required|email|max:150|unique:users,email,' . $this->id,
                     'phone' => 'required|max:25',
                     'company_name' => 'nullable|max:100',
                 ];
@@ -59,7 +59,7 @@ class UserRequest extends FormRequest
                 return [];
             default:break;
         }
-        
+
     }
 
     /**

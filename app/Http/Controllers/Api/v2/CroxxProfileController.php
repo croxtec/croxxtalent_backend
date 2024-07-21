@@ -9,6 +9,7 @@ use App\Models\Cv;
 use App\Models\UserSetting;
 use App\Models\Competency\TalentCompetency;
 use App\Models\Audit;
+use Illuminate\Support\Str;
 use Cloudinary\Cloudinary;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\UserRequest;
@@ -93,11 +94,11 @@ class CroxxProfileController extends Controller
         $old_user_data = collect($user)->toArray();
 
         $update_email = false;
-        if ($validatedData['email'] != $user->email) {
-            $new_email = $validatedData['email'];
-            unset($validatedData['email']);
-            $update_email = true;
-        }
+        // if ($validatedData['email'] != $user->email) {
+        //     $new_email = $validatedData['email'];
+        //     unset($validatedData['email']);
+        //     $update_email = true;
+        // }
         if ($request->type == 'affiliate') {
             $validatedData['company_affiliate'] = $request->company_affiliate;
         }
@@ -184,8 +185,8 @@ class CroxxProfileController extends Controller
             $user->save();
 
             // save audit trail log
-            $old_values = $old_photo;
-            $new_values = $user->photo;
+            $old_values = [$old_photo];
+            $new_values = [$user->photo];
             Audit::log($user->id, 'users.photo.updated', $old_values, $new_values, User::class, $user->id);
 
             return response()->json([

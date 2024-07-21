@@ -32,7 +32,6 @@ class TalentCompanyController extends Controller
             // Get the first company's employer_id as the default
             $firstCompanyEmployerId = $companies->first()->id;
             // $defaultCompanyId = $request->input('employer', $firstCompanyEmployerId);
-
             if($request->input('employer')) {
                 $user->default_company_id = $request->input('employer');
                 $user->save();
