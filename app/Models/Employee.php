@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\Notifiable;
 
 class Employee extends Model
 {
-    use HasFactory;
+    use HasFactory,  Notifiable;
 
     protected $fillable = [
         'user_id',
@@ -55,5 +56,10 @@ class Employee extends Model
     public function verifications()
     {
         return $this->morphMany('App\Models\Verification', 'verifiable');
+    }
+
+    public function routeNotificationForMail()
+    {
+        return $this->email; // Assuming the employee model has an email attribute
     }
 }

@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api\v2\Operations;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\AssessmentNotification;
+
 use App\Models\Assessment\CompetencyQuestion;
 use App\Models\Assessment\EvaluationQuestion;
 use App\Http\Requests\ExperienceAssessmentRequest;
@@ -12,6 +15,8 @@ use App\Models\Assessment\CroxxAssessment;
 use App\Models\Assessment\AssignedEmployee;
 use App\Models\Employee;
 use App\Models\Supervisor;
+
+
 
 class ExperienceAssessmentController extends Controller
 {
@@ -124,6 +129,7 @@ class ExperienceAssessmentController extends Controller
              }
 
              // Create assigned employees
+             $employeeInstances = [];
              $employees = $validatedData['employees'];
              foreach ($employees as $employee) {
                  AssignedEmployee::create([
@@ -137,23 +143,47 @@ class ExperienceAssessmentController extends Controller
                  // Create assigned supervisors
                  $supervisors = $validatedData['supervisors'];
                  foreach ($supervisors as $supervisor) {
-                     AssignedEmployee::create([
+                    $assignedEmployee =   AssignedEmployee::create([
                          'assessment_id' => $assessment->id,
                          'employee_id' => $supervisor,
                          'is_supervisor' => true
                      ]);
+                     $employeeInstances[] = $assignedEmployee;
                  }
+
              }
 
              if ($validatedData['type'] == 'supervisor') {
-                 AssignedEmployee::create([
+                $assignedEmployee = AssignedEmployee::create([
                      'assessment_id' => $assessment->id,
                      'employee_id' => $validatedData['supervisor_id'],
                      'is_supervisor' => true
                  ]);
+                 $employeeInstances[] = $assignedEmployee->employee;
              }
 
+                        // Send notifications and emails
+            $employees = collect();
+            foreach ($employeeInstances as $assignedEmployee) {
+                info($assignedEmployee);
+                $employee = Employee::find($assignedEmployee->employee_id); // Ensure this relationship is defined in the AssignedEmployee model
+                if ($employee) {
+                    // Collect employees for batch notification
+                    $employees->push($employee);
 
+                    // Send instant notification
+                    // $employee->notify(new AssessmentNotification($assessment, $employee));
+                }
+            }
+
+
+            // Send email notifications in batch
+            // $users = $employeeInstances->pluck('employee'); // Assuming this gets a collection of Employee models
+            //  Notification::send($employeeInstances, new AssessmentNotification($assessment, null)); // Pass null or handle properly
+            if ($employees->isNotEmpty()) {
+                info([count($employees)]);
+                // Notification::send($employees, new AssessmentNotification($assessment, null));
+            }
              // Commit the transaction
              DB::commit();
 

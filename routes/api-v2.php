@@ -189,6 +189,8 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::get('settings', 'Api\v2\CroxxProfileController@settings')->name('profile.settings');
         Route::put('profile', 'Api\v2\CroxxProfileController@update')->name('users.update');
         Route::post('profile/photo', 'Api\v2\CroxxProfileController@photo')->name('users.update_photo');
+        Route::get('notifications', 'Api\v2\UserController@notifications')->name('users.notifications');
+        Route::get('notifications/seen/{id}', 'Api\v2\UserController@seenNotification')->name('users.notifications');
         Route::post('users/{id}/resend-verification', 'Api\v2\UserController@resendVerification')->name('users.resend_verification');
 
         // CVs
@@ -216,9 +218,6 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::get('users/{id}/campaigns', 'Api\v2\UserController@campaigns')->name('users.campaigns');
         Route::get('users/{id}/affiliates', 'Api\v2\UserController@affiliates')->name('users.affiliates');
         Route::get('users/{id}/job-invitations', 'Api\v2\UserController@jobInvitations')->name('users.job_invitations');
-
-        Route::get('users/{id}/notifications', 'Api\v2\UserController@notifications')->name('users.notifications');
-        Route::get('notifications/seen/{id}', 'Api\v2\UserController@seenNotification')->name('users.notifications');
     });
 
     // Croxx Jobs
