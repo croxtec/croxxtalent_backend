@@ -25,7 +25,7 @@ class TalentCompanyController extends Controller
 
         $user = $request->user();
         $companies = Employee::where('user_id', $user->id)->with('employer')
-                        ->select(['id', 'employer_id', 'user_id', 'name', 'photo_url', 'photo_updated_at','job_code_id','level'])->get();
+                        ->select(['id', 'employer_id', 'user_id', 'name','code', 'photo_url', 'photo_updated_at','job_code_id','level'])->get();
         $default_company =  null;
 
         if (count($companies)) {
