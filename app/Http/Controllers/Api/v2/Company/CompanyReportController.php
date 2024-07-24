@@ -26,22 +26,26 @@ class CompanyReportController extends Controller
                      ->select(['id', 'gender'])->get();
 
         $top_employees = Employee::where('employer_id', $employer->id)
-                            ->select(['id', 'name', 'code', 'performance'])
+                            ->select(['id', 'name', 'photo_url','code', 'performance'])
                             ->orderBy('performance', 'asc')
                             ->limit(12)->get();
 
         $total_campaigns = Campaign::where('user_id', $employer->id)->count();
 
         $total_employees = $employees->count();
-        $genderCount = $employees->groupBy('gender')->map(function ($row) {
-            return count($row);
-        });
 
-        $gender_percentage = $genderCount->map(function ($count) use ($total_employees) {
-            return round(($count / $total_employees) * 100, 2) . '%';
-        });
+        $gender_distribution = $employees->groupBy('gender')
+        ->reduce(function ($carry, $group) use ($employees) {
+            $count = $group->count();
+            $total = $employees->count();
 
-        $gender_distribution = $gender_percentage->toArray();
+            $carry[$group->first()->gender] = $total > 0
+                ? round(($count / $total) * 100, 2) . '%'
+                : '0%';
+
+            return $carry;
+        }, ['male' => 0, 'female' => 0, 'others' => 0]);
+
 
         $competency_summary = [
             'current_rating' => 70,

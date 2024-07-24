@@ -19,7 +19,7 @@ class OpenAIService
         ]);
     }
 
-    public function generateText($prompt, $model = 'text-davinci-003')
+    public function generateText($prompt, $model = 'gpt-3.5-turbo-1106')
     {
         $response = $this->client->post('completions', [
             'json' => [

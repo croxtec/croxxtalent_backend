@@ -152,7 +152,6 @@ class TrainingHubController extends Controller
         ], 200);
     }
 
-
     /**
      * Display the specified resource.
      *
@@ -239,8 +238,5 @@ class TrainingHubController extends Controller
             'data' => compact('lesson','course')
         ], 200);
     }
-
-
-
 
 }

@@ -15,24 +15,35 @@ use App\Models\JobInvitation;
 use App\Models\AssesmentQuestion;
 use App\Models\AssesmentTalentAnswer;
 use App\Models\Competency\CompetencySetup;
+use App\Libraries\OpenAIService;
+
 
 class TalentCompetencyController extends Controller
 {
+
+    protected $openAIService;
+
+    public function __construct(OpenAIService $openAIService)
+    {
+        $this->openAIService = $openAIService;
+    }
+
 
     public function suggestion(Request $request){
         $user = $request->user();
         $suggestion = [];
 
-        if(isset($user->cv?->job_title_name)){
-            $list =  CompetencySetup::where('industry_id',  $user->cv?->industry_id)->get()->toArray();
+        // $response = $this->openAIService->generateText('What is openai');
+        // if(isset($user->cv?->job_title_name)){
+        //     $list =  CompetencySetup::where('industry_id',  $user->cv?->industry_id)->get()->toArray();
 
-                //$list = array_filter($competencies, function($competency) use ($user) {
-                //    return $competency['industry'] === $user->cv?->industry_name;
-                //});
+        //         //$list = array_filter($competencies, function($competency) use ($user) {
+        //         //    return $competency['industry'] === $user->cv?->industry_name;
+        //         //});
 
-            shuffle($list);
-            $suggestion = array_slice($list,0,5);
-        }
+        //     shuffle($list);
+        //     $suggestion = array_slice($list,0,5);
+        // }
 
         return response()->json([
             'status' => true,
