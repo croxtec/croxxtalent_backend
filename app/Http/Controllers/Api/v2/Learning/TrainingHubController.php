@@ -161,11 +161,10 @@ class TrainingHubController extends Controller
     public function show(Request $request, $code)
     {
         $user = $request->user();
-        $course = CroxxTraining::where('code', $code)
-                        ->with('author')->firstOrFail();
+        $course = CroxxTraining::where('code', $code)->with('author')->firstOrFail();
+        $course_type = $course->type;
         $course_type = $course->type;
         $company = $request->input('employee', $user?->default_company_id ?? null);
-
 
         if($course_type == 'company'){
             $employee = Employee::where('user_id', $user->id)->where('id',$company)->firstOrFail();
@@ -177,7 +176,7 @@ class TrainingHubController extends Controller
             ])->firstOrFail();
 
             $course->learning = $learning;
-            $percentage = ($learning->current_lesson / $course->total_lessons) * 100;
+            $percentage = ($learning?->current_lesson / $course?->total_lessons) * 100;
         }
 
         if($course_type != 'company'){
