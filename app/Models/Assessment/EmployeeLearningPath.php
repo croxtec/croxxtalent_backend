@@ -22,9 +22,4 @@ class EmployeeLearningPath extends Model
                     ->select(['id','name', 'job_code_id', 'department_role_id', 'photo_url', 'code']);
     }
 
-    public function supervisor(){
-        return $this->belongsTo('App\Models\Employee', 'supervisor_id', 'id')
-                    ->with('department','department_role')
-                    ->select(['id','name', 'job_code_id', 'department_role_id', 'photo_url', 'code']);
-    }
 }

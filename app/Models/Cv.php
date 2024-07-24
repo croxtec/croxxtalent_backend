@@ -64,10 +64,11 @@ class Cv extends Model
      *
      * @var array
      */
+    // 'skills',
     protected $appends = [
         'name', 'name_initials', 'photo_url', 'photo_url_cors', 'photo_data_url',
         'industry_name', 'job_title_name', 'country_name', 'state_name',
-        'work_experiences', 'educations', 'certifications', 'skills','hobbies',
+        'work_experiences', 'educations', 'certifications', 'hobbies',
         'awards', 'languages', 'references', 'progress', 'experience_years', 'experience_years_suffix',
         'pdf_url', 'pdf_download_url', 'import_linkedin_url',  'skill_groups'
     ];

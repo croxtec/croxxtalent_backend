@@ -8,7 +8,8 @@ use App\Models\Employee;
 use App\Models\Training\CroxxTraining;
 use App\Models\Assessment\EmployeeLearningPath;
 use App\Models\Training\CroxxLesson as Lesson;
-
+use App\Models\Competency\TalentCompetency;
+use App\Models\Training\CourseLibrary;
 
 class TrainingHubController extends Controller
 {
@@ -62,8 +63,8 @@ class TrainingHubController extends Controller
         $trainings = CroxxTraining::join('employee_learning_paths', 'croxx_trainings.id', '=', 'employee_learning_paths.training_id')
                         ->where('croxx_trainings.employer_id', $employee->employer_id)
                         ->where('employee_learning_paths.employee_id', $employee->id)
-                        ->latest()
                         ->select('croxx_trainings.*')
+                        ->latest()
                         ->paginate($per_page);
 
 
@@ -82,10 +83,17 @@ class TrainingHubController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $per_page = $request->input('per_page', 12);
-        $employeeIds = Employee::where('user_id', $user->id)->pluck('id')->toArray();
+        $per_page = $request->input('per_page', 15);
+        $sort_by = $request->input('sort_by', 'created_at');
+        $sort_dir = $request->input('sort_dir', 'desc');
+        $search = $request->input('search');
 
-        $trainings = CroxxTraining::paginate($per_page);
+        $trainings = CroxxTraining::whereIn('type', ['training', 'competency'])
+                        ->where( function($query) use ($search) {
+                            $query->where('title', 'LIKE', "%{$search}%");
+                        })
+                        ->orderBy($sort_by, $sort_dir)
+                        ->paginate($per_page);
 
         return response()->json([
             'status' => true,
@@ -97,10 +105,21 @@ class TrainingHubController extends Controller
     public function recommended(Request $request)
     {
         $user = $request->user();
-        $per_page = $request->input('per_page', 12);
-        $employeeIds = Employee::where('user_id', $user->id)->pluck('id')->toArray();
+        $per_page = $request->input('per_page', 15);
+        $sort_by = $request->input('sort_by', 'created_at');
+        $sort_dir = $request->input('sort_dir', 'desc');
+        $search = $request->input('search');
 
-        $trainings = CroxxTraining::paginate($per_page);
+        $careerIds = TalentCompetency::where('user_id', $user->id)->pluck('id')->toArray();
+
+        $trainings = CroxxTraining::whereIn('type', ['training', 'competency'])
+                        ->whereIn('career_id', $careerIds)
+                        ->where( function($query) use ($search) {
+                            $query->where('title', 'LIKE', "%{$search}%");
+                        })
+                        ->orderBy($sort_by, $sort_dir)
+                        ->paginate($per_page);
+
 
         return response()->json([
             'status' => true,
@@ -159,11 +178,15 @@ class TrainingHubController extends Controller
             ])->firstOrFail();
 
             $course->learning = $learning;
+            $percentage = ($learning->current_lesson / $course->total_lessons) * 100;
+        }
+
+        if($course_type != 'company'){
+
         }
 
         $course->review_lessons;
-        $percentage = ($learning->current_lesson / $course->total_lessons) * 100;
-        $course->percentage = round($percentage);
+        $course->percentage = isset($percentage) ? round($percentage) : 0;
 
         return response()->json([
             'status' => true,
@@ -189,14 +212,26 @@ class TrainingHubController extends Controller
                 'training_id' => $course->id
             ])->firstOrFail();
 
-            $learning->current_lesson = $lesson->order;
-            $learning->save();
+            if($lesson->order >  $learning->current_lesson){
+                $learning->current_lesson = $lesson->order;
+                $learning->save();
+            }
             $course->learning = $learning;
+            $percentage = ($learning->current_lesson / $course->total_lessons) * 100;
+        }
+
+        if($course_type != 'company'){
+            $learning = CourseLibrary::firstOrCreate([ 'talent_id'  => $user->id ]);
+            if($lesson->order >  $learning->current_lesson){
+                $learning->current_lesson = $lesson->order;
+                $learning->save();
+            }
+            $course->learning = $learning;
+            $percentage = ($learning->current_lesson / $course->total_lessons) * 100;
         }
 
         $course->review_lessons;
-        $percentage = ($learning->current_lesson / $course->total_lessons) * 100;
-        $course->percentage = round($percentage);
+        $course->percentage = isset($percentage) ? round($percentage) : 0;
 
         return response()->json([
             'status' => true,

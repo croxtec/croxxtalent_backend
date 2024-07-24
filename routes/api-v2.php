@@ -464,9 +464,10 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
     Route::fallback(function () {
         return response()->json([
             'status' => false,
-            'message' => "Resource not found",
+            'message' => "",
         ], 404);
     });
+    // "Resource not found"
     // Nothing more, this is just route for direct access to the API domain
 
 
