@@ -39,7 +39,7 @@ class WelcomeEmployee extends Mailable
      */
     public function build()
     {
-        $subject = 'Welcome To ' .$this->employer->name;
+        $subject = 'Welcome To ' .$this->employer->company_name;
         $emoji = "=E2=9A=A1";// Yellow hazard symbol
         //add emoji before the subject
         $subject = "=?UTF-8?Q?" . $emoji . quoted_printable_encode(' ' . $subject) . "?=";

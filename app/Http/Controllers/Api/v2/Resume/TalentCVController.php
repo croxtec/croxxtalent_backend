@@ -17,8 +17,9 @@ use App\Models\User;
 use App\Models\Cv;
 use App\Models\Audit;
 use App\Libraries\LinkedIn;
-use Spatie\PdfToText\Pdf;
+use Smalot\PdfParser\Parser as PdfParser;
 use PhpOffice\PhpWord\IOFactory;
+use App\Helpers\CVParser;
 use Cloudinary\Cloudinary;
 
 class TalentCVController extends Controller
@@ -96,9 +97,6 @@ class TalentCVController extends Controller
         }
     }
 
-
-
-
     /**
      * Store a newly created resource in storage
      *
@@ -166,43 +164,42 @@ class TalentCVController extends Controller
         $cv = CV::where('user_id', $user->id)->firstorFail();
         // Validate the uploaded file
         $request->validate([
-            'resume' => 'required|max:2048',
+            'cv' => 'required|file|mimes:pdf,docx|max:2048',
         ]);
 
-        // Get the uploaded file
-        $resumeFile = $request->file('resume');
+        $file = $request->file('cv');
+        $extension = $file->getClientOriginalExtension();
+        $content = '';
 
-        // Determine the file type
-        $fileExtension = $resumeFile->getClientOriginalExtension();
-        info($resumeFile);
-
-        // Extract text content based on file type
-        $extractedContent = '';
-        if ($fileExtension === 'pdf') {
-            // Extract text content from PDF
-            $extractedContent = Pdf::getText($resumeFile->path());
-        } elseif ($fileExtension === 'docx') {
-            // Extract text content from Word document
-            $phpWord = IOFactory::load($resumeFile->path());
-            info($phpWord);
-            $extractedContent = $phpWord->getText();
-        } else {
+        if ($extension === 'pdf') {
+            $parser = new PdfParser();
+            $pdf = $parser->parseFile($file->getPathname());
+            $content = $pdf->getText();
+        } elseif ($extension === 'docx') {
+            $phpWord = IOFactory::load($file->getPathname(), 'Word2007');
+            foreach ($phpWord->getSections() as $section) {
+                foreach ($section->getElements() as $element) {
+                    if (method_exists($element, 'getText')) {
+                        $content .= $element->getText() . ' ';
+                    }
+                }
+            }
+        }else {
             return response()->json(['error' => 'Unsupported file format'], 422);
         }
 
-        // Store the extracted content in a text file
-        // $fileName = 'extracted_resume_' . time() . '.txt';
-        // Storage::disk('local')->put($fileName, $extractedContent);
+        // Extract sections from the content
+        $sections = CVParser::extractSections($content);
+        $resume = CVParser::extractResumeSections($content);
+        $personal = CVParser::extractPersonalDetails($content);
 
 
         return response()->json([
             'status' => true,
             'message' => "Resume uploaded successfully.",
-            'data' => $text
+            'data' => compact('personal','resume', 'content')
         ], 200);
     }
-
-
 
      /**
     * Upload and update photo.

@@ -76,6 +76,15 @@ class EmployeeAssessmentController extends Controller
             $assessment->estimated_time = $estimated_time;
 
             unset($assessment->questions);
+
+            $isSubmitted = EmployerAssessmentFeedback::where([
+                'assessment_id' => $assessment->id,
+                'employee_id' => $employee->id,
+                'employer_user_id' => $assessment->employer_id,
+                'is_published' => true
+            ])->exists();
+
+            $assessment->is_submited = $isSubmitted;
         }
 
        return response()->json([
