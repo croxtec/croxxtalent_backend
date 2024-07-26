@@ -111,7 +111,7 @@ class EmployeeAssessmentController extends Controller
             return true;
         }
         if($current_company->supervisor) {
-            $supervisor =  $$current_company->supervisor;
+            $supervisor =  $current_company->supervisor;
             // info([$supervisor, $employee]);
             return true;
             if($supervisor->type == 'role' && $employee?->department_role_id === $supervisor->department_role_id){
