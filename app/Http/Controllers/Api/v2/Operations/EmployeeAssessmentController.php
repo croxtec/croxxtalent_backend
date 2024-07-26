@@ -43,13 +43,13 @@ class EmployeeAssessmentController extends Controller
         $assessments = CroxxAssessment::withCount('questions')
                         ->with('competencies')
                         ->join('assigned_employees', 'croxx_assessments.id', '=', 'assigned_employees.assessment_id')
-                        ->where('croxx_assessments.employer_id', $employee->employer_id)
+                        ->where('croxx_assessments.employer_id', $employee?->employer_id)
                         ->when($show == 'personal', function($query) use ($employee){
-                            $query->where('assigned_employees.employee_id', $employee->id)
+                            $query->where('assigned_employees.employee_id', $employee?->id)
                                     ->where('assigned_employees.is_supervisor', 0);
                         })
                         ->when($show == 'supervisor', function($query) use ($employee){
-                            $query->where('assigned_employees.employee_id', $employee->id)
+                            $query->where('assigned_employees.employee_id', $employee?->id)
                                     ->where('assigned_employees.is_supervisor', 1);
                         })
                         ->select('croxx_assessments.*', 'assigned_employees.is_supervisor')
@@ -63,7 +63,7 @@ class EmployeeAssessmentController extends Controller
             $assessment->total_questions = $assessment->questions->count();
 
             $total_answered = TalentAnswer::where([
-                'employee_id' => $employee->id,
+                'employee_id' => $employee?->id,
                 'assessment_id' => $assessment->id
             ])->count();
 
@@ -79,15 +79,15 @@ class EmployeeAssessmentController extends Controller
 
             $isSubmitted = EmployerAssessmentFeedback::where([
                 'assessment_id' => $assessment->id,
-                'employee_id' => $employee->id,
-                'employer_user_id' => $assessment->employer_id,
+                'employee_id' => $employee?->id,
+                'employer_user_id' => $assessment?->employer_id,
                 'is_published' => true
             ])->exists();
 
             $isFeedbacked = EmployerAssessmentFeedback::where([
                 'assessment_id' => $assessment->id,
-                'employee_id' => $employee->id,
-                'employer_user_id' => $assessment->employer_id,
+                'employee_id' => $employee?->id,
+                'employer_user_id' => $assessment?->employer_id,
                 'is_published' => true
             ])->exists();
 
@@ -107,17 +107,17 @@ class EmployeeAssessmentController extends Controller
         $current_company = Employee::where('id', $user->default_company_id)
                     ->where('user_id', $user->id)->with('supervisor')->first();
 
-        if($current_company->id === $employee->id){
+        if($current_company->id === $employee?->id){
             return true;
         }
         if($current_company->supervisor) {
             $supervisor =  $$current_company->supervisor;
             // info([$supervisor, $employee]);
             return true;
-            if($supervisor->type == 'role' && $employee->department_role_id === $supervisor->department_role_id){
+            if($supervisor->type == 'role' && $employee?->department_role_id === $supervisor->department_role_id){
                 return true;
             }
-            if($supervisor->type == 'department' && $employee->job_code_id === $supervisor->department_id){
+            if($supervisor->type == 'department' && $employee?->job_code_id === $supervisor->department_id){
                 return true;
             }
             return false;
@@ -143,10 +143,10 @@ class EmployeeAssessmentController extends Controller
         }
 
         if ($show == "supervisor") {
-            $feedbacks = EmployerAssessmentFeedback::where('supervisor_id', $employee->id)
+            $feedbacks = EmployerAssessmentFeedback::where('supervisor_id', $employee?->id)
                 ->with('employee', 'supervisor')->paginate($per_page);
         } else {
-            $feedbacks = EmployerAssessmentFeedback::where('employee_id', $employee->id)
+            $feedbacks = EmployerAssessmentFeedback::where('employee_id', $employee?->id)
                 ->with('employee', 'supervisor')->paginate($per_page);
         }
 
@@ -184,12 +184,12 @@ class EmployeeAssessmentController extends Controller
         if($assessment->type == 'company' || $assessment->type == 'supervisor'){
             $employee = Employee::where('id', $user->default_company_id)
                      ->where('user_id', $user->id)->first();
-            $searchData['employee_id'] = $employee->id;
+            $searchData['employee_id'] = $employee?->id;
 
             $isPublished = EmployerAssessmentFeedback::where([
                 'assessment_id' => $assessment->id,
-                'employee_id' => $employee->id,
-                'employer_user_id' => $assessment->employer_id,
+                'employee_id' => $employee?->id,
+                'employer_user_id' => $assessment?->employer_id,
                 'is_published' => true
             ])->exists();
 
@@ -269,15 +269,15 @@ class EmployeeAssessmentController extends Controller
 
         $feedback = EmployerAssessmentFeedback::firstOrCreate([
             'assessment_id' => $assessment->id,
-            'employee_id' => $employee->id,
-            'employer_user_id' => $assessment->employer_id
+            'employee_id' => $employee?->id,
+            'employer_user_id' => $assessment?->employer_id
         ]);
 
         // $total_question =  $assessment->questions->count();
         // $total_score = $total_question * 4;
 
         // $talent_score = ScoreSheet::where([
-        //    'employee_id' => $employee->id,
+        //    'employee_id' => $employee?->id,
         //    'assessment_id' =>  $assessment->id
         // ])->sum('score');
         // $score_average = ((int)$talent_score / $total_score) * 100;
