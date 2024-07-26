@@ -183,7 +183,7 @@ class ScoresheetController extends Controller
                     'employee_id' => $employee->id,
                 ],[
                     'score' => $validatedData['score'],
-                    'score' => $validatedData['comment'] ?? '',
+                    'comment' => $validatedData['comment'] ?? '',
                     'supervisor_id' => $user->default_company_id
                 ]
             );
