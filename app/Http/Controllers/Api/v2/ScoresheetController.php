@@ -166,7 +166,7 @@ class ScoresheetController extends Controller
 
         $employee = Employee::where('code', $validatedData['employee_code'])->first();
         $question = CompetencyQuestion::where('assessment_id', $assessment->id)
-                             ->where('id', $validatedData['assessment_question_id'])->first();
+                             ->where('id', $validatedData['question_id'])->first();
 
         $feedback = EmployerAssessmentFeedback::where([
             'assessment_id' => $assessment->id,
