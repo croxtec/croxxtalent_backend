@@ -227,6 +227,36 @@ class GoalController extends Controller
         }
     }
 
+
+
+    public function show(Request $request, $id)
+    {
+        $user = $request->user();
+
+        // if($user->type == 'talent'){
+        //     $employee = Employee::where('code', $code)->firstOrFail();
+        //     $current_company = Employee::where('id', $user->default_company_id)
+        //     ->where('user_id', $user->id)->with('supervisor')->firstOrFail();
+
+        //     if(!$this->validateEmployee($user,$employee)){
+        //          return response()->json([
+        //              'status' => false,
+        //              'message' => 'Unautourized Access'
+        //          ], 401);
+        //     }
+        //  }
+
+        $goal = Goal::find($id);
+
+
+
+        return response()->json([
+            'status' => true,
+            'data' => $goal,
+            'message' => "",
+        ], 200);
+    }
+
     /**
      * Display the specified resource.
      *
@@ -259,6 +289,7 @@ class GoalController extends Controller
             'data' => $goals
         ], 200);
     }
+
 
     private function validateEmployee($user, $employee){
         // Get The current employee information

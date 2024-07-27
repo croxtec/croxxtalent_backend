@@ -163,7 +163,6 @@ class ScoresheetController extends Controller
         ];
 
         $validatedData = $request->validate($rules);
-        $validatedData['assessment_question_id'] = $validatedData['question_id'];
 
         $employee = Employee::where('code', $validatedData['employee_code'])->first();
         $question = CompetencyQuestion::where('assessment_id', $assessment->id)
@@ -183,6 +182,7 @@ class ScoresheetController extends Controller
                     'employee_id' => $employee->id,
                 ],[
                     'score' => $validatedData['score'],
+                    'assessment_question_id' => $validatedData['question_id'],
                     'comment' => $validatedData['comment'] ?? '',
                     'supervisor_id' => $user->default_company_id
                 ]
