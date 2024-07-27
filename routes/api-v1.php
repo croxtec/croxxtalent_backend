@@ -109,7 +109,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::get('users/{id}/affiliates', 'Api\v1\UserController@affiliates')->name('users.affiliates');
         Route::get('users/{id}/job-invitations', 'Api\v1\UserController@jobInvitations')->name('users.job_invitations');
 
-        Route::get('users/{id}/notifications', 'Api\v1\UserController@notifications')->name('users.notifications');
+        Route::get('notifications', 'Api\v1\UserController@notifications')->name('users.notifications');
         Route::get('notifications/seen/{id}', 'Api\v1\UserController@seenNotification')->name('users.notifications');
 
         Route::get('trending/employers', 'Api\v1\CroxxJobsController@trendingEmployers')->name('trending.employers');

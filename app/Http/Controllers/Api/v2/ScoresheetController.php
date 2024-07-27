@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\AssesmentTalentAnswer as TalentAnswer;
 use App\Models\AssesmentScoreSheet as ScoreSheet;
+use Illuminate\Support\Facades\Notification;
 
 use App\Models\Employee;
 use App\Models\Supervisor;
@@ -15,6 +16,7 @@ use App\Models\Assessment\AssignedEmployee;
 use App\Models\Assessment\EmployeeLearningPath;
 use App\Models\Assessment\EmployerAssessmentFeedback;
 use App\Http\Resources\AssignedEmployeeResouce;
+use App\Notifications\AssessmentFeedbackNotification;
 
 class ScoresheetController extends Controller
 {
@@ -142,6 +144,8 @@ class ScoresheetController extends Controller
             'employer_user_id' => $assessment->employer_id
         ])->first();
 
+
+
         return response()->json([
             'status' => true,
             'message' => "",
@@ -260,6 +264,10 @@ class ScoresheetController extends Controller
             $feedback->supervisor_feedback = $validatedData['feedback'];
             $feedback->goal_id = $validatedData['goal_id'] ?? null;
             $feedback->save();
+
+            $user = $employee->talent;
+            $user->notify(new AssessmentFeedbackNotification($assessment, $employee));
+            Notification::send($user, new AssessmentFeedbackNotification($assessment, $employee));
 
             return response()->json([
                 'status' => true,

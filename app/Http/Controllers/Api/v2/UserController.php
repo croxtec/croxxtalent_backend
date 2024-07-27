@@ -22,6 +22,7 @@ use App\Models\Audit;
 use App\Mail\WelcomeVerifyEmail;
 use App\Mail\VerifyEditEmail;
 use App\Models\Notification;
+use App\Http\Resources\NotificationResource;
 
 class UserController extends Controller
 {
@@ -600,30 +601,25 @@ class UserController extends Controller
         return response()->json($response, 200);
     }
 
-    public function notifications(Request $request, $id)
+    public function notifications(Request $request)
     {
-        $user = User::findOrFail($id);
+        // $user = User::findOrFail($id);
+        $user = $request->user();
 
         // $this->authorize('view-any', JobInvitation::class);
 
         $per_page = $request->input('per_page', 25);
-        $sort_by = $request->input('sort_by', 'created_at');
-        $sort_dir = $request->input('sort_dir', 'desc');
 
-        $notifications = Notification::where('user_id', $user->id)->latest();
-        // ->orderBy($sort_by, $sort_dir);
+        $notifications = $user->notifications()->latest()->paginate($per_page);
+        $notificationResources = NotificationResource::collection($notifications);
 
-        if ($per_page === 'all' || $per_page <= 0 ) {
-            $results = $notifications->get();
-            $notifications = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
-        } else {
-            $notifications = $notifications->paginate($per_page);
-        }
-
-        $response = collect([
+        $response = [
             'status' => true,
-            'message' => "Successful."
-        ])->merge($notifications);
+            'message' => "Successful.",
+            'data' => $notificationResources,
+        ];
+
+        // Return the JSON response
         return response()->json($response, 200);
     }
 
@@ -632,8 +628,7 @@ class UserController extends Controller
         $notification = Notification::find($id);
 
         if($notification){
-            $notification->seen = 1;
-            $notification->save();
+            $notification->update(['read_at' => now()]);
 
             return response()->json([
                 'status' => true,

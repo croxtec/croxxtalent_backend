@@ -46,17 +46,17 @@ class Employee extends Model
 
     public function talent(){
         return $this->belongsTo('App\Models\User', 'user_id', 'id')
-                    ->select(['id','first_name','last_name','photo']);
+                    ->select(['id','email','first_name','last_name','photo']);
     }
 
     public function supervisor(){
         return $this->belongsTo('App\Models\Supervisor', 'supervisor_id', 'id');
     }
 
-    public function verifications()
-    {
-        return $this->morphMany('App\Models\Verification', 'verifiable');
-    }
+    // public function verifications()
+    // {
+    //     return $this->morphMany('App\Models\Verification', 'verifiable');
+    // }
 
     public function routeNotificationForMail()
     {
