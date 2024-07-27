@@ -309,10 +309,11 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::post('assessments/{id}/supervisor/scoresheet', 'Api\v2\ScoresheetController@gradeAssessmentScoreSheet');//->name('assesments.index');
         Route::patch('assessments/{id}/supervisor/feedback', 'Api\v2\ScoresheetController@publishSupervisorFeedback');//->name('assesments.index');
         // Assesment Questions
-        Route::post('assesments/questions', 'Api\v2\AssesmentQuestionController@store');//->name('assesments.index');
-        Route::patch('assesments/questions/{id}/archive', 'Api\v2\AssesmentQuestionController@archive')->name('assesments.archive');
-        Route::patch('assesments/questions/{id}/unarchive', 'Api\v2\AssesmentQuestionController@unarchive')->name('assesments.unpublish');
-        Route::delete('assesments/questions/{id}', 'Api\v2\AssesmentQuestionController@destroy');//->name('assesments.index');
+        Route::post('assessments/questions/generate', 'Api\v2\Operations\AssesmentQuestionController@generate');//->name('assessments.index');
+        Route::post('assessments/questions', 'Api\v2\Operations\AssesmentQuestionController@store');//->name('assessments.index');
+        Route::patch('assessments/questions/{id}/archive', 'Api\v2\Operations\AssesmentQuestionController@archive')->name('assessments.archive');
+        Route::patch('assessments/questions/{id}/unarchive', 'Api\v2\Operations\AssesmentQuestionController@unarchive')->name('assessments.unpublish');
+        Route::delete('assessments/questions/{id}', 'Api\v2\Operations\AssesmentQuestionController@destroy');//->name('assessments.index');
 
         // Campaigns
         Route::post('campaigns/{id}/photo', 'Api\v2\CampaignController@photo')->name('campaigns.update_photo');

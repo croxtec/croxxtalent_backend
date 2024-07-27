@@ -224,7 +224,7 @@ class ScoresheetController extends Controller
         // $this->authorize('update', [Assesment::class, $assessment]);
         $rules =[
             'employee_code' => 'required',
-            'feedback' => 'required|string|min:10|max:256',
+            'feedback' => 'required|string|min:10|max:512',
             'goal_id' => 'nullable|exists:goals,id',
             'learning_path' => 'nullable|array',
             'learning_path.*' => 'nullable|integer'

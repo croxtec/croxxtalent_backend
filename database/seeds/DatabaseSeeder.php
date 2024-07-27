@@ -12,10 +12,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
+        $this->call(EvaluationQuestionBankSeeder::class);
+
         $this->call(CountrySeeder::class);
 		$this->call(StateSeeder::class);
         $this->call(TimezoneSeeder::class);
-        
+
         $this->call(RoleAndPermissionSeeder::class);
         $this->call(UserSeeder::class);
 

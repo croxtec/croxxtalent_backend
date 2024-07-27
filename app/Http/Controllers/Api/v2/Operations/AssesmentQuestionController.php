@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\Api\v2;
+namespace App\Http\Controllers\Api\v2\Operations;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\AssesmentQuestion as Question;
 use App\Models\Assesment;
+use App\Models\EvaluationQuestionBank as QuestionBank;
 
 class AssesmentQuestionController extends Controller
 {
@@ -14,9 +15,27 @@ class AssesmentQuestionController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function generate(Request $request)
     {
-        //
+        $rules = [
+            'competency' => 'required',
+            'level' => 'required',
+            'total_question' => 'required|integer|between:1,10'
+        ];
+
+        $validatedData = $request->validate($rules);
+
+        $questions = QuestionBank::where('competency_name', 'LiKE', "%{$validatedData['competency']}%")
+                        ->orWHere('question', 'LiKE', "%{$validatedData['competency']}%")
+                        ->limit($validatedData['total_question'])
+                        ->get();
+
+
+        return response()->json([
+            'status' => true,
+            'message' => "",
+            'data' => $questions
+        ], 201);
     }
 
     /**
