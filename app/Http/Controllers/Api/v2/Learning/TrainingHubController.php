@@ -67,6 +67,18 @@ class TrainingHubController extends Controller
                         ->latest()
                         ->paginate($per_page);
 
+        foreach($trainings as $course){
+            $learning  = EmployeeLearningPath::where([
+                'employee_id' => $employee->id,
+                'employer_user_id' => $employee->employer_id,
+                'training_id' => $course->id
+            ])
+            ->select('id', 'current_lesson','order')
+            ->first();
+
+            $course->learning = $learning;
+            $course->percentage = ($learning?->current_lesson / $course?->total_lessons) * 100;
+        }
 
         return response()->json([
             'status' => true,

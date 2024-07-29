@@ -10,10 +10,10 @@ use App\Models\UserSetting;
 use App\Models\Competency\TalentCompetency;
 use App\Models\Audit;
 use Illuminate\Support\Str;
-use Cloudinary\Cloudinary;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\UserRequest;
 use App\Http\Requests\UserPhotoRequest;
+use Cloudinary\Cloudinary;
 
 class CroxxProfileController extends Controller
 {
@@ -30,18 +30,19 @@ class CroxxProfileController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index($username)
+    public function index(Request $request, $username)
     {
-        // if($request->user())
+        // $user = ($request->user()) ? $request->user() : null;
 
         $profile = User::whereIn('type', ['talent'])->where([
                 'username' => $username,
                 'is_active' => true
         ])->firstOrFail();
+
         unset($profile->cv);
         unset($profile->password_updated_at);
         // $cv = CV::where('user_id', $profile->id)->first();
-        $competencies = TalentCompetency::where('cv_id', $user->id)->get();
+        $competencies = TalentCompetency::where('cv_id', $profile->id)->get();
 
         return response()->json([
             'status' => true,
@@ -115,24 +116,24 @@ class CroxxProfileController extends Controller
 
         $email_changed_msg = '';
 
-        // if ($update_email) {
-        //     // create and send email verification token records
-        //     $verification = new Verification();
-        //     $verification->action = "edit_email";
-        //     $verification->sent_to = $new_email;
-        //     $verification->metadata = ['new_email' => $new_email];
-        //     $verification->is_otp = false;
-        //     $verification = $user->verifications()->save($verification);
-        //     if ($verification && $new_email) {
-        //         if (config('mail.queue_send')) {
-        //             Mail::to($new_email)->queue(new VerifyEditEmail($user, $verification));
-        //         } else {
-        //             Mail::to($new_email)->send(new VerifyEditEmail($user, $verification));
-        //         }
-        //     }
-        //     $email_changed_msg = "We sent a verification to {$new_email} to make sure it’s a valid email address.";
-        //     $email_changed_msg .= " If it doesn’t appear within a few minutes, check your spam folder.";
-        // }
+        if ($update_email) {
+            // create and send email verification token records
+            $verification = new Verification();
+            $verification->action = "edit_email";
+            $verification->sent_to = $new_email;
+            $verification->metadata = ['new_email' => $new_email];
+            $verification->is_otp = false;
+            $verification = $user->verifications()->save($verification);
+            if ($verification && $new_email) {
+                if (config('mail.queue_send')) {
+                    Mail::to($new_email)->queue(new VerifyEditEmail($user, $verification));
+                } else {
+                    Mail::to($new_email)->send(new VerifyEditEmail($user, $verification));
+                }
+            }
+            $email_changed_msg = "We sent a verification to {$new_email} to make sure it’s a valid email address.";
+            $email_changed_msg .= " If it doesn’t appear within a few minutes, check your spam folder.";
+        }
 
         return response()->json([
             'status' => true,

@@ -468,18 +468,18 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             'message' => "",
         ], 404);
     });
-    // "Resource not found"
-    // Nothing more, this is just route for direct access to the API domain
+// "Resource not found"
+// Nothing more, this is just route for direct access to the API domain
 
 
-    // }); // end of Route::middleware('auth.apikey')...
+// }); // end of Route::middleware('auth.apikey')...
 
 
-    // dataTableFilter: {
-    //     per_page: 25, // 25, -1 or all = all records,
-    //     page: 1,
-    //     search: null,
-    //     active: "no",
-    //     sort_by: "created_at",
-    //     sort_dir: "desc"
-    //   },
+// dataTableFilter: {
+//     per_page: 25, // 25, -1 or all = all records,
+//     page: 1,
+//     search: null,
+//     active: "no",
+//     sort_by: "created_at",
+//     sort_dir: "desc"
+//   },

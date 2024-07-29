@@ -284,7 +284,7 @@ class TalentCompanyController extends Controller
             // Delete previously uploaded file if any
             if ($myinfo->photo) {
                 $public_id = pathinfo($myinfo->photo, PATHINFO_FILENAME); // Extract public_id from URL
-                info(['Public ID', $public_id]);
+                // info(['Public ID', $public_id]);
                 $this->cloudinary->uploadApi()->destroy($public_id);
             }
 
