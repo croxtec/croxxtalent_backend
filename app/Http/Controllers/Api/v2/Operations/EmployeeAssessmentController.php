@@ -13,7 +13,7 @@ use App\Models\Supervisor;
 use App\Models\Assessment\CompetencyQuestion;
 use App\Models\Assessment\EvaluationQuestion;
 use App\Models\Assessment\EmployerAssessmentFeedback;
-
+use App\Models\Assessment\TalentAssessmentSummary;
 
 class EmployeeAssessmentController extends Controller
 {
@@ -55,8 +55,6 @@ class EmployeeAssessmentController extends Controller
                         ->select('croxx_assessments.*', 'assigned_employees.is_supervisor')
                         ->latest()
                         ->paginate($per_page);
-
-
 
         foreach ($assessments as $assessment) {
             $total_duration_seconds = $assessment->questions->sum('duration');
@@ -202,6 +200,10 @@ class EmployeeAssessmentController extends Controller
             }
         } else{
             $searchData['talent_id'] = $user->id;
+            TalentAssessmentSummary::firstOrCreate([
+                'talent_id' => $user->id,
+                'assessment_id' => $assessment->id
+            ]);
         }
 
         if ($assessment->category == 'competency_evaluation') {

@@ -28,23 +28,29 @@ class EvaluationAssessmentController extends Controller
             $user = $request->user();
             $validatedData = $request->validated();
             $validatedData['code'] = $user->id . md5(time());
-            $competency_ids = $validatedData['competency_ids'];
-            unset($validatedData['competency_ids']);
+
+            $validatedData['user_id'] = $user->id;
+            $validatedData['employer_id'] = $user->id;
 
             if ($validatedData['type'] == 'company') {
-                $validatedData['user_id'] = $user->id;
-                $validatedData['employer_id'] = $user->id;
+                $competency_ids = $validatedData['competency_ids'];
+                unset($validatedData['competency_ids']);
             }
 
             if ($validatedData['type'] == 'supervisor') {
                 $employee = Supervisor::where('supervisor_id', $validatedData['supervisor_id'])->firstOrFail();
                 $validatedData['employer_id'] = $employee->employer_id;
                 $validatedData['user_id'] = $validatedData['supervisor_id'];
+                $competency_ids = $validatedData['competency_ids'];
+                unset($validatedData['competency_ids']);
             }
 
             // Create assessment
             $assessment = CroxxAssessment::create($validatedData);
-            $assessment->competencies()->attach($competency_ids);
+
+            if ($validatedData['type'] == 'supervisor' || $validatedData['type'] == 'company') {
+                $assessment->competencies()->attach($competency_ids);
+            }
 
             // Create questions
             $questions = $validatedData['questions'];
@@ -53,25 +59,28 @@ class EvaluationAssessmentController extends Controller
                 EvaluationQuestion::create($question);
             }
 
-            // Create assigned employees
-            $employees = $validatedData['employees'];
-            foreach ($employees as $employee) {
-                AssignedEmployee::create([
-                    'assessment_id' => $assessment->id,
-                    'employee_id' => $employee,
-                    'is_supervisor' => false
-                ]);
-            }
-
-            if ($validatedData['type'] == 'company') {
-                // Create assigned supervisors
-                $supervisors = $validatedData['supervisors'];
-                foreach ($supervisors as $supervisor) {
+            // Assign Employee and Supervisor for company and supervisor
+            if ($validatedData['type'] == 'supervisor' || $validatedData['type'] == 'company') {
+                // Create assigned employees
+                $employees = $validatedData['employees'];
+                foreach ($employees as $employee) {
                     AssignedEmployee::create([
                         'assessment_id' => $assessment->id,
-                        'employee_id' => $supervisor,
-                        'is_supervisor' => true
+                        'employee_id' => $employee,
+                        'is_supervisor' => false
                     ]);
+                }
+
+                if ($validatedData['type'] == 'company') {
+                    // Create assigned supervisors
+                    $supervisors = $validatedData['supervisors'];
+                    foreach ($supervisors as $supervisor) {
+                        AssignedEmployee::create([
+                            'assessment_id' => $assessment->id,
+                            'employee_id' => $supervisor,
+                            'is_supervisor' => true
+                        ]);
+                    }
                 }
             }
 

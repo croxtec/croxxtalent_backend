@@ -19,6 +19,7 @@ class CroxxAssessment extends Model
 
         'name',
         'description',
+        'career_id',
         'department_id',
         'department_role_id',
         'level',
@@ -67,6 +68,10 @@ class CroxxAssessment extends Model
         }
     }
 
+    public function career(){
+        return $this->belongsTo('App\Models\Competency\CompetencySetup', 'career_id', 'id')
+                    ->select(['id','competency', 'description']);
+    }
 
     // public function getTotalQuestionsAttribute(){
     //     return $this->questions->count();

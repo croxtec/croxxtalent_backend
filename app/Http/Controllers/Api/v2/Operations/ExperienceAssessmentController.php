@@ -8,14 +8,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\AssessmentNotification;
 
+use App\Models\Employee;
+use App\Models\Supervisor;
 use App\Models\Assessment\CompetencyQuestion;
 use App\Models\Assessment\EvaluationQuestion;
 use App\Http\Requests\ExperienceAssessmentRequest;
 use App\Models\Assessment\CroxxAssessment;
 use App\Models\Assessment\AssignedEmployee;
-use App\Models\Employee;
-use App\Models\Supervisor;
-
 
 
 class ExperienceAssessmentController extends Controller
@@ -253,6 +252,43 @@ class ExperienceAssessmentController extends Controller
         $assessment->questions = $questions;
 
        return response()->json([
+            'status' => true,
+            'message' => "",
+            'data' => $assessment
+        ], 200);
+    }
+
+
+    public function talent(Request $request, $id)
+    {
+        $user = $request->user();
+        $user_type = $user->type;
+        $add = $request->input('add');
+        // Confirm if employee is assigned
+        if($user_type !== 'talent'){
+            return response()->json([
+                'status' => false,
+                'message' => 'Unautourized Access'
+            ], 401);
+        }
+
+        if (is_numeric($id)) {
+            $assessment = CroxxAssessment::where('id', $id)->whereIn('category', ['competency_evaluation'])->firstOrFail();
+        } else {
+            $assessment = CroxxAssessment::where('code', $id)->whereIn('category', ['competency_evaluation'])->firstOrFail();
+        }
+
+        if ($assessment->category == 'competency_evaluation') {
+           $questions = EvaluationQuestion::where('assessment_id', $assessment->id)
+                    ->whereNull('archived_at')->get();
+        } else {
+            $questions = CompetencyQuestion::where('assessment_id', $assessment->id)
+                    ->whereNull('archived_at')->get();
+        }
+
+        $assessment->questions = $questions;
+
+        return response()->json([
             'status' => true,
             'message' => "",
             'data' => $assessment

@@ -99,8 +99,10 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             Route::get('company/team/performance', 'Api\v2\Talent\TalentCompanyController@teamPerformanceProgress')->name('company.performance');
             // Competence
             Route::get('career/suggestion', 'Api\v2\Talent\TalentCompetencyController@suggestion')->name('competence.suggestion');
-            Route::get('competence', 'Api\v2\Talent\TalentCompetencyController@index')->name('competence.index');
+            Route::get('career/competency/match', 'Api\v2\Talent\TalentCompetencyController@competencyMatch')->name('competence.match');
+            Route::get('explore/assessment', 'Api\v2\Talent\TalentCompetencyController@exploreAssessment')->name('competence.explore');
             // Old
+            // Route::get('competence', 'Api\v2\Talent\TalentCompetencyController@index')->name('competence.index');
             // Route::get('competence/skill', 'Api\v2\Talent\TalentCompetencyController@skill')->name('competence.skill');
             // Route::get('competence/experience', 'Api\v2\Talent\TalentCompetencyController@experience')->name('competence.experience');
             // Route::get('competence/manager', 'Api\v2\Talent\TalentCompetencyController@manager')->name('competence.manager');
@@ -294,6 +296,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::patch('courses/{id}/publish', 'Api\v2\Learning\CourseController@publish')->name('courses.publish');
         // Assesment Options
         // Route::patch('assessments/{id}/unpublish', 'Api\v2\AssesmentController@unpublish')->name('assessments.unpublish');
+        Route::get('assessments/talent/{id}', 'Api\v2\Operations\ExperienceAssessmentController@talent')->name('assessments.talent');
         Route::patch('assessments/{id}/publish', 'Api\v2\Operations\ExperienceAssessmentController@publish')->name('assessments.publish');
         Route::patch('assessments/{id}/archive', 'Api\v2\Operations\ExperienceAssessmentController@archive')->name('assessments.archive');
         Route::patch('assessments/{id}/unarchive', 'Api\v2\Operations\ExperienceAssessmentController@unarchive')->name('assessments.unarchive');
