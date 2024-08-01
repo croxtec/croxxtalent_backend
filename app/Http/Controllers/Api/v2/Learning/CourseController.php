@@ -25,6 +25,7 @@ class CourseController extends Controller
         $sort_dir = $request->input('sort_dir', 'desc');
         $search = $request->input('search');
         $archived = $request->input('archived');
+        $department = $request->input('department');
         $datatable_draw = $request->input('draw'); // if any
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
@@ -33,19 +34,24 @@ class CourseController extends Controller
                 $query->where('user_id', $user->id)
                       ->where('type', 'company');
             })
-            ->when($archived ,function ($query) use ($archived) {
-            if ($archived !== null ) {
-                if ($archived === true ) {
-                    $query->whereNotNull('archived_at');
-                } else {
-                    $query->whereNull('archived_at');
+            ->when($department,function ($query) use ($department) {
+                if ($department !== null  && is_numeric($department)) {
+                   $query->where('department_id', $department);
                 }
-            }
-        })
-        ->where( function($query) use ($search) {
-            $query->where('title', 'LIKE', "%{$search}%");
-        })
-        ->orderBy($sort_by, $sort_dir);
+            })
+            ->when($archived ,function ($query) use ($archived) {
+                if ($archived !== null ) {
+                    if ($archived === true ) {
+                        $query->whereNotNull('archived_at');
+                    } else {
+                        $query->whereNull('archived_at');
+                    }
+                }
+            })
+            ->where( function($query) use ($search) {
+                $query->where('title', 'LIKE', "%{$search}%");
+            })
+            ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
             $results = $training->get();

@@ -33,6 +33,7 @@ class ExperienceAssessmentController extends Controller
         $sort_dir = $request->input('sort_dir', 'desc');
         $search = $request->input('search');
         $archived = $request->input('archived');
+        $department = $request->input('department');
         $datatable_draw = $request->input('draw'); // if any
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
@@ -42,6 +43,11 @@ class ExperienceAssessmentController extends Controller
             ->with('competencies')
             ->when($user_type == 'employer', function($query) use ($user){
                 $query->where('employer_id', $user->id);
+            })
+            ->when($department,function ($query) use ($department) {
+                if ($department !== null  && is_numeric($department)) {
+                   $query->where('department_id', $department);
+                }
             })
             ->when($archived ,function ($query) use ($archived) {
             if ($archived !== null ) {
@@ -164,7 +170,7 @@ class ExperienceAssessmentController extends Controller
                         // Send notifications and emails
             $employees = collect();
             foreach ($employeeInstances as $assignedEmployee) {
-                info($assignedEmployee);
+                // info($assignedEmployee);
                 $employee = Employee::find($assignedEmployee->employee_id); // Ensure this relationship is defined in the AssignedEmployee model
                 if ($employee) {
                     // Collect employees for batch notification
