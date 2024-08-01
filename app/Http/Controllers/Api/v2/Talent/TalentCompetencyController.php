@@ -82,7 +82,6 @@ class TalentCompetencyController extends Controller
     public function competencyMatch(Request $request){
         $user = $request->user();
 
-        $user = $request->user();
         $per_page = $request->input('per_page', 4);
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'desc');
@@ -107,12 +106,10 @@ class TalentCompetencyController extends Controller
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'desc');
 
-        $assessments = TalentAssessmentSummary::where('user_id', $user->id)
-                      ->limit($per_page)->get();
+        $ids = TalentAssessmentSummary::where('talent_id', $user->id)->pluck('assessment_id')->toArray();
 
-        // $assessments = CroxxAssessment::with('career')->where('category', 'competency_evaluation')
-        //                  ->whereIn('career_id', $careerIds)
-        //                  ->limit($per_page)->get();
+        $assessments = CroxxAssessment::whereIn('id', $ids)
+                         ->limit($per_page)->get();
 
         return response()->json([
             'status' => true,

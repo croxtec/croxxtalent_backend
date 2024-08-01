@@ -100,7 +100,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             // Competence
             Route::get('career/suggestion', 'Api\v2\Talent\TalentCompetencyController@suggestion')->name('competence.suggestion');
             Route::get('career/competency/match', 'Api\v2\Talent\TalentCompetencyController@competencyMatch')->name('competence.match');
-            Route::get('explore/assessment', 'Api\v2\Talent\TalentCompetencyController@exploreAssessment')->name('competence.explore');
+            Route::get('career/explore', 'Api\v2\Talent\TalentCompetencyController@exploreAssessment')->name('competence.explore');
             // Old
             // Route::get('competence', 'Api\v2\Talent\TalentCompetencyController@index')->name('competence.index');
             // Route::get('competence/skill', 'Api\v2\Talent\TalentCompetencyController@skill')->name('competence.skill');

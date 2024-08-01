@@ -53,6 +53,7 @@ class DepartmentController extends Controller
             $department->soft_skill;
             foreach($department->roles as $role){
                 $role->total_employees = Employee::where('department_role_id', $role->id)->count();
+                $role->performance  = 0;
             }
         }
 
@@ -119,12 +120,52 @@ class DepartmentController extends Controller
         $department->technical_skill;
         $department->soft_skill;
         $department->head_count = Employee::where('job_code_id', $department->id)->count();
-        $department->team_supervisor = Supervisor::where('department_id', $department->id)->get();
-        foreach($department->roles as $role){
-            $role->total_employees = Employee::where('department_role_id', $role->id)->count();
-            $role->role_supervisor = Supervisor::where('department_role_id', $role->id)->get();
+
+        $departmentData = [
+            'id' => $department->id,
+            'label' => $department->job_title,
+            'children' => []
+        ];
+
+        $departmentData['team_supervisor'] = Supervisor::where('department_id', $department->id)->get()->map(function($supervisor) {
+            $employee = $supervisor->employee;
+            return [
+                'id' => $supervisor->id,
+                'label' => $employee->name,
+                'photo' => $employee->photo_url,
+                'children' => []
+            ];
+        })->toArray();
+
+        foreach ($department->roles as $role) {
+            $roleData = [
+                'id' => $role->id,
+                'pid' => $department->id,
+                'label' => $role->name,
+                'children' => []
+            ];
+
+            $roleData['total_employees'] = Employee::where('department_role_id', $role->id)->count();
+            $roleData['role_supervisor'] = Supervisor::where('department_role_id', $role->id)->get()->map(function($supervisor) use ($role) {
+                $employee = $supervisor->employee;
+                return [
+                    'id' => $supervisor->id,
+                    'pid' => $role->id,
+                    'label' => $employee->name,
+                    'photo' => $employee->photo_url,
+                ];
+            })->toArray();
+
+            $roleData['children'] = $roleData['role_supervisor'];
+
+            $departmentData['children'][] = $roleData;
         }
 
+        array_walk($departmentData['children'], function(&$roleData) {
+            unset($roleData['role_supervisor']);
+        });
+
+        $department->chart = $departmentData;
 
         return response()->json([
             'status' => true,
