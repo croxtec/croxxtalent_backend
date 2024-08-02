@@ -60,41 +60,51 @@ class CVParser
         $sections = [
             'personal_details' => '',
             'summary' => '',
-            'work_experience' => '',
-            'education' => '',
-            'skills' => '',
-            'certifications' => '',
-            'projects' => '',
-            'languages' => '',
-            'interests' => ''
+            'job_title' => '',
+            'country' => '',
+            'work_experience' => [],
+            'education' => [],
+            'hobbies' => [],
+            'awards' => [],
+            'certifications' => [],
+            'languages' => [],
+            'references' => [],
+            'projects' => [],
+            'skills' => [],
+            'interests' => [],
         ];
 
         // Regular expressions to match each section
         $patterns = [
-            'personal_details' => '/(Personal\s+Details|Contact\s+Information|Contact\s+Details|Personal\s+Information)[:\s\n]+(.*?)(?=\n\n|\n\s*\n|\n\s*$|$)/is',
             'summary' => '/(Summary|Professional\s+Summary|Career\s+Summary|Objective)[:\s\n]+(.*?)(?=\n\n|\n\s*\n|\n\s*$|$)/is',
+            'job_title' => '/(Job\s+Title|Position\s+Title|Current\s+Position)[:\s\n]+(.*?)(?=\n\n|\n\s*\n|\n\s*$|$)/is',
+            'country' => '/(Country|Location|Residence)[:\s\n]+(.*?)(?=\n\n|\n\s*\n|\n\s*$|$)/is',
             'work_experience' => '/(Work\s+Experience|Professional\s+Experience|Experience|Employment\s+History)[:\s\n]+(.*?)(?=\n\n|\n\s*\n|\n\s*$|$)/is',
             'education' => '/(Education|Academic\s+Background|Educational\s+Qualifications)[:\s\n]+(.*?)(?=\n\n|\n\s*\n|\n\s*$|$)/is',
             'skills' => '/(Skills|Technical\s+Skills|Core\s+Competencies)[:\s\n]+(.*?)(?=\n\n|\n\s*\n|\n\s*$|$)/is',
             'certifications' => '/(Certifications|Licenses)[:\s\n]+(.*?)(?=\n\n|\n\s*\n|\n\s*$|$)/is',
             'projects' => '/(Projects|Project\s+Experience)[:\s\n]+(.*?)(?=\n\n|\n\s*\n|\n\s*$|$)/is',
             'languages' => '/(Languages|Language\s+Proficiency)[:\s\n]+(.*?)(?=\n\n|\n\s*\n|\n\s*$|$)/is',
+            'hobbies' => '/(Hobbies|Interests)[:\s\n]+(.*?)(?=\n\n|\n\s*\n|\n\s*$|$)/is',
+            'awards' => '/(Awards|Honors)[:\s\n]+(.*?)(?=\n\n|\n\s*\n|\n\s*$|$)/is',
+            'references' => '/(References|Referees)[:\s\n]+(.*?)(?=\n\n|\n\s*\n|\n\s*$|$)/is',
             'interests' => '/(Interests|Hobbies)[:\s\n]+(.*?)(?=\n\n|\n\s*\n|\n\s*$|$)/is'
         ];
 
         foreach ($patterns as $section => $pattern) {
             if (preg_match($pattern, $content, $matches)) {
-                $sections[$section] = trim($matches[2]);
+                $matchContent = trim($matches[2]);
+                if (in_array($section, ['job_title', 'summary'])) {
+                    $sections[$section] = $matchContent;
+                } else {
+                    $sections[$section] = array_filter(array_map('trim', preg_split("/\n+/", $matchContent)));
+                }
             }
-        }
-
-        // Normalize paragraphs to be separated by \n\n
-        foreach ($sections as $key => $value) {
-            $sections[$key] = preg_replace("/\n+/", "\n\n", $value);
         }
 
         return $sections;
     }
+
 
     public static function extractPersonalDetails($content)
     {
@@ -108,21 +118,14 @@ class CVParser
             'email' => '',
             'phone' => '',
             'address' => '',
-            'contact_address' => ''
+            'address' => ''
         ];
 
         // Regular expressions to match each detail
         $patterns = [
-            'first_name' => '/First\s*Name[:\s\n]+([^\n]+)/i',
-            'last_name' => '/Last\s*Name[:\s\n]+([^\n]+)/i',
-            'other_name' => '/Other\s*Name[:\s\n]+([^\n]+)/i',
             'gender' => '/Gender[:\s\n]+([^\n]+)/i',
             'date_of_birth' => '/Date\s*of\s*Birth[:\s\n]+([^\n]+)/i',
-            'class' => '/Class[:\s\n]+([^\n]+)/i',
-            'email' => '/Email[:\s\n]+([^\s\n]+)/i',
-            'phone' => '/Phone[:\s\n]+([^\s\n]+)/i',
             'address' => '/Address[:\s\n]+([^\n]+)/i',
-            'contact_address' => '/Contact\s*Address[:\s\n]+([^\n]+)/i'
         ];
 
         foreach ($patterns as $detail => $pattern) {

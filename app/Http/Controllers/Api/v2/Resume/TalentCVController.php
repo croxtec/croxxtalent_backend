@@ -189,15 +189,27 @@ class TalentCVController extends Controller
         }
 
         // Extract sections from the content
-        $sections = CVParser::extractSections($content);
+        // $sections = CVParser::extractSections($content);
         $resume = CVParser::extractResumeSections($content);
-        $personal = CVParser::extractPersonalDetails($content);
 
+        $cv = CV::where('user_id', $user->id)->firstorFail();
+
+        $location = array_reverse($resume->country);
+        $country = isset($location[0]) ? : '';
+        $city = '';
+        // if() $country = $lo
+
+
+        $personal = [
+            'pnone' => $resume->phone,
+            'job_title' => $resume->job_title,
+            'career_summary' => $resume->summary
+        ];
 
         return response()->json([
             'status' => true,
             'message' => "Resume uploaded successfully.",
-            'data' => compact('personal','resume', 'content')
+            'data' => compact('resume')
         ], 200);
     }
 
