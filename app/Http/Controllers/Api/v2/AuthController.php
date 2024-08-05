@@ -172,7 +172,7 @@ class AuthController extends Controller
             $validatedData['services'] = $request->services;
         }
         // Generate Default Username
-        $default_username = ($validatedData['company_name']) ? strtolower($validatedData['company_name']) : strtolower($validatedData['first_name'])."_".strtolower($validatedData['last_name']);
+        $default_username = isset($validatedData['company_name']) ? strtolower($validatedData['company_name']) : strtolower($validatedData['first_name'])."_".strtolower($validatedData['last_name']);
         $total = User::where('username', $default_username)->count();
         if($total) $default_username = $default_username."_".$total;
         $validatedData['username'] = $default_username;
