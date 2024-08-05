@@ -210,10 +210,10 @@ class TalentCVController extends Controller
             ];
             $cv->update($personal);
 
-            if( is_array($resume['languages']) ){
-                $languageObjects = collect($resume['languages'])->map(function ($language) {
-                    return (object) ['name' => trim($language)];
-                });
+            // if( is_array($resume['languages']) ){
+            //     $languageObjects = collect($resume['languages'])->map(function ($language) {
+            //         return (object) ['name' => trim($language)];
+            //     });
                 // info($languageObjects);
                 // foreach($languageObjects as $language){
                 //     $system_lang = App\Models\Language::where('name', $language)->first();
@@ -224,7 +224,7 @@ class TalentCVController extends Controller
                 //         ]);
 
                 // }
-            }
+            // }
 
 
 
