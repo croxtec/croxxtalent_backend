@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Cv;
 use App\Models\Audit;
+use App\Models\Country;
 use App\Libraries\LinkedIn;
 use Smalot\PdfParser\Parser as PdfParser;
 use PhpOffice\PhpWord\IOFactory;
@@ -61,6 +62,7 @@ class TalentCVController extends Controller
                 'first_name' => $user->first_name,
                 'last_name' => $user->last_name,
                 'email' => $user->email,
+                'phone' => $user->phone,
             ]
         );
 
@@ -191,25 +193,48 @@ class TalentCVController extends Controller
         // Extract sections from the content
         // $sections = CVParser::extractSections($content);
         $resume = CVParser::extractResumeSections($content);
-
         $cv = CV::where('user_id', $user->id)->firstorFail();
 
-        $location = array_reverse($resume->country);
-        $country = isset($location[0]) ? : '';
-        $city = '';
-        // if() $country = $lo
+        if($resume){
+            $location = is_array($resume['country']) && array_reverse($resume['country']);
+            $country = isset($location[0]) ? $location[0] : '';
+            $city = isset($location[1]) ? $location[1] : '';
+            $country_code = Country::where('name',$country)->first();
+
+            $personal = [
+                'job_title' => $resume['job_title'],
+                'career_summary' => $resume['summary'],
+                'country_code' => $country_code?->code,
+                'city' => $city,
+                'address' =>  is_array($resume['country']) ? implode($resume['country']) : ''
+            ];
+            $cv->update($personal);
+
+            if( is_array($resume['languages']) ){
+                $languageObjects = collect($resume['languages'])->map(function ($language) {
+                    return (object) ['name' => trim($language)];
+                });
+                // info($languageObjects);
+                // foreach($languageObjects as $language){
+                //     $system_lang = App\Models\Language::where('name', $language)->first();
+                //     $cvLanguage = CvLanguage::updateOrCreate(
+                //         [
+                //             'cv_id' =>  $cv->id,
+                //             'language_id' => $system_lang?->id
+                //         ]);
+
+                // }
+            }
 
 
-        $personal = [
-            'pnone' => $resume->phone,
-            'job_title' => $resume->job_title,
-            'career_summary' => $resume->summary
-        ];
+
+
+        }
 
         return response()->json([
             'status' => true,
             'message' => "Resume uploaded successfully.",
-            'data' => compact('resume')
+            'data' => compact('resume', 'personal')
         ], 200);
     }
 

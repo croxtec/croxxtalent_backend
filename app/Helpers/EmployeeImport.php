@@ -39,6 +39,8 @@ class EmployeeImport implements ToModel, WithHeadingRow
         $level = isset($row['level']) ? $row['level'] : null;
         $location = isset($row['Location']) ? $row['Location'] : null;
         $supervisor = isset($row['supervisor']) ? $row['supervisor'] : null;
+        $gender = isset($row['gender']) ? $row['gender'] : null;
+        $work_type = isset($row['work_type']) ? $row['work_type'] : null;
         // info($row);
         // info([$name , $email , $phone , $department , $role , $level]);
 
@@ -49,7 +51,6 @@ class EmployeeImport implements ToModel, WithHeadingRow
                 'email' =>  $email,
             ])->first();
 
-
             if(!$isEmployer){
                 $data = [
                     'employer_id' => $this->employer->id,
@@ -58,6 +59,8 @@ class EmployeeImport implements ToModel, WithHeadingRow
                     'phone' => $phone,
                     'level' => $level,
                     'location' => $location,
+                    'gender' => $gender,
+                    'work_type' => $work_type,
                 ];
 
                 if(isset($department)){
@@ -129,8 +132,6 @@ class EmployeeImport implements ToModel, WithHeadingRow
                             'department_id' => $isEmployer->job_code_id,
                             'type' => 'department'
                         ]);
-
-                        // info(['Supervisor Created ', $supervisor]);
                     }
                 }
             }

@@ -58,7 +58,6 @@ class CVParser
     public static function extractResumeSections($content)
     {
         $sections = [
-            'personal_details' => '',
             'summary' => '',
             'job_title' => '',
             'country' => '',
