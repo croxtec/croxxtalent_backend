@@ -100,9 +100,9 @@ class CroxxProfileController extends Controller
         //     unset($validatedData['email']);
         //     $update_email = true;
         // }
-        if ($request->type == 'affiliate') {
-            $validatedData['company_affiliate'] = $request->company_affiliate;
-        }
+        // if ($request->type == 'affiliate') {
+        //     $validatedData['company_affiliate'] = $request->company_affiliate;
+        // }
         if ($request->type == 'employer'){
             $validatedData['company_size'] = $request->company_size;
             $validatedData['services'] = $request->services;
