@@ -49,14 +49,6 @@ class EmployeeController extends Controller
 
                }
             }
-        })->when( $archived ,function ($query) use ($archived) {
-            if ($archived !== null  ) {
-                if ($archived === true ) {
-                    $query->whereNotNull('archived_at');
-                } else {
-                    $query->whereNull('archived_at');
-                }
-            }
         })
         ->when( $archived ,function ($query) use ($archived) {
             if ($archived !== null ) {

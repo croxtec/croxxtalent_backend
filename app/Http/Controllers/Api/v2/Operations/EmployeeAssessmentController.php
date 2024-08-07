@@ -267,13 +267,20 @@ class EmployeeAssessmentController extends Controller
         // $this->authorize('update', [Assesment::class, $assessment]);
 
         $assessment = CroxxAssessment::where('id', $id)->where('is_published', 1)->firstOrFail();
-        $employee = Employee::where('id', $user->default_company_id)->where('user_id', $user->id)->first();
 
-        $feedback = EmployerAssessmentFeedback::firstOrCreate([
-            'assessment_id' => $assessment->id,
-            'employee_id' => $employee?->id,
-            'employer_user_id' => $assessment?->employer_id
-        ]);
+        if($assessment->type == 'company' || $assessment->type == 'supervisor'){
+            $employee = Employee::where('id', $user->default_company_id)->where('user_id', $user->id)->first();
+            $feedback = EmployerAssessmentFeedback::firstOrCreate([
+                'assessment_id' => $assessment->id,
+                'employee_id' => $employee?->id,
+                'employer_user_id' => $assessment?->employer_id
+            ]);
+        }else{
+             $feedback = TalentAssessmentSummary::firstOrCreate([
+                'talent_id' => $user->id,
+                'assessment_id' => $assessment->id
+            ]);
+        }
 
         // $total_question =  $assessment->questions->count();
         // $total_score = $total_question * 4;

@@ -95,6 +95,7 @@ class ScoresheetController extends Controller
 
         if (is_numeric($talent)) {
             $talentField = 'talent_id';
+            $talent = $user->id;
         } else {
             $talentField = 'employee_id';
             $employee = Employee::where('code', $talent)->first();
@@ -143,7 +144,6 @@ class ScoresheetController extends Controller
             'employee_id' => $employee->id,
             'employer_user_id' => $assessment->employer_id
         ])->first();
-
 
 
         return response()->json([

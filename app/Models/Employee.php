@@ -53,13 +53,13 @@ class Employee extends Model
         return $this->belongsTo('App\Models\Supervisor', 'supervisor_id', 'id');
     }
 
-    // public function verifications()
-    // {
-    //     return $this->morphMany('App\Models\Verification', 'verifiable');
-    // }
-
-    public function routeNotificationForMail()
+    public function verifications()
     {
-        return $this->email; // Assuming the employee model has an email attribute
+        return $this->morphMany('App\Models\Verification', 'verifiable');
     }
+
+    // public function routeNotificationForMail()
+    // {
+    //     return $this->email; // Assuming the employee model has an email attribute
+    // }
 }
