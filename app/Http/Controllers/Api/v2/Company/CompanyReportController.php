@@ -39,17 +39,20 @@ class CompanyReportController extends Controller
             $count = $group->count();
             $total = $employees->count();
 
-            $carry[$group->first()->gender] = $total > 0
-                ? round(($count / $total) * 100, 2) . '%'
-                : '0%';
+            // $carry[$group->first()->gender] = $total > 0
+            //     ? round(($count / $total) * 100, 2) . '%'
+            //     : '0%';
+
+            $gender = $group->first()->gender;
+            $carry[$gender] = $count;
 
             return $carry;
         }, ['male' => 0, 'female' => 0, 'others' => 0]);
 
 
         $competency_summary = [
-            'current_rating' => 70,
-            'task_completed' => 12,
+            'current_rating' => 80,
+            'task_completed' => 10,
             'diffrences' => 10,
             'summary' => "",
         ];
@@ -112,14 +115,14 @@ class CompanyReportController extends Controller
         $groupedGoals = $goals->groupBy('employee_id');
 
          // Map employee details and goals
-        $department_goals = $employees->map(function ($employee) use ($groupedGoals) {
-            return [
-                'employee' => $employee,
-                'goals' => $groupedGoals->get($employee->id, collect()), // Default to empty collection if no goals
-            ];
-        });
+        // $department_goals = $employees->map(function ($employee) use ($groupedGoals) {
+        //     return [
+        //         'employee' => $employee,
+        //         'goals' => $groupedGoals->get($employee->id, collect()), // Default to empty collection if no goals
+        //     ];
+        // });department_goals
 
-        $data = compact('technical_distribution', 'softskill_distribution','department_goals');
+        $data = compact('technical_distribution', 'softskill_distribution');
 
         return response()->json([
             'status' => true,

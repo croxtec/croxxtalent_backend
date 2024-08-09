@@ -123,7 +123,7 @@ class DepartmentController extends Controller
 
         $departmentData = [
             'id' => $department->id,
-            'label' => $department->job_title,
+            'label' => $department->job_code,
             'children' => []
         ];
 
