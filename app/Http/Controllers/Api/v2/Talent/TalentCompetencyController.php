@@ -37,8 +37,6 @@ class TalentCompetencyController extends Controller
 
         $suggestion = [];
 
-        // $response = $this->openAIService->generateText('What is openai');
-
         if(isset($user->cv?->job_title_name)){
             $list =  CompetencySetup::where('industry_id',  $user->cv?->industry_id)->get()->toArray();
 
@@ -53,7 +51,7 @@ class TalentCompetencyController extends Controller
         return response()->json([
             'status' => true,
             'data' =>   $suggestion,
-            'message' => ''
+            'message' => $response
         ], 200);
     }
 

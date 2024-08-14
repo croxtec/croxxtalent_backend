@@ -5,17 +5,16 @@ namespace App\Models\Competency;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class DepartmentMapping extends Model
+class DepartmentSetup extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'employer_id',
-        'department_id',
+        'department',
         'competency',
-        'competency_role',
-        'description',
-        'level'
+        'level',
+        'department_role',
+        'description'
     ];
 
 }
