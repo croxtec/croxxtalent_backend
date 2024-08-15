@@ -51,7 +51,7 @@ class TalentCompetencyController extends Controller
         return response()->json([
             'status' => true,
             'data' =>   $suggestion,
-            'message' => $response
+            'message' => ""
         ], 200);
     }
 
