@@ -109,6 +109,7 @@ class OpenAIService
                     throw new \Exception("Answer for question '{$question['question']}' is not one of the provided options.");
                 }
             }
+
             return $questions;
             // if (is_array($questions) && count($questions) === $total_question) {
             // } else {
@@ -129,7 +130,7 @@ class OpenAIService
 //                 'messages' => [
 //                     [
 //                         'role' => 'system',
-//                         'content' => 'You are a helpful assistant that generates competencies required for a job role or job title based on their level. These levels are divided into four groups: Beginner, Intermediate, Advanced, and Expert. Provide a competency mapping for each level, including both technical and soft skills. Structure the response in JSON format for each level as follows: [{"job_role": "<Job Role>", "level": "<Beginner>", "technical_skills": [{"competency": "<Competency Name>", "description": "Competency Description"}], "soft_skills": [{"competency": "<Competency Name>", "description": "Competency Description"}]}}, {"job_role": "<Job Role>", "level": "<Intermediate>", "technical_skills": [{"competency": "<Competency Name>", "description": "Competency Description"}], "soft_skills": [{"competency": "<Competency Name>", "description": "Competency Description"}]}}, {"job_role": "<Job Role>", "level": "<Advanced>", "technical_skills": [{"competency": "<Competency Name>", "description": "Competency Description"}], "soft_skills": [{"competency": "<Competency Name>", "description": "Competency Description"}]}}, {"job_role": "<Job Role>", "level": "<Expert>", "technical_skills": [{"competency": "<Competency Name>", "description": "Competency Description"}], "soft_skills": [{"competency": "<Competency Name>", "description": "Competency Description"}]}]',
+//                         'content' => 'You are a helpful assistant that generates competencies required for a job role or job title based on their level. These levels are divided into four groups: Beginner, Intermediate, Advanced, and Expert. Provide a competency mapping for each level, including both technical and soft skills. Structure the response in JSON format for each level as follows: [{"job_role": "<Job Role>", "level": "<Beginner>", "technical_skill": [{"competency": "<Competency Name>", "description": "Competency Description"}], "soft_skill": [{"competency": "<Competency Name>", "description": "Competency Description"}]}}, {"job_role": "<Job Role>", "level": "<Intermediate>", "technical_skill": [{"competency": "<Competency Name>", "description": "Competency Description"}], "soft_skill": [{"competency": "<Competency Name>", "description": "Competency Description"}]}}, {"job_role": "<Job Role>", "level": "<Advanced>", "technical_skill": [{"competency": "<Competency Name>", "description": "Competency Description"}], "soft_skill": [{"competency": "<Competency Name>", "description": "Competency Description"}]}}, {"job_role": "<Job Role>", "level": "<Expert>", "technical_skill": [{"competency": "<Competency Name>", "description": "Competency Description"}], "soft_skill": [{"competency": "<Competency Name>", "description": "Competency Description"}]}]',
 //                     ],
 //                     [
 //                         'role' => 'user',
@@ -158,7 +159,7 @@ class OpenAIService
                     'messages' => [
                         [
                             'role' => 'system',
-                            'content' => 'You are a helpful assistant that generates competencies required for a job role or job title based on their level. These levels are divided into four groups: Beginner, Intermediate, Advanced, and Expert. Provide a competency mapping for each level, including both technical and soft skills. Structure the response in JSON format as follows: [{"job_role": "<Job Role>", "level": "<Beginner>", "technical_skills": [{"competency": "<Competency Name>", "level": "<Beginner>", "description": "Competency Description"}], "soft_skills": [{"competency": "<Competency Name>", "level": "<Beginner>", "description": "Competency Description"}]}}, {"job_role": "<Job Role>", "level": "<Intermediate>", "technical_skills": [{"competency": "<Competency Name>", "level": "<Intermediate>", "description": "Competency Description"}], "soft_skills": [{"competency": "<Competency Name>", "level": "<Intermediate>", "description": "Competency Description"}]}}, {"job_role": "<Job Role>", "level": "<Advanced>", "technical_skills": [{"competency": "<Competency Name>", "level": "<Advanced>", "description": "Competency Description"}], "soft_skills": [{"competency": "<Competency Name>", "level": "<Advanced>", "description": "Competency Description"}]}}, {"job_role": "<Job Role>", "level": "<Expert>", "technical_skills": [{"competency": "<Competency Name>", "level": "<Expert>", "description": "Competency Description"}], "soft_skills": [{"competency": "<Competency Name>", "level": "<Expert>", "description": "Competency Description"}]}]',
+                            'content' => 'You are a helpful assistant that generates competencies required for a job role or job title based on their level. These levels are divided into four groups: Beginner, Intermediate, Advanced, and Expert. Provide a competency mapping for each level, including both technical and soft skills. Structure the response in JSON format as follows: [{"job_role": "<Job Role>", "level": "<Beginner>", "technical_skill": [{"competency": "<Competency Name>", "level": "<Beginner>", "description": "Competency Description"}], "soft_skill": [{"competency": "<Competency Name>", "level": "<Beginner>", "description": "Competency Description"}]}}, {"job_role": "<Job Role>", "level": "<Intermediate>", "technical_skill": [{"competency": "<Competency Name>", "level": "<Intermediate>", "description": "Competency Description"}], "soft_skill": [{"competency": "<Competency Name>", "level": "<Intermediate>", "description": "Competency Description"}]}}, {"job_role": "<Job Role>", "level": "<Advanced>", "technical_skill": [{"competency": "<Competency Name>", "level": "<Advanced>", "description": "Competency Description"}], "soft_skill": [{"competency": "<Competency Name>", "level": "<Advanced>", "description": "Competency Description"}]}}, {"job_role": "<Job Role>", "level": "<Expert>", "technical_skill": [{"competency": "<Competency Name>", "level": "<Expert>", "description": "Competency Description"}], "soft_skill": [{"competency": "<Competency Name>", "level": "<Expert>", "description": "Competency Description"}]}]',
                         ],
                         [
                             'role' => 'user',
@@ -198,21 +199,21 @@ class OpenAIService
             return $competencyMappings;
 
             foreach ($competencyMappings as $mapping) {
-                if (!isset($mapping['job_role'], $mapping['level'], $mapping['technical_skills'], $mapping['soft_skills'])) {
+                if (!isset($mapping['job_role'], $mapping['level'], $mapping['technical_skill'], $mapping['soft_skill'])) {
                     throw new \Exception('Missing required fields in competency mapping.');
                 }
 
-                if (!is_array($mapping['technical_skills']) || !is_array($mapping['soft_skills'])) {
+                if (!is_array($mapping['technical_skill']) || !is_array($mapping['soft_skill'])) {
                     throw new \Exception('Technical skills and soft skills should be arrays.');
                 }
 
-                // foreach ($mapping['technical_skills'] as $skill) {
+                // foreach ($mapping['technical_skill'] as $skill) {
                 //     if (!isset($skill['competency'], $skill['description'])) {
                 //         throw new \Exception('Missing fields in technical skill.');
                 //     }
                 // }
 
-                // foreach ($mapping['soft_skills'] as $skill) {
+                // foreach ($mapping['soft_skill'] as $skill) {
                 //     if (!isset($skill['competency'], $skill['description'])) {
                 //         throw new \Exception('Missing fields in soft skill.');
                 //     }
