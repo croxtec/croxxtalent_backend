@@ -8,6 +8,9 @@ use App\Models\Supervisor;
 use App\Models\Employee;
 use App\Http\Requests\SupervisorRequest;
 
+use App\Notifications\SupervisorRemoved;
+use Illuminate\Support\Facades\Notification;
+
 class SupervisorController extends Controller
 {
     /**
@@ -93,17 +96,6 @@ class SupervisorController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
-    /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -121,8 +113,33 @@ class SupervisorController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+
+    public function destroy(Request $request, $id)
     {
-        //
+        $employer = $request->user();
+
+        // Find the supervisor by ID
+        $supervisor = Supervisor::findOrFail($id);
+        $employee = Employee::where('supervisor_id', $supervisor->id)->first();
+
+        // Remove Supervisor
+        if ($employee) {
+            $employee->supervisor_id = null;
+            // $employee->save();
+        }
+
+        // $supervisor->delete(); 
+
+        // Send notifications to the user
+        $user = $employee->talent;
+        $employee->department;
+        Notification::send($user, new SupervisorRemoved($employee));
+
+        return response()->json([
+            'status' => true,
+            'message' => "Supervisor removed successfully.",
+            'data' => $employee
+        ], 201);
     }
+
 }

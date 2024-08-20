@@ -49,6 +49,7 @@ class VerificationLinkController extends Controller
     {
         $verification = Verification::where('action', 'employee')->where('token', $token)->first();
         $verified = false;
+
         if ($verification) {
             $employee = $verification->verifiable()->first();
             $user = User::whereEmail($employee->email)->first();

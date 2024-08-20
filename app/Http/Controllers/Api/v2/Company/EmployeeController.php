@@ -59,7 +59,8 @@ class EmployeeController extends Controller
                 }
             }
         })->where( function($query) use ($search) {
-            $query->where('name', 'LIKE', "%{$search}%");
+            $query->where('name', 'LIKE', "%{$search}%")
+                ->orWhere('email', 'LIKE', "%{$search}%");
         })->with('department','department_role', 'talent')
         ->orderBy($sort_by, $sort_dir);
 
@@ -101,16 +102,15 @@ class EmployeeController extends Controller
                             ->where('employer_id', $employer->id)->first();
 
         if(!$isEmployer){
-            if(isset($validatedData['job_code'])){
+            if (isset($validatedData['job_code']) && strlen($validatedData['job_code']) > 0) {
                 $department = Department::firstOrCreate([
                     'employer_id' => $validatedData['employer_id'],
                     'job_code' => $validatedData['job_code']
                 ]);
                 $validatedData['job_code_id'] = $department->id;
-
             }
 
-            if (isset($validatedData['department_role'])) {
+            if (isset($validatedData['department_role']) &&  strlen($validatedData['department_role']) > 0) {
                 $department_role = DepartmentRole::firstOrCreate([
                     'employer_id' => $validatedData['employer_id'],
                     'department_id' => $validatedData['job_code_id'],
@@ -198,6 +198,7 @@ class EmployeeController extends Controller
     public function show(Request $request, $id)
     {
         $employer = $request->user();
+
         if (is_numeric($id)) {
             $employee = Employee::where('id', $id)->where('employer_id', $employer->id)->firstOrFail();
         } else {
@@ -237,18 +238,18 @@ class EmployeeController extends Controller
                             ->where('employer_id', $employee->employer_id)->count();
 
         $employee->proficiency = [
-            'total' =>  '90%',
+            'total' =>  '0%',
             'assessment' => [
-                'taken' => 8,
-                'performance' => '27%'
+                'taken' => 0,
+                'performance' => '0%'
             ],
             'goals' => [
                 'taken' => $goals_taken,
-                'performance' => '80%'
+                'performance' => '0%'
             ],
             'trainings' => [
-                'taken' => 12,
-                'performance' => '70%'
+                'taken' => 0,
+                'performance' => '0%'
             ],
         ];
 

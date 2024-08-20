@@ -72,9 +72,8 @@
 						<table width="100%" style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
 							<tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
 								<td class="aligncenter content-block" style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 12px; vertical-align: top; color: #999; text-align: center; margin: 0; padding: 0 0;" align="center" valign="top">
-
-                                    <img width="196" src="{{ asset('images/logo.png') }}" alt="{{ config('myapp.name') }}">
-
+                                    <!-- <img width="196" src="{{ asset('images/logo.png') }}" alt="{{ config('myapp.name') }}"> -->
+                                    <img width="196" src="https://res.cloudinary.com/dwty1bg7o/image/upload/v1724174591/croxxtalent_logo-QcskWkiK_1_mrunrq.png" alt="{{ config('myapp.name') }}">
                                 </td>
 							</tr>
 						</table>
@@ -138,4 +137,4 @@
 		</tr>
 	</table>
 </body>
-</html> 
+</html>

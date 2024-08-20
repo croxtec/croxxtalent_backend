@@ -35,23 +35,6 @@ Route::prefix('croxtec')->middleware('web')->name('api.croxtec.')->group( functi
     Route::post('/newsletter', 'Api\v2\GeneralController@newsletter')->name('newsletter');
 });
 
-Route::prefix('auth')->name('api.')->group( function () {
-    Route::get('/', 'Api\v2\AuthController@index')->name('auth.index');
-    Route::post('login', 'Api\v2\AuthController@login')->name('auth.login');
-    Route::post('company/login', 'Api\v2\AuthController@companyLogin')->name('company.login');
-    Route::post('register', 'Api\v2\AuthController@register')->name('auth.register');
-    Route::middleware('auth:sanctum')->group( function () {
-        Route::post('logout', 'Api\v2\AuthController@logout')->name('auth.logout');
-        Route::post('refresh', 'Api\v2\AuthController@refresh')->name('auth.refresh');
-        Route::get('user', 'Api\v2\AuthController@user')->name('auth.user');
-    });
-
-    Route::get('confirm-code', 'Api\v2\AuthController@confirmResetCode')->name('users.confirm_reset_code');
-    Route::post('forgot-passwword', 'Api\v2\AuthController@sendPasswordVerification')->name('users.send_password_verification');
-    Route::post('reset-password', 'Api\v2\AuthController@resetNewPassword')->name('users.reset_new_password');
-});
-
-
 Route::prefix('links')->middleware('web')->name('api.links.')->group( function () {
     // Verifications
     Route::prefix('verifications')->name('verifications.')->group( function () {
@@ -71,7 +54,6 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
 
         Route::get('cvs/{id}/import-linkedin', 'Api\v2\Link\CvLinkController@importLinkedIn')->name('cvs.import_linkedin');
         Route::get('cvs/import-linkedin-callback', 'Api\v2\Link\CvLinkController@importLinkedIn')->name('cvs.import_linkedin_callback');
-
         // CV References
         Route::get('cv-references/{id}/questionnaire', 'Api\v2\Link\CvReferenceLinkController@questionnaireForm')->name('cv_references.questionnaire_form');
         Route::post('cv-references/{id}/questionnaire', 'Api\v2\Link\CvReferenceLinkController@storeQuestionnaireForm')->name('cv_references.questionnaire_form.store');
@@ -84,6 +66,25 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
     // Unsigned Routes
     Route::get('cvs/import-linkedin-callback', 'Api\v2\Link\CvLinkController@importLinkedInCallback')->name('cvs.import_linkedin_callback');
 });
+
+Route::prefix('auth')->name('api.')->group( function () {
+    Route::get('/', 'Api\v2\AuthController@index')->name('auth.index');
+    Route::post('login', 'Api\v2\AuthController@login')->name('auth.login');
+    Route::post('company/login', 'Api\v2\AuthController@companyLogin')->name('company.login');
+    Route::post('register', 'Api\v2\AuthController@register')->name('auth.register');
+    Route::middleware('auth:sanctum')->group( function () {
+        Route::post('logout', 'Api\v2\AuthController@logout')->name('auth.logout');
+        Route::post('refresh', 'Api\v2\AuthController@refresh')->name('auth.refresh');
+        Route::get('user', 'Api\v2\AuthController@user')->name('auth.user');
+    });
+
+    Route::get('confirm-code', 'Api\v2\AuthController@confirmResetCode')->name('users.confirm_reset_code');
+    Route::post('forgot-passwword', 'Api\v2\AuthController@sendPasswordVerification')->name('users.send_password_verification');
+    Route::post('reset-password', 'Api\v2\AuthController@resetNewPassword')->name('users.reset_new_password');
+});
+
+
+
 
 
 // Below API routes secured with API Key
@@ -258,6 +259,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             'supervisor' => 'Api\v2\Company\SupervisorController',
             'department' => 'Api\v2\Company\DepartmentController'
         ]);
+
         // Overview
         Route::get('overview', 'Api\v2\Company\CompanyReportController@overview')->name('company.insights');
         Route::get('overview/department', 'Api\v2\Company\CompanyReportController@summary')->name('company.summary');
@@ -272,6 +274,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::get('onboarding/welcome', 'Api\v2\EmployerCompetencyController@confirmWelcome')->name('confirm.welcome');
 
         // Route::get('competency/gap', 'Api\v2\EmployerCompetencyController@competency')->name('competency.skill');
+        Route::post('employee/{id}/resend-invitation', 'Api\v2\Company\ManageEmployeeController@resendInvitation')->name('employee.resend_invitation');
         // Route::patch('employee/{id}/archive', 'Api\v2\EmployeeController@archive')->name('employee.archive');
         // Route::patch('employee/{id}/unarchive', 'Api\v2\EmployeeController@unarchive')->name('employee.unarchive');
     });

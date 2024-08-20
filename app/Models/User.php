@@ -309,6 +309,6 @@ class User extends Authenticatable
 
     public function getUnreadNotificationsAttribute()
     {
-        return Notification::where('user_id', $this->id)->latest()->where('seen', 0)->get();
+        return Notification::where('user_id', $this->id)->latest()->whereNull('read_at')->get();
     }
 }
