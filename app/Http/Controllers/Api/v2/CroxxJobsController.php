@@ -203,7 +203,7 @@ class CroxxJobsController extends Controller
 
         if ($appliedJob) {
             $notification = new Notification();
-            // $notification->id = Str::uuid();
+            $notification->id = Str::uuid();
 
             $notification->type = 'CampaignApplication';
 
