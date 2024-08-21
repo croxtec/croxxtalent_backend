@@ -118,8 +118,8 @@ class User extends Authenticatable
      * @var array
      */
     protected $appends = [
-        'name', 'display_name', 'name_initials',  'cv',
-        'total_companies', //'total_affiliates', 'photo_url', 'unread_notifications','permissions',
+        'name', 'display_name', 'name_initials', 'cv','unread_notifications',
+        'total_companies', //'total_affiliates', 'photo_url', ,'permissions',
     ];
 
     // Get Model Attributes

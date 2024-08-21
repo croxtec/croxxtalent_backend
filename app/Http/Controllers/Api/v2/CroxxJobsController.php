@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\Api\v2;
 
-use App\Events\NewNotification;
+// use App\Events\NewNotification;
+use Illuminate\Support\Str;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
@@ -202,12 +203,23 @@ class CroxxJobsController extends Controller
 
         if ($appliedJob) {
             $notification = new Notification();
-            $notification->user_id = $campaign->user_id;
-            $notification->action = "/campaign/applications/$request->campaign_id";
-            $notification->title = 'Campaign Application';
-            $notification->message = "A talent has just applied for $campaign->title campaingn.";
+            // $notification->id = Str::uuid();
+
+            $notification->type = 'CampaignApplication';
+
+            $notification->notifiable_id = $campaign->user_id;
+            $notification->notifiable_type = 'App\Models\User';
+
+            // Set the data as a JSON object
+            $notification->data = json_encode([
+                'action' => "/campaign/applications/{$request->campaign_id}",
+                'title' => 'Campaign Application',
+                'message' => "A talent has just applied for {$campaign->title} campaign."
+            ]);
+
+            $notification->category = 'primary';
             $notification->save();
-            event(new NewNotification($notification->user_id,$notification));
+            // event(new NewNotification($notification->user_id,$notification));
             return response()->json([
                 'status' => true,
                 'message' => "Your Job Application has been submitted.",
