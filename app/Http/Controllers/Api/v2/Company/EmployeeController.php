@@ -273,6 +273,7 @@ class EmployeeController extends Controller
         $validatedData = $request->validated();
 
         $employee = Employee::where('id',$id)->where('employer_id', $employer->id)->firstOrFail();
+
         $employee->update($validatedData);
 
         return response()->json([

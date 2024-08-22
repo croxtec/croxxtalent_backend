@@ -16,11 +16,14 @@ class Employee extends Model
         'name',
         'email',
         'phone',
-        'birth_date',
+        'birth_date', 'hired_date',
         'job_code_id',
         'department_role_id',
         //
-        'code', 'gender', 'work_type', 'language'
+        'level','code',
+        'gender',
+        'work_type',
+        'language'
     ];
 
     // DOB, Job title, job code, employee number and a lot more;
