@@ -190,7 +190,6 @@ class OpenAIService
             $rawContent = $content['choices'][0]['message']['content'];
             $competencyMappings = json_decode($rawContent, true);
 
-            info($competencyMappings);
             // Validate the competency mappings
             if (!is_array($competencyMappings)) {
                 throw new \Exception('Invalid format: Competency mappings should be an array.');
@@ -226,5 +225,52 @@ class OpenAIService
             \Log::error("Error generating competency mapping: " . $e->getMessage());
             throw new \Exception("Error generating competency mapping: " . $e->getMessage());
         }
+    }
+
+    public function currateCourseLessons($course)
+    {
+        try {
+            // Prepare the data for the API request
+            $response = $this->client->post('chat/completions', [
+                'json' => [
+                    'model' => 'gpt-3.5-turbo',
+                    'temperature' => 0.8,
+                    'messages' => [
+                        [
+                            'role' => 'system',
+                            'content' => 'You are an educational content creator tasked with generating detailed lessons based on the course title, department, and experience level. Generate 3 lessons, each structured in a JSON response with the following fields: "title", "level", "competency", and "description". Ensure the description does not exceed 2000 words.',
+                        ],
+                        [
+                            'role' => 'user',
+                            'content' => "Generate 3 lessons for the course with the following details:
+                                        - Department: {$course['department']}
+                                        - Title: {$course['title']}
+                                        - Experience Level: {$course['level']}.",
+                        ],
+                    ]
+                ]
+            ]);
+
+            // Decode the API response
+            $responseBody = json_decode($response->getBody()->getContents(), true);
+
+            $lessons = json_decode($responseBody['choices'][0]['message']['content'], true);
+
+            return $lessons;
+
+        } catch (\Exception $e) {
+            // Log the error and return an error response
+            \Log::error("Error generating course lessons: " . $e->getMessage());
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred while generating the lessons.',
+            ], 500);
         }
     }
+
+
+
+
+
+}
+

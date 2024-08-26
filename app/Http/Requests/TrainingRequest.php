@@ -47,6 +47,7 @@ class TrainingRequest extends FormRequest
                     'title' => 'required|max:100',
                     'objective' => 'required|max:250',
                     'assessment_level' => 'nullable',
+                    'cover_photo' => 'nullable|image|max:512', // 512KB
                     'department_id' => 'required_if:type,company|integer|exists:employer_jobcodes,id',
                     'career_id' => 'required_if:type,training,competency|integer',
                 ];

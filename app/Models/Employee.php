@@ -23,7 +23,8 @@ class Employee extends Model
         'level','code',
         'gender',
         'work_type',
-        'language'
+        'language',
+        'location'
     ];
 
     // DOB, Job title, job code, employee number and a lot more;

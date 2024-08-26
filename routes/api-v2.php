@@ -280,21 +280,15 @@ Route::prefix('auth')->name('api.')->group( function () {
     });
 
     Route::middleware('auth:sanctum')->group( function () {
-        Route::resources([
-            'campaigns' => 'Api\v2\CampaignController',
-            'goals' => 'Api\v2\GoalController',
-            'assessments/evaluation' => 'Api\v2\Operations\EvaluationAssessmentController',
-            'assessments' => 'Api\v2\Operations\ExperienceAssessmentController',
-            'courses' => 'Api\v2\Learning\CourseController',
-            'lessons' => 'Api\v2\Learning\LessonController',
-        ]);
+        // Goals
         Route::get('goals/employee/{code}', 'Api\v2\GoalController@employee');//->name('assesments.index');
         Route::get('goals/overview/performance', 'Api\v2\GoalController@overview')->name('goals.overview');
         Route::get('goals/overview/calendar', 'Api\v2\GoalController@calendarOverview')->name('goals.overview.calendar');
         Route::patch('goals/{id}/archive', 'Api\v2\GoalController@archive')->name('goals.archive');
         Route::patch('goals/{id}/unarchive', 'Api\v2\GoalController@unarchive')->name('goals.unarchive');
         // Course
-        Route::get('courses/progres', 'Api\v2\Learning\CourseController@progres')->name('courses.progress');
+        Route::get('courses/progress', 'Api\v2\Learning\CourseController@progress')->name('courses.progress');
+        Route::get('courses/suggest/{id}', 'Api\v2\Learning\CourseController@suggest')->name('courses.suggest');
         Route::get('company/courses', 'Api\v2\Learning\CourseController@courses')->name('company.courses');
         Route::patch('courses/{id}/publish', 'Api\v2\Learning\CourseController@publish')->name('courses.publish');
         // Assesment Options
@@ -320,7 +314,6 @@ Route::prefix('auth')->name('api.')->group( function () {
         Route::patch('assessments/questions/{id}/archive', 'Api\v2\Operations\AssesmentQuestionController@archive')->name('assessments.archive');
         Route::patch('assessments/questions/{id}/unarchive', 'Api\v2\Operations\AssesmentQuestionController@unarchive')->name('assessments.unpublish');
         Route::delete('assessments/questions/{id}', 'Api\v2\Operations\AssesmentQuestionController@destroy');//->name('assessments.index');
-
         // Campaigns
         Route::post('campaigns/{id}/photo', 'Api\v2\CampaignController@photo')->name('campaigns.update_photo');
         Route::patch('campaigns/{id}/publish', 'Api\v2\CampaignController@publish')->name('campaigns.publish');
@@ -333,6 +326,14 @@ Route::prefix('auth')->name('api.')->group( function () {
         // Route::post('campaigns', 'Api\v2\CampaignController@store')->name('campaigns.store');
         // Route::put('campaigns/{id}', 'Api\v2\CampaignController@update')->name('campaigns.update');
         // Route::delete('campaigns/{id}', 'Api\v2\CampaignController@destroy')->name('campaigns.destroy');
+        Route::resources([
+            'campaigns' => 'Api\v2\CampaignController',
+            'goals' => 'Api\v2\GoalController',
+            'assessments/evaluation' => 'Api\v2\Operations\EvaluationAssessmentController',
+            'assessments' => 'Api\v2\Operations\ExperienceAssessmentController',
+            'courses' => 'Api\v2\Learning\CourseController',
+            'lessons' => 'Api\v2\Learning\LessonController',
+        ]);
     });
 
 

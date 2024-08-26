@@ -74,7 +74,7 @@ class EmployeeRequest extends FormRequest
                     'job_code_id' =>  'sometimes|exists:employer_jobcodes,id',
                     'department_role_id' =>  'sometimes|exists:department_roles,id',
                     'location' => 'nullable',
-                    'work_type' =>  'nullable|in:contract,fulltime,parttime,internship',
+                    'work_type' =>  'nullable',
                     'gender' =>  'nullable',
                     'language' =>  'nullable',
                     'hired_date' =>  'nullable|date',

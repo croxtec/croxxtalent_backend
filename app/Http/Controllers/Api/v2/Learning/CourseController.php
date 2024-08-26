@@ -8,9 +8,20 @@ use App\Models\Employee;
 use App\Http\Requests\TrainingRequest;
 use App\Models\Training\CroxxTraining;
 use App\Models\Assessment\EmployeeLearningPath;
+use Cloudinary\Cloudinary;
+use App\Libraries\OpenAIService;
 
 class CourseController extends Controller
 {
+    protected $cloudinary;
+    protected $openAIService;
+
+    public function __construct(Cloudinary $cloudinary, OpenAIService $openAIService)
+    {
+        $this->cloudinary = $cloudinary;
+        $this->openAIService = $openAIService;
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -83,6 +94,23 @@ class CourseController extends Controller
         $validatedData['employer_id'] = $user->id;
         $validatedData['user_id'] = $user->id;
 
+
+        if ($request->hasFile('cover_photo') && $request->file('cover_photo')->isValid()) {
+            $file = $request->file('cover_photo');
+            $extension = $file->extension();
+
+            $filename = time() . '-' . Str::random(32);
+            $filename = "{$filename}.$extension";
+            $year = date('Y');
+            $rel_upload_path  = "CroxxPH/TRAINING/{$year}";
+
+            $result = $this->cloudinary->uploadApi()->upload($file->getRealPath(), [
+                'folder' => $rel_upload_path, // Specify a folder
+            ]);
+
+            $validatedData['cover_photo'] = $result['secure_url'];
+        }
+
         $training = CroxxTraining::create($validatedData);
 
         return response()->json([
@@ -92,16 +120,34 @@ class CourseController extends Controller
         ], 201);
     }
 
+    public function show(Request $request, $id)
+    {
+    }
+
     /**
      * Display the specified resource.
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function suggest(Request $request, $id)
     {
+        $training = CroxxTraining::findOrFail($id);
+        $training->department;
 
+        $course =[
+            'department' =>  $training->department?->job_code,
+            'title' =>  $training->title,
+            'level' =>  $training->experience_level,
+        ];
 
+        $lessons = $this->openAIService->currateCourseLessons($course);
+
+        return response()->json([
+            'status' => true,
+            'message' => "",
+            'data' => $lessons,
+        ], 200);
     }
 
     /**
@@ -220,7 +266,7 @@ class CourseController extends Controller
     {
         $training = CroxxTraining::findOrFail($id);
 
-        $this->authorize('delete', [CroxxTraining::class, $training]);
+        // $this->authorize('delete', [CroxxTraining::class, $training]);
 
         $training->archived_at = null;
         $training->save();
@@ -343,7 +389,7 @@ class CourseController extends Controller
         $sort_dir = $request->input('sort_dir', 'desc');
 
         $paths = EmployeeLearningPath::where('employer_user_id', $employer->id)
-                    // ->with('employee','supervisor')
+                    ->with('employee')
                     ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {

@@ -17,43 +17,6 @@ use App\Libraries\OpenAIService;
 
 class EmployerCompetencyController extends Controller
 {
-    // public function index(Request $request)
-    // {
-    //     $user = $request->user();
-
-    //     // $competencies = EmployerCompetencyController::competencies();
-    //     // Separate technical and soft skills
-    //     $technical_skills = array_filter($competencies, function($competency) {
-    //         return $competency['competency_role'] === 'technical_skill';
-    //     });
-
-    //     $soft_skills = array_filter($competencies, function($competency) {
-    //         return $competency['competency_role'] === 'soft_skill';
-    //     });
-
-    //     // Shuffle the arrays to randomize selection
-    //     shuffle($technical_skills);
-    //     shuffle($soft_skills);
-
-    //     // Select 6 technical skills and 4 soft skills
-    //     $technical_skills = array_slice($technical_skills, 0, 5);
-    //     $soft_skills = array_slice($soft_skills, 0, 3);
-
-    //     // Combine selected skills
-    //     // $selected_skills = array_merge($selected_technical_skills, $selected_soft_skills);
-
-    //     // Filter for competencies in the 'operations' department
-    //     // $operations_competencies = array_filter($competencies, function($competency) {
-    //     //     return $competency['department'] === 'operations';
-    //     // });
-
-    //     return response()->json([
-    //         'status' => true,
-    //         'data' => compact('technical_skills','soft_skills'),
-    //         'message' => 'Suggested Competency Mapping.'
-    //     ], 200);
-    // }
-
     protected $openAIService;
 
     public function __construct(OpenAIService $openAIService)
@@ -183,3 +146,41 @@ class EmployerCompetencyController extends Controller
 
     }
 }
+
+
+ // public function index(Request $request)
+    // {
+    //     $user = $request->user();
+
+    //     // $competencies = EmployerCompetencyController::competencies();
+    //     // Separate technical and soft skills
+    //     $technical_skills = array_filter($competencies, function($competency) {
+    //         return $competency['competency_role'] === 'technical_skill';
+    //     });
+
+    //     $soft_skills = array_filter($competencies, function($competency) {
+    //         return $competency['competency_role'] === 'soft_skill';
+    //     });
+
+    //     // Shuffle the arrays to randomize selection
+    //     shuffle($technical_skills);
+    //     shuffle($soft_skills);
+
+    //     // Select 6 technical skills and 4 soft skills
+    //     $technical_skills = array_slice($technical_skills, 0, 5);
+    //     $soft_skills = array_slice($soft_skills, 0, 3);
+
+    //     // Combine selected skills
+    //     // $selected_skills = array_merge($selected_technical_skills, $selected_soft_skills);
+
+    //     // Filter for competencies in the 'operations' department
+    //     // $operations_competencies = array_filter($competencies, function($competency) {
+    //     //     return $competency['department'] === 'operations';
+    //     // });
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'data' => compact('technical_skills','soft_skills'),
+    //         'message' => 'Suggested Competency Mapping.'
+    //     ], 200);
+    // }

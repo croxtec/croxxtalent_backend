@@ -36,6 +36,11 @@ class CroxxTraining extends Model
                  ->select(['id','photo', 'first_name','last_name','company_name']);
     }
 
+    public function department(){
+        return $this->belongsTo('App\Models\EmployerJobcode', 'department_id', 'id')
+                    ->select(['id','job_code', 'job_title']);
+    }
+
     public function getTotalLessonsAttribute()
     {
         return $this->hasMany('App\Models\Training\CroxxLesson', 'training_id', 'id')
