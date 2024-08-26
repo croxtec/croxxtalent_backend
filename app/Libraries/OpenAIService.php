@@ -73,7 +73,7 @@ class OpenAIService
             ]);
 
             $responseBody = $response->getBody()->getContents();
-            \Log::info('API Response:', ['response' => $responseBody]);
+            // \Log::info('API Response:', ['response' => $responseBody]);
 
             // Extract JSON from response string
             $content = json_decode($responseBody, true);
@@ -227,8 +227,7 @@ class OpenAIService
         }
     }
 
-    public function currateCourseLessons($course)
-    {
+    public function curateCourseLessons($course) {
         try {
             // Prepare the data for the API request
             $response = $this->client->post('chat/completions', [
@@ -238,39 +237,41 @@ class OpenAIService
                     'messages' => [
                         [
                             'role' => 'system',
-                            'content' => 'You are an educational content creator tasked with generating detailed lessons based on the course title, department, and experience level. Generate 3 lessons, each structured in a JSON response with the following fields: "title", "level", "competency", and "description". Ensure the description does not exceed 2000 words.',
+                            'content' => 'You are an educational content creator tasked with generating detailed lessons based on the course title, department, and experience level. Generate 4 lessons, each structured in a JSON response with the following fields: "title", "description", "level", and "keywords". The output should be in the format: [{"title": "<Lesson Title>", "description": "<Lesson>", "level": "<Lesson Level>", "keywords": "<[2 - 3 Keywords]>"}]. Ensure the description does not exceed 3400 words. The competency should be based on the lesson title.',
                         ],
                         [
                             'role' => 'user',
-                            'content' => "Generate 3 lessons for the course with the following details:
-                                        - Department: {$course['department']}
-                                        - Title: {$course['title']}
-                                        - Experience Level: {$course['level']}.",
+                            'content' => "Generate 4 lessons for the course with the following details:
+                                          - Department: {$course['department']}
+                                          - Title: {$course['title']}
+                                          - Experience Level: {$course['level']}.",
                         ],
-                    ]
-                ]
+                    ],
+                ],
             ]);
 
-            // Decode the API response
+            // Parse the returned content from the assistant
             $responseBody = json_decode($response->getBody()->getContents(), true);
 
+            // Check if the response is properly formatted as expected
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \Exception('Invalid JSON format returned from API');
+            }
+
+            // Decode the lessons
             $lessons = json_decode($responseBody['choices'][0]['message']['content'], true);
+
+            // Log the lessons for debugging
+            // \Log::info('Generated lessons:', $lessons);
 
             return $lessons;
 
         } catch (\Exception $e) {
             // Log the error and return an error response
             \Log::error("Error generating course lessons: " . $e->getMessage());
-            return response()->json([
-                'status' => false,
-                'message' => 'An error occurred while generating the lessons.',
-            ], 500);
+            throw new \Exception("Error generating course lessons: " . $e->getMessage());
         }
     }
 
 
-
-
-
 }
-

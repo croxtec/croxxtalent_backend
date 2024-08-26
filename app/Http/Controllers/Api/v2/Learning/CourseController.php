@@ -7,9 +7,12 @@ use Illuminate\Http\Request;
 use App\Models\Employee;
 use App\Http\Requests\TrainingRequest;
 use App\Models\Training\CroxxTraining;
+use App\Models\Training\LessonSetup;
 use App\Models\Assessment\EmployeeLearningPath;
 use Cloudinary\Cloudinary;
+use Illuminate\Support\Str;
 use App\Libraries\OpenAIService;
+use App\Models\Training\CroxxLesson;
 
 class CourseController extends Controller
 {
@@ -132,22 +135,100 @@ class CourseController extends Controller
      */
     public function suggest(Request $request, $id)
     {
+        $user = $request->user();
         $training = CroxxTraining::findOrFail($id);
-        $training->department;
 
-        $course =[
-            'department' =>  $training->department?->job_code,
-            'title' =>  $training->title,
-            'level' =>  $training->experience_level,
+        $course = [
+            'department' => trim($training->department?->job_code),
+            'title' => $training->title,
+            'level' => $training->experience_level,
         ];
 
-        $lessons = $this->openAIService->currateCourseLessons($course);
+        $lessons = LessonSetup::where('department', $course['department'])
+            // ->where('alias', Str::slug($course['title']))
+            ->where('level', $course['level'])
+            ->inRandomOrder()
+            ->limit(12)
+            ->get();
+
+        // If less than 10 lessons exist, generate more lessons using OpenAI
+        if ($lessons->count() < 10) {
+            $generatedLessons = $this->openAIService->curateCourseLessons($course);
+
+            // info('Generated lessons: ', $generatedLessons);
+
+            foreach ($generatedLessons as $lesson) {
+                try {
+                    LessonSetup::create([
+                        'department' => $course['department'],
+                        'level' => strtolower($lesson['level']),
+                        'alias' => Str::slug($lesson['title']),
+                        'title' => $lesson['title'],
+                        'description' => $lesson['description'],
+                        'keywords' => json_encode($lesson['keywords']),  // Convert keywords array to JSON
+                        'generated_id' => $user->id
+                    ]);
+                } catch (\Exception $e) {
+                    \Log::error('Error saving generated lesson: ' . $e->getMessage());
+                }
+            }
+
+            // Retrieve again with the updated pool
+            $lessons = LessonSetup::where('department', $course['department'])
+                // ->where('alias', Str::slug($course['title']))
+                ->where('level', $course['level'])
+                ->inRandomOrder()
+                ->limit(12)
+                ->get();
+        }
+
+        // Randomly pick 6 lessons from the available pool
+        $selectedLessons = $lessons->random(min(5, $lessons->count()));
+
+        // info('Selected lessons count: ' . $selectedLessons->count());
 
         return response()->json([
             'status' => true,
-            'message' => "",
-            'data' => $lessons,
+            'message' => 'Lessons successfully retrieved.',
+            'data' => $selectedLessons,
         ], 200);
+    }
+
+    public function cloneSuggestionRequest(Request $request, $id){
+        $employer = $request->user();
+
+        if (is_numeric($id)) {
+            $training = CroxxTraining::where('id', $id)->where('employer_id', $employer->id)
+                ->firstOrFail();
+        } else {
+            $training = CroxxTraining::where('code', $id)->where('employer_id', $employer->id)
+                ->firstOrFail();
+        }
+
+        $validatedData =   $request->validate([
+            'lessons' => 'required|array',
+            'lessons.*' => 'required|exists:lesson_setups,id'
+        ]);
+
+        $lessons_setups =  LessonSetup::whereIn('id', $validatedData['lessons']) ->get();
+
+        if(count($lessons_setups)){
+            foreach($lessons_setups as $map){
+                CroxxLesson::firstOrCreate([
+                    'training_id' => $training->id,
+                    'alias' => $map['alias'],
+                ],[
+                    'title' => $map['title'],
+                    'description' => $map['description'],
+                    'keyword' => $map['keyword'],
+                ]);
+            }
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => "Lesson cloned successfully.",
+        ], 201);
     }
 
     /**

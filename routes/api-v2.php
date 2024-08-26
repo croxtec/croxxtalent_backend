@@ -289,6 +289,7 @@ Route::prefix('auth')->name('api.')->group( function () {
         // Course
         Route::get('courses/progress', 'Api\v2\Learning\CourseController@progress')->name('courses.progress');
         Route::get('courses/suggest/{id}', 'Api\v2\Learning\CourseController@suggest')->name('courses.suggest');
+        Route::post('courses/suggest/{id}', 'Api\v2\Learning\CourseController@cloneSuggestionRequest')->name('courses.curatr_suggest');
         Route::get('company/courses', 'Api\v2\Learning\CourseController@courses')->name('company.courses');
         Route::patch('courses/{id}/publish', 'Api\v2\Learning\CourseController@publish')->name('courses.publish');
         // Assesment Options
