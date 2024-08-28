@@ -36,7 +36,6 @@ class CroxxAssessment extends Model
     public function competencies()
     {
         return $this->belongsToMany('App\Models\Competency\DepartmentMapping', 'assessment_competency', 'assessment_id', 'competency_id');
-            // ->select(['id', 'competency']);
     }
 
     public function department(){
@@ -71,6 +70,11 @@ class CroxxAssessment extends Model
     public function career(){
         return $this->belongsTo('App\Models\Competency\CompetencySetup', 'career_id', 'id')
                     ->select(['id','competency', 'description']);
+    }
+
+    public function feedbacks()
+    {
+        return $this->hasMany('App\Models\Assessment\EmployerAssessmentFeedback', 'assessment_id', 'id');
     }
 
     // public function getTotalQuestionsAttribute(){

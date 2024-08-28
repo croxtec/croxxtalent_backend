@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\Goal;
 use App\Models\Employee;
 use App\Models\Campaign;
+use App\Models\Assessment\CroxxAssessment;
 use App\Models\Training\CroxxTraining;
 use App\Models\EmployerJobcode as Department;
 use App\Models\Competency\DepartmentMapping as CompentencyMapping;
@@ -86,7 +87,7 @@ class CompanyReportController extends Controller
         $assessment_distribution = [];
         if(count($technical_skills)){
             foreach($technical_skills as $skill){
-                array_push($assessment_distribution, mt_rand(0, 10));
+                array_push($assessment_distribution, mt_rand(0, 100));
             }
         }
 
@@ -103,16 +104,16 @@ class CompanyReportController extends Controller
             'trainings_distribution' =>  $assessment_distribution,
         ];
 
-        $employees = Employee::where('employer_id', $employer->id)
-                            ->where('job_code_id', $department->id)
-                            ->paginate($per_page);
+        // $employees = Employee::where('employer_id', $employer->id)
+        //                     ->where('job_code_id', $department->id)
+        //                     ->paginate($per_page);
 
-        $employeeIds =  $employees->pluck('id');
-        $goals = Goal::whereIn('employee_id', $employeeIds)
-                            ->orderBy('created_at', 'desc')
-                            ->limit(3)->get();
+        // $employeeIds =  $employees->pluck('id');
+        // $goals = Goal::whereIn('employee_id', $employeeIds)
+        //                     ->orderBy('created_at', 'desc')
+        //                     ->limit(3)->get();
 
-        $groupedGoals = $goals->groupBy('employee_id');
+        // $groupedGoals = $goals->groupBy('employee_id');
 
          // Map employee details and goals
         // $department_goals = $employees->map(function ($employee) use ($groupedGoals) {
@@ -121,8 +122,8 @@ class CompanyReportController extends Controller
         //         'goals' => $groupedGoals->get($employee->id, collect()), // Default to empty collection if no goals
         //     ];
         // });department_goals
-
-        $data = compact('technical_distribution', 'softskill_distribution');
+        $title = $department->job_code;
+        $data = compact('title', 'technical_distribution', 'softskill_distribution');
 
         return response()->json([
             'status' => true,
@@ -146,48 +147,7 @@ class CompanyReportController extends Controller
         ], 200);
     }
 
-    public function gapAnalysisReport(Request $request){
-        $employer = $request->user();
 
-        $groups = array();
-        $department = $request->input('department');
-        $per_page = $request->input('per_page', 12);
-
-        $assessmentGap = Employee::join('employer_assessment_feedback', 'employees.id', '=', 'employer_assessment_feedback.employee_id')
-        ->where('employees.employer_id', $employer->id)
-        ->select('employees.id', 'employees.name', 'employees.status', 'employees.performance', 'employer_assessment_feedback.employee_id', 'employer_assessment_feedback.graded_score')
-        ->when($department, function ($query) use ($department) {
-            // Filter by department
-            $query->where('employees.job_code_id', $department);
-        })
-        ->paginate($per_page);
-
-        $categories = [];
-        $series = [];
-
-        foreach ($assessmentGap as $gap) {
-            $employeeName = $gap['name'];
-            $score = $gap['graded_score'];
-
-            // Add employee name to categories if not already present
-            if (!in_array($employeeName, $categories)) {
-                $categories[] = $employeeName;
-                $series[$employeeName] = []; // Initialize an empty series for the employee
-            }
-
-            // Add score to the employee's series
-            $series[$employeeName][] = $score;
-        }
-        $alternative = array_values($series);
-        $chartData = compact('categories', 'series', 'alternative');
-
-        return response()->json([
-            'status' => true,
-            'data' => $chartData,
-            'message' => ''
-        ], 200);
-
-    }
 
     public function assessmentChart(Request $request){
         $employer = $request->user();
@@ -279,4 +239,111 @@ class CompanyReportController extends Controller
             'message' => ''
         ], 200);
     }
+
+    public function gapAnalysisReport(Request $request)
+    {
+        $employer = $request->user();
+        $departmentId = $request->input('department') ?? $employer->default_company_id;
+        $perPage = $request->input('per_page', 12);
+
+        $department = Department::findOrFail($departmentId);
+
+        $competenciesIds = $department->technical_skill->pluck('id');
+        $competencies = $department->technical_skill->pluck('competency')->toArray();
+
+        $employees = Employee::where('employer_id', $employer->id)
+            ->where('job_code_id', $department->id)
+            ->get();
+
+        $employeeData = [];
+        // info($competenciesIds);
+
+        foreach ($employees as $employee) {
+            $employeeAssessments = CroxxAssessment::whereHas('competencies', function ($query) use ($competenciesIds) {
+                $query->whereIn('competency_id', $competenciesIds);
+            })->with(['feedbacks' => function ($query) use ($employee) {
+                $query->where('employee_id', $employee->id);
+            }])->get();
+
+            $scores = [];
+
+            foreach ($competenciesIds as $competencyId) {
+                $feedback = $employeeAssessments->map->feedbacks->flatten()->firstWhere('competency_id', $competencyId);
+                $scores[] = $feedback ? $feedback->graded_score : 0;
+            }
+
+            $employeeData[] = [
+                'name' => $employee->name,
+                'data' => $scores
+            ];
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => compact('competencies', 'employeeData'),
+            'message' => ''
+        ], 200);
+    }
+
+    protected function getDepartment(Request $request, $employer)
+    {
+        $default_department = $request->input('department') ?? $employer->default_company_id;
+        return Department::findOrFail($default_department) ?? Department::where('employer_id', $employer->id)->firstOrFail();
+    }
+
+    protected function getCompetencyIds($department)
+    {
+        return $department->technical_skill->pluck('id');
+    }
+
+    protected function getEmployees($employer, $department, $per_page)
+    {
+        return Employee::where('employer_id', $employer->id)
+                    ->where('job_code_id', $department->id)
+                    ->paginate($per_page);
+    }
+
+    protected function getAssessmentsByCompetencies($competenciesIds)
+    {
+        return CroxxAssessment::with(['feedbacks' => function($query) {
+            $query->select('assessment_id', 'employee_id', 'graded_score');
+        }])->whereHas('competencies', function ($query) use ($competenciesIds) {
+            $query->whereIn('competency_id', $competenciesIds);
+        })->get();
+    }
+
+    protected function generateGapAnalysisData($employees, $assessments)
+    {
+        $gapAnalysisData = [];
+
+        foreach ($employees as $employee) {
+            $employeeData = [
+                'employee_id' => $employee->id,
+                'employee_name' => $employee->name,
+                'assessments' => $this->getEmployeeAssessments($employee, $assessments)
+            ];
+
+            $gapAnalysisData[] = $employeeData;
+        }
+
+        return $gapAnalysisData;
+    }
+
+    protected function getEmployeeAssessments($employee, $assessments)
+    {
+        $employeeAssessments = [];
+
+        foreach ($assessments as $assessment) {
+            $feedback = $assessment->feedbacks->where('employee_id', $employee->id)->first();
+            if ($feedback) {
+                $employeeAssessments[] = [
+                    'assessment_id' => $assessment->id,
+                    'graded_score' => $feedback->graded_score
+                ];
+            }
+        }
+
+        return $employeeAssessments;
+    }
+
 }

@@ -33,6 +33,9 @@ class EmployerAssessmentFeedback extends Model
                     ->with('department','department_role')
                     ->select(['id','name', 'job_code_id', 'department_role_id', 'photo_url', 'code']);
     }
-
+    public function assessment()
+    {
+        return $this->belongsTo(CroxxAssessment::class, 'assessment_id');
+    }
 
 }
