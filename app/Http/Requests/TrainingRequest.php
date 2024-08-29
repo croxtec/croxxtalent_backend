@@ -45,7 +45,7 @@ class TrainingRequest extends FormRequest
                     'type' => 'required|in:company,training,competency',
                     'experience_level' => 'required|in:beginner,intermediate,advance,expert',
                     'title' => 'required|max:100',
-                    'objective' => 'required|max:250',
+                    'objective' => 'required|max:512',
                     'assessment_level' => 'nullable',
                     'cover_photo' => 'nullable|image|max:512', // 512KB
                     'department_id' => 'required_if:type,company|integer|exists:employer_jobcodes,id',
