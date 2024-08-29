@@ -461,6 +461,7 @@ class CourseController extends Controller
         }
 
         $trainings = CroxxTraining::where('employer_id', $current_company->employer_id)
+                    ->where('is_published', 1)
                     ->when($search,function($query) use ($search) {
                         $query->where('title', 'LIKE', "%{$search}%");
                     })

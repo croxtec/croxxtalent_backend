@@ -41,9 +41,8 @@ class CurrateLessonRequest extends FormRequest
                 ];
 
             case 'PUT':
-            case 'PATCH':
                 return [
-                    'training_id' => 'sometimes|integer|exists:croxx_trainings,id',
+                    // 'training_id' => 'sometimes|integer|exists:croxx_trainings,id',
                     'title' => 'sometimes|max:100',
                     'description' => 'sometimes|min:20|max:1536',
                     'video_url' => [
@@ -53,7 +52,7 @@ class CurrateLessonRequest extends FormRequest
                     ],
                     'keyword' => 'nullable|string|max:255',
                     'cover_photo' => 'nullable|image|max:512',
-                    'video' => 'nullable|mimetypes:video/mp4,video/quicktime|max:61440', // 60MB in kilobytes
+                    // 'video' => 'nullable|mimetypes:video/mp4,video/quicktime|max:61440', // 60MB in kilobytes
                 ];
 
             case 'DELETE':

@@ -338,7 +338,6 @@ Route::prefix('auth')->name('api.')->group( function () {
     });
 
 
-
     Route::middleware('auth:sanctum')->prefix('croxxtalent')->group( function () {
         // Professional
         Route::resources([ 'professional' => 'Api\v2\ProfessionalController' ]);
