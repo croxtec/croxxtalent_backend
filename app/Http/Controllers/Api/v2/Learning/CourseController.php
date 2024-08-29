@@ -125,6 +125,23 @@ class CourseController extends Controller
 
     public function show(Request $request, $id)
     {
+        $user = $request->user();
+
+        $employerId =  $user->id;
+
+        if (is_numeric($id)) {
+            $training = CroxxTraining::where('id', $id)->where('employer_id', $employerId)->firstOrFail();
+        } else {
+            $training = CroxxTraining::where('code', $id)->where('employer_id', $employerId)->firstOrFail();
+        }
+
+        // $training->lessons;
+
+        return response()->json([
+            'status' => true,
+            'message' => "",
+            'data' => $training,
+        ], 200);
     }
 
     /**

@@ -51,7 +51,6 @@ class TrainingRequest extends FormRequest
                     'department_id' => 'required_if:type,company|integer|exists:employer_jobcodes,id',
                     'career_id' => 'required_if:type,training,competency|integer',
                 ];
-
             case 'PUT':
             case 'PATCH':
                 return [
@@ -59,6 +58,7 @@ class TrainingRequest extends FormRequest
                     'title' => 'sometimes|required|max:100',
                     'objective' => 'sometimes|required|max:250',
                     'assessment_level' => 'nullable',
+                    'assessment_id' => 'nullable'
                 ];
             case 'DELETE':
                 return [];
