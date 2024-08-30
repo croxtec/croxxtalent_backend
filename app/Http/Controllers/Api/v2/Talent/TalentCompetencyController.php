@@ -91,6 +91,23 @@ class TalentCompetencyController extends Controller
                          ->whereIn('career_id', $careerIds)
                          ->limit($per_page)->get();
 
+        foreach ($assessments as $assessment) {
+            $total_duration_seconds = $assessment->questions->sum('duration');
+            $assessment->total_questions = $assessment->questions->count();
+
+            $total_answered = AssesmentTalentAnswer::where([
+                'talent_id' => $user?->id,
+                'assessment_id' => $assessment->id
+            ])->count();
+            $assessment->percentage = ($total_answered / $assessment->total_questions) * 100;
+            $assessment->is_feedback  = TalentAssessmentSummary::where([
+                'talent_id' => $user->id,
+                'assessment_id' => $assessment->id,
+                'is_published' => true
+            ])->exists();
+            unset($assessment->questions);
+        }
+
         return response()->json([
             'status' => true,
             'message' => "",
@@ -108,6 +125,23 @@ class TalentCompetencyController extends Controller
 
         $assessments = CroxxAssessment::whereIn('id', $ids)
                          ->limit($per_page)->get();
+
+        foreach ($assessments as $assessment) {
+            $total_duration_seconds = $assessment->questions->sum('duration');
+            $assessment->total_questions = $assessment->questions->count();
+
+            $total_answered = AssesmentTalentAnswer::where([
+                'talent_id' => $user?->id,
+                'assessment_id' => $assessment->id
+            ])->count();
+            $assessment->percentage = ($total_answered / $assessment->total_questions) * 100;
+            $assessment->is_feedback  = TalentAssessmentSummary::where([
+                'talent_id' => $user->id,
+                'assessment_id' => $assessment->id,
+                'is_published' => true
+            ])->exists();
+            unset($assessment->questions);
+        }
 
         return response()->json([
             'status' => true,

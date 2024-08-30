@@ -88,6 +88,13 @@ class CroxxJobsController extends Controller
         // ->whereNull('archived_at')
         ->orderBy($sort_by, $sort_dir);
 
+        foreach ($campaigns as $job) {
+          if($user){
+            $job->is_applied = $job->applied ? true : false;
+            $job->is_saved = $job->savedJob ? true : false;
+          }
+        }
+
         if ($per_page === 'all' || $per_page <= 0 ) {
             $results = $campaigns->get();
             $campaigns = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
@@ -108,14 +115,20 @@ class CroxxJobsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
+        $user = $request->user();
+
         if (is_numeric($id)) {
              $campaign = Campaign::whereId($id)->where('is_published', 1)->firstOrFail();
         }else{
             $campaign = Campaign::where('code', $id)->where('is_published', 1)->firstOrFail();
         }
 
+        if($user){
+            $job->is_applied = $job->applied ? true : false;
+            $job->is_saved = $job->savedJob ? true : false;
+        }
 
         // foreach ($campaign->applications as $application) {
         //     $application->cv = Cv::find($application->talent_cv_id);
