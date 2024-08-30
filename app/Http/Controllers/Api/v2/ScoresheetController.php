@@ -17,6 +17,7 @@ use App\Models\Assessment\EmployeeLearningPath;
 use App\Models\Assessment\EmployerAssessmentFeedback;
 use App\Http\Resources\AssignedEmployeeResouce;
 use App\Notifications\AssessmentFeedbackNotification;
+use App\Models\Assessment\TalentAssessmentSummary;
 
 class ScoresheetController extends Controller
 {
@@ -139,12 +140,18 @@ class ScoresheetController extends Controller
                     ->firstOrFail();
         }
 
-        $feedback = EmployerAssessmentFeedback::where([
-            'assessment_id' => $assessment->id,
-            'employee_id' => $employee->id,
-            'employer_user_id' => $assessment->employer_id
-        ])->first();
-
+        if (is_numeric($talent)) {
+            $feedback = TalentAssessmentSummary::where([
+                'talent_id' => $user->id,
+                'assessment_id' => $assessment->id
+                ])->first();
+        } else {
+            $feedback = EmployerAssessmentFeedback::where([
+                'assessment_id' => $assessment->id,
+                'employee_id' => $employee->id,
+                'employer_user_id' => $assessment->employer_id
+            ])->first();
+        }
 
         return response()->json([
             'status' => true,

@@ -13,7 +13,8 @@ class TalentAssessmentSummary extends Model
           'assessment_id',
           'talent_id',
           'time_taken',
-          'graded_score'
+          'graded_score',
+          'is_published'
     ];
 
     protected $hidden = [

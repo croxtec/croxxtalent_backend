@@ -276,10 +276,10 @@ class EmployeeAssessmentController extends Controller
                 'employer_user_id' => $assessment?->employer_id
             ]);
         }else{
-             $feedback = TalentAssessmentSummary::firstOrCreate([
+             $feedback = TalentAssessmentSummary::where([
                 'talent_id' => $user->id,
                 'assessment_id' => $assessment->id
-            ]);
+            ])->first();
         }
 
         // $total_question =  $assessment->questions->count();
@@ -295,7 +295,7 @@ class EmployeeAssessmentController extends Controller
         // $feedback->score_average = $score_average;
 
         if(!$feedback->is_published){
-            $feedback->employee_feedback = $request->feedback;
+            // $feedback->employee_feedback = $request->feedback;
             $feedback->time_taken = $request->time_taken;
             $feedback->is_published = true;
             $feedback->save();
