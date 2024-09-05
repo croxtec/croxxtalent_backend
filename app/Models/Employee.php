@@ -57,9 +57,18 @@ class Employee extends Model
         return $this->belongsTo('App\Models\Supervisor', 'supervisor_id', 'id');
     }
 
+
     public function verifications()
     {
         return $this->morphMany('App\Models\Verification', 'verifiable');
+    }
+
+    public function feedbackSent(){
+        return $this->hasMany('App\Models\Assessment\EmployerAssessmentFeedback', 'supervisor_id', 'id');
+    }
+
+    public function taskAssigned(){
+        return $this->hasMany('App\Models\Goal', 'supervisor_id', 'id');
     }
 
     // public function routeNotificationForMail()

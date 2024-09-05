@@ -42,23 +42,30 @@ class SupervisorController extends Controller
                 }
             }
         })
-        ->with(['employee','department', 'department_role'])
+        ->with(['employee'])
         ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0) {
             $results = $supervisor->get(); // Retrieve all data when 'all' is specified
             $supervisor = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
         } else {
-            // Apply pagination directly to the query
             $supervisor = $supervisor->paginate($per_page);
         }
-
+ 
         // Flatten the employee data into the main structure
         $supervisor->getCollection()->transform(function ($item) {
+            $item->email = $item->employee->email ?? null;
             $item->name = $item->employee->name ?? null;
             $item->code = $item->employee->code ?? null;
             $item->photo_url = $item->employee->photo_url ?? null;
-            //  'department', 'department_role'
+            $item->department =   $item->employee->department;
+            $item->department_role = $item->employee->department_role;
+            $feedbackCount = $item->employee->feedbackSent->count();
+            $taskCount = $item->employee->taskAssigned->count();
+
+            $item->total_feedback_sent = $feedbackCount . ' Feedback' . ($feedbackCount > 1 ? 's' : '');
+            $item->total_task_assigned = $taskCount . ' Task' . ($taskCount > 1 ? 's' : '');
+
             unset($item->employee);
             return $item;
         });
@@ -66,7 +73,6 @@ class SupervisorController extends Controller
 
         $response = collect([
             'status' => true,
-            "data" => $supervisor,
             'message' => ""
         ])->merge($supervisor)
           ->merge(['draw' => $datatable_draw]);

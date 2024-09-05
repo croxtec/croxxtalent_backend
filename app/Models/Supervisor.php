@@ -19,7 +19,7 @@ class Supervisor extends Model
 
     public function employee(){
         return $this->belongsTo('App\Models\Employee', 'supervisor_id', 'id')
-        ->select(['id','name', 'job_code_id', 'department_role_id', 'photo_url', 'code']);
+        ->select(['id','name', 'email', 'job_code_id', 'department_role_id', 'photo_url', 'code']);
     }
 
 
