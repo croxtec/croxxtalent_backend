@@ -33,23 +33,36 @@ class SupervisorController extends Controller
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
 
         $supervisor = Supervisor::where('employer_id', $employer->id)
-                        ->when( $archived ,function ($query) use ($archived) {
-                            if ($archived !== null ) {
-                                if ($archived === true ) {
-                                    $query->whereNotNull('archived_at');
-                                } else {
-                                    $query->whereNull('archived_at');
-                                }
-                            }
-                        })->with('employee', 'department', 'department_role')
-                        ->orderBy($sort_by, $sort_dir);
+        ->when($archived, function ($query) use ($archived) {
+            if ($archived !== null) {
+                if ($archived === true) {
+                    $query->whereNotNull('archived_at');
+                } else {
+                    $query->whereNull('archived_at');
+                }
+            }
+        })
+        ->with(['employee','department', 'department_role'])
+        ->orderBy($sort_by, $sort_dir);
 
-        if ($per_page === 'all' || $per_page <= 0 ) {
-            $results = $supervisor->get();
+        if ($per_page === 'all' || $per_page <= 0) {
+            $results = $supervisor->get(); // Retrieve all data when 'all' is specified
             $supervisor = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
         } else {
+            // Apply pagination directly to the query
             $supervisor = $supervisor->paginate($per_page);
         }
+
+        // Flatten the employee data into the main structure
+        $supervisor->getCollection()->transform(function ($item) {
+            $item->name = $item->employee->name ?? null;
+            $item->code = $item->employee->code ?? null;
+            $item->photo_url = $item->employee->photo_url ?? null;
+            //  'department', 'department_role'
+            unset($item->employee);
+            return $item;
+        });
+
 
         $response = collect([
             'status' => true,
@@ -128,7 +141,7 @@ class SupervisorController extends Controller
             // $employee->save();
         }
 
-        // $supervisor->delete(); 
+        // $supervisor->delete();
 
         // Send notifications to the user
         $user = $employee->talent;

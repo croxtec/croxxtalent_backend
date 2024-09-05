@@ -47,8 +47,9 @@ class CvWorkExperienceRequest extends FormRequest
                 return [];
             case 'POST':
                 return [
-                    'job_title_id' => 'required|exists:job_titles,id',
+                    // 'job_title_id' => 'required|exists:job_titles,id',
                     'employer' => 'required|max:100',
+                    'job_title' => 'required|max:100',
                     'city' => 'required|max:255',
                     'country_code' => 'required|exists:countries,code',
                     'start_date' => 'required|date',
@@ -59,8 +60,9 @@ class CvWorkExperienceRequest extends FormRequest
             case 'PUT':
             case 'PATCH':
                 return [
-                    'job_title_id' => 'required|exists:job_titles,id',
+                    // 'job_title_id' => 'required|exists:job_titles,id',
                     'employer' => 'required|max:100',
+                    'job_title' => 'required|max:100',
                     'city' => 'required|max:255',
                     'country_code' => 'required|exists:countries,code',
                     'start_date' => 'required|date',
