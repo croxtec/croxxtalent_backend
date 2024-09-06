@@ -49,7 +49,7 @@ class CroxxTraining extends Model
 
     public function review_lessons(){
         return $this->hasMany('App\Models\Training\CroxxLesson', 'training_id', 'id')
-                 ->whereNull('archived_at')->select(['id','title','alias','description']);
+                 ->whereNull('archived_at')->select(['id','title','alias']);
     }
 
     public function lessons(){
@@ -57,4 +57,18 @@ class CroxxTraining extends Model
                  ->whereNull('archived_at');
     }
 
+    public function libraries()
+    {
+        return $this->hasMany('App\Models\Training\CourseLibrary', 'training_id', 'id');
+    }
+
+    public function libaray()
+    {
+        return $this->hasOne('App\Models\Training\CourseLibrary', 'training_id', 'id');
+    }
+
+    public function learning()
+    {
+        return $this->hasOne('App\Models\Assessment\EmployeeLearningPath', 'training_id', 'id');
+    }
 }

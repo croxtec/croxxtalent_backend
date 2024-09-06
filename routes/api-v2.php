@@ -99,6 +99,7 @@ Route::prefix('auth')->name('api.')->group( function () {
             Route::get('company/employee/{id}', 'Api\v2\Talent\TalentCompanyController@employeeInformation')->name('company.employee');
             Route::get('company/team/performance', 'Api\v2\Talent\TalentCompanyController@teamPerformanceProgress')->name('company.performance');
             // Competence
+            Route::get('career/progress', 'Api\v2\Talent\TalentCompetencyController@progress')->name('competence.progress');
             Route::get('career/suggestion', 'Api\v2\Talent\TalentCompetencyController@suggestion')->name('competence.suggestion');
             Route::get('career/competency/match', 'Api\v2\Talent\TalentCompetencyController@competencyMatch')->name('competence.match');
             Route::get('career/explore', 'Api\v2\Talent\TalentCompetencyController@exploreAssessment')->name('competence.explore');
@@ -225,6 +226,7 @@ Route::prefix('auth')->name('api.')->group( function () {
 
     // Croxx Jobs
     Route::middleware('auth:sanctum')->name('api.')->group( function () {
+        Route::get('jobs/dashboard', 'Api\v2\CroxxJobsController@dashboard')->name('jobs.dashboard');
         Route::get('jobs/recommendations', 'Api\v2\CroxxJobsController@recommendations')->name('jobs.recommendations');
         Route::post('jobs/applied', 'Api\v2\CroxxJobsController@apply')->name('jobs.apply');
         Route::post('jobs/saved', 'Api\v2\CroxxJobsController@saved')->name('jobs.saved');

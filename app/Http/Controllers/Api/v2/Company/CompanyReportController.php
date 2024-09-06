@@ -203,7 +203,6 @@ class CompanyReportController extends Controller
             }
         }
 
-        // Prepare the final chart data
         $chartData = [
             'labels' => $departments,
             'datasets' => array_values($datasets),
@@ -220,9 +219,9 @@ class CompanyReportController extends Controller
         $employer = $request->user();
 
         $takenTrainings = CroxxTraining::select('croxx_trainings.id', 'croxx_trainings.title', DB::raw('COUNT(employee_learning_paths.id) AS taken_count'))
+                        ->join('employee_learning_paths', 'croxx_trainings.id', '=', 'employee_learning_paths.training_id')
                         ->where('croxx_trainings.user_id', $employer->id)
                         ->where('croxx_trainings.type', 'company')
-                        ->join('employee_learning_paths', 'croxx_trainings.id', '=', 'employee_learning_paths.training_id')
                         ->groupBy('croxx_trainings.id', 'croxx_trainings.title')
                         ->orderBy('taken_count', 'DESC') // Order by taken_count in descending order (most taken first)
                         ->limit(10) // Limit to top 10 most taken trainings

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Cv;
 use App\Models\CvSkill;
 use App\Models\Employee;
+use App\Models\Training\CroxxTraining;
 use App\Models\AssesmentSummary;
 use App\Models\Assessment\CroxxAssessment;
 use App\Models\Assessment\TalentAssessmentSummary;
@@ -19,8 +20,6 @@ use App\Models\Competency\CompetencySetup;
 use App\Models\Competency\TalentCompetency;
 use App\Libraries\OpenAIService;
 
-
-
 class TalentCompetencyController extends Controller
 {
 
@@ -31,6 +30,41 @@ class TalentCompetencyController extends Controller
         $this->openAIService = $openAIService;
     }
 
+
+    public function progress(Request $request){
+        $user = $request->user();
+        $careers = TalentCompetency::where('user_id', $user->id)->get();
+
+        $labels = [];
+        $datasets  = [];
+
+        foreach($careers as $career){
+            $labels[] = $career->competency;
+            $assessments = CroxxAssessment::join('talent_assessment_summaries', 'croxx_assessments.id', '=', 'talent_assessment_summaries.assessment_id')
+                         ->where('croxx_assessments.career_id', $career->id)
+                         ->where('talent_assessment_summaries.talent_id', $user->id)
+                         ->count();
+            $datasets['assessment_taken'][] = $assessments;
+
+            $trainings = CroxxTraining::join('course_libraries','croxx_trainings.id', '=', 'course_libraries.training_id')
+                            ->where('croxx_trainings.career_id', $career->id)
+                            ->where('course_libraries.talent_id', $user->id)
+                            ->count();
+            $datasets['training_libaries'][] = $trainings;
+        }
+
+        $chartData = [
+            'labels' => $labels,
+            'datasets' => ($datasets)
+        ];
+
+        return response()->json([
+            'status' => true,
+            'data' => $chartData,
+            'message' => ''
+        ], 200);
+
+    }
 
     public function suggestion(Request $request){
         $user = $request->user();

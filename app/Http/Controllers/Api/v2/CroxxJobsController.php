@@ -13,6 +13,7 @@ use App\Models\Campaign;
 use App\Models\Cv;
 use App\Models\AppliedJob;
 use App\Models\SavedJob;
+use App\Models\JobInvitation;
 use App\Models\Notification;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -28,9 +29,7 @@ class CroxxJobsController extends Controller
     {
         $user = $request->user();
         // $this->authorize('view-any', Campaign::class);
-
         // info($request->all());
-
         $per_page = $request->input('per_page', 100);
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'desc');
@@ -148,7 +147,6 @@ class CroxxJobsController extends Controller
         // $this->authorize('view-any', Campaign::class);
         $cv = CV::where('user_id', $user->id)->firstorFail();
 
-
         $per_page = $request->input('per_page', 9);
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'desc');
@@ -156,7 +154,6 @@ class CroxxJobsController extends Controller
 
         $search = $cv->job_title;
         $industry = $cv->industry_id;
-
 
         $campaigns = Campaign::where( function($query) use ($search) {
             $query->where('title', 'LIKE', "%{$search}%");
@@ -173,7 +170,7 @@ class CroxxJobsController extends Controller
             $campaigns = $campaigns->paginate($per_page);
         }
 
-        info(count($campaigns));
+        // info(count($campaigns));
         $response = collect([
             'status' => true,
             'message' => "Successful."
@@ -183,6 +180,21 @@ class CroxxJobsController extends Controller
         return response()->json($response, 200);
     }
 
+    public function dashboard(Request $request){
+        $user = $request->user();
+
+        $total_applied = AppliedJob::where('talent_user_id', $user->id)->count();
+        $total_saved = SavedJob::where('talent_user_id', $user->id)->count();
+        $total_invited = JobInvitation::where('talent_user_id', $user->id)->count();
+
+        $data  = compact('total_applied', 'total_saved', 'total_invited');
+
+        return response()->json([
+            'status' => true,
+            'data' => $data,
+            'message' => ''
+        ], 200);
+    }
 
     /**
      * Apply for a new Job Campaign.
