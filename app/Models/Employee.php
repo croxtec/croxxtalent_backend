@@ -63,6 +63,18 @@ class Employee extends Model
         return $this->morphMany('App\Models\Verification', 'verifiable');
     }
 
+    public function completedAssessment(){
+        return $this->hasMany('App\Models\Assessment\EmployerAssessmentFeedback', 'employee_id', 'id');
+    }
+
+    public function learningPaths(){
+        return $this->hasMany('App\Models\Assessment\EmployeeLearningPath', 'employee_id', 'id');
+    }
+
+    public function goalsCompleted(){
+        return $this->hasMany('App\Models\Goal', 'employee_id', 'id');
+    }
+
     public function feedbackSent(){
         return $this->hasMany('App\Models\Assessment\EmployerAssessmentFeedback', 'supervisor_id', 'id');
     }
@@ -70,6 +82,7 @@ class Employee extends Model
     public function taskAssigned(){
         return $this->hasMany('App\Models\Goal', 'supervisor_id', 'id');
     }
+
 
     // public function routeNotificationForMail()
     // {

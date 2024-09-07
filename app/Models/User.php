@@ -12,6 +12,8 @@ use App\Models\Cv;
 use App\Models\Employee;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Training\CourseLibrary;
+use App\Models\Assessment\TalentAssessmentSummary;
 
 class User extends Authenticatable
 {
@@ -119,7 +121,7 @@ class User extends Authenticatable
      */
     protected $appends = [
         'name', 'display_name', 'name_initials', 'cv','unread_notifications',
-        'total_companies', //'total_affiliates', 'photo_url', ,'permissions',
+        'total_companies', 'training_completed', 'assessment_completed', //'total_affiliates', 'photo_url', ,'permissions',
     ];
 
     // Get Model Attributes
@@ -294,7 +296,15 @@ class User extends Authenticatable
 
     public  function getTotalCompaniesAttribute()
     {
-        return  Employee::where('user_id', $this->id)->count();
+        return $this->type === 'talent' ? Employee::where('user_id', $this->id)->count() : null;
+    }
+
+    public function getTrainingCompletedAttribute(){
+        return $this->type === 'talent' ? CourseLibrary::where('talent_id', $this->id)->count() : null;
+    }
+
+    public function getAssessmentCompletedAttribute(){
+        return $this->type === 'talent' ? TalentAssessmentSummary::where('talent_id', $this->id)->count() : null;
     }
 
     public function getAffiliateRewardPointsAttribute()
@@ -311,4 +321,7 @@ class User extends Authenticatable
     {
         return Notification::where('notifiable_id', $this->id)->whereNull('read_at')->count();
     }
+
+
 }
+

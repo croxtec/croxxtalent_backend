@@ -42,7 +42,15 @@ class TalentCompanyController extends Controller
                 $default_company->department;
                 $default_company->department_role;
                 $default_company->employer;
+
+
                 if($default_company->department && !$default_company->supervisor_id){
+                    $dashboard = [
+                        'completed_assessment' => $default_company->completedAssessment()->count(),
+                        'learning_paths' => $default_company->learningPaths()->count(),
+                        'goals_completed' => $default_company->goalsCompleted()->count(),
+                    ];
+
                     $default_company->department->technical_skill;
                     $default_company->department->soft_skill;
 
@@ -52,7 +60,7 @@ class TalentCompanyController extends Controller
 
                     if(count($technical_skills)){
                         foreach($technical_skills as $skill){
-                            array_push($assessment_distribution, mt_rand(0, 10));
+                            array_push($assessment_distribution, mt_rand(0, 100));
                         }
                     }
 
@@ -62,6 +70,15 @@ class TalentCompanyController extends Controller
                         'trainings_distribution' =>  $assessment_distribution,
                     ];
                 }
+
+                if($default_company->supervisor){
+                    $dashboard = [
+                        'feedback_sent' => $default_company->feedbackSent()->count(),
+                        'task_assigned' => $default_company->taskAssigned()->count(),
+                    ];
+                }
+
+                $default_company->summary = $dashboard;
             }
         }
 

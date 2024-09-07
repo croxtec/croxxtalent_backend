@@ -30,7 +30,6 @@ class TalentCompetencyController extends Controller
         $this->openAIService = $openAIService;
     }
 
-
     public function progress(Request $request){
         $user = $request->user();
         $careers = TalentCompetency::where('user_id', $user->id)->get();
@@ -92,7 +91,6 @@ class TalentCompetencyController extends Controller
     public function jobTraining(Request $request){
         $user = $request->user();
 
-        $user = $request->user();
         $per_page = $request->input('per_page', 4);
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'desc');

@@ -134,7 +134,7 @@ class TrainingHubController extends Controller
                         ->where( function($query) use ($search) {
                             $query->where('title', 'LIKE', "%{$search}%");
                         })
-                        ->with(['libaray' => function ($query) use ($talentId) {
+                        ->with(['libaray' => function ($query) use ($user) {
                             $query->where('talent_id', $user->id);
                         }])
                         ->orderBy($sort_by, $sort_dir)
