@@ -252,7 +252,6 @@ class User extends Authenticatable
         }
     }
 
-
     /**
      * Get the audits for the user.
      */

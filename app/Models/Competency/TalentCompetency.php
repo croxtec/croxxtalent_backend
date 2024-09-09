@@ -16,4 +16,10 @@ class TalentCompetency extends Model
         'level',
         'benchmark'
     ];
+
+
+    public function getCareerByCompetency(){
+        return $this->belongsTo('App\Models\Competency\CompetencySetup', 'competency', 'competency');
+    }
+
 }

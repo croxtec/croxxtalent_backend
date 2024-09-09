@@ -95,12 +95,14 @@ class TalentCompetencyController extends Controller
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'desc');
 
-        $careerIds = TalentCompetency::where('user_id', $user->id)->pluck('id')->toArray();
-        array_push($careerIds, 20);
+        $careers = TalentCompetency::with('getCareerByCompetency')->where('user_id', $user->id)->get();
+        $careerIds = $careers->pluck('getCareerByCompetency.id')->toArray();
 
-        $assessments = CroxxAssessment::with('career')->where('category', 'competency_evaluation')
-                         ->whereIn('career_id', $careerIds)
-                         ->limit($per_page)->get();
+        $assessments = CroxxAssessment::with('career')
+                        ->whereIn('type', ['training'])
+                        ->where('category', 'competency_evaluation')
+                        ->whereIn('career_id', $careerIds)
+                        ->limit($per_page)->get();
 
         return response()->json([
             'status' => true,
@@ -116,7 +118,8 @@ class TalentCompetencyController extends Controller
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'desc');
 
-        $careerIds = TalentCompetency::where('user_id', $user->id)->pluck('id')->toArray();
+        $careers = TalentCompetency::with('getCareerByCompetency')->where('user_id', $user->id)->get();
+        $careerIds = $careers->pluck('getCareerByCompetency.id')->toArray();
         array_push($careerIds, 20);
 
         $assessments = CroxxAssessment::with('career')->where('category', 'competency_evaluation')
