@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Models\Cv;
 use App\Models\UserSetting;
 use App\Models\Competency\TalentCompetency;
+use App\Models\Assessment\CroxxAssessment;
+use App\Models\Training\CroxxTraining;
 use App\Models\Audit;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
@@ -38,15 +40,48 @@ class CroxxProfileController extends Controller
                 'username' => $username,
                 'is_active' => true
         ])->firstOrFail();
+        $profile->makeHidden(['cv', 'password_updated_at']);
 
-        unset($profile->cv);
-        unset($profile->password_updated_at);
-        // $cv = CV::where('user_id', $profile->id)->first();
-        $competencies = TalentCompetency::where('cv_id', $profile->id)->get();
+        $careers = [];
+        $resume = CV::where('user_id', $profile->id)->first();
+        $competencies = TalentCompetency::where('user_id', $profile->id)->get();
+        $skills = $competencies->pluck('competency');
+
+        foreach($competencies as $competency){
+            $careerCompetency = $competency->getCareerByCompetency;
+
+            $career = [
+                'name' => $competency->competency,
+                'level' => $competency->level,
+                'assessment_taken' => [],
+                'completed_trainings' => [],
+                'currently_learning' => []
+            ];
+
+            $assessments = CroxxAssessment::join('talent_assessment_summaries', 'croxx_assessments.id', '=', 'talent_assessment_summaries.assessment_id')
+                        ->where('croxx_assessments.career_id', $careerCompetency->id)
+                        ->where('talent_assessment_summaries.talent_id', $profile->id)
+                        ->get();
+
+            foreach ($assessments as $assessment) {
+                $career['assessment_taken'][] = $assessment;
+            }
+
+            $trainings = CroxxTraining::join('course_libraries', 'croxx_trainings.id', '=', 'course_libraries.training_id')
+                            ->where('croxx_trainings.career_id', $careerCompetency->id)
+                            ->where('course_libraries.talent_id', $profile->id)
+                            ->get();
+
+            foreach ($trainings as $training) {
+                $career['completed_trainings'][] = $training;
+            }
+
+            $careers[] = $career;
+        }
 
         return response()->json([
             'status' => true,
-            'data' => compact('profile',  'competencies'),
+            'data' => compact('profile',  'skills', 'resume','careers'),
             'message' => ''
         ], 200);
     }

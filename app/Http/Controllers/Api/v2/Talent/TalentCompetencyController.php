@@ -7,9 +7,9 @@ use Illuminate\Http\Request;
 use App\Models\Cv;
 use App\Models\CvSkill;
 use App\Models\Employee;
+use App\Models\Assessment\CroxxAssessment;
 use App\Models\Training\CroxxTraining;
 use App\Models\AssesmentSummary;
-use App\Models\Assessment\CroxxAssessment;
 use App\Models\Assessment\TalentAssessmentSummary;
 use App\Models\VettingSummary;
 use App\Models\EmployerJobcode as JobCode;
@@ -32,21 +32,22 @@ class TalentCompetencyController extends Controller
 
     public function progress(Request $request){
         $user = $request->user();
-        $careers = TalentCompetency::where('user_id', $user->id)->get();
+        $careers = TalentCompetency::with('getCareerByCompetency')->where('user_id', $user->id)->get();
 
         $labels = [];
         $datasets  = [];
 
         foreach($careers as $career){
             $labels[] = $career->competency;
+            $competency = $career->getCareerByCompetency;
             $assessments = CroxxAssessment::join('talent_assessment_summaries', 'croxx_assessments.id', '=', 'talent_assessment_summaries.assessment_id')
-                         ->where('croxx_assessments.career_id', $career->id)
+                         ->where('croxx_assessments.career_id', $competency->id)
                          ->where('talent_assessment_summaries.talent_id', $user->id)
                          ->count();
             $datasets['assessment_taken'][] = $assessments;
 
             $trainings = CroxxTraining::join('course_libraries','croxx_trainings.id', '=', 'course_libraries.training_id')
-                            ->where('croxx_trainings.career_id', $career->id)
+                            ->where('croxx_trainings.career_id', $competency->id)
                             ->where('course_libraries.talent_id', $user->id)
                             ->count();
             $datasets['training_libaries'][] = $trainings;
@@ -102,7 +103,7 @@ class TalentCompetencyController extends Controller
                         ->whereIn('type', ['training'])
                         ->where('category', 'competency_evaluation')
                         ->whereIn('career_id', $careerIds)
-                        ->limit($per_page)->get();
+                        ->limit($per_page)->latest()->get();
 
         return response()->json([
             'status' => true,
@@ -120,11 +121,11 @@ class TalentCompetencyController extends Controller
 
         $careers = TalentCompetency::with('getCareerByCompetency')->where('user_id', $user->id)->get();
         $careerIds = $careers->pluck('getCareerByCompetency.id')->toArray();
-        array_push($careerIds, 20);
+        // array_push($careerIds, 20);
 
         $assessments = CroxxAssessment::with('career')->where('category', 'competency_evaluation')
                          ->whereIn('career_id', $careerIds)
-                         ->limit($per_page)->get();
+                         ->limit($per_page)->latest()->get();
 
         foreach ($assessments as $assessment) {
             $total_duration_seconds = $assessment->questions->sum('duration');
@@ -159,7 +160,7 @@ class TalentCompetencyController extends Controller
         $ids = TalentAssessmentSummary::where('talent_id', $user->id)->pluck('assessment_id')->toArray();
 
         $assessments = CroxxAssessment::whereIn('id', $ids)
-                         ->limit($per_page)->get();
+                         ->limit($per_page)->latest()->get();
 
         foreach ($assessments as $assessment) {
             $total_duration_seconds = $assessment->questions->sum('duration');
