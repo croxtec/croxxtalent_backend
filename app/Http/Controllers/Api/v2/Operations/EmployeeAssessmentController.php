@@ -153,7 +153,6 @@ class EmployeeAssessmentController extends Controller
             'message' => "",
             'data' => $feedbacks
         ], 200);
-
     }
 
       /**
@@ -270,32 +269,69 @@ class EmployeeAssessmentController extends Controller
 
         if($assessment->type == 'company' || $assessment->type == 'supervisor'){
             $employee = Employee::where('id', $user->default_company_id)->where('user_id', $user->id)->first();
+            $talentField = 'employee_id';
+            $talent = $employee->id;
             $feedback = EmployerAssessmentFeedback::firstOrCreate([
                 'assessment_id' => $assessment->id,
                 'employee_id' => $employee?->id,
                 'employer_user_id' => $assessment?->employer_id
             ]);
         }else{
-             $feedback = TalentAssessmentSummary::where([
+            $talentField = 'talent_id';
+            $talent = $user->id;
+            $feedback = TalentAssessmentSummary::where([
                 'talent_id' => $user->id,
                 'assessment_id' => $assessment->id
             ])->first();
         }
 
-        // $total_question =  $assessment->questions->count();
-        // $total_score = $total_question * 4;
+        if($assessment->category == 'competency_evaluation'){
+            $total_question =  $assessment->questions->count();
+            $total_score = $total_question * 1;
 
-        // $talent_score = ScoreSheet::where([
-        //    'employee_id' => $employee?->id,
-        //    'assessment_id' =>  $assessment->id
-        // ])->sum('score');
-        // $score_average = ((int)$talent_score / $total_score) * 100;
-        // $feedback->total_score = $total_score;
-        // $feedback->talent_score = $talent_score;
-        // $feedback->score_average = $score_average;
+            $talent_score =  TalentAnswer::where([
+                'assessment_id' => $assessment->id,
+                $talentField => $talent,
+            ])->sum('evaluation_result');
+
+            $graded_score = ((int)$talent_score / $total_score) * 100;
+            $graded_score = (int)$graded_score;
+            if ($graded_score >= 95) {
+                $message = sprintf("Exceptional! You scored %d out of %d points, hitting a fantastic %d%%! You're a master in this area!",
+                    $talent_score, $total_score, $graded_score);
+            } elseif ($graded_score >= 85) {
+                $message = sprintf("Fantastic! You scored %d out of %d points, achieving an impressive %d%%. Keep pushing, you're almost at the top!",
+                    $talent_score, $total_score, $graded_score);
+            } elseif ($graded_score >= 75) {
+                $message = sprintf("Great job! You got %d out of %d points, which is a solid %d%%. You're doing well, keep up the hard work!",
+                    $talent_score, $total_score, $graded_score);
+            } elseif ($graded_score >= 65) {
+                $message = sprintf("Good effort! You achieved %d out of %d points, making it %d%%. There's potential for more, just keep refining your skills!",
+                    $talent_score, $total_score, $graded_score);
+            } elseif ($graded_score >= 55) {
+                $message = sprintf("You're getting there! You earned %d out of %d points, which is %d%%. Keep practicing and you'll see more progress.",
+                    $talent_score, $total_score, $graded_score);
+            } elseif ($graded_score >= 45) {
+                $message = sprintf("A decent try! You got %d out of %d points, making it %d%%. Focus on your weak areas to see better results next time.",
+                    $talent_score, $total_score, $graded_score);
+            } elseif ($graded_score >= 35) {
+                $message = sprintf("Keep going! You scored %d out of %d points, which is %d%%. Practice will help you get there, don't give up!",
+                    $talent_score, $total_score, $graded_score);
+            } elseif ($graded_score >= 25) {
+                $message = sprintf("A learning experience! You scored %d out of %d points, making it %d%%. Keep working, and you'll improve in no time.",
+                    $talent_score, $total_score, $graded_score);
+            } else {
+                $message = sprintf("Don't worry, you scored %d out of %d points, which is %d%%. Stay persistent, and you'll get better results with more practice!",
+                    $talent_score, $total_score, $graded_score);
+            }
+
+            $feedback->summary = $message;
+            $feedback->total_score = $total_score;
+            $feedback->talent_score = $talent_score;
+            $feedback->graded_score = round($graded_score);
+        }
 
         if(!$feedback->is_published){
-            // $feedback->employee_feedback = $request->feedback;
             $feedback->time_taken = $request->time_taken;
             $feedback->is_published = true;
             $feedback->save();

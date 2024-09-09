@@ -262,9 +262,25 @@ class ScoresheetController extends Controller
                 ]);
             }
 
-            $message = sprintf('You aced it! You got %d out of %d points in this assessment, that\'s a whopping %d%%! Great job!',
-                            $feedback->employee_score, $feedback->total_score . ' (total possible)',
-                            $feedback->graded_score);
+            if ($feedback->graded_score >= 90) {
+                $message = sprintf("You aced it! You got %d out of %d points in this assessment, that's an impressive %d%%! Great job!",
+                    $feedback->employee_score, $feedback->total_score, $feedback->graded_score);
+            } elseif ($feedback->graded_score >= 75) {
+                $message = sprintf("Well done! You scored %d out of %d, achieving %d%%. You're doing great!",
+                    $feedback->employee_score, $feedback->total_score, $feedback->graded_score);
+            } elseif ($feedback->graded_score >= 60) {
+                $message = sprintf("Good effort! You got %d out of %d points, with a score of %d%%. Keep up the progress!",
+                    $feedback->employee_score, $feedback->total_score, $feedback->graded_score);
+            } elseif ($feedback->graded_score >= 45) {
+                $message = sprintf("Not bad! You earned %d out of %d points, reaching %d%%. A bit more effort will take you further!",
+                    $feedback->employee_score, $feedback->total_score, $feedback->graded_score);
+            } elseif ($feedback->graded_score >= 30) {
+                $message = sprintf("You scored %d out of %d, which is %d%%. There's room for improvement, keep practicing!",
+                    $feedback->employee_score, $feedback->total_score, $feedback->graded_score);
+            } else {
+                $message = sprintf("You got %d out of %d points, that's %d%%. Don't worry, with more effort you'll improve next time!",
+                    $feedback->employee_score, $feedback->total_score, $feedback->graded_score);
+            }
 
             $feedback->summary = $message;
             $feedback->supervisor_id = $user->default_company_id;
