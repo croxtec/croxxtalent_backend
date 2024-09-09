@@ -73,8 +73,8 @@ class CompanyReportController extends Controller
 
     public function summary(Request $request){
         $employer = $request->user();
-        $default_department = $request->input('department') ?? $employer->default_company_id;
         $per_page = $request->input('per_page', 12);
+        $default_department = $request->input('department') ?? $employer->default_company_id;
 
         if($request->input('department')) {
             $employer->default_company_id = $request->input('department');
@@ -242,10 +242,15 @@ class CompanyReportController extends Controller
     public function gapAnalysisReport(Request $request)
     {
         $employer = $request->user();
-        $departmentId = $request->input('department') ?? $employer->default_company_id;
         $perPage = $request->input('per_page', 12);
+        $default_department = $request->input('department') ?? $employer->default_company_id;
 
-        $department = Department::findOrFail($departmentId);
+        if($request->input('department')) {
+            $employer->default_company_id = $request->input('department');
+            $employer->save();
+        }
+
+        $department = Department::findOrFail($default_department) ?? Department::where('employer_id', $employer->id)->firstOrFail();
 
         $competenciesIds = $department->technical_skill->pluck('id');
         $competencies = $department->technical_skill->pluck('competency')->toArray();
@@ -255,7 +260,6 @@ class CompanyReportController extends Controller
             ->get();
 
         $employeeData = [];
-        // info($competenciesIds);
 
         foreach ($employees as $employee) {
             $employeeAssessments = CroxxAssessment::whereHas('competencies', function ($query) use ($competenciesIds) {
