@@ -55,8 +55,10 @@ class CroxxProfileController extends Controller
                 'level' => $competency->level,
                 'assessment_taken' => [],
                 'completed_trainings' => [],
-                'currently_learning' => []
+                'currently_learning' => [],
+                'summary' => ""
             ];
+            // Add
 
             $assessments = CroxxAssessment::join('talent_assessment_summaries', 'croxx_assessments.id', '=', 'talent_assessment_summaries.assessment_id')
                         ->where('croxx_assessments.career_id', $careerCompetency->id)

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class CvWorkExperience extends Model
 {
     use HasFactory;
-    
+
     /**
      * The table associated with the model.
      *
@@ -24,6 +24,7 @@ class CvWorkExperience extends Model
     protected $fillable = [
         'cv_id',
         'job_title_id',
+        'job_title',
         'employer',
         'city',
         'country_code',
@@ -57,7 +58,8 @@ class CvWorkExperience extends Model
 
     public function getJobTitleNameAttribute()
     {
-        return $this->job_title_id ? $this->jobTitle->name : null;
+        return $this->job_title_id ? $this->jobTitle->name : $this->job_title;
+        // return $this->job_title_id ? $this->jobTitle->name : null;
     }
 
     public function getCountryNameAttribute()
