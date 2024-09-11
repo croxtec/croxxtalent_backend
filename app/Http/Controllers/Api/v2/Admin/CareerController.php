@@ -67,30 +67,26 @@ class CareerController extends Controller
      */
     public function store(Request $request)
     {
-        $job_title = "Front end Developer";
+        $job_title = "Software Developer";
 
-        // Check if there are already 10 competencies for the job title in CompetencySetup
         $existingCompetenciesCount = CompetencySetup::where('job_title', $job_title)->count();
 
-        // If there are less than 10 competencies, generate more
-        if ($existingCompetenciesCount < 10) {
+        if ($existingCompetenciesCount < 8) {
             $competencies = $this->openAIService->generateCompetenciesByJobTitle($job_title);
 
-            // Loop through the competencies and store them in the CompetencySetup model
             foreach ($competencies as $competency) {
-                CompetencySetup::create([
+                CompetencySetup::firstOrCreate([
                     'industry_id' => $request->input('industry_id') ?? 1, // Assuming industry_id is passed in the request
                     'job_title' => $job_title,
                     'competency' => $competency['competency'],
                 ],[
-                    'match_percentage' => $competency['match_percentage'],
-                    'benchmark' => $competency['benchmark'],
+                    'match_percentage' => (int)$competency['match_percentage'],
+                    'benchmark' => (int)$competency['benchmark'],
                     'description' => $competency['description'],
                 ]);
             }
         }
 
-        // Fetch all competencies for the job title, including the new ones if any were generated
         $allCompetencies = CompetencySetup::where('job_title', $job_title)->get();
 
         return response()->json([
