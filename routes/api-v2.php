@@ -338,7 +338,12 @@ Route::prefix('auth')->name('api.')->group( function () {
             'courses' => 'Api\v2\Learning\CourseController',
             'lessons' => 'Api\v2\Learning\LessonController',
         ]);
+
     });
+
+    Route::get('jobs', 'Api\v2\CroxxJobsController@index')->name('jobs.index');
+    Route::get('jobs/{id}', 'Api\v2\CroxxJobsController@show')->name('jobs.show');
+    Route::get('{username}', 'Api\v2\CroxxProfileController@index')->name('profile');
 
 
     Route::middleware('auth:sanctum')->prefix('croxxtalent')->group( function () {
@@ -468,9 +473,7 @@ Route::prefix('auth')->name('api.')->group( function () {
         });
     });
 
-    Route::get('jobs', 'Api\v2\CroxxJobsController@index')->name('jobs.index');
-    Route::get('jobs/{id}', 'Api\v2\CroxxJobsController@show')->name('jobs.show');
-    Route::get('{username}', 'Api\v2\CroxxProfileController@index')->name('profile');
+
     // The fallback route should always be the last route registered by your application.
     Route::fallback(function () {
         return response()->json([

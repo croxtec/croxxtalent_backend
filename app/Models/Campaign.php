@@ -101,14 +101,14 @@ class Campaign extends Model
         return $this->belongsTo('App\Models\User', 'user_id', 'id');
     }
 
-    public function applied()
+    public function appliedJobs()
     {
-        return $this->belongsTo('App\Models\AppliedJob', 'campaign_id', 'id');
+        return $this->hasMany('App\Models\AppliedJob', 'campaign_id', 'id');
     }
 
-    public function savedJob()
+    public function savedJobs()
     {
-        return $this->belongsTo('App\Models\SavedJob', 'campaign_id', 'id');
+        return $this->hasMany('App\Models\SavedJob', 'campaign_id', 'id');
     }
 
     public function getUserNameAttribute()

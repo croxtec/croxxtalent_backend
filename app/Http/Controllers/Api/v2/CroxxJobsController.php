@@ -27,45 +27,39 @@ class CroxxJobsController extends Controller
      */
     public function index(Request $request)
     {
-        $user = $request->user();
+        $user = optional($request->user());
         // $this->authorize('view-any', Campaign::class);
-        // info($request->all());
         $per_page = $request->input('per_page', 100);
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'desc');
         $search = $request->input('search');
+        $country = $request->input('country');
         $industry = $request->input('industry');
         $experience = $request->input('experience');
         $employers = $request->input('employers');
         $employment_types = $request->input('employment_types');
-        // $country = $request->input('country');
-        // $salary_currency = $request->input('salary_currency');
-        // $salary_salary = $request->input('salary_salary');
-        // $salary_end = $request->input('salary_end');
         $qualifications = $request->input('qualifications');
         $languages = $request->input('languages');
         $date_filter = $request->input('date_filter');
-
         $datatable_draw = $request->input('draw'); // if any
 
-
-        $campaigns = Campaign::where( function($query) use ($search) {
+        $campaigns = Campaign::where(function ($query) use ($search) {
             $query->where('title', 'LIKE', "%{$search}%")
-                   ->orWhere('job_title', 'LIKE', "%{$search}%");
+                ->orWhere('job_title', 'LIKE', "%{$search}%");
         })
-        ->when($employment_types, function($query) use($employment_types){
+        ->when($employment_types, function ($query) use ($employment_types) {
             $query->whereIn('work_type', $employment_types);
         })
-        ->when($industry, function($query) use($industry){
+        ->when($industry, function ($query) use ($industry) {
             $query->whereIn('industry_id', $industry);
         })
-        ->when($employers, function($query) use($employers){
+        ->when($employers, function ($query) use ($employers) {
             $query->whereIn('user_id', $employers);
         })
-        ->when($qualifications, function($query) use($qualifications){
+        ->when($qualifications, function ($query) use ($qualifications) {
             $query->whereIn('minimum_degree_id', $qualifications);
         })
-        ->when($date_filter, function($query) use ($date_filter) {
+        ->when($date_filter, function ($query) use ($date_filter) {
             switch ($date_filter) {
                 case 'past_24_hours':
                     $query->where('created_at', '>=', Carbon::now()->subDay());
@@ -78,68 +72,63 @@ class CroxxJobsController extends Controller
                     break;
             }
         })
-        ->when($languages, function($query) use ($languages) {
-            $query->whereHas('languages', function($q) use ($languages) {
+        ->when($languages, function ($query) use ($languages) {
+            $query->whereHas('languages', function ($q) use ($languages) {
                 $q->whereIn('language_id', $languages);
             });
         })
         ->where('is_published', 1)
-        // ->whereNull('archived_at')
         ->orderBy($sort_by, $sort_dir);
 
-        foreach ($campaigns as $job) {
-          if($user){
-            $job->is_applied = $job->applied ? true : false;
-            $job->is_saved = $job->savedJob ? true : false;
-          }
-        }
-
-        if ($per_page === 'all' || $per_page <= 0 ) {
+        if ($per_page === 'all' || $per_page <= 0) {
             $results = $campaigns->get();
             $campaigns = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
         } else {
             $campaigns = $campaigns->paginate($per_page);
         }
 
+        foreach ($campaigns as $job) {
+            if ($user) {
+                $job->is_applied = $job->appliedJobs()->where('campaign_id', $job->id)->exists();
+                $job->is_saved = $job->savedJobs()->where('campaign_id', $job->id)->exists();
+            }
+        }
+
         $response = collect([
             'status' => true,
-            'message' => "Successful."
-        ]) ->merge($campaigns)->merge(['draw' => $datatable_draw]);
+            'message' => $user
+        ])->merge($campaigns)->merge(['draw' => $datatable_draw]);
+
         return response()->json($response, 200);
+
     }
 
-
-      /**
+    /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
     public function show(Request $request, $id)
     {
-        $user = $request->user();
+        $user = optional($request->user());
 
         if (is_numeric($id)) {
-             $campaign = Campaign::whereId($id)->where('is_published', 1)->firstOrFail();
-        }else{
-            $campaign = Campaign::where('code', $id)->where('is_published', 1)->firstOrFail();
+            $job = Campaign::whereId($id)->where('is_published', 1)->firstOrFail();
+        } else {
+            $job = Campaign::where('code', $id)->where('is_published', 1)->firstOrFail();
         }
 
-        if($user){
-            $job->is_applied = $job->applied ? true : false;
-            $job->is_saved = $job->savedJob ? true : false;
+        if ($user) {
+            $job->is_applied = $job->appliedJobs()->where('campaign_id', $job->id)->exists();
+            $job->is_saved = $job->savedJobs()->where('campaign_id', $job->id)->exists();
         }
-
-        // foreach ($campaign->applications as $application) {
-        //     $application->cv = Cv::find($application->talent_cv_id);
-        // }
 
         return response()->json([
             'status' => true,
-            'message' => "Successful.",
-            'data' => $campaign
+            'message' => $user,
+            'data' => $job
         ], 200);
     }
-
 
     public function recommendations(Request $request)
     {

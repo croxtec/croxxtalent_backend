@@ -39,6 +39,7 @@ class CvWorkExperienceController extends Controller
         $current = $current == 'yes' ? true : ($current == 'no' ? false : null);
 
         $cvWorkExperiences = CvWorkExperience::where('cv_id', $cv->id)
+        ->with('competencies')
         ->where( function ($query) use ($current) {
             if ($current !== null ) {
                 $query->where('is_current', $current);
@@ -80,7 +81,11 @@ class CvWorkExperienceController extends Controller
         // Retrieve the validated input data...
         $validatedData = $request->validated();
         $validatedData['cv_id'] = $cv->id;
+        $competency_ids = $validatedData['competency_ids'];
+
         $cvWorkExperience = CvWorkExperience::create($validatedData);
+        $cvWorkExperience->competencies()->attach($competency_ids);
+
         if ($cvWorkExperience) {
             return response()->json([
                 'status' => true,
@@ -139,6 +144,7 @@ class CvWorkExperienceController extends Controller
         $cv = CV::where('user_id', $user->id)->firstorFail();
 
         $cvWorkExperience = CvWorkExperience::findOrFail($cv_work_experience_id);
+
         if ($cv->id != $cvWorkExperience->cv_id) {
             return response()->json([
                 'status' => false,
@@ -150,7 +156,11 @@ class CvWorkExperienceController extends Controller
 
         // Retrieve the validated input data....
         $validatedData = $request->validated();
+        $competency_ids = $validatedData['competency_ids'];
+
         $cvWorkExperience->update($validatedData);
+        $cvWorkExperience->competencies()->sync($competency_ids);
+
         return response()->json([
             'status' => true,
             'message' => "Work experience updated successfully.",

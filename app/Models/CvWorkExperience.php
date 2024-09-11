@@ -110,4 +110,10 @@ class CvWorkExperience extends Model
     {
         return $this->belongsTo('App\Models\Country', 'country_code', 'code');
     }
+
+    public function competencies()
+    {
+        return $this->belongsToMany('App\Models\Competency\CompetencySetup', 'work_experience_competencies', 'work_experience_id', 'competency_id');
+    }
+
 }
