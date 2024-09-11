@@ -261,9 +261,6 @@ class OpenAIService
             // Decode the lessons
             $lessons = json_decode($responseBody['choices'][0]['message']['content'], true);
 
-            // Log the lessons for debugging
-            \Log::info('Generated lessons:', $lessons);
-
             return $lessons;
 
         } catch (\Exception $e) {
@@ -273,6 +270,56 @@ class OpenAIService
         }
     }
 
+    public function generateCompetenciesByJobTitle($job_title)
+    {
+        try {
+            // Request OpenAI to generate competencies
+            $response = $this->client->post('chat/completions', [
+                'json' => [
+                    'model' => 'gpt-3.5-turbo',
+                    'messages' => [
+                        [
+                            'role' => 'system',
+                            'content' => 'You are a helpful assistant that generates competencies required for a job title. Each competency must be a standard name, free from extra additions like examples or clarifications (e.g., "and" or "etc."). Any extra information or clarification should be placed in the description. The competency should also include a match percentage representing how related it is to the job title, a benchmark indicating the percentage required for assessment qualification, and a short description. Structure the response as a JSON array like this: [{"competency": "<Competency Name>", "match_percentage": "<Match %>", "benchmark": "<Benchmark %>", "description": "Short Description"}].',
+                        ],
+                        [
+                            'role' => 'user',
+                            'content' => "Generate competencies for the job title '{$job_title}'. Each competency must include a match percentage, a benchmark for assessment, and a short description. Ensure that the competency name is clear and standard, with any extra details moved to the description. Exclude levels.",
+                        ]
+                    ],
+                    'temperature' => 0.7,
+                ]
+            ]);
 
+            $responseBody = $response->getBody()->getContents();
 
+            // Decode the JSON response from OpenAI
+            $content = json_decode($responseBody, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \Exception('Error decoding JSON response: ' . json_last_error_msg());
+            }
+
+            // Validate the content structure
+            if (!isset($content['choices'][0]['message']['content'])) {
+                throw new \Exception('Invalid API response format.');
+            }
+
+            // Extract the raw content of the competency mapping
+            $rawContent = $content['choices'][0]['message']['content'];
+
+            // Parse the competency mappings as JSON
+            $competencyMappings = json_decode($rawContent, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \Exception('Error parsing competency mappings: ' . json_last_error_msg());
+            }
+
+            // Return the competency mappings
+            return $competencyMappings;
+
+        } catch (\Exception $e) {
+            // Log the error and rethrow it
+            \Log::error("Error generating competency mapping: " . $e->getMessage());
+            throw new \Exception("Error generating competency mapping: " . $e->getMessage());
+        }
+    }
 }

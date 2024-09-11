@@ -72,14 +72,13 @@ class TalentCompetencyController extends Controller
         $suggestion = [];
 
         if(isset($user->cv?->job_title_name)){
-            $list =  CompetencySetup::where('industry_id',  $user->cv?->industry_id)->get()->toArray();
+            $list =  CompetencySetup::where('job_title',  $user->cv?->job_title_name)->get()->toArray();
 
             // $list = array_filter($competencies, function($competency) use ($user) {
             //     return $competency['industry'] === $user->cv?->industry_name;
             // });
 
-            shuffle($list);
-            $suggestion = array_slice($list,0,5);
+            $suggestion = array_slice($list,0,8);
         }
 
         return response()->json([

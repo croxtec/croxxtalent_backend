@@ -348,10 +348,13 @@ Route::prefix('auth')->name('api.')->group( function () {
 
     Route::middleware('auth:sanctum')->prefix('croxxtalent')->group( function () {
         // Professional
-        Route::resources([ 'professional' => 'Api\v2\ProfessionalController' ]);
-        Route::patch('professional/{id}/archive', 'Api\v2\ProfessionalController@archive')->name('professional.archive');
-        Route::patch('professional/{id}/unarchive', 'Api\v2\ProfessionalController@unarchive')->name('professional.unarchive');
+        Route::resources([ 'carrers' => 'Api\v2\Admin\CareerController' ]);
+
+        Route::resources([ 'professional' => 'Api\v2\Admin\ProfessionalController' ]);
+        Route::patch('professional/{id}/archive', 'Api\v2\Admin\ProfessionalController@archive')->name('professional.archive');
+        Route::patch('professional/{id}/unarchive', 'Api\v2\Admin\ProfessionalController@unarchive')->name('professional.unarchive');
     });
+
     // Configurations
     Route::prefix('settings')->name('api.settings.')->group( function () {
         // Timezones
