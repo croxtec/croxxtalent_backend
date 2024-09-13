@@ -51,7 +51,7 @@ class SupervisorController extends Controller
         } else {
             $supervisor = $supervisor->paginate($per_page);
         }
- 
+
         // Flatten the employee data into the main structure
         $supervisor->getCollection()->transform(function ($item) {
             $item->email = $item->employee->email ?? null;
@@ -144,7 +144,7 @@ class SupervisorController extends Controller
         // Remove Supervisor
         if ($employee) {
             $employee->supervisor_id = null;
-            // $employee->save();
+            $employee->save();
         }
 
         // $supervisor->delete();
