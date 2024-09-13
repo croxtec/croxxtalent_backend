@@ -147,7 +147,8 @@ class SupervisorController extends Controller
             $employee->save();
         }
 
-        // $supervisor->delete();
+        $supervisor->archived_at = now();
+        $supervisor->save();
 
         // Send notifications to the user
         $user = $employee->talent;

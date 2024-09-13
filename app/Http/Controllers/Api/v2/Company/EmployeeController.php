@@ -272,7 +272,11 @@ class EmployeeController extends Controller
         $employer = $request->user();
         $validatedData = $request->validated();
 
-        $employee = Employee::where('id',$id)->where('employer_id', $employer->id)->firstOrFail();
+        if (is_numeric($id)) {
+            $employee = Employee::where('id', $id)->where('employer_id', $employer->id)->firstOrFail();
+        } else {
+            $employee = Employee::where('code', $id)->where('employer_id', $employer->id)->firstOrFail();
+        }
 
         $employee->update($validatedData);
 
