@@ -72,13 +72,13 @@ class TalentCompetencyController extends Controller
         $suggestion = [];
 
         if(isset($user->cv?->job_title_name)){
-            $list =  CompetencySetup::where('job_title',  $user->cv?->job_title_name)->get()->toArray();
+            $suggestion =  CompetencySetup::where('job_title',  $user->cv?->job_title_name)->get()->toArray();
 
             // $list = array_filter($competencies, function($competency) use ($user) {
             //     return $competency['industry'] === $user->cv?->industry_name;
             // });
 
-            $suggestion = array_slice($list,0,8);
+            // $suggestion = array_slice($list,0,8);
         }
 
         return response()->json([
@@ -95,19 +95,26 @@ class TalentCompetencyController extends Controller
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'desc');
 
-        $careers = TalentCompetency::with('getCareerByCompetency')->where('user_id', $user->id)->get();
-        $careerIds = $careers->pluck('getCareerByCompetency.id')->toArray();
+        if ($user->cv?->job_title_name) {
+            $suggestion = CompetencySetup::where('job_title', $user->cv->job_title_name)->get();
+        } else {
+            $suggestion = collect();
+        }
 
-        $assessments = CroxxAssessment::with('career')
-                        ->whereIn('type', ['training'])
-                        ->where('category', 'competency_evaluation')
+        $careerIds = $suggestion->pluck('id')->toArray();
+
+        $trainings = CroxxTraining::whereIn('type', ['training', 'competency'])
                         ->whereIn('career_id', $careerIds)
+                        ->whereNotNull('assessment_id')
+                        ->with(['libaray' => function ($query) use ($user) {
+                            $query->where('talent_id', $user->id);
+                        }])
                         ->limit($per_page)->latest()->get();
 
         return response()->json([
             'status' => true,
             'message' => "",
-            'data' => $assessments
+            'data' => $trainings
         ], 200);
     }
 
@@ -123,12 +130,16 @@ class TalentCompetencyController extends Controller
         // array_push($careerIds, 20);
 
         $assessments = CroxxAssessment::with('career')->where('category', 'competency_evaluation')
+                        ->where('type','competency_match')
                          ->whereIn('career_id', $careerIds)
                          ->limit($per_page)->latest()->get();
 
         foreach ($assessments as $assessment) {
             $total_duration_seconds = $assessment->questions->sum('duration');
             $assessment->total_questions = $assessment->questions->count();
+            $minutes = floor($total_duration_seconds / 60);
+            $estimated_time = sprintf('%d minutes', $minutes);
+            $assessment->estimated_time = $estimated_time;
 
             $total_answered = AssesmentTalentAnswer::where([
                 'talent_id' => $user?->id,
@@ -150,19 +161,76 @@ class TalentCompetencyController extends Controller
         ], 200);
     }
 
+    public function competencyRecommendation(Request $request){
+        $user = $request->user();
+
+        $per_page = $request->input('per_page', 4);
+        $sort_by = $request->input('sort_by', 'created_at');
+        $sort_dir = $request->input('sort_dir', 'desc');
+
+        $careers = TalentCompetency::with('getCareerByCompetency')->where('user_id', $user->id)->get();
+        $careerIds = $careers->pluck('getCareerByCompetency.id')->toArray();
+
+        if ($user->cv?->job_title_name) {
+            $suggestion = CompetencySetup::where('job_title', $user->cv->job_title_name)
+                                         ->whereNotIn('id', $careerIds)->get();
+        } else {
+            $suggestion = collect();
+        }
+
+        $suggestionIds = $suggestion->pluck('id')->toArray();
+
+        $assessments = CroxxAssessment::with('career')->where('category', 'competency_evaluation')
+                        ->where('type','competency_match')
+                        ->whereIn('career_id', $suggestionIds)
+                        ->limit($per_page)->latest()->get();
+
+        foreach ($assessments as $assessment) {
+            $total_duration_seconds = $assessment->questions->sum('duration');
+            $assessment->total_questions = $assessment->questions->count();
+            $minutes = floor($total_duration_seconds / 60);
+            $estimated_time = sprintf('%d minutes', $minutes);
+            $assessment->estimated_time = $estimated_time;
+
+            $total_answered = AssesmentTalentAnswer::where([
+                'talent_id' => $user?->id,
+                'assessment_id' => $assessment->id
+            ])->count();
+            $assessment->percentage = ($total_answered / $assessment->total_questions) * 100;
+            $assessment->is_feedback  = TalentAssessmentSummary::where([
+                'talent_id' => $user->id,
+                'assessment_id' => $assessment->id,
+                'is_published' => true
+            ])->exists();
+            unset($assessment->questions);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' =>  "",
+            'data' => $assessments
+        ], 200);
+    }
+
     public function exploreAssessment(Request $request){
         $user = $request->user();
         $per_page = $request->input('per_page', 4);
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'desc');
 
-        $ids = TalentAssessmentSummary::where('talent_id', $user->id)->pluck('assessment_id')->toArray();
+        $ids = TalentAssessmentSummary::where('talent_id', $user->id)
+            ->latest()->limit(3)->inRandomOrder()
+            ->pluck('assessment_id')->toArray();
 
         $assessments = CroxxAssessment::whereIn('id', $ids)
                          ->limit($per_page)->latest()->get();
 
         foreach ($assessments as $assessment) {
             $total_duration_seconds = $assessment->questions->sum('duration');
+            $assessment->total_questions = $assessment->questions->count();
+            $minutes = floor($total_duration_seconds / 60);
+            $estimated_time = sprintf('%d minutes', $minutes);
+            $assessment->estimated_time = $estimated_time;
             $assessment->total_questions = $assessment->questions->count();
 
             $total_answered = AssesmentTalentAnswer::where([

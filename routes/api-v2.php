@@ -102,6 +102,7 @@ Route::prefix('auth')->name('api.')->group( function () {
             Route::get('career/progress', 'Api\v2\Talent\TalentCompetencyController@progress')->name('competence.progress');
             Route::get('career/suggestion', 'Api\v2\Talent\TalentCompetencyController@suggestion')->name('competence.suggestion');
             Route::get('career/competency/match', 'Api\v2\Talent\TalentCompetencyController@competencyMatch')->name('competence.match');
+            Route::get('career/competency/recommendation', 'Api\v2\Talent\TalentCompetencyController@competencyRecommendation')->name('competence.recommendation');
             Route::get('career/job/training', 'Api\v2\Talent\TalentCompetencyController@jobTraining')->name('competence.job-training');
             Route::get('career/explore', 'Api\v2\Talent\TalentCompetencyController@exploreAssessment')->name('competence.explore');
             // Old

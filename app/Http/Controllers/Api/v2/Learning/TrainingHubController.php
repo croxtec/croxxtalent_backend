@@ -9,6 +9,7 @@ use App\Models\Training\CroxxTraining;
 use App\Models\Assessment\EmployeeLearningPath;
 use App\Models\Training\CroxxLesson as Lesson;
 use App\Models\Competency\TalentCompetency;
+use App\Models\Competency\CompetencySetup;
 use App\Models\Training\CourseLibrary;
 
 class TrainingHubController extends Controller
@@ -106,6 +107,7 @@ class TrainingHubController extends Controller
                         ->where( function($query) use ($search) {
                             $query->where('title', 'LIKE', "%{$search}%");
                         })
+                        ->whereNull('assessment_id')
                         ->with(['libaray' => function ($query) use ($user) {
                             $query->where('talent_id', $user->id);
                         }])
@@ -127,10 +129,18 @@ class TrainingHubController extends Controller
         $sort_dir = $request->input('sort_dir', 'desc');
         $search = $request->input('search');
 
-        $careerIds = TalentCompetency::where('user_id', $user->id)->pluck('id')->toArray();
+        // $careerIds = TalentCompetency::where('user_id', $user->id)->pluck('id')->toArray();
+        if ($user->cv?->job_title_name) {
+            $suggestion = CompetencySetup::where('job_title', $user->cv->job_title_name)->get();
+        } else {
+            $suggestion = collect();
+        }
+
+        $careerIds = $suggestion->pluck('id')->toArray();
 
         $trainings = CroxxTraining::whereIn('type', ['training', 'competency'])
                         ->whereIn('career_id', $careerIds)
+                        ->whereNull('assessment_id')
                         ->where( function($query) use ($search) {
                             $query->where('title', 'LIKE', "%{$search}%");
                         })
