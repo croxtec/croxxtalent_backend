@@ -27,13 +27,15 @@ class SupervisorController extends Controller
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'desc');
         $search = $request->input('search');
-        $archived = $request->input('archived');
-        $datatable_draw = $request->input('draw'); // if any
+        $archived = $request->input('archived', 'no');
+        $datatable_draw = $request->input('draw');
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
 
         $supervisor = Supervisor::where('employer_id', $employer->id)
+        ->whereNull('archived_at')
         ->when($archived, function ($query) use ($archived) {
+            info($archived);
             if ($archived !== null) {
                 if ($archived === true) {
                     $query->whereNotNull('archived_at');

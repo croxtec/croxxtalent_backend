@@ -227,28 +227,31 @@ class EmployeeController extends Controller
             }
         }
 
+        if(count($technical_skills)){
+            foreach($technical_skills as $skill){
+                array_push($assessment_distribution, mt_rand(0, 10));
+                array_push($trainings_distribution, mt_rand(0, 10));
+            }
+        }
+
         $employee->technical_distribution = [
             'categories' => $technical_skills,
             'assessment_distribution' =>  $assessment_distribution,
-            'trainings_distribution' =>  $assessment_distribution,
+            'trainings_distribution' =>  $trainings_distribution,
         ];
 
-
-        $goals_taken =  Goal::where('employee_id', $employee->id)
-                            ->where('employer_id', $employee->employer_id)->count();
-
         $employee->proficiency = [
-            'total' =>  '0%',
+            'total' =>  '90%',
             'assessment' => [
-                'taken' => 0,
+                'taken' => $employee->completedAssessment()->count(),
                 'performance' => '0%'
             ],
             'goals' => [
-                'taken' => $goals_taken,
+                'taken' => $employee->goalsCompleted()->count(),
                 'performance' => '0%'
             ],
             'trainings' => [
-                'taken' => 0,
+                'taken' => $employee->learningPaths()->count(),
                 'performance' => '0%'
             ],
         ];

@@ -10,8 +10,7 @@
 @section('email_body')
     Hi {{$supervisor->name}},
     <p>You have a supervisor update .</p>
-    <br>
-    <p>You have been removed has  {{$supervisor?->department?->job_code}};</p>
+    <p>You have been removed has  {{$supervisor?->department?->job_code}} supervisor.</p>
     <p>Thank you for using our application!</p>
 @endsection
 
