@@ -114,6 +114,8 @@ class CvWorkExperienceController extends Controller
         $cv = CV::where('user_id', $user->id)->firstorFail();
 
         $cvWorkExperience = CvWorkExperience::findOrFail($cv_work_experience_id);
+        $cvWorkExperience->competencies;
+
         if ($cv->id != $cvWorkExperience->cv_id) {
             return response()->json([
                 'status' => false,

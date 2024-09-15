@@ -345,7 +345,7 @@ class Cv extends Model
 
     public function workExperiences()
     {
-        return $this->hasMany('App\Models\CvWorkExperience', 'cv_id', 'id');
+        return $this->hasMany('App\Models\CvWorkExperience', 'cv_id', 'id')->with('competencies');
     }
 
     public function educations()

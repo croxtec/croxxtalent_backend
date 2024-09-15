@@ -164,7 +164,7 @@ class TalentCompetencyController extends Controller
     public function competencyRecommendation(Request $request){
         $user = $request->user();
 
-        $per_page = $request->input('per_page', 4);
+        $per_page = $request->input('per_page', 8);
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'desc');
 

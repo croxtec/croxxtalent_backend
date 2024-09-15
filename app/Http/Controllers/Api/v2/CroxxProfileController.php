@@ -15,6 +15,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\UserRequest;
 use App\Http\Requests\UserPhotoRequest;
+use App\Models\CvWorkExperience;
 use Cloudinary\Cloudinary;
 
 class CroxxProfileController extends Controller
@@ -43,6 +44,7 @@ class CroxxProfileController extends Controller
         $profile->makeHidden(['cv', 'password_updated_at']);
 
         $careers = [];
+        $talent_name = $profile->display_name;
         $resume = CV::where('user_id', $profile->id)->first();
         $competencies = TalentCompetency::where('user_id', $profile->id)->get();
         $skills = $competencies->pluck('competency');
@@ -53,12 +55,74 @@ class CroxxProfileController extends Controller
             $career = [
                 'name' => $competency->competency,
                 'level' => $competency->level,
+                'experience' => '',
                 'assessment_taken' => [],
                 'completed_trainings' => [],
                 'currently_learning' => [],
                 'summary' => ""
             ];
             // Add
+
+            $cvWorkExperiences = CvWorkExperience::with('competencies')->whereHas('competencies', function ($query) use ($careerCompetency){
+                $query->where('competency_id', $careerCompetency->id);
+            })->get();
+
+            $cvWorkExperiences = CvWorkExperience::with('competencies')
+                ->whereHas('competencies', function ($query) use ($careerCompetency) {
+                    $query->where('competency_id', $careerCompetency->id);
+                })
+                ->get()
+                ->sortByDesc('start_date');
+
+            $experienceCount = $cvWorkExperiences->count();
+            $career['experience'] = $experienceCount;
+
+            $firstExperience = $cvWorkExperiences->last();  // First work experience (sorted by start date)
+            $recentExperience = $cvWorkExperiences->first();  // Most recent work experience
+
+            if ($experienceCount > 0) {
+                // Extract details from the first experience
+                $firstEmployer = $firstExperience->employer;
+                $firstJobTitle = $firstExperience->job_title_name;
+                $firstCity = $firstExperience->city;
+                $firstCountry = $firstExperience->country?->name;
+                $firstStartDate = $firstExperience->start_date;
+                $firstEndDate = $firstExperience->is_current ? 'present' : $firstExperience->end_date;
+
+                // Extract details from the most recent experience
+                $recentEmployer = $recentExperience->employer;
+                $recentJobTitle = $recentExperience->job_title_name;
+                $recentCity = $recentExperience->city;
+                $recentCountry = $recentExperience->country?->name;
+                $recentStartDate = $recentExperience->start_date;
+                $recentEndDate = $recentExperience->is_current ? 'present' : $recentExperience->end_date;
+
+                // Build the summary
+                $summary = "$talent_name has used the competency '$careerCompetency->competency' in $experienceCount work experience(s). ";
+                $summary .= "The first experience was at $firstEmployer in the role of $firstJobTitle, located in $firstCity, $firstCountry, from $firstStartDate to $firstEndDate. ";
+
+                if ($experienceCount > 1) {
+                    $summary .= "The most recent experience is at $recentEmployer in the role of $recentJobTitle, located in $recentCity, $recentCountry, from $recentStartDate to $recentEndDate.";
+                    $additionalExperiences = $cvWorkExperiences->slice(1, -1)->pluck('employer')->unique()->take(2); // Limit to 2 additional companies
+
+                    // If there are additional companies, list them
+                    if ($additionalExperiences->isNotEmpty()) {
+                        $additionalCompanies = $additionalExperiences->join(', ');
+                        $summary .= " They also used this competency at $additionalCompanies.";
+
+                        // If more than 3 experiences, append a final note
+                        if ($experienceCount > 3) {
+                            $summary .= " And other companies as well.";
+                        }
+                    }
+                }
+            } else {
+                $summary = "$talent_name has not used the competency '$careerCompetency->competency' in any work experience.";
+            }
+
+            // Save or output the summary
+            $career['summary'] = $summary;
+
 
             $assessments = CroxxAssessment::join('talent_assessment_summaries', 'croxx_assessments.id', '=', 'talent_assessment_summaries.assessment_id')
                         ->where('croxx_assessments.career_id', $careerCompetency->id)
@@ -69,13 +133,25 @@ class CroxxProfileController extends Controller
                 $career['assessment_taken'][] = $assessment;
             }
 
-            $trainings = CroxxTraining::join('course_libraries', 'croxx_trainings.id', '=', 'course_libraries.training_id')
-                            ->where('croxx_trainings.career_id', $careerCompetency->id)
-                            ->where('course_libraries.talent_id', $profile->id)
-                            ->get();
+            $completed_trainings = CroxxTraining::join('course_libraries', 'croxx_trainings.id', '=', 'course_libraries.training_id')
+                                        ->where('croxx_trainings.career_id', $careerCompetency->id)
+                                        ->where('course_libraries.talent_id', $profile->id)
+                                        ->where('course_libraries.progress', '>', 80)
+                                        ->get();
 
-            foreach ($trainings as $training) {
-                $career['completed_trainings'][] = $training;
+            foreach ($completed_trainings as $training) {
+                    $career['completed_trainings'][] = $training;
+            }
+
+            // Fetch currently ongoing trainings (progress between 10 and 80)
+            $currently_trainings = CroxxTraining::join('course_libraries', 'croxx_trainings.id', '=', 'course_libraries.training_id')
+                                        ->where('croxx_trainings.career_id', $careerCompetency->id)
+                                        ->where('course_libraries.talent_id', $profile->id)
+                                        ->whereBetween('course_libraries.progress', [10, 80])
+                                        ->get();
+
+            foreach ($currently_trainings as $training) {
+                  $career['currently_trainings'][] = $training;
             }
 
             $careers[] = $career;
