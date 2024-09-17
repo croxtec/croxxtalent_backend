@@ -24,6 +24,55 @@ class CareerController extends Controller
      */
     public function index(Request $request)
     {
+        // $this->authorize('view-any', CompetencySetup::class);
+
+        $per_page = $request->input('per_page', 100);
+        $sort_by = $request->input('sort_by', 'job_title');
+        $sort_dir = $request->input('sort_dir', 'asc');
+        $search = $request->input('search');
+        $archived = $request->input('archived');
+        $datatable_draw = $request->input('draw'); // if any
+        $industry = $request->input('industry');
+
+        $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
+
+        $competencies = CompetencySetup::where( function ($query) use ($archived) {
+            if ($archived !== null ) {
+                if ($archived === true ) {
+                    $query->where('status', 'drafted');
+                } else {
+                    $query->where('status', 'publish');
+                }
+            }
+        })->where( function($query) use ($search) {
+            $query->where('competency', 'LIKE', "%{$search}%")
+                  ->orWhere('job_title', 'LIKE', "%{$search}%");
+        })
+        ->when($industry, function($query) use ($industry){
+            $query->where('industry_id', $industry);
+        })
+        ->orderBy($sort_by, $sort_dir);
+
+        if ($per_page === 'all' || $per_page <= 0 ) {
+            $results = $competencies->get();
+            $competencies = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
+        } else {
+            $competencies = $competencies->paginate($per_page);
+        }
+
+        foreach($competencies as $job){
+            $job->industry;
+        }
+
+        $response = collect([
+            'status' => true,
+            'message' => "Successful."
+        ])->merge($competencies)->merge(['draw' => $datatable_draw]);
+        return response()->json($response, 200);
+    }
+
+    public function review(Request $request)
+    {
         $cvJobTitles = CV::select('job_title')->distinct()->pluck('job_title');
         $competencyJobTitles = CompetencySetup::select('job_title')->distinct()->pluck('job_title');
 
@@ -67,7 +116,7 @@ class CareerController extends Controller
      */
     public function store(Request $request)
     {
-        $job_title = "Front end Developer";
+        $job_title = "Customer Service & Support";
 
         $existingCompetenciesCount = CompetencySetup::where('job_title', $job_title)->count();
 
@@ -76,7 +125,7 @@ class CareerController extends Controller
 
             foreach ($competencies as $competency) {
                 CompetencySetup::firstOrCreate([
-                    'industry_id' => $request->input('industry_id') ?? 1, // Assuming industry_id is passed in the request
+                    'industry_id' => $request->input('industry_id') ?? 1,
                     'job_title' => $job_title,
                     'competency' => $competency['competency'],
                 ],[

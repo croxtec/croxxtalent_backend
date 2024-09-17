@@ -349,8 +349,6 @@ Route::prefix('auth')->name('api.')->group( function () {
 
     Route::middleware('auth:sanctum')->prefix('croxxtalent')->group( function () {
         // Professional
-        Route::resources([ 'carrers' => 'Api\v2\Admin\CareerController' ]);
-
         Route::resources([ 'professional' => 'Api\v2\Admin\ProfessionalController' ]);
         Route::patch('professional/{id}/archive', 'Api\v2\Admin\ProfessionalController@archive')->name('professional.archive');
         Route::patch('professional/{id}/unarchive', 'Api\v2\Admin\ProfessionalController@unarchive')->name('professional.unarchive');
@@ -445,6 +443,9 @@ Route::prefix('auth')->name('api.')->group( function () {
             Route::patch('job-titles/{id}/unarchive', 'Api\v2\Settings\JobTitleController@unarchive')->name('job_titles.unarchive');
             Route::delete('job-titles/{id}', 'Api\v2\Settings\JobTitleController@destroy')->name('job_titles.destroy');
         });
+        // Career Competenciees
+        Route::resources([ 'carrer/competencies' => 'Api\v2\Admin\CareerController' ]);
+
         // Industries
         Route::get('industries', 'Api\v2\Settings\IndustryController@index')->name('industries.index');
         Route::get('industries/{id}', 'Api\v2\Settings\IndustryController@show')->name('industries.show');

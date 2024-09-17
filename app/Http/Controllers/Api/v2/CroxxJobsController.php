@@ -89,8 +89,8 @@ class CroxxJobsController extends Controller
 
         foreach ($campaigns as $job) {
             if ($user) {
-                $job->is_applied = $job->appliedJobs()->where('campaign_id', $job->id)->exists();
-                $job->is_saved = $job->savedJobs()->where('campaign_id', $job->id)->exists();
+                $job->is_applied = $job->appliedJobs()->where('talent_user_id', $user->id)->exists();
+                $job->is_saved = $job->savedJobs()->where('talent_user_id', $user->id)->exists();
             }
         }
 
@@ -119,8 +119,8 @@ class CroxxJobsController extends Controller
         }
 
         if ($user) {
-            $job->is_applied = $job->appliedJobs()->where('campaign_id', $job->id)->exists();
-            $job->is_saved = $job->savedJobs()->where('campaign_id', $job->id)->exists();
+            $job->is_applied = $job->appliedJobs()->where('talent_user_id', $user->id)->exists();
+            $job->is_saved = $job->savedJobs()->where('talent_user_id', $user->id)->exists();
         }
 
         return response()->json([
