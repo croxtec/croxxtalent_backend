@@ -29,7 +29,7 @@ class CvController extends Controller
         // $this->authorize('view-any', Cv::class);
         // Log::info('Reach');
         $per_page = $request->input('per_page', 100);
-        $sort_by = $request->input('sort_by', 'sort_order');
+        $sort_by = $request->input('sort_by', 'name');
         $sort_dir = $request->input('sort_dir', 'asc');
         $search = $request->input('search');
         $skill_ids = $request->input('skill_ids');
@@ -200,14 +200,17 @@ class CvController extends Controller
         $validatedData = $request->validated();
 
         $user = User::findOrFail($validatedData['user_id']);
+
         if ($user->type != 'talent') {
             return response()->json([
                 'status' => false,
                 'message' => "CV Builder can only be used by a talent.",
             ], 400);
         }
+
         $aff_eligibility = false;
         $_cv = Cv::where('user_id', $user->id)->first();
+
         if (!$_cv) {
             $aff_eligibility = true;
         }
@@ -220,6 +223,7 @@ class CvController extends Controller
                 'email' => $user->email,
             ]
         );
+
         if ($cv) {
             // give reward to affiliate referral
             if ($aff_eligibility && $user->referral_user_id) {

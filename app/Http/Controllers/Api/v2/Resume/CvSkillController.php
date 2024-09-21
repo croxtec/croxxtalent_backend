@@ -101,7 +101,7 @@ class CvSkillController extends Controller
         if ($cvSkill) {
             return response()->json([
                 'status' => true,
-                'message' => "Competence created successfully.",
+                'message' => "Competence added successfully.",
                 'data' => $cvSkill
             ], 201);
         } else {

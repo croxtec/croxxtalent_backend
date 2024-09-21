@@ -81,10 +81,12 @@ class CvWorkExperienceController extends Controller
         // Retrieve the validated input data...
         $validatedData = $request->validated();
         $validatedData['cv_id'] = $cv->id;
-        $competency_ids = $validatedData['competency_ids'];
-
         $cvWorkExperience = CvWorkExperience::create($validatedData);
-        $cvWorkExperience->competencies()->attach($competency_ids);
+        $competency_ids = isset($validatedData['competency_ids']);
+
+        if($competency_ids){
+            $cvWorkExperience->competencies()->attach($competency_ids);
+        }
 
         if ($cvWorkExperience) {
             return response()->json([
@@ -158,10 +160,13 @@ class CvWorkExperienceController extends Controller
 
         // Retrieve the validated input data....
         $validatedData = $request->validated();
-        $competency_ids = $validatedData['competency_ids'];
+        $competency_ids = isset($validatedData['competency_ids']);
 
         $cvWorkExperience->update($validatedData);
-        $cvWorkExperience->competencies()->sync($competency_ids);
+
+        if($competency_ids){
+              $cvWorkExperience->competencies()->sync($competency_ids);
+        }
 
         return response()->json([
             'status' => true,
