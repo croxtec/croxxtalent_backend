@@ -15,6 +15,7 @@ use App\Models\AppliedJob;
 use App\Models\SavedJob;
 use App\Models\JobInvitation;
 use App\Models\Notification;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
@@ -27,7 +28,8 @@ class CroxxJobsController extends Controller
      */
     public function index(Request $request)
     {
-        $user = optional($request->user());
+        // $user = optional($request->user());
+        $user = Auth::guard('api')->user();
         // $this->authorize('view-any', Campaign::class);
         $per_page = $request->input('per_page', 100);
         $sort_by = $request->input('sort_by', 'created_at');
@@ -87,10 +89,15 @@ class CroxxJobsController extends Controller
             $campaigns = $campaigns->paginate($per_page);
         }
 
+        if ($user) {
+            $appliedJobs = AppliedJob::where('talent_user_id', $user->id)->pluck('campaign_id')->toArray();
+            $savedJobs = SavedJob::where('talent_user_id', $user->id)->pluck('campaign_id')->toArray();
+        }
+
         foreach ($campaigns as $job) {
             if ($user) {
-                $job->is_applied = $job->appliedJobs()->where('talent_user_id', $user->id)->exists();
-                $job->is_saved = $job->savedJobs()->where('talent_user_id', $user->id)->exists();
+                $job->is_applied = in_array($job->id, $appliedJobs);
+                $job->is_saved = in_array($job->id, $savedJobs);
             }
         }
 
@@ -110,7 +117,7 @@ class CroxxJobsController extends Controller
      */
     public function show(Request $request, $id)
     {
-        $user = optional($request->user());
+        $user = Auth::guard('api')->user();
 
         if (is_numeric($id)) {
             $job = Campaign::whereId($id)->where('is_published', 1)->firstOrFail();
@@ -119,9 +126,16 @@ class CroxxJobsController extends Controller
         }
 
         if ($user) {
-            $job->is_applied = $job->appliedJobs()->where('talent_user_id', $user->id)->exists();
-            $job->is_saved = $job->savedJobs()->where('talent_user_id', $user->id)->exists();
+            $appliedJobs = AppliedJob::where('talent_user_id', $user->id)->pluck('campaign_id')->toArray();
+            $savedJobs = SavedJob::where('talent_user_id', $user->id)->pluck('campaign_id')->toArray();
+            $job->is_applied = in_array($job->id, $appliedJobs);
+            $job->is_saved = in_array($job->id, $savedJobs);
         }
+        // if ($user) {
+        //     $job->is_applied = $job->appliedJobs()->where('talent_user_id', $user->id)->exists();
+        //     $job->is_saved = $job->savedJobs()->where('talent_user_id', $user->id)->exists();
+        // }
+
 
         return response()->json([
             'status' => true,
