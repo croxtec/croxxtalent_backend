@@ -44,7 +44,7 @@ class CompanyReportController extends Controller
             //     ? round(($count / $total) * 100, 2) . '%'
             //     : '0%';
 
-            $gender = $group->first()->gender;
+            $gender = strtolower($group->first()->gender);
             $carry[$gender] = $count;
 
             return $carry;
@@ -52,9 +52,9 @@ class CompanyReportController extends Controller
 
 
         $competency_summary = [
-            'current_rating' => 80,
-            'task_completed' => 10,
-            'diffrences' => 10,
+            'current_rating' => 0,
+            'task_completed' => 0,
+            'diffrences' => 0,
             'summary' => "",
         ];
 
@@ -71,7 +71,7 @@ class CompanyReportController extends Controller
 
     }
 
-    public function summary(Request $request){
+    public function departmentOverview(Request $request){
         $employer = $request->user();
         $per_page = $request->input('per_page', 12);
         $default_department = $request->input('department') ?? $employer->default_company_id;
@@ -168,7 +168,7 @@ class CompanyReportController extends Controller
         }
 
         // Initialize datasets array with level keys
-        $levels = ['beginner', 'intermediate', 'advanced', 'expert'];
+        $levels = ['beginner', 'intermediate', 'advance', 'expert'];
         foreach ($levels as $level) {
             $datasets[$level] = [
                 'label' => $level,

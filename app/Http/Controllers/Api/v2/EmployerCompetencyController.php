@@ -140,7 +140,7 @@ class EmployerCompetencyController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => "Competency matched successfully.",
+            'message' => "",
             'data' => []
         ], 201);
 

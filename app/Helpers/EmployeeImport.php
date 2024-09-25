@@ -57,10 +57,11 @@ class EmployeeImport implements ToModel, WithHeadingRow
                     'name' => $name,
                     'email' => $email,
                     'phone' => $phone,
-                    'level' => $level,
                     'location' => $location,
-                    'gender' => $gender,
-                    'work_type' => $work_type,
+                    'work_type' => strtolower($work_type),
+                    'level' => strtolower($level),
+                    'gender' => strtolower($gender),
+                    'photo_url' => 'https://res.cloudinary.com/dwty1bg7o/image/upload/v1721470055/l199zpjiq1t23uroq7g7ki1xi20hh_kwfrhy.png'
                 ];
 
                 if(isset($department)){
@@ -91,10 +92,12 @@ class EmployeeImport implements ToModel, WithHeadingRow
                     $verification->sent_to = $email;
                     $verification->metadata = null;
                     $verification->is_otp = false;
-                    // $verification = $employee->verifications()->save($verification);
-                    // if ($verification) {
-                    //     // Mail::to($email)->send(new WelcomeEmployee($employee, $this->employer, $verification));
-                    // }
+                    $verification = $employee->verifications()->save($verification);
+                    if ($verification) {
+                        // Dispatch email to the queue
+                        Mail::to($email)->queue(new WelcomeEmployee($employee, $this->employer, $verification));
+                    }
+
                 }
 
                 if(isset($supervisor)){

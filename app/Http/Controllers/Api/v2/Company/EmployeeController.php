@@ -119,6 +119,7 @@ class EmployeeController extends Controller
                 $validatedData['department_role_id'] = $department_role->id;
             }
 
+
             $employee =  Employee::create($validatedData);
 
             if(isset($employer->onboarding_stage) && $employer->onboarding_stage == 1){
@@ -344,7 +345,7 @@ class EmployeeController extends Controller
     {
         $employee = Employee::findOrFail($id);
 
-        // $this->authorize('delete', [Employee::class, $employee]);
+        $this->authorize('delete', [Employee::class, $employee]);
 
         $name = $employee->name;
         // check if the record is linked to other records

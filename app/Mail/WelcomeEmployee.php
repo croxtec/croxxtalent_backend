@@ -18,6 +18,10 @@ class WelcomeEmployee extends Mailable
 
     public $employee;
     public $employer;
+    public $verification;
+
+    public $tries = 3;  // Number of retry attempts
+    public $backoff = 10;  // Delay between retries (in seconds)
 
 
     /**

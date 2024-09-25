@@ -19,6 +19,7 @@ class Employee extends Model
         'birth_date', 'hired_date',
         'job_code_id',
         'department_role_id',
+        'photo_url',
         //
         'level','code',
         'gender',
