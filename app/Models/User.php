@@ -73,6 +73,10 @@ class User extends Authenticatable
         'email',
         'username',
         'password',
+        'google_id',
+        'linkedin_id',
+        'linkedin_token',
+
         'phone',
         'is_active',
         'company_name',
@@ -81,6 +85,7 @@ class User extends Authenticatable
         'services',
         'referral_user_id',
         'referral_code',
+        'email_verified_at'
     ];
 
     /**

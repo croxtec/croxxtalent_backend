@@ -72,6 +72,7 @@ Route::prefix('auth')->name('api.')->group( function () {
     Route::post('login', 'Api\v2\AuthController@login')->name('auth.login');
     Route::post('company/login', 'Api\v2\AuthController@companyLogin')->name('company.login');
     Route::post('register', 'Api\v2\AuthController@register')->name('auth.register');
+
     Route::middleware('auth:sanctum')->group( function () {
         Route::post('logout', 'Api\v2\AuthController@logout')->name('auth.logout');
         Route::post('refresh', 'Api\v2\AuthController@refresh')->name('auth.refresh');
@@ -81,6 +82,15 @@ Route::prefix('auth')->name('api.')->group( function () {
     Route::get('confirm-code', 'Api\v2\AuthController@confirmResetCode')->name('users.confirm_reset_code');
     Route::post('forgot-passwword', 'Api\v2\AuthController@sendPasswordVerification')->name('users.send_password_verification');
     Route::post('reset-password', 'Api\v2\AuthController@resetNewPassword')->name('users.reset_new_password');
+
+    //Google
+    Route::group(['middleware' => ['web']], function () {
+        Route::get('/google', 'Api\v2\Auth\GoogleAuthController@redirect');
+        Route::get('/google/callback', 'Api\v2\Auth\GoogleAuthController@callback');
+        Route::get('/linkedin', [App\Http\Controllers\Api\v2\Auth\LinkedInController::class, 'redirectToLinkedIn']);
+        Route::get('/linkedin/callback', [App\Http\Controllers\Api\v2\Auth\LinkedInController::class, 'handleLinkedInCallback']);
+        Route::get('/linkedin/import', [App\Http\Controllers\Api\v2\Auth\LinkedInController::class, 'importProfile']);
+    });
 });
 
 

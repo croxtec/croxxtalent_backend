@@ -116,7 +116,7 @@ class CareerController extends Controller
      */
     public function store(Request $request)
     {
-        $job_title = "Customer Service & Support";
+        $job_title = "Web Developer";
 
         $existingCompetenciesCount = CompetencySetup::where('job_title', $job_title)->count();
 
