@@ -15,9 +15,10 @@ use Illuminate\Support\Facades\Route;
 */
 
 
+// require __DIR__.'/v2/guest.php';
+
 
 // Direct publicly accessible routes (No API Key)
-
 Route::any('/', function (Request $request) {
     return response()->json([
         'status' => true,
@@ -86,14 +87,12 @@ Route::prefix('auth')->name('api.')->group( function () {
     //Google
     Route::group(['middleware' => ['web']], function () {
         Route::get('/google', 'Api\v2\Auth\GoogleAuthController@redirect');
-        Route::get('/google/callback', 'Api\v2\Auth\GoogleAuthController@callback');
-        Route::get('/linkedin', [App\Http\Controllers\Api\v2\Auth\LinkedInController::class, 'redirectToLinkedIn']);
-        Route::get('/linkedin/callback', [App\Http\Controllers\Api\v2\Auth\LinkedInController::class, 'handleLinkedInCallback']);
-        Route::get('/linkedin/import', [App\Http\Controllers\Api\v2\Auth\LinkedInController::class, 'importProfile']);
+        Route::get('/google/callback', 'Api\v2\Auth\GoogleAuthController@handleGoogleCallback');
+        Route::get('/linkedin', 'Api\v2\Auth\LinkedInController@redirect');
+        Route::get('/linkedin/callback', 'Api\v2\Auth\LinkedInController@handleLinkedInCallback');
+        Route::get('/linkedin/import', 'Api\v2\Auth\LinkedInController@importProfile');
     });
 });
-
-
 
 
 

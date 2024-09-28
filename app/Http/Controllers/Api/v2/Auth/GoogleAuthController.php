@@ -3,8 +3,13 @@
 namespace App\Http\Controllers\Api\v2\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Audit;
 use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Support\Str;
+
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
 
 class GoogleAuthController extends Controller
@@ -15,22 +20,85 @@ class GoogleAuthController extends Controller
         // $googleUser = Socialite::driver('google')->stateless()->user();
     }
 
-    public function callback(Request $request){
-        $googleUser = Socialite::driver("google")->user();
-        var_dump(($googleUser));
+    public function handleGoogleCallback(Request $request)
+    {
+        try {
+            $googleUser = Socialite::driver('google')->user();
 
-        // $user = User::updateOrCreate(
-        //     [
-        //         'google_id' => $googleUser->id
-        //     ],
-        //     [
-        //         'first_name' => $googleUser->name,
-        //         'last_name' => $googleUser->name,
-        //         'email' => $googleUser->email,
-        //         'password' => Str::random(12),
-        //         'email_verified_at' => now(),
-        //     ]
-        // );
+            // Log Google user data for debugging
+            // info('Google user:', (array) $googleUser);
+
+            // Check if a user exists with the given email
+            $user = User::where('email', $googleUser->email)->first();
+
+            if ($user) {
+                if (!$user->google_id) {
+                    $user->google_id = $googleUser->id;
+                    $user->save();
+                }
+            } else {
+                $user = User::create([
+                    'google_id' => $googleUser->id,
+                    'first_name' => $googleUser->user['given_name'] ?? '',
+                    'last_name' => $googleUser->user['family_name'] ?? '',
+                    'email' => $googleUser->email,
+                    'password' => Str::random(12), // Random password for new users
+                    'email_verified_at' => now(),
+                ]);
+            }
+
+            // Log the user in
+            Auth::login($user);
+
+            // Create access token with abilities
+            $abilities = ["access:{$user->type}"];
+            $token = $user->createToken('access-token', $abilities)->plainTextToken;
+
+            // Generate an external token
+            $external_token = (string) Str::orderedUuid();
+            $user->token = $external_token;
+            $user->save();
+
+            // Optionally, log the action in your audit trail
+            $old_values = [];
+            $new_values = [];
+            Audit::log($user->id, 'login', $old_values, $new_values, User::class, $user->id);
+
+            // Prepare response data
+            $responseData = $this->tokenData($token);
+            $responseData['realtime_token'] = $user->token;
+            $responseData['user'] = $user;
+
+            // Return success response
+            return response()->json([
+                'status' => true,
+                'message' => 'You have logged in successfully.',
+                'data' => $responseData
+            ], 200);
+
+        } catch (\Exception $e) {
+            // Log exception details
+            info('Authentication error:', ['exception' => $e->getMessage()]);
+
+            // Return error response
+            return response()->json([
+                'status' => 'False',
+                'message' => 'Failed to authenticate.',
+                'error' => $e->getMessage(), // Display the error message
+            ], 500);
+        }
 
     }
+
+    protected function tokenData($token)
+    {
+        $token_expiry = (60 * (int) config('sanctum.expiration'));
+        return [
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'expires_in' => $token_expiry,
+            'expires_at' => Carbon::now()->addSeconds($token_expiry)->toJSON()
+        ];
+    }
+
 }
