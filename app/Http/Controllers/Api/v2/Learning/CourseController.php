@@ -11,7 +11,7 @@ use App\Models\Training\LessonSetup;
 use App\Models\Assessment\EmployeeLearningPath;
 use Cloudinary\Cloudinary;
 use Illuminate\Support\Str;
-use App\Libraries\OpenAIService;
+use App\Services\OpenAIService;
 use App\Models\Training\CroxxLesson;
 
 class CourseController extends Controller

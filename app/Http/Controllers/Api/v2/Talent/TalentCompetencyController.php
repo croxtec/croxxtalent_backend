@@ -18,7 +18,7 @@ use App\Models\AssesmentQuestion;
 use App\Models\AssesmentTalentAnswer;
 use App\Models\Competency\CompetencySetup;
 use App\Models\Competency\TalentCompetency;
-use App\Libraries\OpenAIService;
+use App\Services\OpenAIService;
 
 class TalentCompetencyController extends Controller
 {

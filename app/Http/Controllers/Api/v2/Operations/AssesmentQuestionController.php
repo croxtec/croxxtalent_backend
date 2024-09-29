@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\AssesmentQuestion as Question;
 use App\Models\Assesment;
 use App\Models\EvaluationQuestionBank as QuestionBank;
-use App\Libraries\OpenAIService;
+use App\Services\OpenAIService;
 
 class AssesmentQuestionController extends Controller
 {

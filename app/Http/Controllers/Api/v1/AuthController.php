@@ -21,7 +21,6 @@ use App\Models\User;
 use App\Models\Verification;
 use App\Models\Audit;
 use App\Mail\WelcomeVerifyEmail;
-use App\Notifications\CroxxTalentUsers;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 

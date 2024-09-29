@@ -13,7 +13,7 @@ use App\Models\VettingSummary;
 use App\Models\EmployerJobcode as Department;
 use App\Models\Competency\DepartmentMapping;
 use App\Models\Competency\DepartmentSetup;
-use App\Libraries\OpenAIService;
+use App\Services\OpenAIService;
 
 class EmployerCompetencyController extends Controller
 {

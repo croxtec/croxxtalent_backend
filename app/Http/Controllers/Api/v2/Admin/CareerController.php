@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Competency\CompetencySetup;
 use App\Models\CV;
-use App\Libraries\OpenAIService;
+use App\Services\OpenAIService;
 
 class CareerController extends Controller
 {

@@ -20,6 +20,7 @@
         "h4cc/wkhtmltopdf-amd64": "0.12.x",
         "h4cc/wkhtmltopdf-i386": "0.12.x",
         "jenssegers/agent": "^2.6",
+        "kreait/laravel-firebase": "^5.8",
         "laravel/framework": "^9.19",
         "laravel/legacy-factories": "^1.0",
         "laravel/sanctum": "^2.6",

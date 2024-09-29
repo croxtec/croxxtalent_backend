@@ -21,7 +21,7 @@ class LinkedInController extends Controller
         info(config('services.linkedin.redirect'));
         // ->scopes(['r_liteprofile', 'r_emailaddress'])  // Request email and profile scopes
         return Socialite::driver('linkedin')
-                // ->redirectUrl(config('services.linkedin.redirect')) // Specify the redirect URL
+                ->redirectUrl(config('services.linkedin.redirect')) // Specify the redirect URL
                 // ->scopes(['openid', 'profile', 'w_member_social', 'email']) // Request email and profile scopes
                 ->redirect();
     }
@@ -46,7 +46,8 @@ class LinkedInController extends Controller
 
         try {
             // Retrieve the LinkedIn user with the authorization code
-            $linkedinUser = Socialite::driver('linkedin')->stateless()->user();
+            $linkedinUser = Socialite::driver('linkedin')
+                    ->redirectUrl(config('services.linkedin.redirect'))->stateless()->user();
 
             info($linkedinUser);
 
