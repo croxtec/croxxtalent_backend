@@ -13,7 +13,7 @@ class FirebaseService
     public function __construct()
     {
         // Initialize Firebase Messaging with the factory and credentials
-        $firebase = (new Factory)->withServiceAccount('./croxxtalent-c1019-firebase-adminsdk-6z0kl-208b0eeb01.json');
+        $firebase = (new Factory)->withServiceAccount(config('firebase.credentials.file') ?? '');
         $this->messaging = $firebase->createMessaging();
     }
 

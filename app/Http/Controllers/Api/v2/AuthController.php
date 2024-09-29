@@ -27,21 +27,20 @@ use Illuminate\Support\Facades\Validator;
 
 use App\Mail\PasswordReset;
 use App\Mail\PasswordChanged;
-use App\Services\FirebaseService;
 
 class AuthController extends Controller
 {
 
-    protected $firebaseService;
+    // protected $firebaseService;
 
    /**
     * Create a new AuthController instance.
     *
     * @return void
     */
-    public function __construct(FirebaseService $firebaseService)
+    public function __construct()
     {
-        $this->firebaseService = $firebaseService;
+        // $this->firebaseService = $firebaseService;
     }
 
     protected function tokenData($token)
@@ -130,10 +129,10 @@ class AuthController extends Controller
         $responseData['user'] = $user;
 
         // Send push Notification
-        $title = "Test Notification";
-        $body = "Your account has been logged in";
-        $deviceToken = "your_device_token";  // Get this from the client-side
-        $this->firebaseService->sendPushNotification($title, $body, $deviceToken, $data);
+        // $title = "Test Notification";
+        // $body = "Your account has been logged in";
+        // $deviceToken = "your_device_token";  // Get this from the client-side
+        // $this->firebaseService->sendPushNotification($title, $body, $deviceToken, $data);
 
 
         // send response
