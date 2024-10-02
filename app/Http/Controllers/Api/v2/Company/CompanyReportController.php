@@ -250,7 +250,19 @@ class CompanyReportController extends Controller
             $employer->save();
         }
 
-        $department = Department::findOrFail($default_department) ?? Department::where('employer_id', $employer->id)->firstOrFail();
+        $department = Department::first($default_department) ?? Department::where('employer_id', $employer->id)->first();
+
+
+        if(!$department){
+            return response()->json([
+                'status' => true,
+                'data' => [
+                    'competencies' => [],
+                    'employeeData' => []
+                ],
+                'message' => ''
+            ], 200);
+        }
 
         $competenciesIds = $department->technical_skill->pluck('id');
         $competencies = $department->technical_skill->pluck('competency')->toArray();

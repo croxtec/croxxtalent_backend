@@ -110,7 +110,6 @@ class EmployerCompetencyController extends Controller
                     'employer_id' => $employer->id,
                     'department_id' => $department->id,
                     'competency' => $map['competency'],
-                    'level' => $map['level'],
                 ],[
                     'competency_role' => $map['department_role'],
                     'description' => $map['description'],
@@ -125,6 +124,39 @@ class EmployerCompetencyController extends Controller
 
         return response()->json([
             'status' => true,
+            'message' => "Competency matched.",
+        ], 201);
+
+    }
+
+    public function addCompetency(Request $request, $id){
+        $employer = $request->user();
+
+        if (is_numeric($id)) {
+            $department = Department::where('id', $id)->where('employer_id', $employer->id)
+                ->select(['id','job_code', 'job_title', 'description'])->firstOrFail();
+        } else {
+            $department = Department::where('job_title', $id)->where('employer_id', $employer->id)
+                ->select(['id','job_code', 'job_title', 'description'])->firstOrFail();
+        }
+
+        $validatedData =   $request->validate([
+            'competency' => 'required|string|between:3,30',
+            'role' => 'required|in:technical_skill,soft_skill'
+        ]);
+
+        $department = DepartmentMapping::firstOrCreate([
+            'employer_id' => $employer->id,
+            'department_id' => $department->id,
+            'competency' => $validatedData['competency'],
+        ],[
+            'competency_role' => $validatedData['role'],
+            'description' => $validatedData['description'] ?? '',
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'data' => $department,
             'message' => "Competency matched.",
         ], 201);
 
@@ -145,6 +177,8 @@ class EmployerCompetencyController extends Controller
         ], 201);
 
     }
+
+
 }
 
 

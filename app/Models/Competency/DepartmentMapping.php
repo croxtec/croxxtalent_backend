@@ -14,8 +14,7 @@ class DepartmentMapping extends Model
         'department_id',
         'competency',
         'competency_role',
-        'description',
-        'level'
+        'description'
     ];
 
 }

@@ -284,6 +284,7 @@ Route::prefix('auth')->name('api.')->group( function () {
         // Mapping
         Route::get('competency/mapping', 'Api\v2\EmployerCompetencyController@index')->name('competency.index');
         Route::post('competency/mapping/{id}', 'Api\v2\EmployerCompetencyController@storeCompetency')->name('competency.store');
+        Route::post('competency/add/{id}', 'Api\v2\EmployerCompetencyController@addCompetency')->name('competency.add');
         Route::get('onboarding/welcome', 'Api\v2\EmployerCompetencyController@confirmWelcome')->name('confirm.welcome');
 
         // Route::get('competency/gap', 'Api\v2\EmployerCompetencyController@competency')->name('competency.skill');
