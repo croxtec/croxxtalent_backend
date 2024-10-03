@@ -181,9 +181,14 @@ class AuthController extends Controller
             $validatedData['services'] = $request->services;
         }
         // Generate Default Username
-        $default_username = isset($validatedData['company_name']) ? strtolower($validatedData['company_name']) : strtolower($validatedData['first_name'])."_".strtolower($validatedData['last_name']);
+
+        $default_username = isset($validatedData['company_name'])
+            ? Str::slug($validatedData['company_name'], '_')
+            : Str::slug("{$validatedData['first_name']}_{$validatedData['last_name']}", '_');
+
         $total = User::where('username', $default_username)->count();
-        if($total) $default_username = $default_username."_".$total;
+        if ($total)  $default_username .= "_{$total}";
+
         $validatedData['username'] = $default_username;
         // if ($validatedData['type'] == 'affiliate') {
         //     $validator = Validator::make($request->all(),[
@@ -226,28 +231,28 @@ class AuthController extends Controller
             $new_values = $validatedData;
             Audit::log($user->id, 'register', $old_values, $new_values, User::class, $user->id);
             // create and send email verification token records
-            if($validatedData['type'] == 'talent'){
-                $verification = new Verification();
-                $verification->action = "register";
-                $verification->sent_to = $user->email;
-                $verification->metadata = null;
-                $verification->is_otp = false;
-                $verification = $user->verifications()->save($verification);
-                if ($verification && $user->email) {
-                    if (config('mail.queue_send')) {
-                        Mail::to($user->email)->queue(new WelcomeVerifyEmail($user, $verification));
-                    } else {
-                        Mail::to($user->email)->send(new WelcomeVerifyEmail($user, $verification));
-                    }
+            // if($validatedData['type'] == 'talent'){}
+            $verification = new Verification();
+            $verification->action = "register";
+            $verification->sent_to = $user->email;
+            $verification->metadata = null;
+            $verification->is_otp = false;
+            $verification = $user->verifications()->save($verification);
+            if ($verification && $user->email) {
+                if (config('mail.queue_send')) {
+                    Mail::to($user->email)->queue(new WelcomeVerifyEmail($user, $verification));
+                } else {
+                    Mail::to($user->email)->send(new WelcomeVerifyEmail($user, $verification));
                 }
             }
+
             // format token data
             $responseData = $this->tokenData($token);
             $responseData['user'] = $user;
 
             return response()->json([
                 'status' => true,
-                'message' => "User \"{$user->name}\" created successfully.",
+                'message' => "\"{$user->name}\" created successfully.",
                 'data' => $responseData
             ], 201);
         } else {
@@ -314,9 +319,9 @@ class AuthController extends Controller
         array_push($abilities, "access:{$user->type}");
         $token =  $user->createToken('access-token', $abilities)->plainTextToken;
         // Add token to access the secondary server
-        $external_token = (string) Str::orderedUuid();// Str::random(32);
-        // $user->token = $external_token;
-        $user->save();
+        // $external_token = (string) Str::orderedUuid();// Str::random(32);
+        // // $user->token = $external_token;
+        // $user->save();
 
         // save audit trail log
         $old_values = [];
