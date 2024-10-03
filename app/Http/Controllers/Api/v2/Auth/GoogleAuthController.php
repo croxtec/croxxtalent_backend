@@ -67,7 +67,7 @@ class GoogleAuthController extends Controller
 
         } catch (\Exception $e) {
             // Log exception details
-            info('Authentication error:', ['exception' => $e->getMessage()]);
+            // info('Authentication error:', ['exception' => $e->getMessage()]);
 
             // Return error response
             return response()->json([

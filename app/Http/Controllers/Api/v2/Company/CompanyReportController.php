@@ -81,7 +81,19 @@ class CompanyReportController extends Controller
             $employer->save();
         }
 
-        $department = Department::findOrFail($default_department) ?? Department::where('employer_id', $employer->id)->firstOrFail();
+        $department = Department::find($default_department) ?? Department::where('employer_id', $employer->id)->first();
+
+        if(!$department){
+            return response()->json([
+                'status' => true,
+                'data' => [
+                    'title' => '',
+                    'technical_distribution' => [],
+                    'softskill_distribution' => [],
+                ],
+                'message' => ''
+            ], 200);
+        }
 
         $technical_skills = array_column($department->technical_skill->toArray(0),'competency');
         $assessment_distribution = [];
@@ -248,8 +260,7 @@ class CompanyReportController extends Controller
             $employer->save();
         }
 
-        $department = Department::first($default_department) ?? Department::where('employer_id', $employer->id)->first();
-
+        $department = Department::find($default_department) ?? Department::where('employer_id', $employer->id)->first();
 
         if(!$department){
             return response()->json([
