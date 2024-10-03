@@ -56,7 +56,7 @@ class GoogleAuthController extends Controller
             // $responseData = $this->tokenData($token);
 
             $frontendUrl = env('FRONTEND_URL', 'https://localhost:5173');
-            return redirect()->to($frontendUrl . '/auth/callback?token=' . $token);
+            return redirect()->to($frontendUrl . '/auth/callback?status=success&token=' . $token);
 
             // Return success response
             // return response()->json([
