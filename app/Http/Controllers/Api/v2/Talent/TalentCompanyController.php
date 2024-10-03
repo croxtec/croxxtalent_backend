@@ -24,8 +24,8 @@ class TalentCompanyController extends Controller
     public function index(Request $request){
 
         $user = $request->user();
-        $companies = Employee::where('user_id', $user->id)->with('employer')
-                        ->select(['id', 'employer_id', 'user_id', 'name','code', 'supervisor_id','photo_url', 'photo_updated_at','job_code_id','level'])->get();
+        $companies = Employee::where('user_id', $user->id)->with('employer')->get();
+                        // ->select(['id', 'employer_id', 'user_id', 'name','code', 'supervisor_id','photo_url', 'photo_updated_at','job_code_id','level'])
         $default_company =  null;
 
         if (count($companies)) {
@@ -38,6 +38,7 @@ class TalentCompanyController extends Controller
             }
 
             $default_company = $companies->firstWhere('id', $user->default_company_id);
+
             if($default_company){
                 $default_company->department;
                 $default_company->department_role;
@@ -147,9 +148,9 @@ class TalentCompanyController extends Controller
             if(isset($myinfo->supervisor_id)){
 
                 if (is_numeric($id)) {
-                    $employee = Employee::where('id', $id)->where('employer_id', $myinfo->employer_id)->firstOrFail();
+                    $employee = Employee::where('id', $id)->where('employer_id', $myinfo->employer_id)->first();
                 } else {
-                    $employee = Employee::where('code', $id)->where('employer_id', $myinfo->employer_id)->firstOrFail();
+                    $employee = Employee::where('code', $id)->where('employer_id', $myinfo->employer_id)->first();
                 }
 
 
