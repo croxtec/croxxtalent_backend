@@ -147,8 +147,6 @@ class CompanyReportController extends Controller
         ], 200);
     }
 
-
-
     public function assessmentChart(Request $request){
         $employer = $request->user();
 

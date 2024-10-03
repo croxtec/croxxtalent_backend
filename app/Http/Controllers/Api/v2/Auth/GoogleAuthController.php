@@ -16,18 +16,14 @@ class GoogleAuthController extends Controller
 {
 
     public function redirect(Request $request){
-        return Socialite::driver("google")->redirect();
+        return Socialite::driver('google')->stateless()->redirect();
         // $googleUser = Socialite::driver('google')->stateless()->user();
     }
 
     public function handleGoogleCallback(Request $request)
     {
         try {
-            $googleUser = Socialite::driver('google')->user();
-
-            // Log Google user data for debugging
-            // info('Google user:', (array) $googleUser);
-
+            $googleUser = Socialite::driver('google')->stateless()->user();
             // Check if a user exists with the given email
             $user = User::where('email', $googleUser->email)->first();
 
@@ -47,17 +43,9 @@ class GoogleAuthController extends Controller
                 ]);
             }
 
-            // Log the user in
-            Auth::login($user);
-
             // Create access token with abilities
             $abilities = ["access:{$user->type}"];
             $token = $user->createToken('access-token', $abilities)->plainTextToken;
-
-            // Generate an external token
-            $external_token = (string) Str::orderedUuid();
-            $user->token = $external_token;
-            $user->save();
 
             // Optionally, log the action in your audit trail
             $old_values = [];
@@ -65,16 +53,17 @@ class GoogleAuthController extends Controller
             Audit::log($user->id, 'login', $old_values, $new_values, User::class, $user->id);
 
             // Prepare response data
-            $responseData = $this->tokenData($token);
-            $responseData['realtime_token'] = $user->token;
-            $responseData['user'] = $user;
+            // $responseData = $this->tokenData($token);
+
+            $frontendUrl = env('FRONTEND_URL', 'https://croxxtalent.com');
+            return redirect()->to($frontendUrl . '/auth/callback?token=' . $token);
 
             // Return success response
-            return response()->json([
-                'status' => true,
-                'message' => 'You have logged in successfully.',
-                'data' => $responseData
-            ], 200);
+            // return response()->json([
+            //     'status' => true,
+            //     'message' => '',
+            //     'data' => $responseData
+            // ], 200);
 
         } catch (\Exception $e) {
             // Log exception details

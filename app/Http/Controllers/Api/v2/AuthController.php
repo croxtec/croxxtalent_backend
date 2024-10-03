@@ -115,9 +115,9 @@ class AuthController extends Controller
         array_push($abilities, "access:{$user->type}");
         $token =  $user->createToken('access-token', $abilities)->plainTextToken;
         // Add token to access the secondary server
-        $external_token = (string) Str::orderedUuid();// Str::random(32);
-        $user->token = $external_token;
-        $user->save();
+        // $external_token = (string) Str::orderedUuid();// Str::random(32);
+        // $user->token = $external_token;
+        // $user->save();
 
         // save audit trail log
         $old_values = [];
@@ -125,8 +125,8 @@ class AuthController extends Controller
         Audit::log($user->id, 'login', $old_values, $new_values, User::class, $user->id);
 
         $responseData = $this->tokenData($token);
-        $responseData['realtime_token'] = $user->token;
-        $responseData['user'] = $user;
+        // $responseData['realtime_token'] = $user->token;
+        // $responseData['user'] = $user;
 
         // Send push Notification
         // $title = "Test Notification";
