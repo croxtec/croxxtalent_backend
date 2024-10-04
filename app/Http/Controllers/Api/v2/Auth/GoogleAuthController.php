@@ -38,6 +38,7 @@ class GoogleAuthController extends Controller
                     'first_name' => $googleUser->user['given_name'] ?? '',
                     'last_name' => $googleUser->user['family_name'] ?? '',
                     'email' => $googleUser->email,
+                    'type' => 'talent',
                     'password' => Str::random(12), // Random password for new users
                     'email_verified_at' => now(),
                 ]);
@@ -55,7 +56,7 @@ class GoogleAuthController extends Controller
             // Prepare response data
             // $responseData = $this->tokenData($token);
 
-            $frontendUrl = env('FRONTEND_URL', 'https://localhost:5173');
+            $frontendUrl = env('FRONTEND_URL', 'https://croxxtalent');
             return redirect()->to($frontendUrl . '/auth/callback?status=success&token=' . $token);
 
             // Return success response

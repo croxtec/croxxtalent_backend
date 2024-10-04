@@ -148,7 +148,7 @@ class EmployerCompetencyController extends Controller
         $department = DepartmentMapping::firstOrCreate([
             'employer_id' => $employer->id,
             'department_id' => $department->id,
-            'competency' => $validatedData['competency'],
+            'competency' => trim($validatedData['competency']),
         ],[
             'competency_role' => $validatedData['role'],
             'description' => $validatedData['description'] ?? '',
