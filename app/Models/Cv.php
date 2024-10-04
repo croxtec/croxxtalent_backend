@@ -23,6 +23,8 @@ class Cv extends Model
      */
     protected $table = 'cvs';
 
+    protected $cvImportService;
+
     /**
      * The attributes that are mass assignable.
      *

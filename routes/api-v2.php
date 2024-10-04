@@ -122,7 +122,7 @@ Route::prefix('auth')->name('api.')->group( function () {
             // Resume
             Route::get('resume', 'Api\v2\Resume\TalentCVController@index')->name('resume.index');
             Route::post('resume', 'Api\v2\Resume\TalentCVController@storeInformation')->name('resume.store');
-            Route::post('resume/import', 'Api\v2\Resume\TalentCVController@importResume')->name('resume.import');
+            Route::post('resume/import', 'Api\v2\Resume\TalentImprtCVController@importResume')->name('resume.import');
 
             Route::post('resume/contact', 'Api\v2\Resume\TalentCVController@storeContact')->name('resume.contact');
             Route::post('resume/photo', 'Api\v2\Resume\TalentCVController@photo')->name('resume.update_photo');

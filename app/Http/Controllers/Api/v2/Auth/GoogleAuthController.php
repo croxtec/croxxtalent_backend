@@ -39,7 +39,7 @@ class GoogleAuthController extends Controller
                     'last_name' => $googleUser->user['family_name'] ?? '',
                     'email' => $googleUser->email,
                     'type' => 'talent',
-                    'password' => Str::random(12), // Random password for new users
+                    'password' => bcrypt(Str::random(12)), // Random password for new users
                     'email_verified_at' => now(),
                 ]);
             }
