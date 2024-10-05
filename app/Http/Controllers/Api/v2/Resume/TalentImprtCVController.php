@@ -288,7 +288,7 @@ class TalentImprtCVController extends Controller
         if (!empty($resumeData['education']) && is_array($resumeData['education'])) {
             foreach ($resumeData['education'] as $education) {
                 info($education);
-                if($education['school']){
+                if($education['school'] && $education['start_date']){
                     $countryRecord = null;
                     if (!empty($education['country'])) {
                         $countryRecord = Country::where('name', $education['country'])->first();
@@ -298,7 +298,7 @@ class TalentImprtCVController extends Controller
                         [
                             'cv_id' => $cv->id,
                             'school' => $education['school'] ?? '',
-                            'start_date' => $this->strToDate($education['start_date']) ?? null,
+                            'start_date' => $this->strToDate($education['start_date']) ,
                         ],
                         [
                             'course_of_study_id' => $education['course_of_study_id'] ?? null,
@@ -322,13 +322,13 @@ class TalentImprtCVController extends Controller
         if (!empty($resumeData['certifications']) && is_array($resumeData['certifications'])) {
             info('Certification');
             foreach ($resumeData['certifications'] as $certification) {
-                info($certification);
-                if($certification['institution'] && $certification['start_date']){
+                // info($certification);
+                if($certification['institution'] && $certification['date']){
                     CvCertification::updateOrCreate(
                         [
                             'cv_id' => $cv->id,
                             'institution' => $this->humanString($certification['institution']),
-                            'start_date' => $this->strToDate($certification['start_date']) ?? null,
+                            'start_date' => $this->strToDate($certification['date']) ?? null,
                         ],
                         [
                             'certification_course_id' => ($certification['certification_course_id']) ?? 1,
