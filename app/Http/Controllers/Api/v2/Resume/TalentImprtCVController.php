@@ -10,7 +10,10 @@ use App\Models\Country;
 use App\Libraries\LinkedIn;
 use Smalot\PdfParser\Parser as PdfParser;
 use PhpOffice\PhpWord\IOFactory;
-use App\Helpers\CVParser;
+use PhpOffice\PhpWord\Element\TextRun;
+use PhpOffice\PhpWord\Element\Text;
+
+use App\Models\Competency\CompetencySetup;
 use App\Models\Competency\TalentCompetency;
 use App\Models\CvCertification;
 use App\Models\CvEducation;
@@ -59,101 +62,20 @@ class TalentImprtCVController extends Controller
             throw new Exception('Unable to parse CV content');
         }
 
-        // $this->updatePersonalInfo($cv, $resumeData);
+        $this->updatePersonalInfo($cv, $resumeData);
         $this->updateLanguages($cv, $resumeData);
         $this->updateWorkExperience($cv, $resumeData);
         $this->updateEducation($cv, $resumeData);
-        $this->updateCertifications($cv, $resumeData);
         $this->updateSkills($cv, $resumeData);
+        $this->updateCertifications($cv, $resumeData);
 
         // Storage::disk('local')->delete($path);
 
         return response()->json([
             'status' => true,
-            'message' => "Resume imported successfully. Kindly review the imported CV.",
-            'data' => compact('resumeData')
+            'message' => "Resume imported successfully. Kindly review the imported information.",
+            'data' => [], //compact('resumeData')
         ], 200);
-
-        // if (!$resumeData) {
-        //     throw new Exception('Unable to parse CV content');
-        // }
-
-        // if($resume){
-        //     $location = is_array($resume['country']) && array_reverse($resume['country']);
-        //     $country = isset($location[0]) ? $location[0] : '';
-        //     $city = isset($location[1]) ? $location[1] : '';
-        //     $country_code = Country::where('name',$country)->first();
-
-        //     $personal = [
-        //         'job_title' => $resume['job_title'],
-        //         'career_summary' => $resume['summary'],
-        //         'country_code' => $country_code?->code,
-        //         'city' => $city,
-        //         'address' =>  is_array($resume['country']) ? implode($resume['country']) : ''
-        //     ];
-        //     $cv->update($personal);
-
-        //     if( is_array($resume['languages']) ){
-        //         $languageObjects = collect($resume['languages'])->map(function ($language) {
-        //             return (object) ['name' => trim($language)];
-        //         });
-        //         // info($languageObjects);
-        //         foreach($languageObjects as $language){
-        //             $system_lang = App\Models\Language::where('name', $language)->first();
-        //             $cvLanguage = CvLanguage::updateOrCreate(
-        //                 [
-        //                     'cv_id' =>  $cv->id,
-        //                     'language_id' => $system_lang?->id
-        //                 ]);
-
-        //         }
-        //     }
-
-        //     $work_history_fields = [
-        //         'job_title' => '',
-        //         'employer' => '',
-        //         'city' => '',
-        //         'country_code' => '',
-        //         'start_date' => '',
-        //         'end_date' => '',
-        //         'is_current' => '',
-        //         'description' => ''
-        //     ];
-
-        //     CvWorkExperience::updateOrCreate($work_history_fields);
-
-
-        //     $education_fields = [
-        //         'school' => '',
-        //         'course_of_study_id' => '',
-        //         'degree_id' => '',
-        //         'city' => '',
-        //         'country_code' => '',
-        //         'start_date' => '',
-        //         'end_date' => '',
-        //         'is_current' => '',
-        //         'description' => '',
-        //     ];
-
-        //     CvEducation::updateOrCreate($education_fields);
-
-        //     $certification_fields = [
-        //         'institution' => '',
-        //         'certification_course_id' => '',
-        //         'start_date' => '',
-        //     ];
-
-        //     CvCertification::updateOrCreate($certification_fields);
-
-        //     $skills_fields = [
-        //         'competency',
-        //         'level',
-        //     ];
-
-        //     TalentCompetency::updateOrCreate($skills_fields);
-
-        // }
-
 
     }
 
@@ -187,6 +109,27 @@ class TalentImprtCVController extends Controller
     /**
      * Extract content from DOCX
      */
+    // protected function extractDocxContent(string $path): string
+    // {
+    //     try {
+    //         $content = '';
+    //         $phpWord = IOFactory::load($path);
+
+    //         foreach ($phpWord->getSections() as $section) {
+    //             foreach ($section->getElements() as $element) {
+    //                 if (method_exists($element, 'getText')) {
+    //                     $content .= $element->getText() . ' ';
+    //                 }
+    //             }
+    //         }
+
+    //         return $content;
+    //     } catch (Exception $e) {
+    //         throw new Exception('Failed to parse DOCX file: ' . $e->getMessage());
+    //     }
+    // }
+
+
     protected function extractDocxContent(string $path): string
     {
         try {
@@ -195,9 +138,22 @@ class TalentImprtCVController extends Controller
 
             foreach ($phpWord->getSections() as $section) {
                 foreach ($section->getElements() as $element) {
-                    if (method_exists($element, 'getText')) {
+                    // Handle TextRun elements (which contain multiple text elements)
+                    if ($element instanceof TextRun) {
+                        foreach ($element->getElements() as $childElement) {
+                            if ($childElement instanceof Text) {
+                                $content .= $childElement->getText() . ' ';
+                            }
+                        }
+                    }
+                    // Handle regular Text elements
+                    elseif ($element instanceof Text) {
                         $content .= $element->getText() . ' ';
                     }
+                    // Handle other text-like elements (if any)
+                    // elseif (method_exists($element, 'getText')) {
+                    //     $content .= $element->getText() . ' ';
+                    // }
                 }
             }
 
@@ -211,24 +167,58 @@ class TalentImprtCVController extends Controller
        return date('Y-m-d', strtotime(strtotime($date)));
     }
 
+    protected function humanString($str = '', $limit = 25){
+        return isset($str) ? substr($str, 0, $limit) : '';
+    }
+
     /**
      * Update personal information
      */
     protected function updatePersonalInfo(CV $cv, array $resumeData): void
     {
-        $location = is_array($resumeData['country']) ? array_reverse($resumeData['country']) : [];
-        $country = $location[0] ?? '';
-        $city = $location[1] ?? '';
+        if (!empty($resumeData['contact_info']) && is_array($resumeData['contact_info'])) {
 
-        $countryRecord = Country::where('name', $country)->first();
+            $contactInfo = $resumeData['contact_info'];
+            info($contactInfo);
+            // Prepare location data
+            $country = $contactInfo['country'] ?? '';
+            $countryRecord = null;
 
-        $cv->update([
-            'job_title' => $resumeData['job_title'] ?? null,
-            'career_summary' => $resumeData['summary'] ?? null,
-            'country_code' => $countryRecord?->code,
-            'city' => $city,
-            'address' => is_array($resumeData['country']) ? implode(', ', $resumeData['country']) : null
-        ]);
+            if (!empty($country)) {
+                $countryRecord = Country::where('name', $country)
+                    ->orWhere('code', strtoupper($country))
+                    ->first();
+            }
+
+            // Prepare address
+            $addressParts = array_filter([
+                $contactInfo['address'] ?? '',
+                $contactInfo['city'] ?? '',
+                $contactInfo['state'] ?? '',
+                $contactInfo['postal_code'] ?? '',
+                $contactInfo['country'] ?? ''
+            ]);
+
+            $fullAddress = !empty($addressParts) ? implode(', ', $addressParts) : null;
+
+            // Prepare phone number
+            $phone = $contactInfo['phone'] ?? '';
+            if (!empty($phone)) {
+                // Standardize phone format if needed
+                $phone = preg_replace('/[^\d+]/', '', $phone);
+            }
+
+            $cv->update([
+                'career_summary' => $this->humanString($resumeData['summary'] ?? '', 150),
+                'country_code' => $countryRecord?->code,
+                'city' => $contactInfo['city'] ?? '',
+                'state' => $contactInfo['state'] ?? '',
+                'postal_code' => $contactInfo['postal_code'] ?? '',
+                'phone' => $phone,
+                'email' => $contactInfo['email'] ?? '',
+                'address' => $fullAddress,
+            ]);
+        }
     }
 
     /**
@@ -238,15 +228,16 @@ class TalentImprtCVController extends Controller
     {
         if (!empty($resumeData['languages']) && is_array($resumeData['languages'])) {
             // First, remove existing languages
-            $cv->languages()->delete();
-
+            // $cv->languages()->delete();
+            info('Languages');
             foreach ($resumeData['languages'] as $languageName) {
+                info($languageName);
                 $language = Language::where('name', 'LIKE', '%' . trim($languageName) . '%')->first();
-
                 if ($language) {
                     CvLanguage::create([
                         'cv_id' => $cv->id,
-                        'language_id' => $language->id
+                        'language_id' => $language->id,
+                        'level' => 'intermediate'
                     ]);
                 }
             }
@@ -260,7 +251,7 @@ class TalentImprtCVController extends Controller
     {
         if (!empty($resumeData['work_experience']) && is_array($resumeData['work_experience'])) {
             foreach ($resumeData['work_experience'] as $experience) {
-
+                // info($experience);
                 if($experience['job_title'] && $experience['employer'] && $experience['start_date']){
                     $countryRecord = null;
                     if (!empty($experience['country'])) {
@@ -269,16 +260,16 @@ class TalentImprtCVController extends Controller
                     CvWorkExperience::updateOrCreate(
                         [
                             'cv_id' => $cv->id,
-                            'employer' => $experience['employer'] ?? '',
+                            'employer' =>  $this->humanString($experience['employer']),
                             'start_date' => $experience['start_date'] ? $this->strToDate($experience['start_date']): null,
                         ],
                         [
-                            'job_title' => $experience['job_title'] ?? '',
-                            'city' => $experience['city'] ?? '',
+                            'job_title' => $this->humanString($experience['job_title']),
+                            'city' =>    $this->humanString($experience['city']),
                             'country_code' => $countryRecord?->code,
                             'end_date' => $experience['end_date'] ? $this->strToDate($experience['end_date']): null,
                             'is_current' => $experience['is_current'] ?? false,
-                            'description' =>isset($experience['description']) ? substr($experience['description'], 0, 150) . (strlen($experience['description']) > 150 ? '...' : '') : ''
+                            'description' => $this->humanString($experience['description'], 150)
                         ]
                     );
                 }
@@ -296,48 +287,54 @@ class TalentImprtCVController extends Controller
     {
         if (!empty($resumeData['education']) && is_array($resumeData['education'])) {
             foreach ($resumeData['education'] as $education) {
-                $countryRecord = null;
-                if (!empty($education['country'])) {
-                    $countryRecord = Country::where('name', $education['country'])->first();
-                }
+                info($education);
+                if($education['school']){
+                    $countryRecord = null;
+                    if (!empty($education['country'])) {
+                        $countryRecord = Country::where('name', $education['country'])->first();
+                    }
 
-                CvEducation::updateOrCreate(
-                    [
-                        'cv_id' => $cv->id,
-                        'school' => $education['school'] ?? '',
-                        'start_date' => $education['start_date'] ?? null,
-                    ],
-                    [
-                        'course_of_study_id' => $education['course_of_study_id'] ?? null,
-                        'degree_id' => $education['degree_id'] ?? null,
-                        'city' => $education['city'] ?? '',
-                        'country_code' => $countryRecord?->code,
-                        'end_date' => $education['end_date'] ?? null,
-                        'is_current' => $education['is_current'] ?? false,
-                        'description' => $education['description'] ?? ''
-                    ]
-                );
+                    CvEducation::updateOrCreate(
+                        [
+                            'cv_id' => $cv->id,
+                            'school' => $education['school'] ?? '',
+                            'start_date' => $this->strToDate($education['start_date']) ?? null,
+                        ],
+                        [
+                            'course_of_study_id' => $education['course_of_study_id'] ?? null,
+                            'degree_id' => $education['degree_id'] ?? null,
+                            'city' => $this->humanString($education['city']) ?? '',
+                            'country_code' => $countryRecord?->code,
+                            'is_current' => $education['is_current'] ?? false,
+                            'end_date' => $this->strToDate($education['end_date'] )?? null,
+                            'description' => $this->humanString($education['description'], 150) ?? ''
+                        ]
+                    );
+                }
             }
         }
     }
-
     /**
      * Update certifications
      */
     protected function updateCertifications(CV $cv, array $resumeData): void
     {
         if (!empty($resumeData['certifications']) && is_array($resumeData['certifications'])) {
+            info('Certification');
             foreach ($resumeData['certifications'] as $certification) {
-                CvCertification::updateOrCreate(
-                    [
-                        'cv_id' => $cv->id,
-                        'institution' => $certification['institution'] ?? '',
-                        'certification_course_id' => $certification['certification_course_id'] ?? null,
-                    ],
-                    [
-                        'start_date' => $certification['start_date'] ?? null,
-                    ]
-                );
+                info($certification);
+                if($certification['institution'] && $certification['start_date']){
+                    CvCertification::updateOrCreate(
+                        [
+                            'cv_id' => $cv->id,
+                            'institution' => $this->humanString($certification['institution']),
+                            'start_date' => $this->strToDate($certification['start_date']) ?? null,
+                        ],
+                        [
+                            'certification_course_id' => ($certification['certification_course_id']) ?? 1,
+                        ]
+                    );
+                }
             }
         }
     }
@@ -348,16 +345,23 @@ class TalentImprtCVController extends Controller
     protected function updateSkills(CV $cv, array $resumeData): void
     {
         if (!empty($resumeData['skills']) && is_array($resumeData['skills'])) {
+            info('Skills');
             foreach ($resumeData['skills'] as $skill) {
-                TalentCompetency::updateOrCreate(
-                    [
-                        'cv_id' => $cv->id,
-                        'competency' => $skill['name'] ?? '',
-                    ],
-                    [
-                        'level' => $skill['level'] ?? 'Intermediate'
-                    ]
-                );
+                // info($skill);
+                $setup = CompetencySetup::where('competency', 'LIKE', '%' . trim($skill) . '%')->first();
+
+                if($setup){
+                    TalentCompetency::updateOrCreate(
+                        [
+                            'user_id' => $cv->user_id,
+                            'cv_id' => $cv->id,
+                            'competency' => $setup->competency,
+                        ],
+                        [
+                            'level' => 'intermediate'
+                        ]
+                    );
+                }
             }
         }
     }

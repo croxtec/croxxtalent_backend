@@ -20,7 +20,6 @@ class CvImportParser
         // Initialize empty sections
         $sections = [
             'summary' => '',
-            'job_title' => '',
             'contact_info' => [],
             'work_experience' => [],
             'education' => [],
@@ -29,6 +28,7 @@ class CvImportParser
             'languages' => [],
             'projects' => [],
             'awards' => [],
+            'hobbies' => []
         ];
 
         // Log original content for debugging
@@ -47,80 +47,76 @@ class CvImportParser
         $sectionMarkers = [
             'summary' => [
                 'patterns' => [
-                    '/\b(Professional\s+Summary|Summary|Profile|About\s+Me|Career\s+Objective)\s*[:.]\s*(.*?)(?=\n\s*\b(?:Experience|Education|Skills|Languages|Certifications|Projects|Awards)\b|\z)/is',
-                    '/\b(Career\s+Summary|Executive\s+Summary|Personal\s+Statement)\s*[:.]\s*(.*?)(?=\n\s*\b(?:Experience|Education|Skills|Languages|Certifications|Projects|Awards)\b|\z)/is',
-                    '/\b(Objective|Professional\s+Profile|Summary\s+of\s+Qualifications)\s*[:.]\s*(.*?)(?=\n\s*\b(?:Experience|Education|Skills|Languages|Certifications|Projects|Awards)\b|\z)/is',
-                    '/\b(Career\s+Highlights|Professional\s+Objective|Overview)\s*[:.]\s*(.*?)(?=\n\s*\b(?:Experience|Education|Skills|Languages|Certifications|Projects|Awards)\b|\z)/is'
+                    '/\b(Professional\s+Summary|Summary|Profile|About\s+Me|Career\s+Objective|Personal\s+Summary|Introduction|Objective|Career\s+Overview|Personal\s+Profile)\s*[:.\-]*\s*(.*?)(?=\n\s*\b(?:Experience|Education|Skills|Languages|Certifications|Projects|Awards|Employment|Work\s+History)\b|\z)/is',
+                    '/\b(Career\s+Summary|Executive\s+Summary|Personal\s+Statement|Overview|Summary\s+Statement)\s*[:.\-]*\s*(.*?)(?=\n\s*\b(?:Experience|Education|Skills|Languages|Certifications|Projects|Awards|Employment|Work\s+History)\b|\z)/is',
                 ],
                 'type' => 'text'
             ],
             'work_experience' => [
                 'patterns' => [
-                    '/\b(Work\s+Experience|Professional\s+Experience|Employment\s+History|Experience)\s*[:.]\s*(.*?)(?=\n\s*\b(?:Education|Skills|Languages|Certifications|Projects|Awards)\b|\z)/is',
-                    '/\b(Employment\s+Experience|Career\s+Experience|Work\s+History)\s*[:.]\s*(.*?)(?=\n\s*\b(?:Education|Skills|Languages|Certifications|Projects|Awards)\b|\z)/is',
-                    '/\b(Professional\s+Background|Career\s+History)\s*[:.]\s*(.*?)(?=\n\s*\b(?:Education|Skills|Languages|Certifications|Projects|Awards)\b|\z)/is'
+                    '/\b(Work\s+Experience|Professional\s+Experience|Employment\s+History|Experience|Career\s+History|Job\s+Experience|Work\s+and\s+Employment\s+History)\s*[:.\-]*\s*(.*?)(?=\n\s*\b(?:Education|Skills|Languages|Certifications|Projects|Awards|Hobbies)\b|\z)/is',
+                    '/\b(Employment\s+Experience|Career\s+Experience|Work\s+History|Job\s+Experience)\s*[:.\-]*\s*(.*?)(?=\n\s*\b(?:Education|Skills|Languages|Certifications|Projects|Awards|Hobbies)\b|\z)/is',
                 ],
                 'type' => 'experience'
             ],
             'education' => [
                 'patterns' => [
-                    '/\b(Education|Academic\s+Background|Educational\s+Qualifications)\s*[:.]\s*(.*?)(?=\n\s*\b(?:Experience|Skills|Languages|Certifications|Projects|Awards)\b|\z)/is',
-                    '/\b(Academic\s+History|Educational\s+Background|Education\s+Details)\s*[:.]\s*(.*?)(?=\n\s*\b(?:Experience|Skills|Languages|Certifications|Projects|Awards)\b|\z)/is',
-                    '/\b(Scholastic\s+Achievements|Academic\s+Qualifications|Educational\s+History)\s*[:.]\s*(.*?)(?=\n\s*\b(?:Experience|Skills|Languages|Certifications|Projects|Awards)\b|\z)/is'
+                    '/\b(Education|Academic\s+Background|Educational\s+Qualifications|Academic\s+Experience|Education\s+and\s+Training)\s*[:.\-]*\s*(.*?)(?=\n\s*\b(?:Experience|Skills|Languages|Certifications|Projects|Awards|Hobbies)\b|\z)/is',
+                    '/\b(Academic\s+History|Education\s+Details|Educational\s+Background|Scholastic\s+Achievements|Education\s+Background)\s*[:.\-]*\s*(.*?)(?=\n\s*\b(?:Experience|Skills|Languages|Certifications|Projects|Awards|Hobbies)\b|\z)/is',
                 ],
                 'type' => 'education'
             ],
             'skills' => [
                 'patterns' => [
-                    '/\b(Skills|Technical\s+Skills|Core\s+Competencies|Key\s+Skills)\s*[:.]\s*(.*?)(?=\n\s*\b(?:Experience|Education|Languages|Certifications|Projects|Awards)\b|\z)/is',
-                    '/\b(Professional\s+Skills|Key\s+Competencies|Core\s+Skills)\s*[:.]\s*(.*?)(?=\n\s*\b(?:Experience|Education|Languages|Certifications|Projects|Awards)\b|\z)/is',
-                    '/\b(Strengths|Key\s+Strengths|Competencies)\s*[:.]\s*(.*?)(?=\n\s*\b(?:Experience|Education|Languages|Certifications|Projects|Awards)\b|\z)/is'
+                    '/\b(Skills|Technical\s+Skills|Core\s+Competencies|Key\s+Skills|Skill\s+Set|Relevant\s+Skills|Professional\s+Skills|Specialized\s+Skills)\s*[:.\-]*\s*(.*?)(?=\n\s*\b(?:Experience|Education|Languages|Certifications|Projects|Awards|Hobbies)\b|\z)/is',
+                    '/\b(Strengths|Key\s+Strengths|Competencies|Abilities|Key\s+Competencies)\s*[:.\-]*\s*(.*?)(?=\n\s*\b(?:Experience|Education|Languages|Certifications|Projects|Awards|Hobbies)\b|\z)/is',
                 ],
                 'type' => 'list'
             ],
             'languages' => [
                 'patterns' => [
-                    '/\b(Languages|Language\s+Skills|Language\s+Proficiency)\s*[:.]\s*(.*?)(?=\n\s*\b(?:Experience|Education|Skills|Certifications|Projects|Awards)\b|\z)/is',
-                    '/\b(Linguistic\s+Abilities|Languages\s+Spoken|Language\s+Knowledge)\s*[:.]\s*(.*?)(?=\n\s*\b(?:Experience|Education|Skills|Certifications|Projects|Awards)\b|\z)/is'
+                    '/\b(Languages|Language\s+Skills|Language\s+Proficiency|Linguistic\s+Abilities|Languages\s+Spoken|Languages\s+and\s+Proficiency)\s*[:.\-]*\s*(.*?)(?=\n\s*\b(?:Experience|Education|Skills|Certifications|Projects|Awards|Hobbies)\b|\z)/is',
                 ],
                 'type' => 'list'
             ],
             'certifications' => [
                 'patterns' => [
-                    '/\b(Certifications|Licenses|Professional\s+Certifications)\s*[:.]\s*(.*?)(?=\n\s*\b(?:Experience|Education|Skills|Languages|Projects|Awards)\b|\z)/is',
-                    '/\b(Licenses\s+and\s+Certifications|Certifications\s+and\s+Training)\s*[:.]\s*(.*?)(?=\n\s*\b(?:Experience|Education|Skills|Languages|Projects|Awards)\b|\z)/is',
-                    '/\b(Credentials|Certifications\s+Received|Professional\s+Licenses)\s*[:.]\s*(.*?)(?=\n\s*\b(?:Experience|Education|Skills|Languages|Projects|Awards)\b|\z)/is'
+                    '/\b(Certifications|Licenses|Professional\s+Certifications|Certifications\s+and\s+Training|Credentials|Certifications\s+Received|Professional\s+Licenses)\s*[:.\-]*\s*(.*?)(?=\n\s*\b(?:Experience|Education|Skills|Languages|Projects|Awards|Hobbies)\b|\z)/is',
                 ],
-                'type' => 'list'
+                'type' => 'certification'
             ],
             'projects' => [
                 'patterns' => [
-                    '/\b(Projects|Project\s+Experience|Relevant\s+Projects)\s*[:.]\s*(.*?)(?=\n\s*\b(?:Experience|Education|Skills|Languages|Certifications|Awards)\b|\z)/is',
-                    '/\b(Professional\s+Projects|Major\s+Projects|Notable\s+Projects)\s*[:.]\s*(.*?)(?=\n\s*\b(?:Experience|Education|Skills|Languages|Certifications|Awards)\b|\z)/is'
+                    '/\b(Projects|Project\s+Experience|Relevant\s+Projects|Professional\s+Projects|Major\s+Projects|Notable\s+Projects)\s*[:.\-]*\s*(.*?)(?=\n\s*\b(?:Experience|Education|Skills|Languages|Certifications|Awards|Hobbies)\b|\z)/is',
                 ],
                 'type' => 'list'
             ],
             'hobbies' => [
                 'patterns' => [
-                    '/\b(Hobbies|Interests|Leisure\s+Activities)\s*[:.]\s*(.*?)(?=\n\s*\b(?:Experience|Education|Skills|Languages|Certifications|Projects|Awards)\b|\z)/is',
-                    '/\b(Personal\s+Interests|Leisure\s+Interests|Pastimes)\s*[:.]\s*(.*?)(?=\n\s*\b(?:Experience|Education|Skills|Languages|Certifications|Projects|Awards)\b|\z)/is'
+                    '/\b(Hobbies|Interests|Leisure\s+Activities|Personal\s+Interests|Leisure\s+Interests|Pastimes)\s*[:.\-]*\s*(.*?)(?=\n\s*\b(?:Experience|Education|Skills|Languages|Certifications|Projects|Awards)\b|\z)/is',
                 ],
                 'type' => 'list'
             ],
             'awards' => [
                 'patterns' => [
-                    '/\b(Awards|Honors|Achievements)\s*[:.]\s*(.*?)(?=\n\s*\b(?:Experience|Education|Skills|Languages|Certifications|Projects|Hobbies)\b|\z)/is',
-                    '/\b(Achievements|Recognitions|Awards\s+and\s+Honors)\s*[:.]\s*(.*?)(?=\n\s*\b(?:Experience|Education|Skills|Languages|Certifications|Projects|Hobbies)\b|\z)/is'
+                    '/\b(Awards|Honors|Achievements|Recognitions|Awards\s+and\s+Honors|Distinctions)\s*[:.\-]*\s*(.*?)(?=\n\s*\b(?:Experience|Education|Skills|Languages|Certifications|Projects|Hobbies)\b|\z)/is',
                 ],
                 'type' => 'list'
             ]
         ];
 
+        function sanitizeInput($text) {
+            return  preg_replace('/[^\x20-\x7E]/', '', $text);
+            $sanitized = iconv('UTF-8', 'UTF-8//IGNORE', $text);
+            return $sanitized;
+        }
+
+        $sanitizeContent = sanitizeInput($content);
 
         // Extract each section
         foreach ($sectionMarkers as $sectionKey => $sectionInfo) {
             foreach ($sectionInfo['patterns'] as $pattern) {
-                if (preg_match($pattern, $content, $matches)) {
+                if (preg_match($pattern, $sanitizeContent, $matches)) {
                     $sectionContent = trim($matches[2]);
 
                     if (self::$debug) {
@@ -143,15 +139,11 @@ class CvImportParser
                         case 'list':
                             $sections[$sectionKey] = self::parseList($sectionContent);
                             break;
+                        case 'certification':
+                            $sections[$sectionKey] = self::parseCertification($sectionContent);
+                            break;
                     }
                 }
-            }
-        }
-
-        // Extract job title if not found in sections
-        if (empty($sections['job_title'])) {
-            if (preg_match('/^([^\n\r]+)/u', $content, $matches)) {
-                $sections['job_title'] = self::cleanText($matches[1]);
             }
         }
 
@@ -222,6 +214,7 @@ class CvImportParser
                 'employer' => '',
                 'start_date' => '',
                 'end_date' => '',
+                'city' => '',
                 'is_current' => false,
                 'description' => ''
             ];
@@ -233,10 +226,21 @@ class CvImportParser
                 $experience['is_current'] = stripos($matches[2], 'Present') !== false || stripos($matches[2], 'Current') !== false;
             }
 
-            // Extract job title and employer
-            if (preg_match('/^(.+?)(?:at|with|for)?\s*([^,\n]+)/i', $block, $matches)) {
+            // Extract job title, employer, and city
+            if (preg_match('/^(.+?)(?:at|with|for)?\s*([^,\n]+)(?:,\s*([^,\n]+))?/i', $block, $matches)) {
                 $experience['job_title'] = trim($matches[1]);
                 $experience['employer'] = trim($matches[2]);
+                // Extract city if it exists in the matches
+                if (isset($matches[3])) {
+                    $experience['city'] = trim($matches[3]);
+                }
+            }
+
+            // Try to extract city from a separate line if not found above
+            if (empty($experience['city'])) {
+                if (preg_match('/\b(?:in|at|located\sin)\s+([^,\n]+(?:,\s*[A-Z]{2})?)/i', $block, $cityMatches)) {
+                    $experience['city'] = trim($cityMatches[1]);
+                }
             }
 
             // Extract description
@@ -299,6 +303,59 @@ class CvImportParser
         return $education;
     }
 
+    protected static function parseCertification(string $content): array
+    {
+        $certifications = [];
+
+        // Split content into individual certification blocks
+        $blocks = preg_split('/\n(?=(?:\d{4}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)))/i', $content);
+
+        foreach ($blocks as $block) {
+            if (empty(trim($block))) continue;
+
+            $certification = [
+                'institution' => '',
+                'date' => '',
+                'certification_course' => ''
+            ];
+
+            // Extract date
+            if (preg_match('/(\d{4}|\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4})/i', $block, $matches)) {
+                $certification['date'] = trim($matches[1]);
+            }
+
+            // Extract certification course and institution
+            // Pattern 1: "Certification Name from Institution"
+            if (preg_match('/^(.+?)\s+(?:from|by|at|through)\s+(.+?)(?:\s+|\n|$)/i', $block, $matches)) {
+                $certification['certification_course'] = trim($matches[1]);
+                $certification['institution'] = trim($matches[2]);
+            }
+            // Pattern 2: "Institution - Certification Name"
+            elseif (preg_match('/^(.+?)\s*[-–]\s*(.+?)(?:\s+|\n|$)/i', $block, $matches)) {
+                $certification['institution'] = trim($matches[1]);
+                $certification['certification_course'] = trim($matches[2]);
+            }
+            // Pattern 3: Just certification name (if no clear institution)
+            else {
+                $lines = array_filter(array_map('trim', explode("\n", $block)));
+                if (!empty($lines)) {
+                    $certification['certification_course'] = reset($lines);
+                }
+            }
+
+            // Clean up and add if we have at least a certification name
+            if (!empty($certification['certification_course'])) {
+                // Remove date information from course name if it was accidentally included
+                $certification['certification_course'] = preg_replace('/\b\d{4}\b|\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4}\b/i', '', $certification['certification_course']);
+                $certification['certification_course'] = trim($certification['certification_course']);
+
+                $certifications[] = $certification;
+            }
+        }
+
+        return $certifications;
+    }
+
     /**
      * Parse list-type sections (skills, languages)
      */
@@ -338,7 +395,7 @@ class CvImportParser
         // Normalize whitespace
         $text = preg_replace('/\s+/', ' ', $text);
 
-        // Remove bullet points and list markers
+    // Remove bullet points and list markers
         $text = preg_replace('/^[•·⋅◦∙◾◽▪▫-]\s*/', '', $text);
 
         // Normalize quotes
@@ -357,28 +414,95 @@ class CvImportParser
     /**
      * Extract contact information
      */
+    /**
+ * Extract contact information from resume content
+ *
+ * @param string $content The resume content to parse
+ * @return array Extracted contact information
+ */
     protected static function extractContactInfo(string $content): array
     {
-        $contact = [];
+        $contact = [
+            'email' => '',
+            'phone' => '',
+            'address' => '',
+            'city' => '',
+            'state' => '',
+            'country' => '',
+            'postal_code' => '',
+            // 'linkedin' => ''
+        ];
 
-        // Email
-        if (preg_match('/[\w\.-]+@[\w\.-]+\.\w+/', $content, $matches)) {
-            $contact['email'] = $matches[0];
+        // Email extraction - handles various email formats
+        if (preg_match('/\b[\w\.-]+@[\w\.-]+\.\w{2,}\b/', $content, $matches)) {
+            $contact['email'] = strtolower(trim($matches[0]));
         }
 
-        // Phone
-        if (preg_match('/(?:(?:\+|00)[1-9]\d{0,3}[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/', $content, $matches)) {
-            $contact['phone'] = $matches[0];
-        }
+        // Phone extraction - handles international and domestic formats
+        $phonePatterns = [
+            // International format: +1-234-567-8900, +1 (234) 567-8900
+            '/(?:\+\d{1,4}[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/',
+            // Alternative format: 234.567.8900
+            '/\b\d{3}[.-]\d{3}[.-]\d{4}\b/',
+            // Basic format: 2345678900
+            '/\b\d{10}\b/'
+        ];
 
-        // Location/Address
-        if (preg_match('/(?:Address|Location):\s*([^,\n]+)(?:,\s*([^,\n]+))?/', $content, $matches)) {
-            $contact['address'] = trim($matches[1]);
-            if (isset($matches[2])) {
-                $contact['city'] = trim($matches[2]);
+        foreach ($phonePatterns as $pattern) {
+            if (preg_match($pattern, $content, $matches)) {
+                $contact['phone'] = preg_replace('/[^\d+]/', '', $matches[0]);
+                break;
             }
         }
 
-        return $contact;
+        // Location extraction - handles various address formats
+        $addressPatterns = [
+            // Full address with labels
+            '/(?:Address|Location|Residence):\s*([^,\n]+)(?:,\s*([^,\n]+))?(?:,\s*([A-Z]{2})\s*)?(?:,?\s*(\d{5}(?:-\d{4})?))?\s*(?:,\s*([^,\n]+))?/i',
+            // Address without labels
+            '/(\d+[^,\n]+)(?:,\s*([^,\n]+))?(?:,\s*([A-Z]{2})\s*)?(?:,?\s*(\d{5}(?:-\d{4})?))?\s*(?:,\s*([^,\n]+))?/i'
+        ];
+
+        foreach ($addressPatterns as $pattern) {
+            if (preg_match($pattern, $content, $matches)) {
+                $contact['address'] = trim($matches[1]);
+                if (!empty($matches[2])) {
+                    $contact['city'] = trim($matches[2]);
+                }
+                if (!empty($matches[3])) {
+                    $contact['state'] = strtoupper(trim($matches[3]));
+                }
+                if (!empty($matches[4])) {
+                    $contact['postal_code'] = trim($matches[4]);
+                }
+                if (!empty($matches[5])) {
+                    $contact['country'] = trim($matches[5]);
+                }
+                break;
+            }
+        }
+
+        // City and Country fallback - if not found in address
+        if (empty($contact['city'])) {
+            if (preg_match('/(?:City|Location):\s*([^,\n]+)/i', $content, $matches)) {
+                $contact['city'] = trim($matches[1]);
+            }
+        }
+
+        if (empty($contact['country'])) {
+            if (preg_match('/(?:Country):\s*([^,\n]+)/i', $content, $matches)) {
+                $contact['country'] = trim($matches[1]);
+            }
+        }
+
+        // LinkedIn profile extraction
+        // if (preg_match('/(?:linkedin\.com\/in\/)([\w-]+)/?/i', $content, $matches)) {
+        //     $contact['linkedin'] = 'linkedin.com/in/' . $matches[1];
+        // }
+
+        // Clean up empty values
+        return array_filter($contact, function($value) {
+            return !empty($value);
+        });
     }
 }
