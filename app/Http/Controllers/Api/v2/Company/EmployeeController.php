@@ -119,7 +119,7 @@ class EmployeeController extends Controller
                 $validatedData['department_role_id'] = $department_role->id;
             }
 
-
+            $validatedData['photo_url'] =  'https://res.cloudinary.com/dwty1bg7o/image/upload/v1721470055/l199zpjiq1t23uroq7g7ki1xi20hh_kwfrhy.png';
             $employee =  Employee::create($validatedData);
 
             if(isset($employer->onboarding_stage) && $employer->onboarding_stage == 1){

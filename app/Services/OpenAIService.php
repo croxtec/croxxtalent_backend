@@ -237,7 +237,7 @@ class OpenAIService
                     'messages' => [
                         [
                             'role' => 'system',
-                            'content' => 'You are an educational content creator tasked with generating detailed lessons based on the course title, department, and experience level. Generate 4 lessons, each structured in a JSON response with the following fields: "title", "description", "level", and "keywords". The output should be in the format: [{"title": "<Lesson Title>", "description": "<Lesson Content>", "level": "<Lesson Level>", "keywords": "<[2 - 3 Keywords]>"}]. Ensure that each description provides comprehensive, detailed content that effectively teaches the lesson, and does not exceed 3400 words. The competency should be based on the lesson title.',
+                            'content' => 'You are an educational content creator tasked with generating detailed lessons based on the course title, department, and experience level. Generate 4 lessons, each structured in a JSON response with the following fields: "title", "content", "level", and "keywords". The output should be in the format: [{"title": "<Lesson Title>", "content": "<Main Lesson Content>", "level": "<Lesson Level>", "keywords": "[<2 - 3 Keywords>]"}]. Ensure that the "content" field provides comprehensive, detailed information that effectively teaches the lesson, and does not exceed 3400 words. The lesson’s competency should align with the lesson title.',
                         ],
                         [
                             'role' => 'user',
@@ -269,6 +269,7 @@ class OpenAIService
             throw new \Exception("Error generating course lessons: " . $e->getMessage());
         }
     }
+
 
     public function generateCompetenciesByJobTitle($job_title)
     {

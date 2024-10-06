@@ -181,12 +181,12 @@ class CourseController extends Controller
                         'level' => strtolower($lesson['level']),
                         'alias' => Str::slug($lesson['title']),
                         'title' => $lesson['title'],
-                        'description' => $lesson['description'],
+                        'description' => $lesson['content'],
                         'keywords' => json_encode($lesson['keywords']),  // Convert keywords array to JSON
                         'generated_id' => $user->id
                     ]);
                 } catch (\Exception $e) {
-                    \Log::error('Error saving generated lesson: ' . $e->getMessage());
+                    // \Log::error('Error saving generated lesson: ' . $e->getMessage());
                 }
             }
 

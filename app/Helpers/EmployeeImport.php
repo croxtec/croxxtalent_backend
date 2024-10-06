@@ -124,7 +124,7 @@ class EmployeeImport implements ToModel, WithHeadingRow
             }
 
             if(isset($supervisor)){
-                if(strtolower(trim($supervisor)) == 'yes '){
+                if(strtolower(trim($supervisor)) == 'yes'){
                     $isSupervisor = Supervisor::where('supervisor_id',  $isEmployer->id)
                                             ->where('employer_id', $this->employer->id)->first();
 

@@ -35,47 +35,52 @@ class TalentImprtCVController extends Controller
      */
     public function importResume(Request $request)
     {
-        // Authorization was declared in the Form Request
-        $user = $request->user();
-        $cv = CV::where('user_id', $user->id)->firstorFail();
-        // Validate the uploaded file
-        $request->validate([
-            'cv' => 'required|file|mimes:pdf,docx|max:2048',
-        ]);
+        try{
+            $user = $request->user();
+            $cv = CV::where('user_id', $user->id)->firstorFail();
+            // Validate the uploaded file
+            $request->validate([
+                'cv' => 'required|file|mimes:pdf,docx|max:2048',
+            ]);
 
-        $file = $request->file('cv');
-        $path = $file->getPathname();
+            $file = $request->file('cv');
+            $path = $file->getPathname();
 
-        $content = '';
-        $content = $this->extractContent($file, $path);
+            $content = '';
+            $content = $this->extractContent($file, $path);
 
-        // Extract sections from the content
-        // $sections = CVParser::extractSections($content);
-        // $resume = CVParser::extractResumeSections($content);
+            // Extract sections from the content
+            // $sections = CVParser::extractSections($content);
+            // $resume = CVParser::extractResumeSections($content);
 
-        $cv = CV::where('user_id', $user->id)->firstorFail();
+            $cv = CV::where('user_id', $user->id)->firstorFail();
 
-        $resumeData = CvImportParser::extractResumeSections($content);
+            $resumeData = CvImportParser::extractResumeSections($content);
 
+            if (!$resumeData) {
+                throw new Exception('Unable to parse CV content');
+            }
 
-        if (!$resumeData) {
-            throw new Exception('Unable to parse CV content');
+            $this->updatePersonalInfo($cv, $resumeData);
+            $this->updateLanguages($cv, $resumeData);
+            $this->updateWorkExperience($cv, $resumeData);
+            $this->updateEducation($cv, $resumeData);
+            $this->updateSkills($cv, $resumeData);
+            $this->updateCertifications($cv, $resumeData);
+
+            // Storage::disk('local')->delete($path);
+
+            return response()->json([
+                'status' => true,
+                'message' =>  "Resume imported successfully! Please review the information to ensure everything is accurate.",
+                'data' => [], //compact('resumeData')
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => "Resume import failed. Please fill in the required fields on the Resume Builder."
+            ], 422);
         }
-
-        $this->updatePersonalInfo($cv, $resumeData);
-        $this->updateLanguages($cv, $resumeData);
-        $this->updateWorkExperience($cv, $resumeData);
-        $this->updateEducation($cv, $resumeData);
-        $this->updateSkills($cv, $resumeData);
-        $this->updateCertifications($cv, $resumeData);
-
-        // Storage::disk('local')->delete($path);
-
-        return response()->json([
-            'status' => true,
-            'message' => "Resume imported successfully. Kindly review the imported information.",
-            'data' => [], //compact('resumeData')
-        ], 200);
 
     }
 
@@ -234,7 +239,7 @@ class TalentImprtCVController extends Controller
                 info($languageName);
                 $language = Language::where('name', 'LIKE', '%' . trim($languageName) . '%')->first();
                 if ($language) {
-                    CvLanguage::create([
+                    CvLanguage::updateOrCreate([
                         'cv_id' => $cv->id,
                         'language_id' => $language->id,
                         'level' => 'intermediate'

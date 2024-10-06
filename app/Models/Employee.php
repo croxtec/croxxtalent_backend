@@ -58,7 +58,6 @@ class Employee extends Model
         return $this->belongsTo('App\Models\Supervisor', 'supervisor_id', 'id');
     }
 
-
     public function verifications()
     {
         return $this->morphMany('App\Models\Verification', 'verifiable');
