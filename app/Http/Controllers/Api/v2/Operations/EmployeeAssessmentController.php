@@ -65,7 +65,7 @@ class EmployeeAssessmentController extends Controller
                 'assessment_id' => $assessment->id
             ])->count();
 
-            $assessment->percentage = ($total_answered / $assessment->total_questions) * 100;
+            $assessment->percentage = ($total_answered / ($assessment->total_questions ?? 1)) * 100;
             // Convert the total duration in minutes to hours, minutes, and seconds
             $minutes = floor($total_duration_seconds / 60);
             $seconds = $total_duration_seconds % 60;
@@ -294,7 +294,7 @@ class EmployeeAssessmentController extends Controller
                 $talentField => $talent,
             ])->sum('evaluation_result');
 
-            $graded_score = ((int)$assessment_score / $total_score) * 100;
+            $graded_score = ((int)$assessment_score / $total_score ?? 1) * 100;
             $graded_score = (int)$graded_score;
 
             if ($graded_score >= 95) {

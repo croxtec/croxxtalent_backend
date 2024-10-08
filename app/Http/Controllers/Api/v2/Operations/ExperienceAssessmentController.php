@@ -125,7 +125,7 @@ class ExperienceAssessmentController extends Controller
             // Create assessment
             $assessment = CroxxAssessment::create($validatedData);
             $assessment->competencies()->attach($competency_ids);
-             info('REACH here');
+            //  info('REACH here');
             // Create assigned employees
             $employeeInstances = [];
             $supervisorInstances = [];
