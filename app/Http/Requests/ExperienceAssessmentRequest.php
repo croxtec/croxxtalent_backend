@@ -48,6 +48,7 @@ class ExperienceAssessmentRequest extends FormRequest
                     'description' => 'nullable|max:250',
                     'validity_period' => 'nullable|date',
                     'expected_score' => 'required|integer',
+                    'delivery_type' => 'nullable|in:quiz,classroom,on_the_job,assessment,experience,exam,external',
                     'is_published' => 'required|boolean',
 
                     'competency_ids.*' => 'required|integer|exists:department_mappings,id',
@@ -63,7 +64,6 @@ class ExperienceAssessmentRequest extends FormRequest
                     'supervisors' => 'required_if:type,company|array',
                     'employees.*' => 'integer|exists:employees,id',
                     'supervisors.*' => 'nullable|integer|exists:employees,id',
-                    'delivery_type' => 'nullable|in:quiz,classroom,on_the_job,assessment,experience,exam,external',
                 ];
             case 'PUT':
             case 'PATCH':

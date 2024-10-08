@@ -95,6 +95,7 @@ class TalentCompetencyController extends Controller
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'desc');
 
+        $generalKnowlegeIds = CompetencySetup::where('job_title', 'General Knowledge')->pluck('id')->toArray();
         if ($user->cv?->job_title_name) {
             $suggestion = CompetencySetup::where('job_title', $user->cv->job_title_name)->get();
         } else {
@@ -102,6 +103,7 @@ class TalentCompetencyController extends Controller
         }
 
         $careerIds = $suggestion->pluck('id')->toArray();
+        $careerIds = array_merge($careerIds, $generalKnowlegeIds);
 
         $trainings = CroxxTraining::whereIn('type', ['training', 'competency'])
                         ->whereIn('career_id', $careerIds)
@@ -170,6 +172,7 @@ class TalentCompetencyController extends Controller
 
         $careers = TalentCompetency::with('getCareerByCompetency')->where('user_id', $user->id)->get();
         $careerIds = $careers->pluck('getCareerByCompetency.id')->toArray();
+        $generalKnowlegeIds = CompetencySetup::where('job_title', 'General Knowledge')->pluck('id')->toArray();
 
         if ($user->cv?->job_title_name) {
             $suggestion = CompetencySetup::where('job_title', $user->cv->job_title_name)
@@ -179,6 +182,7 @@ class TalentCompetencyController extends Controller
         }
 
         $suggestionIds = $suggestion->pluck('id')->toArray();
+        $suggestionIds = array_merge($suggestionIds, $generalKnowlegeIds);
 
         $assessments = CroxxAssessment::with('career')->where('category', 'competency_evaluation')
                         ->where('type','competency_match')
