@@ -122,10 +122,10 @@ class ExperienceAssessmentController extends Controller
                  $validatedData['user_id'] = $validatedData['supervisor_id'];
              }
 
-             // Create assessment
-             $assessment = CroxxAssessment::create($validatedData);
-             $assessment->competencies()->attach($competency_ids);
-
+            // Create assessment
+            $assessment = CroxxAssessment::create($validatedData);
+            $assessment->competencies()->attach($competency_ids);
+             info('REACH here');
             // Create assigned employees
             $employeeInstances = [];
             $supervisorInstances = [];
@@ -180,12 +180,10 @@ class ExperienceAssessmentController extends Controller
                 }
             }
 
-            // Send email notifications to employees
             if ($employeeCollection->isNotEmpty()) {
                 Notification::send($employeeCollection, new AssessmentPublishedNotification($assessment, 'employee'));
             }
 
-            // Send email notifications to supervisors
             if ($supervisorCollection->isNotEmpty()) {
                 Notification::send($supervisorCollection, new AssessmentPublishedNotification($assessment, 'supervisor'));
             }
