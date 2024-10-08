@@ -168,14 +168,14 @@ class ExperienceAssessmentController extends Controller
 
             foreach ($employeeInstances as $assignedEmployee) {
                 $employee = Employee::find($assignedEmployee->employee_id);
-                if ($employee) {
+                if ($employee->talent) {
                     $employeeCollection->push($employee->talent);
                 }
             }
 
             foreach ($supervisorInstances as $assignedEmployee) {
                 $supervisor = Employee::find($assignedEmployee->employee_id);
-                if ($supervisor) {
+                if ($supervisor->talent) {
                     $supervisorCollection->push($supervisor->talent);
                 }
             }

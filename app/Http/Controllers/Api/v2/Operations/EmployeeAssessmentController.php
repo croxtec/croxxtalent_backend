@@ -58,7 +58,7 @@ class EmployeeAssessmentController extends Controller
 
         foreach ($assessments as $assessment) {
             $total_duration_seconds = $assessment->questions->sum('duration');
-            $assessment->total_questions = $assessment->questions->count();
+            $assessment->total_questions = $assessment->questions->count() ?? 1;
 
             $total_answered = TalentAnswer::where([
                 'employee_id' => $employee?->id,
