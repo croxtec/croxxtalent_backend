@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Validator;
 
 use App\Mail\PasswordReset;
 use App\Mail\PasswordChanged;
+use App\Models\Employee;
 
 class AuthController extends Controller
 {
@@ -98,11 +99,6 @@ class AuthController extends Controller
             $user->save();
         }
 
-        if (!$user->username) {
-            // $user->password = bcrypt($validatedData['password']);
-            // $user->save();
-        }
-
         if ($user->is_active !== true) {
             $user->is_active = true;
             $user->save();
@@ -111,13 +107,20 @@ class AuthController extends Controller
                 'message' => 'Your account is inactive, please contact support admin.'
             ], 401);
         }
+
+        //
+        $companies = Employee::where('email', $user->email)->whereNotNull('email_verified_at')
+                    ->whereNull('user_id')->get();
+
+        if ($companies->count()) {
+            foreach ($companies as $company) {
+                $company->update(['user_id' => $user->id, 'status' => 1]);
+            }
+        }
+
         // create token
         array_push($abilities, "access:{$user->type}");
         $token =  $user->createToken('access-token', $abilities)->plainTextToken;
-        // Add token to access the secondary server
-        // $external_token = (string) Str::orderedUuid();// Str::random(32);
-        // $user->token = $external_token;
-        // $user->save();
 
         // save audit trail log
         $old_values = [];

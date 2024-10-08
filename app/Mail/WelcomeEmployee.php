@@ -43,15 +43,25 @@ class WelcomeEmployee extends Mailable
      */
     public function build()
     {
-        $subject = 'Welcome To ' .$this->employer->company_name;
-        $emoji = "=E2=9A=A1";// Yellow hazard symbol
-        //add emoji before the subject
+        $isTalent = $this->employee->talent;
+        $subject = 'Welcome To ' . $this->employer->company_name;
+        $emoji = "=E2=9A=A1"; // Yellow hazard symbol
+
+        // Customize the subject based on employee type
+        if ($isTalent) {
+            $subject = "Exciting Opportunities Await You at " . $this->employer->company_name;
+        } else {
+            $subject = "Welcome to " . $this->employer->company_name . "! We're Glad to Have You";
+        }
+
+        // Add emoji before the subject
         $subject = "=?UTF-8?Q?" . $emoji . quoted_printable_encode(' ' . $subject) . "?=";
 
         return $this->subject($subject)
                     ->view('api.emails.welcome_employee_email')
                     ->text('api.emails.welcome_employee_email_plain')
                     ->with([
+                        'is_talent' => $isTalent,
                         'company_name' => $this->employer->company_name,
                         'name' => $this->employee->name,
                         'email' => $this->employee->email,
