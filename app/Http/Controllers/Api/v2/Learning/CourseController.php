@@ -155,8 +155,10 @@ class CourseController extends Controller
         $user = $request->user();
         $training = CroxxTraining::findOrFail($id);
 
+        $department =( $training->type == 'company') ? $training->department?->job_code : $training->career?->competency;
+
         $course = [
-            'department' => trim($training->department?->job_code),
+            'department' =>  trim($department ?? ''),
             'title' => $training->title,
             'level' => $training->experience_level,
         ];
@@ -165,7 +167,7 @@ class CourseController extends Controller
             // ->where('alias', Str::slug($course['title']))
             ->where('level', $course['level'])
             ->inRandomOrder()
-            ->limit(12)
+            ->limit(9)
             ->get();
 
         // If less than 10 lessons exist, generate more lessons using OpenAI

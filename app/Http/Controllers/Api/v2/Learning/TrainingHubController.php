@@ -129,17 +129,18 @@ class TrainingHubController extends Controller
         $sort_dir = $request->input('sort_dir', 'desc');
         $search = $request->input('search');
 
-
+        $generalKnowlegeIds = CompetencySetup::where('job_title', 'General Knowledge')->pluck('id')->toArray();
         if ($user->cv?->job_title_name) {
             $suggestion = CompetencySetup::where('job_title', $user->cv->job_title_name)->get();
         } else {
             $suggestion = collect();
         }
+
         $careers = TalentCompetency::with('getCareerByCompetency')->where('user_id', $user->id)->get();
         $careerIdsFromCompetency = $careers->pluck('getCareerByCompetency.id')->toArray();
         $careerIdsFromSuggestion = $suggestion->pluck('id')->toArray();
 
-        $careerIds = array_unique(array_merge($careerIdsFromCompetency, $careerIdsFromSuggestion));
+        $careerIds = array_unique(array_merge($careerIdsFromCompetency, $careerIdsFromSuggestion, $generalKnowlegeIds));
 
         $trainings = CroxxTraining::whereIn('type', ['training', 'competency'])
                         ->whereIn('career_id', $careerIds)

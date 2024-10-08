@@ -41,6 +41,11 @@ class CroxxTraining extends Model
                     ->select(['id','job_code', 'job_title']);
     }
 
+    public function career(){
+        return $this->belongsTo('App\Models\Competency\CompetencySetup', 'career_id', 'id')
+                    ->select(['id','competency', 'job_title']);
+    }
+
     public function getTotalLessonsAttribute()
     {
         return $this->hasMany('App\Models\Training\CroxxLesson', 'training_id', 'id')

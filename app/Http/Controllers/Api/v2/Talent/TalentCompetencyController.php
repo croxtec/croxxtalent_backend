@@ -223,11 +223,11 @@ class TalentCompetencyController extends Controller
         $sort_dir = $request->input('sort_dir', 'desc');
 
         $ids = TalentAssessmentSummary::where('talent_id', $user->id)
-            ->latest()->limit(3)->inRandomOrder()
-            ->pluck('assessment_id')->toArray();
+                        ->latest()->limit(3)->inRandomOrder()
+                        ->pluck('assessment_id')->toArray();
 
         $assessments = CroxxAssessment::whereIn('id', $ids)
-                         ->limit($per_page)->latest()->get();
+                        ->limit($per_page)->latest()->get();
 
         foreach ($assessments as $assessment) {
             $total_duration_seconds = $assessment->questions->sum('duration');
@@ -241,12 +241,15 @@ class TalentCompetencyController extends Controller
                 'talent_id' => $user?->id,
                 'assessment_id' => $assessment->id
             ])->count();
+
             $assessment->percentage = ($total_answered / $assessment->total_questions) * 100;
+
             $assessment->is_feedback  = TalentAssessmentSummary::where([
                 'talent_id' => $user->id,
                 'assessment_id' => $assessment->id,
                 'is_published' => true
             ])->exists();
+
             unset($assessment->questions);
         }
 
