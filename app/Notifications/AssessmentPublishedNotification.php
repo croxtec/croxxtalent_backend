@@ -41,7 +41,7 @@ class AssessmentPublishedNotification extends Notification implements ShouldQueu
         info(['Notifiable', $notifiable]);
 
         return [
-            'notifiable' => $notifiable,
+            // 'notifiable' => $notifiable,
             'user_id' => $notifiable->id,
             'type' => 'ManageAssessment',
             'assessment_id' => $this->assessment->id,
