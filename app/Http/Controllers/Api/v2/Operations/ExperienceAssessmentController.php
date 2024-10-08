@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
-use App\Notifications\AssessmentNotification;
+use App\Notifications\AssessmentPublishedNotification;
 
 use App\Models\Employee;
 use App\Models\Supervisor;
@@ -126,68 +126,68 @@ class ExperienceAssessmentController extends Controller
              $assessment = CroxxAssessment::create($validatedData);
              $assessment->competencies()->attach($competency_ids);
 
-             // Create questions
-             $questions = $validatedData['questions'];
-             foreach ($questions as $question) {
-                 $question['assessment_id'] = $assessment->id;
-                 CompetencyQuestion::create($question);
-             }
+            // Create assigned employees
+            $employeeInstances = [];
+            $supervisorInstances = [];
 
-             // Create assigned employees
-             $employeeInstances = [];
-             $employees = $validatedData['employees'];
-             foreach ($employees as $employee) {
-                 AssignedEmployee::create([
-                     'assessment_id' => $assessment->id,
-                     'employee_id' => $employee,
-                     'is_supervisor' => false
-                 ]);
-             }
-
-             if ($validatedData['type'] == 'company') {
-                 // Create assigned supervisors
-                 $supervisors = $validatedData['supervisors'];
-                 foreach ($supervisors as $supervisor) {
-                    $assignedEmployee =   AssignedEmployee::create([
-                         'assessment_id' => $assessment->id,
-                         'employee_id' => $supervisor,
-                         'is_supervisor' => true
-                     ]);
-                     $employeeInstances[] = $assignedEmployee;
-                 }
-
-             }
-
-             if ($validatedData['type'] == 'supervisor') {
+            $employees = $validatedData['employees'];
+            foreach ($employees as $employee) {
                 $assignedEmployee = AssignedEmployee::create([
-                     'assessment_id' => $assessment->id,
-                     'employee_id' => $validatedData['supervisor_id'],
-                     'is_supervisor' => true
-                 ]);
-                 $employeeInstances[] = $assignedEmployee->employee;
-             }
+                    'assessment_id' => $assessment->id,
+                    'employee_id' => $employee,
+                    'is_supervisor' => false
+                ]);
+                $employeeInstances[] = $assignedEmployee;
+            }
 
-                        // Send notifications and emails
-            $employees = collect();
-            foreach ($employeeInstances as $assignedEmployee) {
-                // info($assignedEmployee);
-                $employee = Employee::find($assignedEmployee->employee_id); // Ensure this relationship is defined in the AssignedEmployee model
-                if ($employee) {
-                    // Collect employees for batch notification
-                    $employees->push($employee);
-
-                    // Send instant notification
-                    // $employee->notify(new AssessmentNotification($assessment, $employee));
+            if ($validatedData['type'] == 'company') {
+                // Create assigned supervisors
+                $supervisors = $validatedData['supervisors'];
+                foreach ($supervisors as $supervisor) {
+                    $assignedEmployee = AssignedEmployee::create([
+                        'assessment_id' => $assessment->id,
+                        'employee_id' => $supervisor,
+                        'is_supervisor' => true
+                    ]);
+                    $supervisorInstances[] = $assignedEmployee;
                 }
             }
 
+            if ($validatedData['type'] == 'supervisor') {
+                $assignedEmployee = AssignedEmployee::create([
+                    'assessment_id' => $assessment->id,
+                    'employee_id' => $validatedData['supervisor_id'],
+                    'is_supervisor' => true
+                ]);
+                $supervisorInstances[] = $assignedEmployee;
+            }
 
-            // Send email notifications in batch
-            // $users = $employeeInstances->pluck('employee'); // Assuming this gets a collection of Employee models
-            //  Notification::send($employeeInstances, new AssessmentNotification($assessment, null)); // Pass null or handle properly
-            if ($employees->isNotEmpty()) {
-                info([count($employees)]);
-                // Notification::send($employees, new AssessmentNotification($assessment, null));
+            // Collect employees and supervisors separately for sending notifications
+            $employeeCollection = collect();
+            $supervisorCollection = collect();
+
+            foreach ($employeeInstances as $assignedEmployee) {
+                $employee = Employee::find($assignedEmployee->employee_id);
+                if ($employee) {
+                    $employeeCollection->push($employee->talent);
+                }
+            }
+
+            foreach ($supervisorInstances as $assignedEmployee) {
+                $supervisor = Employee::find($assignedEmployee->employee_id);
+                if ($supervisor) {
+                    $supervisorCollection->push($supervisor->talent);
+                }
+            }
+
+            // Send email notifications to employees
+            if ($employeeCollection->isNotEmpty()) {
+                Notification::send($employeeCollection, new AssessmentPublishedNotification($assessment, 'employee'));
+            }
+
+            // Send email notifications to supervisors
+            if ($supervisorCollection->isNotEmpty()) {
+                Notification::send($supervisorCollection, new AssessmentPublishedNotification($assessment, 'supervisor'));
             }
              // Commit the transaction
              DB::commit();

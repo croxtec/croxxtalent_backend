@@ -15,7 +15,7 @@ Hi {{ $name }},
     You’ve been invited to join {{ $company_name }} on our platform! By joining, you will gain access to company tools, resources, and be a part of their employee management system.
 </p>
 <p>
-    Please click the button below to verify your email address and get started as a member of {{ $company_name }}.
+    Please click the button below to verify your email address and get started as an employee of {{ $company_name }}.
 </p>
 @endif
 

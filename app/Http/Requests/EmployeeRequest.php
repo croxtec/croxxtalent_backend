@@ -65,7 +65,6 @@ class EmployeeRequest extends FormRequest
                         'exists:department_roles,id'
                     ],
                     'department_role' => 'nullable|string|min:3|max:56',
-
                     'location' => 'nullable|min:5|max:256',
                 ];
             case 'PUT':
