@@ -16,9 +16,6 @@
         <br><br>
         <a href="{{ config('myapp.url') }}" target="_blank">Click here to view the assessment details</a>.
     </p>
-    <p>
-        {{ $notifiable }}
-    </p>
 @endsection
 
 @section('email_complimentary_close')
