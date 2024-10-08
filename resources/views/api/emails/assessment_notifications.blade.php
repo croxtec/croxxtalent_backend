@@ -8,13 +8,16 @@
 @endsection
 
 @section('email_body')
-    Hi {{ $notifiable->name }},
+    Hi ,
     <br>
     <p>
         {{ $message }} <br><br>
         You can view the details of the assessment by logging into the platform.
         <br><br>
         <a href="{{ config('myapp.url') }}" target="_blank">Click here to view the assessment details</a>.
+    </p>
+    <p>
+        {{ $notifiable }}
     </p>
 @endsection
 
