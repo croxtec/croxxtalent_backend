@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class CompanySupervisorGoalNotification extends Notification implements ShouldQueue
+class SupervisorGoalNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 

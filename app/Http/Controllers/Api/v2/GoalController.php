@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests\GoalRequest;
 use App\Models\Goal;
 use App\Models\Employee;
-use App\Notifications\CompanySupervisorGoalNotification;
+use App\Notifications\SupervisorGoalNotification;
 use Illuminate\Support\Carbon;
 
 class GoalController extends Controller
@@ -214,7 +214,7 @@ class GoalController extends Controller
 
             $goal = Goal::create($validatedData);
 
-            if($employee->talent) $employee->talent->notify(new CompanySupervisorGoalNotification($goal, $current_company));
+            if($employee->talent) $employee->talent->notify(new SupervisorGoalNotification($goal, $current_company));
         }
 
         if($goal){
