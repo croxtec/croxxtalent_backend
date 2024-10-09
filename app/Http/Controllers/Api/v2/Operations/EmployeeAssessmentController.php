@@ -14,6 +14,7 @@ use App\Models\Assessment\CompetencyQuestion;
 use App\Models\Assessment\EvaluationQuestion;
 use App\Models\Assessment\EmployerAssessmentFeedback;
 use App\Models\Assessment\TalentAssessmentSummary;
+use Illuminate\Support\Facades\Storage;
 
 class EmployeeAssessmentController extends Controller
 {

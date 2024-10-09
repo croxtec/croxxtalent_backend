@@ -157,36 +157,13 @@ class ExperienceAssessmentController extends Controller
                 $assignedEmployee = AssignedEmployee::create([
                     'assessment_id' => $assessment->id,
                     'employee_id' => $validatedData['supervisor_id'],
-                    'is_supervisor' => true
+                    'is_supervisor' => false
                 ]);
-                $supervisorInstances[] = $assignedEmployee;
+                $employeeInstances[] = $assignedEmployee;
             }
 
-            // Collect employees and supervisors separately for sending notifications
-            $employeeCollection = collect();
-            $supervisorCollection = collect();
+            $this->notifyAssignedUsers($employeeInstances, $supervisorInstances, $assessment);
 
-            foreach ($employeeInstances as $assignedEmployee) {
-                $employee = Employee::find($assignedEmployee->employee_id);
-                if ($employee->talent) {
-                    $employeeCollection->push($employee->talent);
-                }
-            }
-
-            foreach ($supervisorInstances as $assignedEmployee) {
-                $supervisor = Employee::find($assignedEmployee->employee_id);
-                if ($supervisor->talent) {
-                    $supervisorCollection->push($supervisor->talent);
-                }
-            }
-
-            if ($employeeCollection->isNotEmpty()) {
-                Notification::send($employeeCollection, new AssessmentPublishedNotification($assessment, 'employee'));
-            }
-
-            if ($supervisorCollection->isNotEmpty()) {
-                Notification::send($supervisorCollection, new AssessmentPublishedNotification($assessment, 'supervisor'));
-            }
              // Commit the transaction
              DB::commit();
 
@@ -205,6 +182,47 @@ class ExperienceAssessmentController extends Controller
                  'message' => "Could not complete request. " . $e->getMessage(),
              ], 400);
          }
+    }
+
+    private function notifyAssignedUsers($employeeInstances, $supervisorInstances, $assessment)
+    {
+        // Notify employees
+        if (!empty($employeeInstances)) {
+            $employees = collect();
+
+            foreach ($employeeInstances as $assignedEmployee) {
+                $employee = Employee::find($assignedEmployee->employee_id);
+                if ($employee) {
+                    $employees->push($employee);
+                }
+            }
+
+            if ($employees->isNotEmpty()) {
+                // Send batch notifications to employees
+                foreach ($employees as $employee) {
+                    if($employee->talent)  Notification::send($employee->talent, new AssessmentPublishedNotification($assessment, $employee, 'employee'));
+                }
+            }
+        }
+
+        // Notify supervisors
+        if (!empty($supervisorInstances)) {
+            $supervisors = collect();
+
+            foreach ($supervisorInstances as $assignedEmployee) {
+                $supervisor = Employee::find($assignedEmployee->employee_id);
+                if ($supervisor) {
+                    $supervisors->push($supervisor);
+                }
+            }
+
+            if ($supervisors->isNotEmpty()) {
+                // Send batch notifications to supervisors
+                foreach ($supervisors as $supervisor) {
+                   if($supervisor->talent) Notification::send($supervisor->talent, new AssessmentPublishedNotification($assessment, $supervisor, 'supervisor'));
+                }
+            }
+        }
     }
 
     /**

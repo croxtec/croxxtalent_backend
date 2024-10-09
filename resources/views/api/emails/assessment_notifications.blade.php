@@ -4,17 +4,20 @@
     New Assessment Notification - {{ config('myapp.name') }}
 @endsection
 
-@section('email_body_title')
-@endsection
-
 @section('email_body')
-    Hi ,
+    Hi {{ $notifiable->name }},
     <br>
     <p>
-        {{ $message }} <br><br>
-        You can view the details of the assessment by logging into the platform.
+        {{ $messageContent }}
         <br><br>
-        <a href="{{ config('myapp.url') }}" target="_blank">Click here to view the assessment details</a>.
+        This assessment is an important part of your development and performance evaluation.
+        Please log into the platform to complete the assessment.
+    </p>
+    <p>
+        @include('api.emails.layouts.partials.button_primary', [
+            'button_text' => 'Access Your Assessment',
+            'button_url' => config('myapp.url')
+        ])
     </p>
 @endsection
 
