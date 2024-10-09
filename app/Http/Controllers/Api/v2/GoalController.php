@@ -66,7 +66,7 @@ class GoalController extends Controller
 
         $response = collect([
             'status' => true,
-            'message' => "Successful."
+            'message' => ""
         ])->merge($goals)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
     }
@@ -214,7 +214,7 @@ class GoalController extends Controller
 
             $goal = Goal::create($validatedData);
 
-            if($employee->talent) $employee->talent->notify(new SupervisorGoalNotification($goal, $current_company));
+            if($employee->talent) $employee->talent->notify(new SupervisorGoalNotification($goal, $current_company, $employee));
         }
 
         if($goal){

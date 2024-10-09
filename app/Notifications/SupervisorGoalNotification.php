@@ -13,6 +13,7 @@ class SupervisorGoalNotification extends Notification implements ShouldQueue
 
     protected $goal;
     protected $supervisor;
+    protected $employee;
 
     /**
      * Create a new notification instance.
@@ -21,10 +22,11 @@ class SupervisorGoalNotification extends Notification implements ShouldQueue
      * @param  mixed  $supervisor
      * @return void
      */
-    public function __construct($goal, $supervisor)
+    public function __construct($goal, $supervisor, $employee)
     {
         $this->goal = $goal;
         $this->supervisor = $supervisor;
+        $this->employee = $employee;
     }
 
     /**
@@ -51,6 +53,7 @@ class SupervisorGoalNotification extends Notification implements ShouldQueue
             ->view('api.emails.company.supervisor_goal_notification', [
                 'goal' => $this->goal,
                 'supervisor' => $this->supervisor,
+                'employee' => $this->employee,
                 'employee' => $notifiable,
                 'buttonUrl' => url("/company"),
             ]);
