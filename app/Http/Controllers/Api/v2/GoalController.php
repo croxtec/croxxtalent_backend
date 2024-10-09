@@ -214,15 +214,13 @@ class GoalController extends Controller
 
             $goal = Goal::create($validatedData);
 
-            // Send notification to the employee
             if($employee->talent) $employee->talent->notify(new CompanySupervisorGoalNotification($goal, $current_company));
         }
-
 
         if($goal){
             return response()->json([
                 'status' => true,
-                'message' => "New future goalcreated successfully.",
+                'message' => "New future goal created successfully.",
                 'data' => Goal::find($goal->id)
             ], 201);
         } else {

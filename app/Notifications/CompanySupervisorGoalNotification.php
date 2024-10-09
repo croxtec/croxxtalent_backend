@@ -48,7 +48,7 @@ class CompanySupervisorGoalNotification extends Notification implements ShouldQu
     {
         return (new MailMessage)
             ->subject('A New Goal Has Been Assigned to You')
-            ->view('api.emails.company_supervisor_goal_notification', [
+            ->view('api.emails.company.supervisor_goal_notification', [
                 'goal' => $this->goal,
                 'supervisor' => $this->supervisor,
                 'employee' => $notifiable,
