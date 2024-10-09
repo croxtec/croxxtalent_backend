@@ -5,8 +5,6 @@
 @endsection
 
 @section('email_body')
-    Hi {{ $notifiable->name }},
-    <br>
     <p>
         {{ $messageContent }}
         <br><br>

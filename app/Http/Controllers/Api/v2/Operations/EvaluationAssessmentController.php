@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\v2\Operations;
 
+use App\Helpers\AssessmentNotificationHelper;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
@@ -59,39 +60,50 @@ class EvaluationAssessmentController extends Controller
                 EvaluationQuestion::create($question);
             }
 
+              // Create assigned employees
+              $employeeInstances = [];
+              $supervisorInstances = [];
+
             // Assign Employee and Supervisor for company and supervisor
             if ($validatedData['type'] == 'supervisor' || $validatedData['type'] == 'company') {
                 // Create assigned employees
                 $employees = $validatedData['employees'];
                 foreach ($employees as $employee) {
-                    AssignedEmployee::create([
+                    $assignedEmployee = AssignedEmployee::create([
                         'assessment_id' => $assessment->id,
                         'employee_id' => $employee,
                         'is_supervisor' => false
                     ]);
+                    $employeeInstances[] = $assignedEmployee;
                 }
 
                 if ($validatedData['type'] == 'company') {
                     // Create assigned supervisors
                     $supervisors = $validatedData['supervisors'];
                     foreach ($supervisors as $supervisor) {
-                        AssignedEmployee::create([
+                        $assignedEmployee = AssignedEmployee::create([
                             'assessment_id' => $assessment->id,
                             'employee_id' => $supervisor,
                             'is_supervisor' => true
                         ]);
+                        $supervisorInstances[] = $assignedEmployee;
                     }
                 }
             }
 
+            // Attach Supervisor to
             if ($validatedData['type'] == 'supervisor') {
-                AssignedEmployee::create([
+                $assignedEmployee = AssignedEmployee::create([
                     'assessment_id' => $assessment->id,
                     'employee_id' => $validatedData['supervisor_id'],
                     'is_supervisor' => true
                 ]);
+
+                $employeeInstances[] = $assignedEmployee;
             }
 
+            // Send Notification
+            AssessmentNotificationHelper::notifyAssignedUsers($employeeInstances, $supervisorInstances, $assessment);
 
             // Commit the transaction
             DB::commit();

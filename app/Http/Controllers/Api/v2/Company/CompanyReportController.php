@@ -149,7 +149,7 @@ class CompanyReportController extends Controller
         $employer = $request->user();
 
         $feedbacks = EmployerAssessmentFeedback::where('employer_user_id', $employer->id)
-                        ->with('employee','supervisor')
+                        ->with('employee','supervisor', 'assessment')
                         ->latest()->limit(8) ->get();
 
         return response()->json([

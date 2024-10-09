@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\v2\Operations;
 
+use App\Helpers\AssessmentNotificationHelper;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
@@ -125,31 +126,40 @@ class ExperienceAssessmentController extends Controller
             // Create assessment
             $assessment = CroxxAssessment::create($validatedData);
             $assessment->competencies()->attach($competency_ids);
-            //  info('REACH here');
+
+            // Create questions
+            $questions = $validatedData['questions'];
+            foreach ($questions as $question) {
+                $question['assessment_id'] = $assessment->id;
+                CompetencyQuestion::create($question);
+            }
+
             // Create assigned employees
             $employeeInstances = [];
             $supervisorInstances = [];
 
-            $employees = $validatedData['employees'];
-            foreach ($employees as $employee) {
-                $assignedEmployee = AssignedEmployee::create([
-                    'assessment_id' => $assessment->id,
-                    'employee_id' => $employee,
-                    'is_supervisor' => false
-                ]);
-                $employeeInstances[] = $assignedEmployee;
-            }
-
-            if ($validatedData['type'] == 'company') {
-                // Create assigned supervisors
-                $supervisors = $validatedData['supervisors'];
-                foreach ($supervisors as $supervisor) {
+            if ($validatedData['type'] == 'supervisor' || $validatedData['type'] == 'company') {
+                $employees = $validatedData['employees'];
+                foreach ($employees as $employee) {
                     $assignedEmployee = AssignedEmployee::create([
                         'assessment_id' => $assessment->id,
-                        'employee_id' => $supervisor,
-                        'is_supervisor' => true
+                        'employee_id' => $employee,
+                        'is_supervisor' => false
                     ]);
-                    $supervisorInstances[] = $assignedEmployee;
+                    $employeeInstances[] = $assignedEmployee;
+                }
+
+                if ($validatedData['type'] == 'company') {
+                    // Create assigned supervisors
+                    $supervisors = $validatedData['supervisors'];
+                    foreach ($supervisors as $supervisor) {
+                        $assignedEmployee = AssignedEmployee::create([
+                            'assessment_id' => $assessment->id,
+                            'employee_id' => $supervisor,
+                            'is_supervisor' => true
+                        ]);
+                        $supervisorInstances[] = $assignedEmployee;
+                    }
                 }
             }
 
@@ -157,15 +167,16 @@ class ExperienceAssessmentController extends Controller
                 $assignedEmployee = AssignedEmployee::create([
                     'assessment_id' => $assessment->id,
                     'employee_id' => $validatedData['supervisor_id'],
-                    'is_supervisor' => false
+                    'is_supervisor' => true
                 ]);
                 $employeeInstances[] = $assignedEmployee;
             }
 
-            $this->notifyAssignedUsers($employeeInstances, $supervisorInstances, $assessment);
+            // Send Notification
+            AssessmentNotificationHelper::notifyAssignedUsers($employeeInstances, $supervisorInstances, $assessment);
 
-             // Commit the transaction
-             DB::commit();
+            // Commit the transaction
+            DB::commit();
 
              return response()->json([
                  'status' => true,
@@ -184,46 +195,46 @@ class ExperienceAssessmentController extends Controller
          }
     }
 
-    private function notifyAssignedUsers($employeeInstances, $supervisorInstances, $assessment)
-    {
-        // Notify employees
-        if (!empty($employeeInstances)) {
-            $employees = collect();
+    // private function notifyAssignedUsers($employeeInstances, $supervisorInstances, $assessment)
+    // {
+    //     // Notify employees
+    //     if (!empty($employeeInstances)) {
+    //         $employees = collect();
 
-            foreach ($employeeInstances as $assignedEmployee) {
-                $employee = Employee::find($assignedEmployee->employee_id);
-                if ($employee) {
-                    $employees->push($employee);
-                }
-            }
+    //         foreach ($employeeInstances as $assignedEmployee) {
+    //             $employee = Employee::find($assignedEmployee->employee_id);
+    //             if ($employee) {
+    //                 $employees->push($employee);
+    //             }
+    //         }
 
-            if ($employees->isNotEmpty()) {
-                // Send batch notifications to employees
-                foreach ($employees as $employee) {
-                    if($employee->talent)  Notification::send($employee->talent, new AssessmentPublishedNotification($assessment, $employee, 'employee'));
-                }
-            }
-        }
+    //         if ($employees->isNotEmpty()) {
+    //             // Send batch notifications to employees
+    //             foreach ($employees as $employee) {
+    //                 if($employee->talent)  Notification::send($employee->talent, new AssessmentPublishedNotification($assessment, $employee, 'employee'));
+    //             }
+    //         }
+    //     }
 
-        // Notify supervisors
-        if (!empty($supervisorInstances)) {
-            $supervisors = collect();
+    //     // Notify supervisors
+    //     if (!empty($supervisorInstances)) {
+    //         $supervisors = collect();
 
-            foreach ($supervisorInstances as $assignedEmployee) {
-                $supervisor = Employee::find($assignedEmployee->employee_id);
-                if ($supervisor) {
-                    $supervisors->push($supervisor);
-                }
-            }
+    //         foreach ($supervisorInstances as $assignedEmployee) {
+    //             $supervisor = Employee::find($assignedEmployee->employee_id);
+    //             if ($supervisor) {
+    //                 $supervisors->push($supervisor);
+    //             }
+    //         }
 
-            if ($supervisors->isNotEmpty()) {
-                // Send batch notifications to supervisors
-                foreach ($supervisors as $supervisor) {
-                   if($supervisor->talent) Notification::send($supervisor->talent, new AssessmentPublishedNotification($assessment, $supervisor, 'supervisor'));
-                }
-            }
-        }
-    }
+    //         if ($supervisors->isNotEmpty()) {
+    //             // Send batch notifications to supervisors
+    //             foreach ($supervisors as $supervisor) {
+    //                if($supervisor->talent) Notification::send($supervisor->talent, new AssessmentPublishedNotification($assessment, $supervisor, 'supervisor'));
+    //             }
+    //         }
+    //     }
+    // }
 
     /**
      * Display the specified resource.
@@ -328,7 +339,31 @@ class ExperienceAssessmentController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $user = $request->user();
+        // $this->authorize('update', [CroxxAssessment::class, $assessment]);
+
+        if (is_numeric($id)) {
+            $assessment = CroxxAssessment::where('id', $id)->where('employer_id', $user->id)->firstOrFail();
+        } else {
+            $assessment = CroxxAssessment::where('code', $id)->where('employer_id', $user->id)->firstOrFail();
+        }
+
+        // $request->validate([
+        //     'questions' => 'required|array'
+        // ]);
+
+        // $questions = $request->questions;
+        // foreach ($questions as $question) {
+        //     $question['assessment_id'] = $assessment->id;
+        //     CompetencyQuestion::create($question);
+        // }
+
+        return response()->json([
+            'status' => true,
+            'message' => "",
+            'data' => $assessment
+        ], 200);
+
     }
 
     public function publish(Request $request, $id)

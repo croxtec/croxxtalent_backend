@@ -289,7 +289,7 @@ class ScoresheetController extends Controller
             $feedback->save();
 
             $user = $employee->talent;
-            $user->notify(new AssessmentFeedbackNotification($assessment, $employee));
+            // $user->notify(new AssessmentFeedbackNotification($assessment, $employee));
             Notification::send($user, new AssessmentFeedbackNotification($assessment, $employee));
 
             return response()->json([
