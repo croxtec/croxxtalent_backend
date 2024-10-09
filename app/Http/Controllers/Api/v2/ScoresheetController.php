@@ -253,6 +253,7 @@ class ScoresheetController extends Controller
 
         if(!$feedback->supervisor_id){
             $paths = $validatedData['learning_path'];
+
             foreach ($paths as $path) {
                 EmployeeLearningPath::firstOrCreate([
                     'assessment_feedback_id' => $feedback->id,

@@ -149,6 +149,7 @@ class CompanyReportController extends Controller
         $employer = $request->user();
 
         $feedbacks = EmployerAssessmentFeedback::where('employer_user_id', $employer->id)
+                        ->where('is_published', true)->whereNotNull('supervisor_id')
                         ->with('employee','supervisor', 'assessment')
                         ->latest()->limit(8) ->get();
 

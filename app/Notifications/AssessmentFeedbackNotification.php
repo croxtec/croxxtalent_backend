@@ -48,10 +48,10 @@ class AssessmentFeedbackNotification extends Notification implements ShouldQueue
         {
             return (new MailMessage)
                 ->subject('Your Assessment Feedback is Now Available')
-                ->view('api.emails.assessment_feedback_notification', [
+                ->view('api.emails.company.assessment_feedback_notification', [
                     'assessment' => $this->assessment,
                     'employee' => $this->employee,
-                    'actionUrl' => url("/assessments/{$this->assessment->id}/feedback"),
+                    'actionUrl' => url("/company"),
                 ]);
         }
 

@@ -6,25 +6,28 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use App\Models\NotificationContent;
 
-class AssessmentFeedbackNotification extends Notification implements ShouldQueue
+class AssessmentPublishedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
     protected $assessment;
     protected $employee;
+    protected $role;
 
     /**
      * Create a new notification instance.
      *
-     * @param  mixed  $assessment
-     * @param  mixed  $employee
-     * @return void
+     * @param $assessment
+     * @param $employee
+     * @param $role
      */
-    public function __construct($assessment, $employee)
+    public function __construct($assessment, $employee, $role)
     {
         $this->assessment = $assessment;
         $this->employee = $employee;
+        $this->role = $role;
     }
 
     /**
@@ -35,7 +38,7 @@ class AssessmentFeedbackNotification extends Notification implements ShouldQueue
      */
     public function via($notifiable)
     {
-        return ['mail', 'database'];
+        return ['database', 'mail'];
     }
 
     /**
@@ -46,12 +49,13 @@ class AssessmentFeedbackNotification extends Notification implements ShouldQueue
      */
     public function toMail($notifiable)
     {
+        $messageContent = $this->generateMessageContent();
         return (new MailMessage)
-            ->subject('Your Assessment Feedback is Now Available')
-            ->view('api.emails.assessment_feedback_notification', [
+            ->subject('New Assessment Assigned: ' . $this->assessment->title)
+            ->view('api.emails.company.assessment_notifications', [
                 'assessment' => $this->assessment,
-                'employee' => $this->employee,
-                'buttonUrl' => url("/assessments/{$this->assessment->id}/feedback"),
+                'messageContent' => $messageContent,
+                'notifiable' => $notifiable,
             ]);
     }
 
@@ -64,10 +68,24 @@ class AssessmentFeedbackNotification extends Notification implements ShouldQueue
     public function toArray($notifiable)
     {
         return [
-            'type' => 'AssessmentFeedback',
-            'assessment_id' => $this->assessment->id,
+            'user_id' => $this->employee ? $this->employee->user_id : null,
+            'type' => 'ManageAssessment',
             'assessment_code' => $this->assessment->code,
-            'message' => "Dear {$this->employee->name}, your assessment feedback for \"{$this->assessment->title}\" has been published.",
+            'message' => $this->generateMessageContent(),
         ];
+    }
+
+    /**
+     * Generate message content based on the role.
+     *
+     * @return string
+     */
+    private function generateMessageContent()
+    {
+        if ($this->role === 'supervisor') {
+            return "Dear {$this->employee->name}, you have been assigned as a supervisor for the new assessment titled '{$this->assessment->name}' by your company.";
+        }
+
+        return "Dear {$this->employee->name}, you have been assigned a new assessment titled '{$this->assessment->name}' by your company.";
     }
 }

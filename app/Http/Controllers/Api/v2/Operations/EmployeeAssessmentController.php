@@ -106,10 +106,10 @@ class EmployeeAssessmentController extends Controller
         $current_company = Employee::where('id', $user->default_company_id)
                     ->where('user_id', $user->id)->with('supervisor')->first();
 
-        if($current_company->id === $employee?->id){
+        if($current_company?->id === $employee?->id){
             return true;
         }
-        if($current_company->supervisor) {
+        if($current_company?->supervisor) {
             $supervisor =  $current_company->supervisor;
             // info([$supervisor, $employee]);
             return true;
