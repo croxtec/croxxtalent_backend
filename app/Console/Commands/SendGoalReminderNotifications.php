@@ -58,7 +58,6 @@ class SendGoalReminderNotifications extends Command
                 $name =  $user->name;
             }
 
-        //    $this->info($user->email);
             // Send the reminder notification to the goal owner
            Notification::send($user,new GoalReminderNotification($goal, $name));
         }

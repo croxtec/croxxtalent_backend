@@ -13,7 +13,7 @@
         This goal was set to help you achieve significant progress in your role and contribute to the company’s success.
     </p>
     <p>
-        <strong>Goal Description:</strong> {{ $goal->metric }}
+        <strong>Goal Metric:</strong> {{ $goal->metric }}
     </p>
     <p>
         As the deadline approaches, we encourage you to review the progress you have made so far. Completing this goal will help in your personal development and will ensure that the team achieves its objectives.

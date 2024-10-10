@@ -137,6 +137,7 @@ class GoalController extends Controller
 
 
         $goals = Goal::whereNull('archived_at')
+            ->where('user_id', $user->id)
             ->when($period, function($query) use($period){
                 $query->whereBetween('created_at', $period);
             })
