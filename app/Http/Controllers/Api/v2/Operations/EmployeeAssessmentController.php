@@ -146,7 +146,9 @@ class EmployeeAssessmentController extends Controller
                 ->with('employee', 'supervisor')->latest()->paginate($per_page);
         } else {
             $feedbacks = EmployerAssessmentFeedback::where('employee_id', $employee?->id)
-                ->with('employee', 'supervisor')->latest()->paginate($per_page);
+                        ->where('supervisor_id', '!=', 0)
+                        ->with('employee', 'supervisor')
+                        ->latest()->paginate($per_page);
         }
 
         return response()->json([
