@@ -8,7 +8,7 @@ use Illuminate\Notifications\Notifiable;
 
 class AssignedEmployee extends Model
 {
-    use HasFactory, Notifiable;
+    use HasFactory;
 
     protected $fillable = [
         'assessment_id',
@@ -21,10 +21,5 @@ class AssignedEmployee extends Model
         ->select(['id','name', 'job_code_id', 'department_role_id', 'photo_url', 'code']);
     }
 
-     // Define routeNotificationForMail if you want to send emails
-     public function routeNotificationForMail()
-     {
-         return $this->employee->email; // Assuming the employee model has an email attribute
-     }
 
 }

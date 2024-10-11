@@ -33,6 +33,11 @@ class CroxxAssessment extends Model
         // 'total_questions'
     ];
 
+    public function company(){
+        return $this->belongsTo('App\Models\User', 'employer_id', 'id')
+                 ->select(['id','photo', 'first_name','last_name','company_name']);
+    }
+
     public function competencies()
     {
         return $this->belongsToMany('App\Models\Competency\DepartmentMapping', 'assessment_competency', 'assessment_id', 'competency_id');

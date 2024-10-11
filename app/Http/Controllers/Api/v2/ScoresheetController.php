@@ -38,6 +38,8 @@ class ScoresheetController extends Controller
         $archived = $request->input('archived');
         $supervisor = $request->input('supervisor', 0);
 
+        $assessment->company;
+        $assessment->competencies;
         if($user->type == "employer"){
             $supervisor = $supervisor == 'yes' ? 1 : 0;
             $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
@@ -73,6 +75,16 @@ class ScoresheetController extends Controller
                 'employee_id' => $summary->employee_id,
                 'employer_user_id' => $assessment->employer_id
             ])->first();
+
+            if($feedback){
+                if(is_numeric($feedback->time_taken)){
+                    $timetaken = intval($feedback->time_taken);
+                    $minutes = floor($timetaken / 60);
+                    $seconds = $timetaken % 60;
+
+                    $feedback->estimated_time = sprintf('%d minutes %d seconds', $minutes, $seconds);
+                }
+            }
 
             $summary->is_submited = $feedback ? true : false;
             $summary->feedback = $feedback;

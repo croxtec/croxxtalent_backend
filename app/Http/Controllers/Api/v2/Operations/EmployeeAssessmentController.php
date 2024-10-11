@@ -88,9 +88,9 @@ class EmployeeAssessmentController extends Controller
                 'employee_id' => $employee?->id,
                 'employer_user_id' => $assessment?->employer_id,
                 'is_published' => true
-            ])->exists();
+            ])->first();
 
-            $assessment->is_feedback = $isFeedbacked;
+            $assessment->is_feedback = $isFeedbacked?->supervisor_id ? true : false;
             $assessment->is_submited = $isSubmitted;
         }
 
