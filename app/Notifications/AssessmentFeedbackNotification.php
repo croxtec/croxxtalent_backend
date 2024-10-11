@@ -51,7 +51,7 @@ class AssessmentFeedbackNotification extends Notification implements ShouldQueue
                 ->view('api.emails.company.assessment_feedback_notification', [
                     'assessment' => $this->assessment,
                     'employee' => $this->employee,
-                    'button_url' => url("/company"),
+                    'actionUrl' => url("/company"),
                 ]);
         }
 

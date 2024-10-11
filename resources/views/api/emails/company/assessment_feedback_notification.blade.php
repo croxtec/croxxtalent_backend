@@ -15,7 +15,7 @@
     <p>
         @include('api.emails.layouts.partials.button_primary', [
             'button_text' => 'View Feedback',
-            'button_url' => $buttonUrl
+            'button_url' => config('myapp.url')
         ])
     </p>
 @endsection

@@ -38,7 +38,6 @@ class ScoresheetController extends Controller
         $archived = $request->input('archived');
         $supervisor = $request->input('supervisor', 0);
 
-        $assessment->company;
         $assessment->competencies;
         if($user->type == "employer"){
             $supervisor = $supervisor == 'yes' ? 1 : 0;
