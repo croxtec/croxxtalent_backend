@@ -18,6 +18,7 @@ use App\Models\Assessment\EmployerAssessmentFeedback;
 use App\Http\Resources\AssignedEmployeeResouce;
 use App\Notifications\AssessmentFeedbackNotification;
 use App\Models\Assessment\TalentAssessmentSummary;
+use App\Models\Training\CroxxTraining;
 
 class ScoresheetController extends Controller
 {
@@ -75,15 +76,15 @@ class ScoresheetController extends Controller
                 'employer_user_id' => $assessment->employer_id
             ])->first();
 
-            if($feedback){
-                if(is_numeric($feedback->time_taken)){
-                    $timetaken = intval($feedback->time_taken);
-                    $minutes = floor($timetaken / 60);
-                    $seconds = $timetaken % 60;
+            // if($feedback){
+            //     if(is_numeric($feedback->time_taken)){
+            //         $timetaken = intval($feedback->time_taken);
+            //         $minutes = floor($timetaken / 60);
+            //         $seconds = $timetaken % 60;
 
-                    $feedback->estimated_time = sprintf('%d minutes %d seconds', $minutes, $seconds);
-                }
-            }
+            //         $feedback->estimated_time = sprintf('%d minutes %d seconds', $minutes, $seconds);
+            //     }
+            // }
 
             $summary->is_submited = $feedback ? true : false;
             $summary->feedback = $feedback;
@@ -116,7 +117,7 @@ class ScoresheetController extends Controller
 
         $assessment->questions;
 
-        foreach ($assessment->questions as $question) {
+        foreach($assessment->questions as $question) {
             $question->response = TalentAnswer::where([
                 'assessment_question_id' => $question->id,
                 $talentField => $talent,
@@ -151,17 +152,31 @@ class ScoresheetController extends Controller
                     ->firstOrFail();
         }
 
+
         if (is_numeric($talent)) {
+
             $feedback = TalentAssessmentSummary::where([
                 'talent_id' => $user->id,
                 'assessment_id' => $assessment->id
-                ])->first();
+            ])->first();
+
         } else {
             $feedback = EmployerAssessmentFeedback::where([
                 'assessment_id' => $assessment->id,
                 'employee_id' => $employee->id,
                 'employer_user_id' => $assessment->employer_id
             ])->first();
+
+            $resources = CroxxTraining::join('employee_learning_paths', 'croxx_trainings.id', '=', 'employee_learning_paths.training_id')
+                            ->where('employee_learning_paths.employee_id', $employee->id)
+                            ->where('employee_learning_paths.assessment_feedback_id', $feedback->id)
+                            ->with(['learning' => function ($query) use ($employee) {
+                                $query->where('employee_learning_paths.employee_id', $employee->id);
+                            }])
+                            ->select('croxx_trainings.*')
+                            ->get();
+
+           $feedback->resources = $resources;
         }
 
         return response()->json([
