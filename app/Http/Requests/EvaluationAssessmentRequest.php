@@ -46,7 +46,7 @@ class EvaluationAssessmentRequest extends FormRequest
                     'category' => 'required|in:competency_evaluation',
                     'level' => 'required|in:beginner,intermediate,advance,expert',
                     'name' => 'required|max:100',
-                    'description' => 'nullable|max:250',
+                    'description' => 'nullable|max:400',
                     'expected_percentage' => 'required|integer',
                     'is_published' => 'required|boolean',
                     'validity_period' => 'nullable|date',
