@@ -52,10 +52,16 @@ class EmployeeAssessmentController extends Controller
                         ->when($show == 'supervisor', function($query) use ($employee){
                             $query->where('assigned_employees.employee_id', $employee?->id)
                                     ->where('assigned_employees.is_supervisor', 1);
-                        })
+                                    // ->selectRaw('croxx_assessments.*, assigned_employees.is_supervisor,
+                                    //     (SELECT COUNT(*)
+                                    //     FROM assigned_employees ae
+                                    //     WHERE ae.assessment_id = croxx_assessments.id
+                                    //     AND ae.is_supervisor = 0) AS total_non_supervisors');
+                            })
                         ->select('croxx_assessments.*', 'assigned_employees.is_supervisor')
                         ->latest()
                         ->paginate($per_page);
+
 
         foreach ($assessments as $assessment) {
             $total_duration_seconds = $assessment->questions->sum('duration');

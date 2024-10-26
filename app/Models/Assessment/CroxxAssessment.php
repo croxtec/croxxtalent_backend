@@ -82,6 +82,11 @@ class CroxxAssessment extends Model
         return $this->hasMany('App\Models\Assessment\EmployerAssessmentFeedback', 'assessment_id', 'id');
     }
 
+    public function assignedEmployees()
+    {
+        return $this->hasMany('App\Models\Assessment\AssignedEmployee', 'assessment_id', 'id');
+    }
+
     // public function getTotalQuestionsAttribute(){
     //     return $this->questions->count();
     // }

@@ -21,6 +21,7 @@ class Employee extends Model
         'department_role_id',
         'photo_url',
         //
+        'performance',
         'level','code',
         'gender',
         'work_type',

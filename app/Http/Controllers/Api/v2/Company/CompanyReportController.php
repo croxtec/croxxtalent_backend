@@ -36,13 +36,9 @@ class CompanyReportController extends Controller
         $total_employees = $employees->count();
 
         $gender_distribution = $employees->groupBy('gender')
-        ->reduce(function ($carry, $group) use ($employees) {
+             ->reduce(function ($carry, $group) use ($employees) {
             $count = $group->count();
             $total = $employees->count();
-
-            // $carry[$group->first()->gender] = $total > 0
-            //     ? round(($count / $total) * 100, 2) . '%'
-            //     : '0%';
 
             $gender = strtolower($group->first()->gender);
             $carry[$gender] = $count;
@@ -50,12 +46,36 @@ class CompanyReportController extends Controller
             return $carry;
         }, ['male' => 0, 'female' => 0, 'others' => 0]);
 
+        // Retrieve total goals (tasks) completed
+        $totalGoalsCompleted = Goal::where('employer_id', $employer->id)
+                ->where('status', 'done')->whereNull('archived_at')
+                ->count();
+
+        // Retrieve goals (tasks) completed this month
+        $currentMonthGoalsCompleted = Goal::where('employer_id', $employer->id)
+                ->where('status', 'done')->whereNull('archived_at')
+                ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
+                ->count();
+
+        // Retrieve goals (tasks) completed last month
+        $lastMonthGoalsCompleted = Goal::where('employer_id', $employer->id)
+                ->where('status', 'done')->whereNull('archived_at')
+                ->whereBetween('created_at', [  now()->subMonth()->startOfMonth(),now()->subMonth()->endOfMonth()])
+                ->count();
+
+        $differences = $currentMonthGoalsCompleted - $lastMonthGoalsCompleted;
+        $totalPerformance = $employees->sum('performance');
+        $averagePerformance = $total_employees > 0 ? $totalPerformance / $total_employees : 0;
 
         $competency_summary = [
-            'current_rating' => 0,
-            'task_completed' => 0,
-            'diffrences' => 0,
-            'summary' => "",
+            'current_rating' => $averagePerformance,
+            'task_completed' => $currentMonthGoalsCompleted,
+            'differences' => $differences,
+            'summary' => $differences > 0
+                ? "Improved by $differences tasks this month."
+                : ($differences < 0
+                    ? "Completed " . abs($differences) . " fewer tasks than last month."
+                    : "Performance is consistent with last month."),
         ];
 
         $data = compact(
@@ -310,65 +330,67 @@ class CompanyReportController extends Controller
         ], 200);
     }
 
-    protected function getDepartment(Request $request, $employer)
+    protected function refreshEmployeePerformance(Request $request)
     {
-        $default_department = $request->input('department') ?? $employer->default_company_id;
-        return Department::findOrFail($default_department) ?? Department::where('employer_id', $employer->id)->firstOrFail();
-    }
+        $employer = $request->user();
+        $perPage = $request->input('per_page', 12);
+        $period = [now()->startOfMonth(), now()->endOfMonth()];
+        $default_department = $request->input('department');
 
-    protected function getCompetencyIds($department)
-    {
-        return $department->technical_skill->pluck('id');
-    }
+        // Retrieve employees
+        $employees = Employee::where('employer_id', $employer->id)
+            ->select(['id', 'name', 'photo_url', 'code', 'performance'])
+            ->get();
 
-    protected function getEmployees($employer, $department, $per_page)
-    {
-        return Employee::where('employer_id', $employer->id)
-                    ->where('job_code_id', $department->id)
-                    ->paginate($per_page);
-    }
+        // Retrieve goals
+        $goals = Goal::where('employer_id', $employer->id)
+            ->whereNull('archived_at')
+            // ->whereBetween('created_at', $period)
+            ->select(['id', 'employer_id', 'employee_id', 'type', 'status'])
+            ->get();
 
-    protected function getAssessmentsByCompetencies($competenciesIds)
-    {
-        return CroxxAssessment::with(['feedbacks' => function($query) {
-            $query->select('assessment_id', 'employee_id', 'graded_score');
-        }])->whereHas('competencies', function ($query) use ($competenciesIds) {
-            $query->whereIn('competency_id', $competenciesIds);
-        })->get();
-    }
+        // Retrieve assessment feedback
+        $feedbacks = EmployerAssessmentFeedback::where('employer_user_id', $employer->id)
+            ->whereNull('archived_at')
+            // ->whereBetween('created_at', $period)
+            ->select(['id', 'employer_user_id', 'employee_id', 'graded_score', 'employee_score', 'total_score'])
+            ->get();
 
-    protected function generateGapAnalysisData($employees, $assessments)
-    {
-        $gapAnalysisData = [];
+        // Group goals by employee
+        $goalsByEmployee = $goals->groupBy('employee_id');
+        // Group feedbacks by employee
+        $feedbackByEmployee = $feedbacks->groupBy('employee_id');
+
+        // return compact('goalsByEmployee', 'feedbackByEmployee');
 
         foreach ($employees as $employee) {
-            $employeeData = [
-                'employee_id' => $employee->id,
-                'employee_name' => $employee->name,
-                'assessments' => $this->getEmployeeAssessments($employee, $assessments)
-            ];
+            $employeeGoals = $goalsByEmployee->get($employee->id, collect());
+            $totalGoals = $employeeGoals->count();
+            $completedGoals = $employeeGoals->where('status', 'done')->count();
 
-            $gapAnalysisData[] = $employeeData;
+            $goalPerformance = $totalGoals > 0 ? ($completedGoals / $totalGoals) * 100 : 0;
+
+            // Calculate feedback score
+            $employeeFeedbacks = $feedbackByEmployee->get($employee->id, collect());
+            $totalFeedbackScore = $employeeFeedbacks->sum('graded_score');
+            $feedbackCount = $employeeFeedbacks->count();
+
+            $feedbackPerformance = $feedbackCount > 0 ? ($totalFeedbackScore / $feedbackCount) : 0;
+
+            // Combine goal performance and feedback score (50% weight for each)
+            $combinedPerformance = ($goalPerformance * 0.5) + ($feedbackPerformance * 0.5);
+
+            $employee->performance = (int)$combinedPerformance;
+            $employee->save();
         }
 
-        return $gapAnalysisData;
+        return response()->json([
+            'message' => 'Employee performances updated successfully',
+            'employees' => $employees
+        ]);
     }
 
-    protected function getEmployeeAssessments($employee, $assessments)
-    {
-        $employeeAssessments = [];
 
-        foreach ($assessments as $assessment) {
-            $feedback = $assessment->feedbacks->where('employee_id', $employee->id)->first();
-            if ($feedback) {
-                $employeeAssessments[] = [
-                    'assessment_id' => $assessment->id,
-                    'graded_score' => $feedback->graded_score
-                ];
-            }
-        }
 
-        return $employeeAssessments;
-    }
 
 }

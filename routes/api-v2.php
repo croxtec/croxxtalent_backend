@@ -278,8 +278,10 @@ Route::prefix('auth')->name('api.')->group( function () {
         Route::get('/overview/department', 'Api\v2\Company\CompanyReportController@departmentOverview')->name('company.summary');
         Route::get('/overview/assessment/feedback', 'Api\v2\Company\CompanyReportController@recentFeedback')->name('company.assessment.feedback');
         Route::get('/overview/assessment/chart', 'Api\v2\Company\CompanyReportController@assessmentChart')->name('company.assessment.chart');
-        Route::get('/overview/employees/gap', 'Api\v2\Company\CompanyReportController@gapAnalysisReport')->name('company.employyes.gap');
         Route::get('/overview/courses/chart', 'Api\v2\Company\CompanyReportController@coursesChart')->name('company.courses.chart');
+        // Report
+        Route::get('/refresh/employees/performance', 'Api\v2\Company\CompanyReportController@refreshEmployeePerformance');
+        Route::get('/overview/employees/gap', 'Api\v2\Company\ReportAnalysisController@gapAnalysisReport');
 
         // Mapping
         Route::get('competency/mapping', 'Api\v2\EmployerCompetencyController@index')->name('competency.index');

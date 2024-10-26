@@ -52,8 +52,12 @@ class DepartmentController extends Controller
             $department->technical_skill;
             $department->soft_skill;
             foreach($department->roles as $role){
-                $role->total_employees = Employee::where('department_role_id', $role->id)->count();
-                $role->performance  = 0;
+                $employees = Employee::where('department_role_id', $role->id)
+                                ->select(['id', 'name', 'photo_url', 'code', 'performance'])->get();
+                $role->total_employees = $employees->count();
+                $totalPerformance = $employees->sum('performance');
+                $averagePerformance = $role->total_employees > 0 ? $totalPerformance / $role->total_employees : 0;
+                $role->performance  = round($averagePerformance,2);
             }
         }
 
