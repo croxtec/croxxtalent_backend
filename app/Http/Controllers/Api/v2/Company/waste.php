@@ -47,55 +47,73 @@ class ReportAnalysisController extends Controller
         $competenciesIds = $department->technical_skill->pluck('id');
         $competencies = $department->technical_skill->pluck('competency')->toArray();
 
-        $expectedScores = array_fill_keys($competenciesIds->toArray(), 10);
+        // Get expected scores for each competency (assuming max score is 5)
+        $expectedScores = $department->technical_skill->pluck('expected_score', 'id')
+            ->map(function($score) {
+                return $score ?? 10;
+            })->toArray();
 
         $employees = Employee::where('employer_id', $employer->id)
-                            ->where('job_code_id', $department->id)
-                            ->get();
+            ->where('job_code_id', $department->id)
+            ->get();
 
         $employeeData = [];
+        $departmentAverages = array_fill_keys($competenciesIds->toArray(), 0);
+        $competencyGaps = [];
 
         foreach ($employees as $employee) {
             $employeeAssessments = CroxxAssessment::whereHas('competencies', function ($query) use ($competenciesIds) {
                 $query->whereIn('competency_id', $competenciesIds);
             })->with(['feedbacks' => function ($query) use ($employee) {
-                $query->where('employee_id', $employee->id)
-                      ->where('is_published', 1)  // Only get published feedbacks
-                      ->orderBy('created_at', 'desc'); // Get the latest feedback
+                $query->where('employee_id', $employee->id);
             }])->get();
 
             $scores = [];
             $gaps = [];
 
             foreach ($competenciesIds as $competencyId) {
-                $feedback = $employeeAssessments->map(function($assessment) {
-                    return $assessment->feedbacks->first();
-                })->filter()->first();
+                $feedback = $employeeAssessments->map->feedbacks->flatten()
+                    ->firstWhere('competency_id', $competencyId);
 
-                $gradedScore = $feedback ? $feedback->graded_score : 0;
-
-                $actualScore = ($gradedScore / 100) * 10;
+                $actualScore = $feedback ? $feedback->graded_score : 0;
                 $expectedScore = $expectedScores[$competencyId];
 
-                $gap = max(0, $actualScore - $expectedScore);
+                $scores[$competencyId] = $actualScore;
+                $gaps[$competencyId] = max(0, $expectedScore - $actualScore);
 
-                // Store the scores and gaps
-                $scores[] = $actualScore;
-                $gaps[] = $gap;
+                // Add to department averages
+                $departmentAverages[$competencyId] += $actualScore;
             }
 
             $employeeData[] = [
+                'employee_id' => $employee->id,
                 'name' => $employee->name,
-                'data' => $scores,
+                'scores' => $scores,
                 'gaps' => $gaps,
+                'average_score' => array_sum($scores) / count($scores),
+                'total_gap' => array_sum($gaps),
+                // 'development_needs' => $this->identifyDevelopmentNeeds($gaps, $competencies)
             ];
         }
 
-        return response()->json([
-            'status' => true,
-            'data' => compact('competencies', 'employeeData'),
-            'message' => ''
-        ], 200);
+        // Calculate department averages and gaps
+        $employeeCount = count($employees);
+        foreach ($departmentAverages as $competencyId => &$total) {
+            $total = $employeeCount > 0 ? $total / $employeeCount : 0;
+            $competencyGaps[$competencyId] = max(0, $expectedScores[$competencyId] - $total);
+        }
+
+        return [
+            // 'department' => [
+            //     'name' => $department->name,
+            //     'averages' => $departmentAverages,
+            //     'gaps' => $competencyGaps
+            // ],
+            'competencies' => $competencies,
+            'expected_scores' => $expectedScores,
+            'employees' => $employeeData,
+            // 'summary' => $this->generateGapAnalysisSummary($employeeData, $competencies)
+        ];
     }
 
     private function identifyDevelopmentNeeds(array $gaps, array $competencies)

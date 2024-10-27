@@ -92,3 +92,46 @@ class CroxxAssessment extends Model
     // }
 
 }
+
+
+// foreach ($employees as $employee) {
+//     $employeeAssessments = CroxxAssessment::whereHas('competencies', function ($query) use ($competenciesIds) {
+//         $query->whereIn('competency_id', $competenciesIds);
+//     })
+//     ->with(['competencies','feedbacks' => function ($query) use ($employee) {
+//         $query->where('employee_id', $employee->id);
+//     }])
+//     ->get();
+
+//     $scores = [];
+//     $gaps = [];
+
+//     $feedbacks[] = $employeeAssessments->map->feedbacks;
+
+//     foreach ($competenciesIds as $competencyId) {
+//         $feedback = $employeeAssessments->map->feedbacks->flatten()->firstWhere('competency_id', $competencyId);
+//         info($feedback); $
+//         $assessment = $employeeAssessments->first();
+//         $expectedPercentage = $assessment ? $assessment->expected_percentage : 100;
+
+//         $gradedScore = $feedback ? $feedback->graded_score : 0;
+
+//         $gap = max(0, min(10, ($gradedScore - $expectedPercentage) / 10));
+
+//         $gaps[] = [
+//             'competency' => DepartmentMapping::find($competencyId)?->competency,
+//             'graded_score' => $gradedScore,
+//             'expected_percentage' => $expectedPercentage,
+//             'gap' => $gap
+//         ];
+
+//         $scores[] = $gradedScore;
+//     }
+
+//     $employeeData[] = [
+//         'name' => $employee->name,
+//         'competencies' => $competencies,
+//         'scores' => $scores,
+//         'gaps' => $gaps,
+//     ];
+// }
