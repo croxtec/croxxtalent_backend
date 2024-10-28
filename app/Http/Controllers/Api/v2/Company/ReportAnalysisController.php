@@ -32,7 +32,6 @@ class ReportAnalysisController extends Controller
         }
 
         $department = Department::find($default_department) ?? Department::where('employer_id', $employer->id)->first();
-
         if(!$department){
             return response()->json([
                 'status' => true,
@@ -46,7 +45,6 @@ class ReportAnalysisController extends Controller
 
         $competenciesIds = $department->technical_skill->pluck('id');
         $competencies = $department->technical_skill->pluck('competency')->toArray();
-
         $expectedScores = array_fill_keys($competenciesIds->toArray(), 10);
 
         $employees = Employee::where('employer_id', $employer->id)
@@ -54,34 +52,39 @@ class ReportAnalysisController extends Controller
                             ->get();
 
         $employeeData = [];
-
         foreach ($employees as $employee) {
-            $employeeAssessments = CroxxAssessment::whereHas('competencies', function ($query) use ($competenciesIds) {
-                $query->whereIn('competency_id', $competenciesIds);
-            })->with(['feedbacks' => function ($query) use ($employee) {
-                $query->where('employee_id', $employee->id)
-                      ->where('is_published', 1)  // Only get published feedbacks
-                      ->orderBy('created_at', 'desc'); // Get the latest feedback
-            }])->get();
-
             $scores = [];
             $gaps = [];
 
             foreach ($competenciesIds as $competencyId) {
-                $feedback = $employeeAssessments->map(function($assessment) {
-                    return $assessment->feedbacks->first();
-                })->filter()->first();
+                // Get all assessments for this competency
+                $assessments = CroxxAssessment::whereHas('competencies', function ($query) use ($competencyId) {
+                    $query->where('competency_id', $competencyId);
+                })->with(['feedbacks' => function ($query) use ($employee) {
+                    $query->where('employee_id', $employee->id)
+                          ->where('is_published', 1)
+                          ->orderBy('created_at', 'desc');
+                }])->get();
 
-                $gradedScore = $feedback ? $feedback->graded_score : 0;
+                // Calculate average score across all assessments for this competency
+                $totalScore = 0;
+                $assessmentCount = 0;
 
-                $actualScore = ($gradedScore / 100) * 10;
+                foreach ($assessments as $assessment) {
+                    $feedback = $assessment->feedbacks->first();
+                    if ($feedback) {
+                        $totalScore += ($feedback->graded_score / 100) * 10; // Convert to 0-10 scale
+                        $assessmentCount++;
+                    }
+                }
+
+                $actualScore = $assessmentCount > 0 ? $totalScore / $assessmentCount : 0;
                 $expectedScore = $expectedScores[$competencyId];
 
-                $gap = max(0, $actualScore - $expectedScore);
+                $gap = max(0, min(10, $expectedScore - $actualScore));
 
-                // Store the scores and gaps
-                $scores[] = $actualScore;
-                $gaps[] = $gap;
+                $scores[] = round($actualScore, 2);
+                $gaps[] = round($gap, 2);
             }
 
             $employeeData[] = [
