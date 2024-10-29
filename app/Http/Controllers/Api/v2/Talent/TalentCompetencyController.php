@@ -23,12 +23,12 @@ use App\Services\OpenAIService;
 class TalentCompetencyController extends Controller
 {
 
-    protected $openAIService;
+    // protected $openAIService;
 
-    public function __construct(OpenAIService $openAIService)
-    {
-        $this->openAIService = $openAIService;
-    }
+    // public function __construct(OpenAIService $openAIService)
+    // {
+    //     $this->openAIService = $openAIService;
+    // }
 
     public function progress(Request $request){
         $user = $request->user();

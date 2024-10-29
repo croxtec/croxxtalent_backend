@@ -280,7 +280,7 @@ Route::prefix('auth')->name('api.')->group( function () {
         Route::get('/overview/assessment/chart', 'Api\v2\Company\CompanyReportController@assessmentChart')->name('company.assessment.chart');
         Route::get('/overview/courses/chart', 'Api\v2\Company\CompanyReportController@coursesChart')->name('company.courses.chart');
         // Report
-        Route::get('/refresh/employees/performance', 'Api\v2\Company\CompanyReportController@refreshEmployeePerformance');
+        Route::get('/refresh/performance', 'Api\v2\Company\CompanyReportController@refreshPerformance');
         Route::get('/overview/employees/gap', 'Api\v2\Company\ReportAnalysisController@gapAnalysisReport');
 
         // Mapping

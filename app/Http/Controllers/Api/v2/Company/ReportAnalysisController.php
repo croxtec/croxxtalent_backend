@@ -9,13 +9,7 @@ use App\Models\Goal;
 use App\Models\Employee;
 use App\Models\Campaign;
 use App\Models\Assessment\CroxxAssessment;
-use App\Models\Training\CroxxTraining;
 use App\Models\EmployerJobcode as Department;
-use App\Models\Competency\DepartmentMapping as CompentencyMapping;
-use App\Models\Assessment\EmployerAssessmentFeedback;
-use App\Models\Assessment\EmployeeLearningPath;
-use App\Models\Competency\CompetencySetup;
-use App\Models\Competency\DepartmentMapping;
 
 class ReportAnalysisController extends Controller
 {

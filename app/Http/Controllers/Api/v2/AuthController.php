@@ -28,6 +28,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Mail\PasswordReset;
 use App\Mail\PasswordChanged;
 use App\Models\Employee;
+use App\Services\RefreshCompanyPerformance;
 
 class AuthController extends Controller
 {
@@ -39,9 +40,11 @@ class AuthController extends Controller
     *
     * @return void
     */
-    public function __construct()
-    {
+    protected $companyPerformanceService;
+
+    public function __construct(RefreshCompanyPerformance $companyPerformanceService){
         // $this->firebaseService = $firebaseService;
+        $this->companyPerformanceService = $companyPerformanceService;
     }
 
     protected function tokenData($token)
@@ -325,7 +328,8 @@ class AuthController extends Controller
         // $external_token = (string) Str::orderedUuid();// Str::random(32);
         // // $user->token = $external_token;
         // $user->save();
-
+        $this->companyPerformanceService->refreshCompetenciesPerformance($user);
+        $this->companyPerformanceService->refreshEmployeesPerformance($user);
         // save audit trail log
         $old_values = [];
         $new_values = [];
