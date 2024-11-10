@@ -32,7 +32,7 @@ class CandidateController extends Controller
         $rating = $request->input('rating', 0);
         $datatable_draw = $request->input('draw');
 
-        $campaign_field = is_numeric($id) ? 'campaigns.id' : 'campaigns.code';
+        $campaign_field = is_numeric($id) ? 'id' : 'code';
         $archived = $archived === 'yes' ? true : ($archived === 'no' ? false : null);
 
         $query = Campaign::with(['appliedJobs' => function ($query) use ($archived, $rating, $sort_by, $sort_dir) {
