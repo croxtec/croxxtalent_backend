@@ -39,15 +39,15 @@ class CompanyReportController extends Controller
                             ->limit(12)->get();
 
         $total_campaigns = Campaign::where('user_id', $employer->id)->count();
-
         $total_employees = $employees->count();
 
         $gender_distribution = $employees->groupBy('gender')
-             ->reduce(function ($carry, $group) use ($employees) {
+            ->reduce(function ($carry, $group) use ($employees) {
             $count = $group->count();
             $total = $employees->count();
 
-            $gender = strtolower($group->first()->gender);
+            // Handle empty or null genders by setting them to 'others'
+            $gender = strtolower($group->first()->gender) ?: 'others';
             $carry[$gender] = $count;
 
             return $carry;

@@ -11,6 +11,7 @@ use App\Mail\TalentJobInvitation;
 use App\Mail\TalentJobInvitationAccepted;
 use App\Mail\TalentJobInvitationRejected;
 use App\Models\AppliedJob;
+use App\Models\Campaign;
 
 class CandidateController extends Controller
 {
@@ -21,45 +22,50 @@ class CandidateController extends Controller
      */
     public function index(Request $request, $id)
     {
-        $user = $request->user();
+        $employer = $request->user();
 
-        $per_page = $request->input('per_page', 100);
+        $per_page = $request->input('per_page', 25);
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'desc');
         $search = $request->input('search');
         $archived = $request->input('archived');
         $rating = $request->input('rating', 0);
-        $datatable_draw = $request->input('draw'); // if any
+        $datatable_draw = $request->input('draw');
 
-        $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
+        $campaign_field = is_numeric($id) ? 'campaigns.id' : 'campaigns.code';
+        $archived = $archived === 'yes' ? true : ($archived === 'no' ? false : null);
 
-        $jobApplied = AppliedJob::where('campaign_id', $id)
-            ->where( function ($query) use ($archived) {
-            if ($archived !== null ) {
-                if ($archived === true ) {
-                    $query->whereNotNull('archived_at');
-                } else {
-                    $query->whereNull('archived_at');
-                }
-            }
-        })->when($rating, function ($query) use($rating){
-            $query->where('rating', $rating);
-        })
-        ->orderBy($sort_by, $sort_dir);
+        $query = Campaign::with(['appliedJobs' => function ($query) use ($archived, $rating, $sort_by, $sort_dir) {
+                $query->when($archived !== null, function ($query) use ($archived) {
+                    if ($archived) {
+                        $query->whereNotNull('archived_at');
+                    } else {
+                        $query->whereNull('archived_at');
+                    }
+                })
+                ->when($rating, function ($query) use ($rating) {
+                    $query->where('rating', $rating);
+                })
+                ->orderBy($sort_by, $sort_dir)
+                ->with('talentUser');
+            }])
+            ->where($campaign_field, $id);
 
-        if ($per_page === 'all' || $per_page <= 0 ) {
-            $results = $jobApplied->get();
-            $jobApplied = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
+        if ($per_page === 'all' || $per_page <= 0) {
+            $campaigns = $query->get();
+            $campaignsPaginated = new \Illuminate\Pagination\LengthAwarePaginator($campaigns, $campaigns->count(), -1);
         } else {
-            $jobApplied = $jobApplied->paginate($per_page);
+            $campaignsPaginated = $query->paginate($per_page);
         }
 
         $response = collect([
             'status' => true,
             'message' => "Successful."
-        ])->merge($jobApplied)->merge(['draw' => $datatable_draw]);
+        ])->merge($campaignsPaginated)->merge(['draw' => $datatable_draw]);
+
         return response()->json($response, 200);
     }
+
 
 
     public function rateCandidate(Request $request, $id){
