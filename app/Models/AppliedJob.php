@@ -18,7 +18,13 @@ class AppliedJob extends Model
         'rating'
     ];
 
-        /**
+    // Rating Definition
+    // 0 => Applied o
+    // 1 => Qualified or ExtraUnder Review
+    // 2 => Unqualify
+    // 3 => Invited
+
+    /**
      * The accessors to append to the model's array form.
      *
      * @var array

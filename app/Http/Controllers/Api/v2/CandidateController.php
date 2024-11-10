@@ -32,36 +32,33 @@ class CandidateController extends Controller
         $rating = $request->input('rating', 0);
         $datatable_draw = $request->input('draw');
 
-        $campaign_field = is_numeric($id) ? 'id' : 'code';
+        $campaign_field = is_numeric($id) ? 'campaign_id' : 'code';
         $archived = $archived === 'yes' ? true : ($archived === 'no' ? false : null);
 
-        $query = Campaign::with(['appliedJobs' => function ($query) use ($archived, $rating, $sort_by, $sort_dir) {
-                $query->when($archived !== null, function ($query) use ($archived) {
-                    if ($archived) {
-                        $query->whereNotNull('archived_at');
-                    } else {
-                        $query->whereNull('archived_at');
-                    }
-                })
-                ->when($rating, function ($query) use ($rating) {
-                    $query->where('rating', $rating);
-                })
-                ->orderBy($sort_by, $sort_dir)
-                ->with('talentUser');
-            }])
-            ->where($campaign_field, $id);
+        // Query with relationships
+        $jobApplied = AppliedJob::with(['talentUser'])
+            ->where($campaign_field, $id)
+            ->where(function ($query) use ($archived) {
+                if ($archived !== null) {
+                    $archived ? $query->whereNotNull('archived_at') : $query->whereNull('archived_at');
+                }
+            })
+            ->when($rating, function ($query) use ($rating) {
+                $query->where('rating', $rating);
+            })
+            ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0) {
-            $campaigns = $query->get();
-            $campaignsPaginated = new \Illuminate\Pagination\LengthAwarePaginator($campaigns, $campaigns->count(), -1);
+            $results = $jobApplied->get();
+            $jobApplied = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
         } else {
-            $campaignsPaginated = $query->paginate($per_page);
+            $jobApplied = $jobApplied->paginate($per_page);
         }
 
         $response = collect([
             'status' => true,
             'message' => "Successful."
-        ])->merge($campaignsPaginated)->merge(['draw' => $datatable_draw]);
+        ])->merge($jobApplied)->merge(['draw' => $datatable_draw]);
 
         return response()->json($response, 200);
     }
