@@ -83,7 +83,7 @@ class RefreshCompanyPerformance {
                 $assessments = CroxxAssessment::whereHas('competencies', function ($query) use ($competency) {
                     $query->where('competency', $competency->competency);
                 })->with(['feedbacks' => function ($query) use ($period) {
-                    $query->whereBetween('created_at', $period)
+                    $query//->whereBetween('created_at', $period)
                         ->where('is_published', 1)
                         ->orderBy('created_at', 'desc');
                 }])->get();
@@ -114,13 +114,13 @@ class RefreshCompanyPerformance {
                 ]);
 
                 // Log the performance update
-                \Log::info("Competency {$competency->competency} performance updated", [
-                    'competency_id' => $competency->id,
-                    'department_id' => $competency->department_id,
-                    'performance' => $competencyPerformance,
-                    'total_assessments' => $assessmentCount,
-                    'period' => $period
-                ]);
+                // \Log::info("Competency {$competency->competency} performance updated", [
+                //     'competency_id' => $competency->id,
+                //     'department_id' => $competency->department_id,
+                //     'performance' => $competencyPerformance,
+                //     'total_assessments' => $assessmentCount,
+                //     'period' => $period
+                // ]);
             }
 
             return $competencies;

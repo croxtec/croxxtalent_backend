@@ -35,7 +35,7 @@ class CompanyReportController extends Controller
 
         $top_employees = Employee::where('employer_id', $employer->id)
                             ->select(['id', 'name', 'photo_url','code', 'performance'])
-                            ->orderBy('performance', 'asc')
+                            ->orderBy('performance', 'desc')
                             ->limit(12)->get();
 
         $total_campaigns = Campaign::where('user_id', $employer->id)->count();
@@ -188,13 +188,11 @@ class CompanyReportController extends Controller
         $departments = [];
         $datasets = [];
 
-        // Fetch the department assessments
         $department_assessments = Department::join('croxx_assessments', 'employer_jobcodes.id', '=', 'croxx_assessments.department_id')
             ->where('croxx_assessments.employer_id', $employer->id)
             ->select('croxx_assessments.id', 'croxx_assessments.employer_id', 'croxx_assessments.level', 'croxx_assessments.is_published', 'croxx_assessments.expected_percentage', 'employer_jobcodes.job_code')
             ->get();
 
-        // Calculate department scores and prepare data for charting
         foreach ($department_assessments as $item) {
             $item->department_score = EmployerAssessmentFeedback::where('assessment_id', $item->id)->avg('graded_score');
         }
@@ -230,7 +228,7 @@ class CompanyReportController extends Controller
         foreach ($datasets as $level => &$dataset) {
             for ($i = 0; $i < count($departments); $i++) {
                 if (!isset($dataset['data'][$i])) {
-                    $dataset['data'][$i] = null;
+                    $dataset['data'][$i] = 0;
                 }
             }
         }

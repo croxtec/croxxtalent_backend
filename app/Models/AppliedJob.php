@@ -69,9 +69,10 @@ class AppliedJob extends Model
     }
 
     // New relationship with JobInvitation model
-    public function invitation()
+    public function talentInvitation()
     {
-        return $this->belongsTo('App\Models\JobInvitation', 'talent_user_id', 'id');
+        return $this->hasOne(JobInvitation::class, 'talent_user_id', 'talent_user_id')
+                    ->where('campaign_id', $this->campaign_id);
     }
 
     // Combined accessors to avoid duplication
@@ -97,7 +98,7 @@ class AppliedJob extends Model
 
     public function getJobInvitationsAttribute()
     {
-        return $this->invitation;
+        return $this->talentInvitation;
     }
 
 }

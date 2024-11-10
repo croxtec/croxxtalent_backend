@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Helpers\EmployeeImport;
 use App\Http\Requests\EmployeeRequest;
 use App\Mail\WelcomeEmployee;
+use App\Models\Assessment\CroxxAssessment;
 use App\Models\User;
 use App\Models\Verification;
 use Illuminate\Support\Facades\Mail;
@@ -219,19 +220,37 @@ class EmployeeController extends Controller
         $employee->supervisor;
 
         $technical_skills = array_column($employee->department->technical_skill->toArray(0),'competency');
+        $soft_skills = array_column($employee->department->soft_skill->toArray(0),'competency');
+
         $assessment_distribution = [];
         $trainings_distribution = [];
 
-        if(count($technical_skills)){
-            foreach($technical_skills as $skill){
-                array_push($assessment_distribution, mt_rand(0, 10));
+        $assessments = CroxxAssessment::whereHas('competencies', function ($query) use ($technical_skills) {
+            $query->whereIn('competency', $technical_skills);
+        })->with(['competencies','feedbacks' => function ($query) {
+            $query->where('is_published', 1) ->orderBy('created_at', 'desc');
+        }])->get();
+
+
+        foreach ($technical_skills as $skill) {
+            $score = 0;
+
+            foreach ($assessments as $assessment) {
+                foreach ($assessment->competencies as $competency) {
+                    if ($competency->competency === $skill) {
+                        $feedback = $assessment->feedbacks->firstWhere('assessment_id', $assessment->id);
+                        $score = $feedback ? $feedback->graded_score : 0;
+                        break 2; // Break out of both loops once score is found
+                    }
+                }
             }
+
+            $assessment_distribution[] = $score;
         }
 
         if(count($technical_skills)){
             foreach($technical_skills as $skill){
-                array_push($assessment_distribution, mt_rand(0, 10));
-                array_push($trainings_distribution, mt_rand(0, 10));
+                array_push($trainings_distribution, 0);
             }
         }
 
@@ -241,15 +260,26 @@ class EmployeeController extends Controller
             'trainings_distribution' =>  $trainings_distribution,
         ];
 
+        // Goals Summary
+        $employeeGoals = $employee->goalsCompleted();
+        $totalGoals = $employeeGoals->count();
+        $completedGoals = $employeeGoals->where('status', 'done')->count();
+        $goalPerformance = $totalGoals > 0 ? ($completedGoals / $totalGoals) * 100 : 0;
+        // Assessment Summaru
+        $employeeFeedbacks = $employee->completedAssessment();
+        $feedbackCount = $employeeFeedbacks->count();
+        $totalFeedbackScore = $employeeFeedbacks->sum('graded_score');
+        $feedbackPerformance = $feedbackCount > 0 ? ($totalFeedbackScore / $feedbackCount) : 0;
+
         $employee->proficiency = [
-            'total' =>  '90%',
+            'total' =>  "{$employee->performance}%",
             'assessment' => [
-                'taken' => $employee->completedAssessment()->count(),
-                'performance' => '0%'
+                'taken' => $feedbackCount,
+                'performance' => "{$feedbackPerformance}%"
             ],
             'goals' => [
-                'taken' => $employee->goalsCompleted()->count(),
-                'performance' => '0%'
+                'taken' => $totalGoals,
+                'performance' => "{$goalPerformance}%"
             ],
             'trainings' => [
                 'taken' => $employee->learningPaths()->count(),
