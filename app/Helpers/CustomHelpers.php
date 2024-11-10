@@ -23,6 +23,14 @@ if ( ! function_exists('api_url')) {
     }
 }
 
+if ( ! function_exists('client_url')) {
+    function client_url(string $path)
+    {
+        $slash = $path[0] == '/' ? '' : '/';
+        return config('myapp.client_url') . $slash . $path;
+    }
+}
+
 if ( ! function_exists('cloud_asset')) {
 
     function cloud_asset(string $path)

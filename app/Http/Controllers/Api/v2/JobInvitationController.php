@@ -23,7 +23,7 @@ class JobInvitationController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        info([$user->id, $user->type]);
+        // info([$user->id, $user->type]);
 
         $this->authorize('view-any', JobInvitation::class);
 
@@ -289,15 +289,6 @@ class JobInvitationController extends Controller
             $jobInvitation->status = 'accepted';
             $jobInvitation->save();
 
-            //Send push notifications
-            // $notification = new Notification();
-            // $notification->user_id = $jobInvitation->talent_user_id;
-            // $notification->action = '/my-job';
-            // $notification->category = 'success';
-            // $notification->title = 'Job Invitation Accepted';
-            // $notification->message = "Your job invitation/offer was accepted by $display_name ";
-            // $notification->save();
-            // send email notification
             if ($jobInvitation->employerUser->email) {
                 if (config('mail.queue_send')) {
                     Mail::to($jobInvitation->employerUser->email)->queue(new TalentJobInvitationAccepted($jobInvitation));
@@ -331,15 +322,6 @@ class JobInvitationController extends Controller
             $jobInvitation->status = 'rejected';
             $jobInvitation->save();
 
-            // send push notification
-            // $notification = new Notification();
-            // $notification->user_id = $jobInvitation->talent_user_id;
-            // $notification->action = '/my-job';
-            // $notification->category = 'danger';
-            // $notification->title = 'Job Invitation Rejected';
-            // $notification->message = "Your job invitation/offer was rejected by $display_name ";
-            // $notification->save();
-            // send email notification
             if ($jobInvitation->employerUser->email) {
                 if (config('mail.queue_send')) {
                     Mail::to($jobInvitation->employerUser->email)->queue(new TalentJobInvitationRejected($jobInvitation));

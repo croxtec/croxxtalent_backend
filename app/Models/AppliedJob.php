@@ -30,8 +30,20 @@ class AppliedJob extends Model
      * @var array
      */
     protected $appends = [
-      'campaign',  'employer', 'cv', 'talent'
+        'campaign', 'employer', 'cv', 'talent', 'job_invitations'
     ];
+
+    public function getStatusAttribute()
+    {
+        $status = [
+            0 => 'Applied',
+            1 => 'Qualified',
+            2 => 'Unqualify',
+            3 => 'Invited',
+        ];
+
+        return $status[$this->rating] ?? 'Unknown';
+    }
 
 
     // User relationships
@@ -41,19 +53,9 @@ class AppliedJob extends Model
         return $this->belongsTo('App\Models\Campaign', 'campaign_id', 'id');
     }
 
-    public function getCampaignAttribute()
-    {
-        return $this->job;
-    }
-
     public function employerUser()
     {
         return $this->belongsTo('App\Models\User', 'employer_user_id', 'id');
-    }
-
-    public function getEmployerAttribute()
-    {
-        return $this->employerUser;
     }
 
     public function talentUser()
@@ -61,19 +63,41 @@ class AppliedJob extends Model
         return $this->belongsTo('App\Models\User', 'talent_user_id', 'id');
     }
 
-    public function getTalentAttribute()
-    {
-        return $this->talentUser;
-    }
-
     public function talentCv()
     {
         return $this->belongsTo('App\Models\Cv', 'talent_cv_id', 'id');
     }
 
+    // New relationship with JobInvitation model
+    public function invitation()
+    {
+        return $this->belongsTo('App\Models\JobInvitation', 'talent_user_id', 'id');
+    }
+
+    // Combined accessors to avoid duplication
+    public function getCampaignAttribute()
+    {
+        return $this->job;
+    }
+
+    public function getEmployerAttribute()
+    {
+        return $this->employerUser;
+    }
+
+    public function getTalentAttribute()
+    {
+        return $this->talentUser;
+    }
+
     public function getCvAttribute()
     {
         return $this->talentCv;
+    }
+
+    public function getJobInvitationsAttribute()
+    {
+        return $this->invitation;
     }
 
 }

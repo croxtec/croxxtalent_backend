@@ -17,7 +17,7 @@
         <b>{{ $jobInvitation->employerUser->display_name }}</b> has schedule an interview with you at {{ $jobInvitation->interview_at }}
     </p>
     <p>
-        Please login to your <a href="{{ config('myapp.url') }}" target="_blank">{{ config('myapp.name') }}</a> account to view details and accept offer.
+        Please login to your <a href="{{ config('myapp.client_url') }}" target="_blank">{{ config('myapp.name') }}</a> account to view details and accept offer.
     </p>
 @endsection
 
