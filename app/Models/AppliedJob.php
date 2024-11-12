@@ -30,7 +30,7 @@ class AppliedJob extends Model
      * @var array
      */
     protected $appends = [
-        'campaign', 'employer',  'talent', 'job_invitations'
+        'campaign', 'employer', 'cv', 'talent', 'job_invitations'
     ];
 
     public function getStatusAttribute()
@@ -63,10 +63,10 @@ class AppliedJob extends Model
         return $this->belongsTo('App\Models\User', 'talent_user_id', 'id');
     }
 
-    // public function talentCv()
-    // {
-    //     return $this->belongsTo('App\Models\Cv', 'talent_cv_id', 'id');
-    // }
+    public function talentCv()
+    {
+        return $this->belongsTo('App\Models\Cv', 'talent_cv_id', 'id');
+    }
 
     // New relationship with JobInvitation model
     public function talentInvitation()
@@ -89,6 +89,11 @@ class AppliedJob extends Model
     public function getTalentAttribute()
     {
         return $this->talentUser;
+    }
+
+    public function getCvAttribute()
+    {
+        return $this->talentCv;
     }
 
     public function getJobInvitationsAttribute()
