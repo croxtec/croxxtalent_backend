@@ -168,11 +168,15 @@ class CompanyReportController extends Controller
 
     public function recentFeedback(Request $request){
         $employer = $request->user();
+        $per_page = $request->input('per_page', 12);
 
         $feedbacks = EmployerAssessmentFeedback::where('employer_user_id', $employer->id)
                         ->where('is_published', true)->whereNotNull('supervisor_id')
                         ->with('employee','supervisor', 'assessment')
-                        ->latest()->limit(8) ->get();
+                        ->latest();
+
+        $feedbacks = $feedbacks->paginate($per_page);
+                        // ->limit(8) ->get();
 
         return response()->json([
             'status' => true,

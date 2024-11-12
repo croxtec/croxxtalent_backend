@@ -30,7 +30,7 @@ class AppliedJob extends Model
      * @var array
      */
     protected $appends = [
-        'campaign', 'employer', 'cv', 'talent', 'job_invitations'
+        'campaign', 'employer',  'talent', 'job_invitations'
     ];
 
     public function getStatusAttribute()
