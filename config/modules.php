@@ -131,6 +131,9 @@ return [
         ],
     ],
 
+    'providers' => [
+        Modules\HR\Providers\HRServiceProvider::class,
+    ],
     /*
     |--------------------------------------------------------------------------
     | Package commands

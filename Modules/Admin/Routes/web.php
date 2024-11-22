@@ -1,9 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\HR\Http\Controllers\HRController;
+use Modules\Admin\Http\Controllers\AdminController;
 
-// use $MODULE_NAMESPACE$\HR\$CONTROLLER_NAMESPACE$\HRController;
+// use $MODULE_NAMESPACE$\Admin\$CONTROLLER_NAMESPACE$\AdminController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,5 +17,5 @@ use Modules\HR\Http\Controllers\HRController;
 */
 
 Route::group([], function () {
-    Route::resource('hr', HRController::class)->names('hr');
+    Route::resource('admin', AdminController::class)->names('admin');
 });
