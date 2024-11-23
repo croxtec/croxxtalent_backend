@@ -21,6 +21,12 @@ return new class extends Migration
             $table->time('actual_end_time')->nullable();
             $table->enum('status', ['scheduled', 'in_progress', 'completed', 'absent'])->default('scheduled');
             $table->text('notes')->nullable();
+            // Overtime
+            $table->integer('overtime_minutes')->default(0);
+            $table->decimal('overtime_rate', 3, 2)->default(1.5);
+            $table->boolean('is_overtime_approved')->default(false);
+            $table->foreignId('approved_by')->nullable()->constrained('employees');
+
             $table->timestamps();
             $table->softDeletes();
         });

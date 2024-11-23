@@ -26,6 +26,10 @@ return new class extends Migration
             $table->date('approved_at')->nullable();
             $table->text('reject_reason')->nullable();
             $table->text('approved_reason')->nullable();
+
+            $table->foreignId('shift_id')->nullable(); // If they're missing a specific shift
+            $table->time('start_time')->nullable();    // For partial day leaves
+            $table->time('end_time')->nullable();
             $table->timestamps();
         });
     }

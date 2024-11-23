@@ -20,6 +20,7 @@ return new class extends Migration
             $table->enum('status', ['draft', 'active', 'closed'])->default('draft'); // Survey status
             $table->dateTime('start_date')->nullable();
             $table->dateTime('end_date')->nullable();
+            $table->string('recurring')->nullable();
             $table->timestamps();
         });
     }
