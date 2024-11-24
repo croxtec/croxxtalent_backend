@@ -14,10 +14,14 @@ return new class extends Migration
         Schema::create('clock_events', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id');
-            $table->foreignId('shift_id')->nullable();
             $table->foreignId('employee_id')->constrained('employees');
             $table->enum('event_type', ['clock_in', 'clock_out', 'break_start', 'break_end']);
             $table->dateTime('event_time');
+             // Integration points
+            $table->foreignId('shift_id')->nullable();
+            $table->foreignId('employee_shift_id')->nullable();// For advanced module
+            $table->foreignId('attendance_id')->nullable();
+
             $table->string('location')->nullable();
             $table->string('device_info')->nullable();
             $table->string('ip_address')->nullable();
@@ -27,6 +31,7 @@ return new class extends Migration
             $table->timestamps();
         });
     }
+
 
     /**
      * Reverse the migrations.

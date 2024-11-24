@@ -29,6 +29,21 @@ class Holiday extends Model
         'holiday_date' => 'date',  // Handle as Carbon date
     ];
 
+    // Check if a holiday applies to an employee
+    public function appliesToEmployee($employeeId, $departmentId)
+    {
+        if (in_array($employeeId, $this->applicable_to['employees'] ?? [])) {
+            return true;
+        }
+
+        if (in_array($departmentId, $this->applicable_to['departments'] ?? [])) {
+            return true;
+        }
+
+        return false;
+    }
+
+
     protected static function newFactory(): HolidayFactory
     {
         //return HolidayFactory::new();

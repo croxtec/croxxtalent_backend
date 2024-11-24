@@ -20,6 +20,9 @@ return new class extends Migration
             $table->boolean('is_night_shift')->default(false);
             $table->integer('grace_period')->default(15); // in minutes
             $table->boolean('is_active')->default(true);
+            $table->foreignId('company_id');  // Missing company isolation
+            $table->string('recurring_days')->nullable(); // For M,T,W etc.
+            $table->integer('repeat_frequency')->nullable(); // Weekly repeat
             $table->timestamps();
             $table->softDeletes();
         });

@@ -22,6 +22,8 @@ return new class extends Migration
             $table->time('start_time')->nullable(); // Task start time
             $table->time('end_time')->nullable(); // Task end time
             $table->decimal('hours_spent', 8, 2)->nullable(); // Total hours spent (calculated or manual entry)
+            $table->enum('status', ['draft', 'submitted', 'approved', 'rejected'])->default('draft');
+            $table->foreignId('approved_by')->nullable();
             $table->text('file')->nullable(); // Additional notes for the task
             $table->timestamps();
         });
