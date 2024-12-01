@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Modules\HR\Http\Controllers\Api\Company\HolidayController;
+use Modules\HR\Http\Controllers\Api\Company\PolicyController;
 
 /*
     |--------------------------------------------------------------------------
@@ -19,5 +20,6 @@ Route::middleware(['auth:sanctum'])->prefix('hr')->name('api.')->group(function 
     // Route::get('hr', fn (Request $request) => $request->user())->name('hr');
 
     Route::resources([ 'holidays' =>  HolidayController::class ]);
+    Route::resources([ 'policies' =>  PolicyController::class ]);
 
 });

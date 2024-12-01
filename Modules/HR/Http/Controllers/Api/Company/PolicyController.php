@@ -3,14 +3,23 @@
 namespace Modules\HR\Http\Controllers\Api\Company;
 
 use App\Http\Controllers\Controller;
+use Cloudinary\Cloudinary;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\HR\Entities\Policy;
+use Illuminate\Support\Str;
 use Modules\HR\Http\Requests\PolicyRequest;
 
 class PolicyController extends Controller
 {
     public array $data = [];
+
+    protected $cloudinary;
+
+    public function __construct(Cloudinary $cloudinary)
+    {
+        $this->cloudinary = $cloudinary;
+    }
 
     /**
      * Display a listing of the resource.
@@ -41,7 +50,7 @@ class PolicyController extends Controller
         })
         ->where('company_id', $user->id)
         ->where( function($query) use ($search) {
-            $query->where('Policy_name', 'LIKE', "%{$search}%");
+            $query->where('policy_name', 'LIKE', "%{$search}%");
         })->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
@@ -68,6 +77,22 @@ class PolicyController extends Controller
 
         $validatedData = $request->validated();
         $validatedData['company_id'] = $company->id;
+
+        if ($request->hasFile('policy_document') && $request->file('policy_document')->isValid()) {
+            $file = $request->file('policy_document');
+            $extension = $file->extension();
+
+            $filename = time() . '-' . Str::random(32);
+            $filename = "{$filename}.$extension";
+            $year = date('Y');
+            $rel_upload_path  = "CroxxDocx/Policy/{$year}";
+
+            $result = $this->cloudinary->uploadApi()->upload($file->getRealPath(), [
+                'folder' => $rel_upload_path, // Specify a folder
+            ]);
+
+            $validatedData['policy_document'] = $result['secure_url'];
+        }
 
         $policy = Policy::create($validatedData);
 

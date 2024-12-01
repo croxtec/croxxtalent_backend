@@ -19,7 +19,7 @@ class PolicyRequest extends FormRequest
                 return [
                     'policy_name' => 'required|min:3',
                     'policy_description' => 'required|string|max:512',
-                    'status' => 'required|in:active,inactive',
+                    'status' => 'nullable|in:active,inactive',
                     'department_id' => 'nullable|integer|exists:employer_jobcodes,id',
                     'policy_document' => 'nullable|file|mimes:pdf,docx|max:4088',
                 ];
@@ -28,6 +28,8 @@ class PolicyRequest extends FormRequest
                     'policy_name' => 'sometimes|min:3',
                     'policy_description' => 'sometimes|string|max:512',
                     'status' => 'sometimes|in:active,inactive',
+                    'department_id' => 'nullable|integer|exists:employer_jobcodes,id',
+                    'policy_document' => 'nullable|file|mimes:pdf,docx|max:4088',
                 ];
             case 'PATCH':
             case 'DELETE':
