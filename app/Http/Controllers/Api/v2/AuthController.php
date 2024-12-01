@@ -22,23 +22,29 @@ use App\Models\User;
 use App\Models\Verification;
 use App\Models\Audit;
 use App\Mail\WelcomeVerifyEmail;
-use App\Notifications\CroxxTalentUsers;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 use App\Mail\PasswordReset;
 use App\Mail\PasswordChanged;
+use App\Models\Employee;
+use App\Services\RefreshCompanyPerformance;
+
 class AuthController extends Controller
 {
+
+    // protected $firebaseService;
 
    /**
     * Create a new AuthController instance.
     *
     * @return void
     */
-    public function __construct()
-    {
+    protected $companyPerformanceService;
 
+    public function __construct(RefreshCompanyPerformance $companyPerformanceService){
+        // $this->firebaseService = $firebaseService;
+        $this->companyPerformanceService = $companyPerformanceService;
     }
 
     protected function tokenData($token)
@@ -96,11 +102,6 @@ class AuthController extends Controller
             $user->save();
         }
 
-        if (!$user->username) {
-            // $user->password = bcrypt($validatedData['password']);
-            // $user->save();
-        }
-
         if ($user->is_active !== true) {
             $user->is_active = true;
             $user->save();
@@ -109,13 +110,20 @@ class AuthController extends Controller
                 'message' => 'Your account is inactive, please contact support admin.'
             ], 401);
         }
+
+        //
+        $companies = Employee::where('email', $user->email)->whereNotNull('email_verified_at')
+                    ->whereNull('user_id')->get();
+
+        if ($companies->count()) {
+            foreach ($companies as $company) {
+                $company->update(['user_id' => $user->id, 'status' => 1]);
+            }
+        }
+
         // create token
         array_push($abilities, "access:{$user->type}");
         $token =  $user->createToken('access-token', $abilities)->plainTextToken;
-        // Add token to access the secondary server
-        $external_token = (string) Str::orderedUuid();// Str::random(32);
-        $user->token = $external_token;
-        $user->save();
 
         // save audit trail log
         $old_values = [];
@@ -123,8 +131,15 @@ class AuthController extends Controller
         Audit::log($user->id, 'login', $old_values, $new_values, User::class, $user->id);
 
         $responseData = $this->tokenData($token);
-        $responseData['realtime_token'] = $user->token;
-        $responseData['user'] = $user;
+        // $responseData['realtime_token'] = $user->token;
+        // $responseData['user'] = $user;
+
+        // Send push Notification
+        // $title = "Test Notification";
+        // $body = "Your account has been logged in";
+        // $deviceToken = "your_device_token";  // Get this from the client-side
+        // $this->firebaseService->sendPushNotification($title, $body, $deviceToken, $data);
+
 
         // send response
         return response()->json([
@@ -172,9 +187,14 @@ class AuthController extends Controller
             $validatedData['services'] = $request->services;
         }
         // Generate Default Username
-        $default_username = isset($validatedData['company_name']) ? strtolower($validatedData['company_name']) : strtolower($validatedData['first_name'])."_".strtolower($validatedData['last_name']);
+
+        $default_username = isset($validatedData['company_name'])
+            ? Str::slug($validatedData['company_name'], '_')
+            : Str::slug("{$validatedData['first_name']}_{$validatedData['last_name']}", '_');
+
         $total = User::where('username', $default_username)->count();
-        if($total) $default_username = $default_username."_".$total;
+        if ($total)  $default_username .= "_{$total}";
+
         $validatedData['username'] = $default_username;
         // if ($validatedData['type'] == 'affiliate') {
         //     $validator = Validator::make($request->all(),[
@@ -217,28 +237,28 @@ class AuthController extends Controller
             $new_values = $validatedData;
             Audit::log($user->id, 'register', $old_values, $new_values, User::class, $user->id);
             // create and send email verification token records
-            if($validatedData['type'] == 'talent'){
-                $verification = new Verification();
-                $verification->action = "register";
-                $verification->sent_to = $user->email;
-                $verification->metadata = null;
-                $verification->is_otp = false;
-                $verification = $user->verifications()->save($verification);
-                if ($verification && $user->email) {
-                    if (config('mail.queue_send')) {
-                        Mail::to($user->email)->queue(new WelcomeVerifyEmail($user, $verification));
-                    } else {
-                        Mail::to($user->email)->send(new WelcomeVerifyEmail($user, $verification));
-                    }
+            // if($validatedData['type'] == 'talent'){}
+            $verification = new Verification();
+            $verification->action = "register";
+            $verification->sent_to = $user->email;
+            $verification->metadata = null;
+            $verification->is_otp = false;
+            $verification = $user->verifications()->save($verification);
+            if ($verification && $user->email) {
+                if (config('mail.queue_send')) {
+                    Mail::to($user->email)->queue(new WelcomeVerifyEmail($user, $verification));
+                } else {
+                    Mail::to($user->email)->send(new WelcomeVerifyEmail($user, $verification));
                 }
             }
+
             // format token data
             $responseData = $this->tokenData($token);
             $responseData['user'] = $user;
 
             return response()->json([
                 'status' => true,
-                'message' => "User \"{$user->name}\" created successfully.",
+                'message' => "\"{$user->name}\" created successfully.",
                 'data' => $responseData
             ], 201);
         } else {
@@ -305,10 +325,11 @@ class AuthController extends Controller
         array_push($abilities, "access:{$user->type}");
         $token =  $user->createToken('access-token', $abilities)->plainTextToken;
         // Add token to access the secondary server
-        $external_token = (string) Str::orderedUuid();// Str::random(32);
-        // $user->token = $external_token;
-        $user->save();
-
+        // $external_token = (string) Str::orderedUuid();// Str::random(32);
+        // // $user->token = $external_token;
+        // $user->save();
+        $this->companyPerformanceService->refreshCompetenciesPerformance($user);
+        $this->companyPerformanceService->refreshEmployeesPerformance($user);
         // save audit trail log
         $old_values = [];
         $new_values = [];

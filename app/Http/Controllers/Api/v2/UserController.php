@@ -611,6 +611,13 @@ class UserController extends Controller
         $per_page = $request->input('per_page', 25);
 
         $notifications = $user->notifications()->latest()->paginate($per_page);
+
+        foreach ($notifications as $notification) {
+            if(!$notification->read_at){
+                $notification->update(['read_at' => now()]);
+            }
+        }
+
         $notificationResources = NotificationResource::collection($notifications);
 
         $response = [

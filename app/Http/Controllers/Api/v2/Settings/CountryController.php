@@ -232,10 +232,12 @@ class CountryController extends Controller
             $country = Country::findOrFail($id);
         }
 
+        info($country);
+
         $this->authorize('view-any', State::class);
 
         $per_page = $request->input('per_page', 100);
-        $sort_by = $request->input('sort_by', 'sort_order');
+        $sort_by = $request->input('sort_by', 'country_code');
         $sort_dir = $request->input('sort_dir', 'asc');
         $search = $request->input('search');
         $archived = $request->input('archived');

@@ -12,6 +12,8 @@ use App\Models\Cv;
 use App\Models\Employee;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Training\CourseLibrary;
+use App\Models\Assessment\TalentAssessmentSummary;
 
 class User extends Authenticatable
 {
@@ -69,7 +71,12 @@ class User extends Authenticatable
         'first_name',
         'last_name',
         'email',
+        'username',
         'password',
+        'google_id',
+        'linkedin_id',
+        'linkedin_token',
+
         'phone',
         'is_active',
         'company_name',
@@ -78,6 +85,7 @@ class User extends Authenticatable
         'services',
         'referral_user_id',
         'referral_code',
+        'email_verified_at'
     ];
 
     /**
@@ -117,8 +125,8 @@ class User extends Authenticatable
      * @var array
      */
     protected $appends = [
-        'name', 'display_name', 'name_initials',  'cv',
-        'total_companies', //'total_affiliates', 'photo_url', 'unread_notifications','permissions',
+        'name', 'display_name', 'name_initials', 'cv','unread_notifications',
+        'total_companies', 'training_completed', 'assessment_completed', //'total_affiliates', 'photo_url', ,'permissions',
     ];
 
     // Get Model Attributes
@@ -249,7 +257,6 @@ class User extends Authenticatable
         }
     }
 
-
     /**
      * Get the audits for the user.
      */
@@ -293,7 +300,15 @@ class User extends Authenticatable
 
     public  function getTotalCompaniesAttribute()
     {
-        return  Employee::where('user_id', $this->id)->count();
+        return $this->type === 'talent' ? Employee::where('user_id', $this->id)->count() : null;
+    }
+
+    public function getTrainingCompletedAttribute(){
+        return $this->type === 'talent' ? CourseLibrary::where('talent_id', $this->id)->count() : null;
+    }
+
+    public function getAssessmentCompletedAttribute(){
+        return $this->type === 'talent' ? TalentAssessmentSummary::where('talent_id', $this->id)->count() : null;
     }
 
     public function getAffiliateRewardPointsAttribute()
@@ -308,6 +323,9 @@ class User extends Authenticatable
 
     public function getUnreadNotificationsAttribute()
     {
-        return Notification::where('user_id', $this->id)->latest()->where('seen', 0)->get();
+        return Notification::where('notifiable_id', $this->id)->whereNull('read_at')->count();
     }
+
+
 }
+

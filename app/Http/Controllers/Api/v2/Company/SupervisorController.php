@@ -8,6 +8,9 @@ use App\Models\Supervisor;
 use App\Models\Employee;
 use App\Http\Requests\SupervisorRequest;
 
+use App\Notifications\SupervisorRemoved;
+use Illuminate\Support\Facades\Notification;
+
 class SupervisorController extends Controller
 {
     /**
@@ -24,33 +27,54 @@ class SupervisorController extends Controller
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'desc');
         $search = $request->input('search');
-        $archived = $request->input('archived');
-        $datatable_draw = $request->input('draw'); // if any
+        $archived = $request->input('archived', 'no');
+        $datatable_draw = $request->input('draw');
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
 
         $supervisor = Supervisor::where('employer_id', $employer->id)
-                        ->when( $archived ,function ($query) use ($archived) {
-                            if ($archived !== null ) {
-                                if ($archived === true ) {
-                                    $query->whereNotNull('archived_at');
-                                } else {
-                                    $query->whereNull('archived_at');
-                                }
-                            }
-                        })->with('employee', 'department', 'department_role')
-                        ->orderBy($sort_by, $sort_dir);
+        ->whereNull('archived_at')
+        ->when($archived, function ($query) use ($archived) {
+            info($archived);
+            if ($archived !== null) {
+                if ($archived === true) {
+                    $query->whereNotNull('archived_at');
+                } else {
+                    $query->whereNull('archived_at');
+                }
+            }
+        })
+        ->with(['employee'])
+        ->orderBy($sort_by, $sort_dir);
 
-        if ($per_page === 'all' || $per_page <= 0 ) {
-            $results = $supervisor->get();
+        if ($per_page === 'all' || $per_page <= 0) {
+            $results = $supervisor->get(); // Retrieve all data when 'all' is specified
             $supervisor = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
         } else {
             $supervisor = $supervisor->paginate($per_page);
         }
 
+        // Flatten the employee data into the main structure
+        $supervisor->getCollection()->transform(function ($item) {
+            $item->email = $item->employee->email ?? null;
+            $item->name = $item->employee->name ?? null;
+            $item->code = $item->employee->code ?? null;
+            $item->photo_url = $item->employee->photo_url ?? null;
+            $item->department =   $item->employee->department;
+            $item->department_role = $item->employee->department_role;
+            $feedbackCount = $item->employee->feedbackSent->count();
+            $taskCount = $item->employee->taskAssigned->count();
+
+            $item->total_feedback_sent = $feedbackCount . ' Feedback' . ($feedbackCount > 1 ? 's' : '');
+            $item->total_task_assigned = $taskCount . ' Task' . ($taskCount > 1 ? 's' : '');
+
+            unset($item->employee);
+            return $item;
+        });
+
+
         $response = collect([
             'status' => true,
-            "data" => $supervisor,
             'message' => ""
         ])->merge($supervisor)
           ->merge(['draw' => $datatable_draw]);
@@ -93,17 +117,6 @@ class SupervisorController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
-    /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -121,8 +134,34 @@ class SupervisorController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+
+    public function destroy(Request $request, $id)
     {
-        //
+        $employer = $request->user();
+
+        // Find the supervisor by ID
+        $supervisor = Supervisor::findOrFail($id);
+        $employee = Employee::where('supervisor_id', $supervisor->id)->first();
+
+        // Remove Supervisor
+        if ($employee) {
+            $employee->supervisor_id = null;
+            $employee->save();
+        }
+
+        $supervisor->archived_at = now();
+        $supervisor->save();
+
+        // Send notifications to the user
+        $user = $employee->talent;
+        $employee->department;
+        Notification::send($user, new SupervisorRemoved($employee));
+
+        return response()->json([
+            'status' => true,
+            'message' => "Supervisor removed successfully.",
+            'data' => $employee
+        ], 201);
     }
+
 }

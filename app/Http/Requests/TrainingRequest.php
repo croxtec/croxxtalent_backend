@@ -45,12 +45,12 @@ class TrainingRequest extends FormRequest
                     'type' => 'required|in:company,training,competency',
                     'experience_level' => 'required|in:beginner,intermediate,advance,expert',
                     'title' => 'required|max:100',
-                    'objective' => 'required|max:250',
+                    'objective' => 'required|max:512',
                     'assessment_level' => 'nullable',
+                    'cover_photo' => 'nullable|image|max:512', // 512KB
                     'department_id' => 'required_if:type,company|integer|exists:employer_jobcodes,id',
                     'career_id' => 'required_if:type,training,competency|integer',
                 ];
-
             case 'PUT':
             case 'PATCH':
                 return [
@@ -58,6 +58,7 @@ class TrainingRequest extends FormRequest
                     'title' => 'sometimes|required|max:100',
                     'objective' => 'sometimes|required|max:250',
                     'assessment_level' => 'nullable',
+                    'assessment_id' => 'nullable'
                 ];
             case 'DELETE':
                 return [];

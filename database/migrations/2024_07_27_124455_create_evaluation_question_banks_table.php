@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('admin_id')->default(1);
             $table->unsignedBigInteger('industry_id')->nullable();
-            $table->enum('level', ['beginner', 'intermediate', 'advanced', 'expert']);
+            $table->enum('level', ['beginner', 'intermediate', 'advance', 'expert']);
             $table->string('competency_name');
             $table->text('question');
             $table->string('option1');

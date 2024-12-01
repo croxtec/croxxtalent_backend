@@ -22,6 +22,8 @@ class EmployerAssessmentFeedback extends Model
         'updated_at',
     ];
 
+    protected $appends = ['estimated_time'];
+
     public function employee(){
         return $this->belongsTo('App\Models\Employee', 'employee_id', 'id')
                     ->with('department','department_role')
@@ -34,5 +36,24 @@ class EmployerAssessmentFeedback extends Model
                     ->select(['id','name', 'job_code_id', 'department_role_id', 'photo_url', 'code']);
     }
 
+    public function assessment()
+    {
+        return $this->belongsTo(CroxxAssessment::class, 'assessment_id');
+    }
+
+    public function getEstimatedTimeAttribute()
+    {
+        if (is_numeric($this->time_taken)) {
+            $timetaken = intval($this->time_taken);
+            $minutes = floor($timetaken / 60);
+            $seconds = $timetaken % 60;
+
+            // Return the formatted time
+            return sprintf('%d minutes %d seconds', $minutes, $seconds);
+        }
+
+        // If not numeric, return null or a default value
+        return null;
+    }
 
 }

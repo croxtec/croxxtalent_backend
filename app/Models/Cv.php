@@ -23,6 +23,8 @@ class Cv extends Model
      */
     protected $table = 'cvs';
 
+    protected $cvImportService;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -345,7 +347,7 @@ class Cv extends Model
 
     public function workExperiences()
     {
-        return $this->hasMany('App\Models\CvWorkExperience', 'cv_id', 'id');
+        return $this->hasMany('App\Models\CvWorkExperience', 'cv_id', 'id')->with('competencies');
     }
 
     public function educations()

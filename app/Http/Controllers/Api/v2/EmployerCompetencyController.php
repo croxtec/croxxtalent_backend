@@ -11,99 +11,79 @@ use App\Models\AssesmentSummary;
 use App\Models\Assesment;
 use App\Models\VettingSummary;
 use App\Models\EmployerJobcode as Department;
-use  App\Models\Competency\DepartmentMapping;
+use App\Models\Competency\DepartmentMapping;
+use App\Models\Competency\DepartmentSetup;
+use App\Services\OpenAIService;
 
 class EmployerCompetencyController extends Controller
 {
-    protected static function competencies(){
-        return[
-            // Human Resources
-            ['department' => 'human_resources', 'competency' => 'talent_acquisition', 'competency_role' => 'technical_skill', 'description' => 'Ability to identify, attract, and recruit top talent.'],
-            ['department' => 'human_resources', 'competency' => 'employee_relations', 'competency_role' => 'soft_skill', 'description' => 'Managing relationships between the employer and employees.'],
-            ['department' => 'human_resources', 'competency' => 'compensation_and_benefits', 'competency_role' => 'technical_skill', 'description' => 'Designing and managing employee compensation packages and benefits.'],
-            ['department' => 'human_resources', 'competency' => 'training_and_development', 'competency_role' => 'technical_skill', 'description' => 'Creating and implementing employee training programs.'],
-            ['department' => 'human_resources', 'competency' => 'conflict_resolution', 'competency_role' => 'soft_skill', 'description' => 'Effectively resolving disputes and conflicts in the workplace.'],
-            // Finance
-            ['department' => 'finance', 'competency' => 'financial_analysis', 'competency_role' => 'technical_skill', 'description' => 'Analyzing financial data to assist in decision-making.'],
-            ['department' => 'finance', 'competency' => 'budgeting', 'competency_role' => 'technical_skill', 'description' => 'Planning and managing financial resources.'],
-            ['department' => 'finance', 'competency' => 'accounting', 'competency_role' => 'technical_skill', 'description' => 'Recording, summarizing, and reporting financial transactions.'],
-            ['department' => 'finance', 'competency' => 'financial_reporting', 'competency_role' => 'technical_skill', 'description' => 'Preparing financial statements and reports.'],
-            ['department' => 'finance', 'competency' => 'risk_management', 'competency_role' => 'technical_skill', 'description' => 'Identifying and managing financial risks.'],
-            // Marketing
-            ['department' => 'marketing', 'competency' => 'market_research', 'competency_role' => 'technical_skill', 'description' => 'Collecting and analyzing market data to inform marketing strategies.'],
-            ['department' => 'marketing', 'competency' => 'branding', 'competency_role' => 'technical_skill', 'description' => 'Developing and maintaining a brand image.'],
-            ['department' => 'marketing', 'competency' => 'digital_marketing', 'competency_role' => 'technical_skill', 'description' => 'Using digital channels to promote products and services.'],
-            ['department' => 'marketing', 'competency' => 'content_creation', 'competency_role' => 'technical_skill', 'description' => 'Creating engaging content for various marketing channels.'],
-            ['department' => 'marketing', 'competency' => 'public_relations', 'competency_role' => 'soft_skill', 'description' => 'Managing the public image of the company.'],
-            // Sales
-            ['department' => 'sales', 'competency' => 'prospecting', 'competency_role' => 'technical_skill', 'description' => 'Identifying potential customers and leads.'],
-            ['department' => 'sales', 'competency' => 'negotiation', 'competency_role' => 'soft_skill', 'description' => 'Reaching mutually beneficial agreements with customers.'],
-            ['department' => 'sales', 'competency' => 'customer_relationship_management', 'competency_role' => 'technical_skill', 'description' => 'Managing and nurturing relationships with customers.'],
-            ['department' => 'sales', 'competency' => 'sales_strategy', 'competency_role' => 'technical_skill', 'description' => 'Developing and implementing sales plans and strategies.'],
-            ['department' => 'sales', 'competency' => 'closing_deals', 'competency_role' => 'soft_skill', 'description' => 'Successfully closing sales transactions.'],
-            // Information Technology
-            ['department' => 'information_technology', 'competency' => 'network_administration', 'competency_role' => 'technical_skill', 'description' => 'Managing and maintaining computer networks.'],
-            ['department' => 'information_technology', 'competency' => 'software_development', 'competency_role' => 'technical_skill', 'description' => 'Designing and developing software applications.'],
-            ['department' => 'information_technology', 'competency' => 'cybersecurity', 'competency_role' => 'technical_skill', 'description' => 'Protecting systems and data from cyber threats.'],
-            ['department' => 'information_technology', 'competency' => 'database_management', 'competency_role' => 'technical_skill', 'description' => 'Administering and managing databases.'],
-            ['department' => 'information_technology', 'competency' => 'technical_support', 'competency_role' => 'technical_skill', 'description' => 'Providing technical assistance to users.'],
-            // Operations
-            ['department' => 'operations', 'competency' => 'supply_chain_management', 'competency_role' => 'technical_skill', 'description' => 'Managing the flow of goods and services.'],
-            ['department' => 'operations', 'competency' => 'project_management', 'competency_role' => 'technical_skill', 'description' => 'Planning and executing projects efficiently.'],
-            ['department' => 'operations', 'competency' => 'process_improvement', 'competency_role' => 'technical_skill', 'description' => 'Enhancing business processes for better efficiency.'],
-            ['department' => 'operations', 'competency' => 'inventory_management', 'competency_role' => 'technical_skill', 'description' => 'Tracking and managing inventory levels.'],
-            ['department' => 'operations', 'competency' => 'logistics_management', 'competency_role' => 'technical_skill', 'description' => 'Coordinating the movement of goods.'],
-            // Customer Service
-            ['department' => 'customer_service', 'competency' => 'communication_skills', 'competency_role' => 'soft_skill', 'description' => 'Effectively communicating with customers.'],
-            ['department' => 'customer_service', 'competency' => 'problem_solving', 'competency_role' => 'soft_skill', 'description' => 'Resolving customer issues efficiently.'],
-            ['department' => 'customer_service', 'competency' => 'customer_satisfaction', 'competency_role' => 'technical_skill', 'description' => 'Ensuring customers are happy with the services provided.'],
-            ['department' => 'customer_service', 'competency' => 'product_knowledge', 'competency_role' => 'technical_skill', 'description' => 'Understanding the products or services offered.'],
-            ['department' => 'customer_service', 'competency' => 'empathy', 'competency_role' => 'soft_skill', 'description' => 'Understanding and sharing the feelings of customers.'],
-            // Research and Development
-            ['department' => 'research_and_development', 'competency' => 'innovation', 'competency_role' => 'technical_skill', 'description' => 'Developing new and creative solutions.'],
-            ['department' => 'research_and_development', 'competency' => 'product_development', 'competency_role' => 'technical_skill', 'description' => 'Designing and developing new products.'],
-            ['department' => 'research_and_development', 'competency' => 'data_analysis', 'competency_role' => 'technical_skill', 'description' => 'Analyzing data to inform R&D decisions.'],
-            ['department' => 'research_and_development', 'competency' => 'prototyping', 'competency_role' => 'technical_skill', 'description' => 'Creating prototypes for testing and development.']
-        ];
+    protected $openAIService;
+
+    public function __construct(OpenAIService $openAIService)
+    {
+        $this->openAIService = $openAIService;
     }
 
     public function index(Request $request)
     {
         $user = $request->user();
+        $job_code = $request->input('department');
 
-        $competencies = EmployerCompetencyController::competencies();
+        // Fetch department with its technical skills
+        $department = Department::where('employer_id', $user->id)
+                                ->where('id', $job_code)
+                                ->with('technical_skill')
+                                ->firstOrFail();
 
-        // Separate technical and soft skills
-        $technical_skills = array_filter($competencies, function($competency) {
-            return $competency['competency_role'] === 'technical_skill';
-        });
+        // Check if preferred competencies are already attached to the department
+        if ($department->technical_skill->count()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Competency mapping already available.'
+            ], 400);
+        }
 
-        $soft_skills = array_filter($competencies, function($competency) {
-            return $competency['competency_role'] === 'soft_skill';
-        });
+        $job_title = trim($department->job_code);
 
-        // Shuffle the arrays to randomize selection
-        shuffle($technical_skills);
-        shuffle($soft_skills);
+        // Check if there are stored competencies for this department
+        $storedCompetencies = DepartmentSetup::where('department', $job_title)
+                                             ->get()
+                                             ->groupBy('department_role');
 
-        // Select 6 technical skills and 4 soft skills
-        $technical_skills = array_slice($technical_skills, 0, 5);
-        $soft_skills = array_slice($soft_skills, 0, 3);
+        if ($storedCompetencies->count()) {
+            $competencies = $storedCompetencies;
+        } else {
+            // Generate competencies using OpenAIService if not stored
+            $competencies = $this->openAIService->generateCompetencyMapping($job_title);
 
-        // Combine selected skills
-        // $selected_skills = array_merge($selected_technical_skills, $selected_soft_skills);
+            // Save competencies to DepartmentSetup
+            foreach ($competencies as $competency) {
+                foreach (['technical_skill', 'soft_skill'] as $skillType) {
+                    foreach ($competency[$skillType] as $skill) {
+                        DepartmentSetup::create([
+                            'department' => $job_title,
+                            'competency' => $skill['competency'],
+                            'level' => strtolower($competency['level']),
+                            'department_role' => $skillType,
+                            'description' => $skill['description'],
+                            'generated_id' => $user->id
+                        ]);
+                    }
+                }
+            }
 
-        // Filter for competencies in the 'operations' department
-        // $operations_competencies = array_filter($competencies, function($competency) {
-        //     return $competency['department'] === 'operations';
-        // });
+            $competencies = DepartmentSetup::where('department', $job_title)
+                ->get()
+                ->groupBy('department_role');
+        }
 
         return response()->json([
             'status' => true,
-            'data' => compact('technical_skills','soft_skills'),
-            'message' => 'Suggested Competency Mapping.'
+            'data' => $competencies,
+            'message' => 'Competency Mapping Generated.'
         ], 200);
     }
+
 
     public function storeCompetency(Request $request, $id){
         $employer = $request->user();
@@ -116,33 +96,22 @@ class EmployerCompetencyController extends Controller
                 ->select(['id','job_code', 'job_title', 'description'])->firstOrFail();
         }
 
-        $competencies = EmployerCompetencyController::competencies();
+        $validatedData =   $request->validate([
+            'mapping' => 'required|array',
+            'mapping.*' => 'required|exists:department_setups,id'
+        ]);
+
+        $mapping_setups =  DepartmentSetup::whereIn('id', $validatedData['mapping']) ->get();
 
 
-        // $this->validate($request, [
-        //     'mapping' => 'required|array'
-        // ]);
-        $mapping = [];
-
-        foreach ($request->mapping as $map) {
-            $cp = array_filter($competencies, function($competency) use ($map) {
-                return $competency['competency'] === $map;
-            });
-
-            // If array_filter returns an array, we need to merge it into $mapping
-            if (!empty($cp)) {
-                $mapping = array_merge($mapping, $cp);
-            }
-        }
-
-        if(count($mapping)){
-            foreach($mapping as $map){
+        if(count($mapping_setups)){
+            foreach($mapping_setups as $map){
                 DepartmentMapping::firstOrCreate([
                     'employer_id' => $employer->id,
                     'department_id' => $department->id,
                     'competency' => $map['competency'],
                 ],[
-                    'competency_role' => $map['competency_role'],
+                    'competency_role' => $map['department_role'],
                     'description' => $map['description'],
                 ]);
             }
@@ -155,8 +124,40 @@ class EmployerCompetencyController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => "Competency matched successfully.",
-            'data' => $mapping
+            'message' => "Competency matched.",
+        ], 201);
+
+    }
+
+    public function addCompetency(Request $request, $id){
+        $employer = $request->user();
+
+        if (is_numeric($id)) {
+            $department = Department::where('id', $id)->where('employer_id', $employer->id)
+                ->select(['id','job_code', 'job_title', 'description'])->firstOrFail();
+        } else {
+            $department = Department::where('job_title', $id)->where('employer_id', $employer->id)
+                ->select(['id','job_code', 'job_title', 'description'])->firstOrFail();
+        }
+
+        $validatedData =   $request->validate([
+            'competency' => 'required|string|between:3,30',
+            'role' => 'required|in:technical_skill,soft_skill'
+        ]);
+
+        $department = DepartmentMapping::firstOrCreate([
+            'employer_id' => $employer->id,
+            'department_id' => $department->id,
+            'competency' => trim($validatedData['competency']),
+        ],[
+            'competency_role' => $validatedData['role'],
+            'description' => $validatedData['description'] ?? '',
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'data' => $department,
+            'message' => "Competency matched.",
         ], 201);
 
     }
@@ -171,9 +172,49 @@ class EmployerCompetencyController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => "Competency matched successfully.",
+            'message' => "",
             'data' => []
         ], 201);
 
     }
+
+
 }
+
+
+ // public function index(Request $request)
+    // {
+    //     $user = $request->user();
+
+    //     // $competencies = EmployerCompetencyController::competencies();
+    //     // Separate technical and soft skills
+    //     $technical_skills = array_filter($competencies, function($competency) {
+    //         return $competency['competency_role'] === 'technical_skill';
+    //     });
+
+    //     $soft_skills = array_filter($competencies, function($competency) {
+    //         return $competency['competency_role'] === 'soft_skill';
+    //     });
+
+    //     // Shuffle the arrays to randomize selection
+    //     shuffle($technical_skills);
+    //     shuffle($soft_skills);
+
+    //     // Select 6 technical skills and 4 soft skills
+    //     $technical_skills = array_slice($technical_skills, 0, 5);
+    //     $soft_skills = array_slice($soft_skills, 0, 3);
+
+    //     // Combine selected skills
+    //     // $selected_skills = array_merge($selected_technical_skills, $selected_soft_skills);
+
+    //     // Filter for competencies in the 'operations' department
+    //     // $operations_competencies = array_filter($competencies, function($competency) {
+    //     //     return $competency['department'] === 'operations';
+    //     // });
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'data' => compact('technical_skills','soft_skills'),
+    //         'message' => 'Suggested Competency Mapping.'
+    //     ], 200);
+    // }

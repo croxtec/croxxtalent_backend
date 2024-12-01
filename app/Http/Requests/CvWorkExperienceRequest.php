@@ -47,8 +47,11 @@ class CvWorkExperienceRequest extends FormRequest
                 return [];
             case 'POST':
                 return [
-                    'job_title_id' => 'required|exists:job_titles,id',
+                    // 'job_title_id' => 'required|exists:job_titles,id',
+                    'job_title' => 'required',
+                    'competency_ids.*' => 'nullable|integer|exists:competency_setups,id',
                     'employer' => 'required|max:100',
+                    'job_title' => 'required|max:100',
                     'city' => 'required|max:255',
                     'country_code' => 'required|exists:countries,code',
                     'start_date' => 'required|date',
@@ -59,11 +62,14 @@ class CvWorkExperienceRequest extends FormRequest
             case 'PUT':
             case 'PATCH':
                 return [
-                    'job_title_id' => 'required|exists:job_titles,id',
-                    'employer' => 'required|max:100',
-                    'city' => 'required|max:255',
-                    'country_code' => 'required|exists:countries,code',
-                    'start_date' => 'required|date',
+                    // 'job_title_id' => 'required|exists:job_titles,id',
+                    'job_title' => 'sometimes',
+                    'competency_ids.*' => 'nullable|integer|exists:competency_setups,id',
+                    'employer' => 'sometimes|max:100',
+                    'job_title' => 'sometimes|max:100',
+                    'city' => 'sometimes|max:255',
+                    'country_code' => 'sometimes|exists:countries,code',
+                    'start_date' => 'sometimes|date',
                     'end_date' => 'nullable|date',
                     'is_current' => 'boolean',
                     'description' => 'nullable|max:500',

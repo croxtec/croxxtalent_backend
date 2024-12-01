@@ -7,10 +7,24 @@ use Illuminate\Http\Request;
 use App\Models\Employee;
 use App\Http\Requests\TrainingRequest;
 use App\Models\Training\CroxxTraining;
+use App\Models\Training\LessonSetup;
 use App\Models\Assessment\EmployeeLearningPath;
+use Cloudinary\Cloudinary;
+use Illuminate\Support\Str;
+use App\Services\OpenAIService;
+use App\Models\Training\CroxxLesson;
 
 class CourseController extends Controller
 {
+    protected $cloudinary;
+    protected $openAIService;
+
+    public function __construct(Cloudinary $cloudinary, OpenAIService $openAIService)
+    {
+        $this->cloudinary = $cloudinary;
+        $this->openAIService = $openAIService;
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -83,6 +97,23 @@ class CourseController extends Controller
         $validatedData['employer_id'] = $user->id;
         $validatedData['user_id'] = $user->id;
 
+
+        if ($request->hasFile('cover_photo') && $request->file('cover_photo')->isValid()) {
+            $file = $request->file('cover_photo');
+            $extension = $file->extension();
+
+            $filename = time() . '-' . Str::random(32);
+            $filename = "{$filename}.$extension";
+            $year = date('Y');
+            $rel_upload_path  = "CroxxPH/TRAINING/{$year}";
+
+            $result = $this->cloudinary->uploadApi()->upload($file->getRealPath(), [
+                'folder' => $rel_upload_path, // Specify a folder
+            ]);
+
+            $validatedData['cover_photo'] = $result['secure_url'];
+        }
+
         $training = CroxxTraining::create($validatedData);
 
         return response()->json([
@@ -92,16 +123,131 @@ class CourseController extends Controller
         ], 201);
     }
 
+    public function show(Request $request, $id)
+    {
+        $user = $request->user();
+
+        $employerId =  $user->id;
+
+        if (is_numeric($id)) {
+            $training = CroxxTraining::where('id', $id)->where('employer_id', $employerId)->firstOrFail();
+        } else {
+            $training = CroxxTraining::where('code', $id)->where('employer_id', $employerId)->firstOrFail();
+        }
+
+        $training->department;
+
+        return response()->json([
+            'status' => true,
+            'message' => "",
+            'data' => $training,
+        ], 200);
+    }
+
     /**
      * Display the specified resource.
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function suggest(Request $request, $id)
     {
+        $user = $request->user();
+        $training = CroxxTraining::findOrFail($id);
 
+        $department =( $training->type == 'company') ? $training->department?->job_code : $training->career?->competency;
 
+        $course = [
+            'department' =>  trim($department ?? ''),
+            'title' => $training->title,
+            'level' => $training->experience_level,
+        ];
+
+        $lessons = LessonSetup::where('department', $course['department'])
+            // ->where('alias', Str::slug($course['title']))
+            ->where('level', $course['level'])
+            ->inRandomOrder()
+            ->limit(9)
+            ->get();
+
+        // If less than 10 lessons exist, generate more lessons using OpenAI
+        if ($lessons->count() < 10) {
+            $generatedLessons = $this->openAIService->curateCourseLessons($course);
+
+            // info('Generated lessons: ', $generatedLessons);
+
+            foreach ($generatedLessons as $lesson) {
+                try {
+                    LessonSetup::create([
+                        'department' => $course['department'],
+                        'level' => strtolower($lesson['level']),
+                        'alias' => Str::slug($lesson['title']),
+                        'title' => $lesson['title'],
+                        'description' => $lesson['content'],
+                        'keywords' => json_encode($lesson['keywords']),  // Convert keywords array to JSON
+                        'generated_id' => $user->id
+                    ]);
+                } catch (\Exception $e) {
+                    // \Log::error('Error saving generated lesson: ' . $e->getMessage());
+                }
+            }
+
+            // Retrieve again with the updated pool
+            $lessons = LessonSetup::where('department', $course['department'])
+                // ->where('alias', Str::slug($course['title']))
+                ->where('level', $course['level'])
+                ->inRandomOrder()
+                ->limit(12)
+                ->get();
+        }
+
+        // Randomly pick 6 lessons from the available pool
+        $selectedLessons = $lessons->random(min(5, $lessons->count()));
+
+        // info('Selected lessons count: ' . $selectedLessons->count());
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Lessons successfully retrieved.',
+            'data' => $selectedLessons,
+        ], 200);
+    }
+
+    public function cloneSuggestionRequest(Request $request, $id){
+        $employer = $request->user();
+
+        if (is_numeric($id)) {
+            $training = CroxxTraining::where('id', $id)->where('employer_id', $employer->id)
+                ->firstOrFail();
+        } else {
+            $training = CroxxTraining::where('code', $id)->where('employer_id', $employer->id)
+                ->firstOrFail();
+        }
+
+        $validatedData =   $request->validate([
+            'lessons' => 'required|array',
+            'lessons.*' => 'required|exists:lesson_setups,id'
+        ]);
+
+        $lessons_setups =  LessonSetup::whereIn('id', $validatedData['lessons']) ->get();
+
+        if(count($lessons_setups)){
+            foreach($lessons_setups as $map){
+                CroxxLesson::firstOrCreate([
+                    'training_id' => $training->id,
+                    'alias' => $map['alias'],
+                ],[
+                    'title' => $map['title'],
+                    'description' => $map['description'],
+                    'keyword' => $map['keyword'],
+                ]);
+            }
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => "Lesson cloned successfully.",
+        ], 201);
     }
 
     /**
@@ -220,7 +366,7 @@ class CourseController extends Controller
     {
         $training = CroxxTraining::findOrFail($id);
 
-        $this->authorize('delete', [CroxxTraining::class, $training]);
+        // $this->authorize('delete', [CroxxTraining::class, $training]);
 
         $training->archived_at = null;
         $training->save();
@@ -317,6 +463,7 @@ class CourseController extends Controller
         }
 
         $trainings = CroxxTraining::where('employer_id', $current_company->employer_id)
+                    ->where('is_published', 1)
                     ->when($search,function($query) use ($search) {
                         $query->where('title', 'LIKE', "%{$search}%");
                     })
@@ -343,7 +490,7 @@ class CourseController extends Controller
         $sort_dir = $request->input('sort_dir', 'desc');
 
         $paths = EmployeeLearningPath::where('employer_user_id', $employer->id)
-                    // ->with('employee','supervisor')
+                    ->with('employee')
                     ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {

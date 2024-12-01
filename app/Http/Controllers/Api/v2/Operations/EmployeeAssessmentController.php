@@ -14,6 +14,7 @@ use App\Models\Assessment\CompetencyQuestion;
 use App\Models\Assessment\EvaluationQuestion;
 use App\Models\Assessment\EmployerAssessmentFeedback;
 use App\Models\Assessment\TalentAssessmentSummary;
+use Illuminate\Support\Facades\Storage;
 
 class EmployeeAssessmentController extends Controller
 {
@@ -51,21 +52,27 @@ class EmployeeAssessmentController extends Controller
                         ->when($show == 'supervisor', function($query) use ($employee){
                             $query->where('assigned_employees.employee_id', $employee?->id)
                                     ->where('assigned_employees.is_supervisor', 1);
-                        })
+                                    // ->selectRaw('croxx_assessments.*, assigned_employees.is_supervisor,
+                                    //     (SELECT COUNT(*)
+                                    //     FROM assigned_employees ae
+                                    //     WHERE ae.assessment_id = croxx_assessments.id
+                                    //     AND ae.is_supervisor = 0) AS total_non_supervisors');
+                            })
                         ->select('croxx_assessments.*', 'assigned_employees.is_supervisor')
                         ->latest()
                         ->paginate($per_page);
 
+
         foreach ($assessments as $assessment) {
             $total_duration_seconds = $assessment->questions->sum('duration');
-            $assessment->total_questions = $assessment->questions->count();
+            $assessment->total_questions = $assessment->questions->count() ?? 1;
 
             $total_answered = TalentAnswer::where([
                 'employee_id' => $employee?->id,
                 'assessment_id' => $assessment->id
             ])->count();
 
-            $assessment->percentage = ($total_answered / $assessment->total_questions) * 100;
+            $assessment->percentage = ($total_answered / ($assessment->total_questions ?? 1)) * 100;
             // Convert the total duration in minutes to hours, minutes, and seconds
             $minutes = floor($total_duration_seconds / 60);
             $seconds = $total_duration_seconds % 60;
@@ -87,9 +94,9 @@ class EmployeeAssessmentController extends Controller
                 'employee_id' => $employee?->id,
                 'employer_user_id' => $assessment?->employer_id,
                 'is_published' => true
-            ])->exists();
+            ])->first();
 
-            $assessment->is_feedback = $isFeedbacked;
+            $assessment->is_feedback = $isFeedbacked?->supervisor_id ? true : false;
             $assessment->is_submited = $isSubmitted;
         }
 
@@ -105,10 +112,10 @@ class EmployeeAssessmentController extends Controller
         $current_company = Employee::where('id', $user->default_company_id)
                     ->where('user_id', $user->id)->with('supervisor')->first();
 
-        if($current_company->id === $employee?->id){
+        if($current_company?->id === $employee?->id){
             return true;
         }
-        if($current_company->supervisor) {
+        if($current_company?->supervisor) {
             $supervisor =  $current_company->supervisor;
             // info([$supervisor, $employee]);
             return true;
@@ -145,7 +152,9 @@ class EmployeeAssessmentController extends Controller
                 ->with('employee', 'supervisor')->latest()->paginate($per_page);
         } else {
             $feedbacks = EmployerAssessmentFeedback::where('employee_id', $employee?->id)
-                ->with('employee', 'supervisor')->latest()->paginate($per_page);
+                        ->where('supervisor_id', '!=', 0)
+                        ->with('employee', 'supervisor')
+                        ->latest()->paginate($per_page);
         }
 
         return response()->json([
@@ -153,7 +162,6 @@ class EmployeeAssessmentController extends Controller
             'message' => "",
             'data' => $feedbacks
         ], 200);
-
     }
 
       /**
@@ -267,28 +275,77 @@ class EmployeeAssessmentController extends Controller
         // $this->authorize('update', [Assesment::class, $assessment]);
 
         $assessment = CroxxAssessment::where('id', $id)->where('is_published', 1)->firstOrFail();
-        $employee = Employee::where('id', $user->default_company_id)->where('user_id', $user->id)->first();
 
-        $feedback = EmployerAssessmentFeedback::firstOrCreate([
-            'assessment_id' => $assessment->id,
-            'employee_id' => $employee?->id,
-            'employer_user_id' => $assessment?->employer_id
-        ]);
+        if($assessment->type == 'company' || $assessment->type == 'supervisor'){
+            $employee = Employee::where('id', $user->default_company_id)->where('user_id', $user->id)->first();
+            $talentField = 'employee_id';
+            $talent = $employee->id;
+            $feedback = EmployerAssessmentFeedback::firstOrCreate([
+                'assessment_id' => $assessment->id,
+                'employee_id' => $employee?->id,
+                'employer_user_id' => $assessment?->employer_id
+            ]);
+        }else{
+            $talentField = 'talent_id';
+            $talent = $user->id;
+            $feedback = TalentAssessmentSummary::where([
+                'talent_id' => $user->id,
+                'assessment_id' => $assessment->id
+            ])->first();
+        }
 
-        // $total_question =  $assessment->questions->count();
-        // $total_score = $total_question * 4;
+        if($assessment->category == 'competency_evaluation'){
+            $total_question =  $assessment->questions->count();
+            $total_score = $total_question * 1;
 
-        // $talent_score = ScoreSheet::where([
-        //    'employee_id' => $employee?->id,
-        //    'assessment_id' =>  $assessment->id
-        // ])->sum('score');
-        // $score_average = ((int)$talent_score / $total_score) * 100;
-        // $feedback->total_score = $total_score;
-        // $feedback->talent_score = $talent_score;
-        // $feedback->score_average = $score_average;
+            $assessment_score =  TalentAnswer::where([
+                'assessment_id' => $assessment->id,
+                $talentField => $talent,
+            ])->sum('evaluation_result');
+
+            $graded_score = ((int)$assessment_score / $total_score ?? 1) * 100;
+            $graded_score = (int)$graded_score;
+
+            if ($graded_score >= 95) {
+                $message = sprintf("Exceptional! You scored %d out of %d points, hitting a fantastic %d%%! You're a master in this area!",
+                    $assessment_score, $total_score, $graded_score);
+            } elseif ($graded_score >= 85) {
+                $message = sprintf("Fantastic! You scored %d out of %d points, achieving an impressive %d%%. Keep pushing, you're almost at the top!",
+                    $assessment_score, $total_score, $graded_score);
+            } elseif ($graded_score >= 75) {
+                $message = sprintf("Great job! You got %d out of %d points, which is a solid %d%%. You're doing well, keep up the hard work!",
+                    $assessment_score, $total_score, $graded_score);
+            } elseif ($graded_score >= 65) {
+                $message = sprintf("Good effort! You achieved %d out of %d points, making it %d%%. There's potential for more, just keep refining your skills!",
+                    $assessment_score, $total_score, $graded_score);
+            } elseif ($graded_score >= 55) {
+                $message = sprintf("You're getting there! You earned %d out of %d points, which is %d%%. Keep practicing and you'll see more progress.",
+                    $assessment_score, $total_score, $graded_score);
+            } elseif ($graded_score >= 45) {
+                $message = sprintf("A decent try! You got %d out of %d points, making it %d%%. Focus on your weak areas to see better results next time.",
+                    $assessment_score, $total_score, $graded_score);
+            } elseif ($graded_score >= 35) {
+                $message = sprintf("Keep going! You scored %d out of %d points, which is %d%%. Practice will help you get there, don't give up!",
+                    $assessment_score, $total_score, $graded_score);
+            } elseif ($graded_score >= 25) {
+                $message = sprintf("A learning experience! You scored %d out of %d points, making it %d%%. Keep working, and you'll improve in no time.",
+                    $assessment_score, $total_score, $graded_score);
+            } else {
+                $message = sprintf("Don't worry, you scored %d out of %d points, which is %d%%. Stay persistent, and you'll get better results with more practice!",
+                    $assessment_score, $total_score, $graded_score);
+            }
+
+            $feedback->summary = $message;
+            $feedback->total_score = $total_score;
+            if($assessment->type == 'company' || $assessment->type == 'supervisor'){
+                $feedback->employee_score = $assessment_score;
+            }else{
+                $feedback->talent_score = $assessment_score;
+            }
+            $feedback->graded_score = round($graded_score);
+        }
 
         if(!$feedback->is_published){
-            $feedback->employee_feedback = $request->feedback;
             $feedback->time_taken = $request->time_taken;
             $feedback->is_published = true;
             $feedback->save();

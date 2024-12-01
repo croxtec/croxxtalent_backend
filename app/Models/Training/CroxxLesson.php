@@ -11,12 +11,11 @@ class CroxxLesson extends Model
 
     protected $fillable = [
         'training_id',
-        'title',
         'alias',
+        'title',
         'description',
         'video_url',
         'resources',
-        'cover_photo',
         'keyword'
     ];
 

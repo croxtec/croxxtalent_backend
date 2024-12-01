@@ -17,6 +17,8 @@ use App\Models\Assessment\EmployeeLearningPath;
 use App\Models\Assessment\EmployerAssessmentFeedback;
 use App\Http\Resources\AssignedEmployeeResouce;
 use App\Notifications\AssessmentFeedbackNotification;
+use App\Models\Assessment\TalentAssessmentSummary;
+use App\Models\Training\CroxxTraining;
 
 class ScoresheetController extends Controller
 {
@@ -37,6 +39,7 @@ class ScoresheetController extends Controller
         $archived = $request->input('archived');
         $supervisor = $request->input('supervisor', 0);
 
+        $assessment->competencies;
         if($user->type == "employer"){
             $supervisor = $supervisor == 'yes' ? 1 : 0;
             $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
@@ -73,6 +76,16 @@ class ScoresheetController extends Controller
                 'employer_user_id' => $assessment->employer_id
             ])->first();
 
+            // if($feedback){
+            //     if(is_numeric($feedback->time_taken)){
+            //         $timetaken = intval($feedback->time_taken);
+            //         $minutes = floor($timetaken / 60);
+            //         $seconds = $timetaken % 60;
+
+            //         $feedback->estimated_time = sprintf('%d minutes %d seconds', $minutes, $seconds);
+            //     }
+            // }
+
             $summary->is_submited = $feedback ? true : false;
             $summary->feedback = $feedback;
         }
@@ -95,6 +108,7 @@ class ScoresheetController extends Controller
 
         if (is_numeric($talent)) {
             $talentField = 'talent_id';
+            $talent = $user->id;
         } else {
             $talentField = 'employee_id';
             $employee = Employee::where('code', $talent)->first();
@@ -103,7 +117,7 @@ class ScoresheetController extends Controller
 
         $assessment->questions;
 
-        foreach ($assessment->questions as $question) {
+        foreach($assessment->questions as $question) {
             $question->response = TalentAnswer::where([
                 'assessment_question_id' => $question->id,
                 $talentField => $talent,
@@ -138,13 +152,32 @@ class ScoresheetController extends Controller
                     ->firstOrFail();
         }
 
-        $feedback = EmployerAssessmentFeedback::where([
-            'assessment_id' => $assessment->id,
-            'employee_id' => $employee->id,
-            'employer_user_id' => $assessment->employer_id
-        ])->first();
 
+        if (is_numeric($talent)) {
 
+            $feedback = TalentAssessmentSummary::where([
+                'talent_id' => $user->id,
+                'assessment_id' => $assessment->id
+            ])->first();
+
+        } else {
+            $feedback = EmployerAssessmentFeedback::where([
+                'assessment_id' => $assessment->id,
+                'employee_id' => $employee->id,
+                'employer_user_id' => $assessment->employer_id
+            ])->first();
+
+            $resources = CroxxTraining::join('employee_learning_paths', 'croxx_trainings.id', '=', 'employee_learning_paths.training_id')
+                            ->where('employee_learning_paths.employee_id', $employee->id)
+                            ->where('employee_learning_paths.assessment_feedback_id', $feedback->id)
+                            // ->with(['learning' => function ($query) use ($employee) {
+                            //     $query->where('employee_learning_paths.employee_id', $employee->id);
+                            // }])
+                            ->select('croxx_trainings.*')
+                            ->get();
+
+           $feedback->resources = $resources;
+        }
 
         return response()->json([
             'status' => true,
@@ -246,18 +279,37 @@ class ScoresheetController extends Controller
 
         if(!$feedback->supervisor_id){
             $paths = $validatedData['learning_path'];
-            foreach ($paths as $path) {
-                EmployeeLearningPath::firstOrCreate([
-                    'assessment_feedback_id' => $feedback->id,
-                    'employee_id' => $employee->id,
-                    'employer_user_id' => $assessment->employer_id,
-                    'training_id' => $path
-                ]);
+
+            if(isset($paths)){
+                foreach ($paths as $path) {
+                    EmployeeLearningPath::firstOrCreate([
+                        'assessment_feedback_id' => $feedback->id,
+                        'employee_id' => $employee->id,
+                        'employer_user_id' => $assessment->employer_id,
+                        'training_id' => $path
+                    ]);
+                }
             }
 
-            $message = sprintf('You aced it! You got %d out of %d points in this assessment, that\'s a whopping %d%%! Great job!',
-                            $feedback->employee_score, $feedback->total_score . ' (total possible)',
-                            $feedback->graded_score);
+            if ($feedback->graded_score >= 90) {
+                $message = sprintf("You aced it! You got %d out of %d points in this assessment, that's an impressive %d%%! Great job!",
+                    $feedback->employee_score, $feedback->total_score, $feedback->graded_score);
+            } elseif ($feedback->graded_score >= 75) {
+                $message = sprintf("Well done! You scored %d out of %d, achieving %d%%. You're doing great!",
+                    $feedback->employee_score, $feedback->total_score, $feedback->graded_score);
+            } elseif ($feedback->graded_score >= 60) {
+                $message = sprintf("Good effort! You got %d out of %d points, with a score of %d%%. Keep up the progress!",
+                    $feedback->employee_score, $feedback->total_score, $feedback->graded_score);
+            } elseif ($feedback->graded_score >= 45) {
+                $message = sprintf("Not bad! You earned %d out of %d points, reaching %d%%. A bit more effort will take you further!",
+                    $feedback->employee_score, $feedback->total_score, $feedback->graded_score);
+            } elseif ($feedback->graded_score >= 30) {
+                $message = sprintf("You scored %d out of %d, which is %d%%. There's room for improvement, keep practicing!",
+                    $feedback->employee_score, $feedback->total_score, $feedback->graded_score);
+            } else {
+                $message = sprintf("You got %d out of %d points, that's %d%%. Don't worry, with more effort you'll improve next time!",
+                    $feedback->employee_score, $feedback->total_score, $feedback->graded_score);
+            }
 
             $feedback->summary = $message;
             $feedback->supervisor_id = $user->default_company_id;
@@ -266,7 +318,7 @@ class ScoresheetController extends Controller
             $feedback->save();
 
             $user = $employee->talent;
-            $user->notify(new AssessmentFeedbackNotification($assessment, $employee));
+            // $user->notify(new AssessmentFeedbackNotification($assessment, $employee));
             Notification::send($user, new AssessmentFeedbackNotification($assessment, $employee));
 
             return response()->json([

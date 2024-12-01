@@ -46,10 +46,11 @@ class EvaluationAssessmentRequest extends FormRequest
                     'category' => 'required|in:competency_evaluation',
                     'level' => 'required|in:beginner,intermediate,advance,expert',
                     'name' => 'required|max:100',
-                    'description' => 'nullable|max:250',
-                    'validity_period' => 'nullable|date',
+                    'description' => 'nullable|max:400',
                     'expected_percentage' => 'required|integer',
                     'is_published' => 'required|boolean',
+                    'validity_period' => 'nullable|date',
+                    'delivery_type' => 'nullable|in:quiz,classroom,on_the_job,assessment,experience,exam,external',
 
                     'competency_ids.*' => 'required|integer|exists:department_mappings,id',
                     'questions' => 'required|array',
@@ -69,7 +70,6 @@ class EvaluationAssessmentRequest extends FormRequest
                     'supervisors' => 'required_if:type,company|array',
                     'employees.*' => 'integer|exists:employees,id',
                     'supervisors.*' => 'nullable|integer|exists:employees,id',
-                    'delivery_type' => 'nullable|in:quiz,classroom,on_the_job,assessment,experience,exam,external',
                 ];
             case 'PUT':
             case 'PATCH':

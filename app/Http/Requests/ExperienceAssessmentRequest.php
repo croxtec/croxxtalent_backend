@@ -22,7 +22,7 @@ class ExperienceAssessmentRequest extends FormRequest
             case 'PATCH':
                 return  true;
                 $assessment = Assessment::findOrFail(1);
-                return $this->user()->can('update', [Assessment::class, $assessment]);
+                // return $this->user()->can('update', [Assessment::class, $assessment]);
             case 'DELETE':
                 return false;
             default:break;
@@ -45,9 +45,10 @@ class ExperienceAssessmentRequest extends FormRequest
                     'category' => 'required|in:peer_review,experience',
                     'level' => 'required|in:beginner,intermediate,advance,expert',
                     'name' => 'required|max:100',
-                    'description' => 'nullable|max:250',
+                    'description' => 'nullable|max:400',
                     'validity_period' => 'nullable|date',
                     'expected_score' => 'required|integer',
+                    'delivery_type' => 'nullable|in:quiz,classroom,on_the_job,assessment,experience,exam,external',
                     'is_published' => 'required|boolean',
 
                     'competency_ids.*' => 'required|integer|exists:department_mappings,id',
@@ -63,7 +64,6 @@ class ExperienceAssessmentRequest extends FormRequest
                     'supervisors' => 'required_if:type,company|array',
                     'employees.*' => 'integer|exists:employees,id',
                     'supervisors.*' => 'nullable|integer|exists:employees,id',
-                    'delivery_type' => 'nullable|in:quiz,classroom,on_the_job,assessment,experience,exam,external',
                 ];
             case 'PUT':
             case 'PATCH':

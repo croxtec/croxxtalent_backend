@@ -22,9 +22,9 @@ return new class extends Migration
             $table->foreignId('supervisor_id')->nullable();
             $table->string('summary')->nullable();
             $table->string('time_taken')->nullable();
-            $table->integer('employee_score')->default(0)->nullable();
-            $table->integer('total_score')->default(0)->nullable();
-            $table->integer('graded_score')->default(0)->nullable();
+            $table->double('employee_score')->default(0)->nullable();
+            $table->double('total_score')->default(0)->nullable();
+            $table->double('graded_score')->default(0)->nullable();
 
             $table->foreignId('goal_id')->nullable();
             $table->text('employee_feedback')->nullable();

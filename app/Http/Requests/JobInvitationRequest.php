@@ -41,16 +41,18 @@ class JobInvitationRequest extends FormRequest
                 return [];
             case 'POST':
                 return [
-                    'employer_user_id' => 'required|exists:users,id',
+                    // 'employer_user_id' => 'required|exists:users,id',
+                    'campaign_id' => 'required|exists:campaigns,id',
                     'talent_user_id' => 'required|exists:users,id',
-                    'talent_cv_id' => 'required|exists:cvs,id',
+                    // 'talent_cv_id' => 'required|exists:cvs,id',
                     'interview_at' =>'nullable|date|after:yesterday'
                 ];
             case 'PUT':
                 return [
-                    'employer_user_id' => 'required|exists:users,id',
+                    // 'employer_user_id' => 'required|exists:users,id',
+                    'campaign_id' => 'required|exists:campaigns,id',
                     'talent_user_id' => 'required|exists:users,id',
-                    'talent_cv_id' => 'required|exists:cvs,id',
+                    // 'talent_cv_id' => 'required|exists:cvs,id',
                     'interview_at' =>'nullable|date|after:yesterday'
                 ];
             case 'PATCH':

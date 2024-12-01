@@ -12,12 +12,13 @@ class AssessmentFeedbackNotification extends Notification implements ShouldQueue
     use Queueable;
 
     protected $assessment;
-    protected $user;
     protected $employee;
 
     /**
      * Create a new notification instance.
      *
+     * @param  mixed  $assessment
+     * @param  mixed  $employee
      * @return void
      */
     public function __construct($assessment, $employee)
@@ -44,12 +45,16 @@ class AssessmentFeedbackNotification extends Notification implements ShouldQueue
      * @return \Illuminate\Notifications\Messages\MailMessage
      */
     public function toMail($notifiable)
-    {
-        return (new MailMessage)
-                    ->line('The introduction to the notification.')
-                    ->action('Notification Action', url('/'))
-                    ->line('Thank you for using our application!');
-    }
+        {
+            return (new MailMessage)
+                ->subject('Your Assessment Feedback is Now Available')
+                ->view('api.emails.company.assessment_feedback_notification', [
+                    'assessment' => $this->assessment,
+                    'employee' => $this->employee,
+                    'actionUrl' => url("/company"),
+                ]);
+        }
+
 
     /**
      * Get the array representation of the notification.
@@ -60,9 +65,10 @@ class AssessmentFeedbackNotification extends Notification implements ShouldQueue
     public function toArray($notifiable)
     {
         return [
-            'type' => 'AssessmentFeedback', // Custom type
+            'type' => 'AssessmentFeedback',
             'assessment_id' => $this->assessment->id,
-            'message' =>  "Hello {$this->employee->name},  a supervisor has publish your assessment ."
+            'assessment_code' => $this->assessment->code,
+            'message' => "Hello {$this->employee->name}, a supervisor has published your assessment feedback.",
         ];
     }
 }

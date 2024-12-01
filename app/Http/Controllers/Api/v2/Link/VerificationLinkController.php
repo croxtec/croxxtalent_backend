@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\Verification;
 use App\Models\Audit;
 use App\Mail\EmailChanged;
+use App\Notifications\EmployeeInvitationConfirmation;
 
 class VerificationLinkController extends Controller
 {
@@ -49,24 +50,29 @@ class VerificationLinkController extends Controller
     {
         $verification = Verification::where('action', 'employee')->where('token', $token)->first();
         $verified = false;
+
         if ($verification) {
             $employee = $verification->verifiable()->first();
             $user = User::whereEmail($employee->email)->first();
             if ($employee && $user) {
-                // $employee->email_verified_at = Carbon::now();
                 $employee->user_id = $user->id;
                 $employee->status = 1;
+                $employee->email_verified_at = Carbon::now();
                 $employee->save();
+                $employee->employer->notify(new EmployeeInvitationConfirmation($employee));
                 // delete token after verification
                 $verification->delete();
-
                 // save audit trail log
                 $old_values = [];
                 $new_values = [];
-                Audit::log($user->id, 'email_verified', $old_values, $new_values, User::class, $user->id);
-
                 $verified = true;
+
+                Audit::log($user->id, 'email_verified', $old_values, $new_values, User::class, $user->id);
             }else{
+                if($employee){
+                    $employee->email_verified_at = Carbon::now();
+                    $employee->save();
+                }
                 return  redirect()->to("https://croxxtalent.com/register?email=$employee->email");
             }
         }

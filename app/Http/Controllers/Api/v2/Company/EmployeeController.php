@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Helpers\EmployeeImport;
 use App\Http\Requests\EmployeeRequest;
 use App\Mail\WelcomeEmployee;
+use App\Models\Assessment\CroxxAssessment;
 use App\Models\User;
 use App\Models\Verification;
 use Illuminate\Support\Facades\Mail;
@@ -49,14 +50,6 @@ class EmployeeController extends Controller
 
                }
             }
-        })->when( $archived ,function ($query) use ($archived) {
-            if ($archived !== null  ) {
-                if ($archived === true ) {
-                    $query->whereNotNull('archived_at');
-                } else {
-                    $query->whereNull('archived_at');
-                }
-            }
         })
         ->when( $archived ,function ($query) use ($archived) {
             if ($archived !== null ) {
@@ -67,7 +60,8 @@ class EmployeeController extends Controller
                 }
             }
         })->where( function($query) use ($search) {
-            $query->where('name', 'LIKE', "%{$search}%");
+            $query->where('name', 'LIKE', "%{$search}%")
+                ->orWhere('email', 'LIKE', "%{$search}%");
         })->with('department','department_role', 'talent')
         ->orderBy($sort_by, $sort_dir);
 
@@ -109,16 +103,15 @@ class EmployeeController extends Controller
                             ->where('employer_id', $employer->id)->first();
 
         if(!$isEmployer){
-            if(isset($validatedData['job_code'])){
+            if (isset($validatedData['job_code']) && strlen($validatedData['job_code']) > 0) {
                 $department = Department::firstOrCreate([
                     'employer_id' => $validatedData['employer_id'],
                     'job_code' => $validatedData['job_code']
                 ]);
                 $validatedData['job_code_id'] = $department->id;
-
             }
 
-            if (isset($validatedData['department_role'])) {
+            if (isset($validatedData['department_role']) &&  strlen($validatedData['department_role']) > 0) {
                 $department_role = DepartmentRole::firstOrCreate([
                     'employer_id' => $validatedData['employer_id'],
                     'department_id' => $validatedData['job_code_id'],
@@ -127,6 +120,7 @@ class EmployeeController extends Controller
                 $validatedData['department_role_id'] = $department_role->id;
             }
 
+            $validatedData['photo_url'] =  'https://res.cloudinary.com/dwty1bg7o/image/upload/v1721470055/l199zpjiq1t23uroq7g7ki1xi20hh_kwfrhy.png';
             $employee =  Employee::create($validatedData);
 
             if(isset($employer->onboarding_stage) && $employer->onboarding_stage == 1){
@@ -206,6 +200,7 @@ class EmployeeController extends Controller
     public function show(Request $request, $id)
     {
         $employer = $request->user();
+
         if (is_numeric($id)) {
             $employee = Employee::where('id', $id)->where('employer_id', $employer->id)->firstOrFail();
         } else {
@@ -225,38 +220,70 @@ class EmployeeController extends Controller
         $employee->supervisor;
 
         $technical_skills = array_column($employee->department->technical_skill->toArray(0),'competency');
+        $soft_skills = array_column($employee->department->soft_skill->toArray(0),'competency');
+
         $assessment_distribution = [];
         $trainings_distribution = [];
 
+        $assessments = CroxxAssessment::whereHas('competencies', function ($query) use ($technical_skills) {
+            $query->whereIn('competency', $technical_skills);
+        })->with(['competencies','feedbacks' => function ($query) {
+            $query->where('is_published', 1) ->orderBy('created_at', 'desc');
+        }])->get();
+
+
+        foreach ($technical_skills as $skill) {
+            $score = 0;
+
+            foreach ($assessments as $assessment) {
+                foreach ($assessment->competencies as $competency) {
+                    if ($competency->competency === $skill) {
+                        $feedback = $assessment->feedbacks->firstWhere('assessment_id', $assessment->id);
+                        $score = $feedback ? $feedback->graded_score : 0;
+                        break 2; // Break out of both loops once score is found
+                    }
+                }
+            }
+
+            $assessment_distribution[] = $score;
+        }
+
         if(count($technical_skills)){
             foreach($technical_skills as $skill){
-                array_push($assessment_distribution, mt_rand(0, 10));
+                array_push($trainings_distribution, 0);
             }
         }
 
         $employee->technical_distribution = [
             'categories' => $technical_skills,
             'assessment_distribution' =>  $assessment_distribution,
-            'trainings_distribution' =>  $assessment_distribution,
+            'trainings_distribution' =>  $trainings_distribution,
         ];
 
-
-        $goals_taken =  Goal::where('employee_id', $employee->id)
-                            ->where('employer_id', $employee->employer_id)->count();
+        // Goals Summary
+        $employeeGoals = $employee->goalsCompleted();
+        $totalGoals = $employeeGoals->count();
+        $completedGoals = $employeeGoals->where('status', 'done')->count();
+        $goalPerformance = $totalGoals > 0 ? ($completedGoals / $totalGoals) * 100 : 0;
+        // Assessment Summaru
+        $employeeFeedbacks = $employee->completedAssessment();
+        $feedbackCount = $employeeFeedbacks->count();
+        $totalFeedbackScore = $employeeFeedbacks->sum('graded_score');
+        $feedbackPerformance = $feedbackCount > 0 ? ($totalFeedbackScore / $feedbackCount) : 0;
 
         $employee->proficiency = [
-            'total' =>  '90%',
+            'total' =>  "{$employee->performance}%",
             'assessment' => [
-                'taken' => 8,
-                'performance' => '27%'
+                'taken' => $feedbackCount,
+                'performance' => "{$feedbackPerformance}%"
             ],
             'goals' => [
-                'taken' => $goals_taken,
-                'performance' => '80%'
+                'taken' => $totalGoals,
+                'performance' => "{$goalPerformance}%"
             ],
             'trainings' => [
-                'taken' => 12,
-                'performance' => '70%'
+                'taken' => $employee->learningPaths()->count(),
+                'performance' => '0%'
             ],
         ];
 
@@ -279,7 +306,12 @@ class EmployeeController extends Controller
         $employer = $request->user();
         $validatedData = $request->validated();
 
-        $employee = Employee::where('id',$id)->where('employer_id', $employer->id)->firstOrFail();
+        if (is_numeric($id)) {
+            $employee = Employee::where('id', $id)->where('employer_id', $employer->id)->firstOrFail();
+        } else {
+            $employee = Employee::where('code', $id)->where('employer_id', $employer->id)->firstOrFail();
+        }
+
         $employee->update($validatedData);
 
         return response()->json([
@@ -343,7 +375,7 @@ class EmployeeController extends Controller
     {
         $employee = Employee::findOrFail($id);
 
-        // $this->authorize('delete', [Employee::class, $employee]);
+        $this->authorize('delete', [Employee::class, $employee]);
 
         $name = $employee->name;
         // check if the record is linked to other records

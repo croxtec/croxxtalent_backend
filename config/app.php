@@ -54,6 +54,8 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    'client_url' =>  env('CLIENT_URL', 'https://croxxtalent.com'),
+
     'asset_url' => env('ASSET_URL', null),
 
     /*
@@ -176,7 +178,7 @@ return [
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
         App\Providers\CloudinaryServiceProvider::class,
-
+        Laravel\Socialite\SocialiteServiceProvider::class,
     ],
 
     /*
@@ -230,12 +232,13 @@ return [
         'View' => Illuminate\Support\Facades\View::class,
 
         // Custom
-        'Pusher' => Pusher\Pusher::class,
+        // 'Pusher' => Pusher\Pusher::class,
         'DomPDF' => Barryvdh\DomPDF\Facade::class,
         'SnappyPDF' => Barryvdh\Snappy\Facades\SnappyPdf::class,
         'SnappyImage' => Barryvdh\Snappy\Facades\SnappyImage::class,
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
         // 'PdfToText' => Spatie\PdfToText\PdfToTextFacade::class,
+        'Socialite' => Laravel\Socialite\Facades\Socialite::class,
     ],
 
 ];

@@ -135,4 +135,5 @@ class CVParser
 
         return $details;
     }
+
 }

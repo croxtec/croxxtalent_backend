@@ -8,9 +8,12 @@ use Illuminate\Support\Facades\Mail;
 use App\Http\Requests\JobInvitationRequest;
 use App\Models\JobInvitation;
 use App\Mail\TalentJobInvitation;
+use Illuminate\Support\Facades\Notification;
 use App\Mail\TalentJobInvitationAccepted;
 use App\Mail\TalentJobInvitationRejected;
 use App\Models\AppliedJob;
+use App\Models\Campaign;
+use App\Notifications\JobInvitationNotification;
 
 class CandidateController extends Controller
 {
@@ -21,33 +24,32 @@ class CandidateController extends Controller
      */
     public function index(Request $request, $id)
     {
-        $user = $request->user();
+        $employer = $request->user();
 
-        $per_page = $request->input('per_page', 100);
+        $per_page = $request->input('per_page', 25);
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'desc');
         $search = $request->input('search');
         $archived = $request->input('archived');
         $rating = $request->input('rating', 0);
-        $datatable_draw = $request->input('draw'); // if any
+        $datatable_draw = $request->input('draw');
 
-        $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
+        $campaign_field = is_numeric($id) ? 'campaign_id' : 'code';
+        $archived = $archived === 'yes' ? true : ($archived === 'no' ? false : null);
 
-        $jobApplied = AppliedJob::where('campaign_id', $id)
-            ->where( function ($query) use ($archived) {
-            if ($archived !== null ) {
-                if ($archived === true ) {
-                    $query->whereNotNull('archived_at');
-                } else {
-                    $query->whereNull('archived_at');
+        // Query with relationships
+        $jobApplied = AppliedJob::where($campaign_field, $id)
+            ->where(function ($query) use ($archived) {
+                if ($archived !== null) {
+                    $archived ? $query->whereNotNull('archived_at') : $query->whereNull('archived_at');
                 }
-            }
-        })->when($rating, function ($query) use($rating){
-            $query->where('rating', $rating);
-        })
-        ->orderBy($sort_by, $sort_dir);
+            })
+            ->when($rating, function ($query) use ($rating) {
+                $query->where('rating', $rating);
+            })
+            ->orderBy($sort_by, $sort_dir);
 
-        if ($per_page === 'all' || $per_page <= 0 ) {
+        if ($per_page === 'all' || $per_page <= 0) {
             $results = $jobApplied->get();
             $jobApplied = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
         } else {
@@ -58,8 +60,10 @@ class CandidateController extends Controller
             'status' => true,
             'message' => "Successful."
         ])->merge($jobApplied)->merge(['draw' => $datatable_draw]);
+
         return response()->json($response, 200);
     }
+
 
 
     public function rateCandidate(Request $request, $id){
@@ -67,7 +71,7 @@ class CandidateController extends Controller
         $applied = AppliedJob::findOrFail($id);
 
         $request->validate([
-            'rating' => 'required|integer|between:1,3',
+            'rating' => 'required|integer|between:1,2',
         ]);
 
         $applied->rating = $request->rating;
@@ -86,34 +90,34 @@ class CandidateController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
+
     public function invite(JobInvitationRequest $request)
     {
         // Authorization is declared in the Form Request
-
+        $employer = $request->user();
         // Retrieve the validated input data...
         $validatedData = $request->validated();
-        // unset($validatedData['interview_at']);
-        // Avoid Dublicate
 
+        $appliedJob = AppliedJob::where('campaign_id', $validatedData['campaign_id'])
+                        ->where('talent_user_id', $validatedData['talent_user_id'])
+                        ->first();
+
+        $validatedData['employer_user_id'] = $employer->id;
+        $validatedData['talent_cv_id'] = $appliedJob->talent_cv_id;
+
+        // Avoid Duplicate
         $jobInvitation = JobInvitation::firstOrCreate($validatedData);
+
         if ($jobInvitation) {
-            // send email notification
-            if ($jobInvitation->talentCv->email) {
-                if (config('mail.queue_send')) {
-                    Mail::to($jobInvitation->talentCv->email)->queue(new TalentJobInvitation($jobInvitation));
-                } else {
-                    Mail::to($jobInvitation->talentCv->email)->send(new TalentJobInvitation($jobInvitation));
-                }
+
+            if ($appliedJob) {
+                $appliedJob->rating = 3;
+                $appliedJob->save();
             }
-            // Send Push notification
-            $display_name = $jobInvitation->employerUser->display_name;
-            $notification = new Notification();
-            $notification->user_id = $request->talent_user_id;
-            $notification->action = '/my-job';
-            $notification->title = 'Job Invitation';
-            $notification->message = "You have a new job invitation/offer from <b>$display_name</b>.";
-            $notification->save();
-            event(new NewNotification($notification->user_id,$notification));
+
+            // Send Laravel notification to the talent
+            Notification::send($jobInvitation->talentUser, new JobInvitationNotification($jobInvitation));
+
             return response()->json([
                 'status' => true,
                 'message' => "An invitation has been sent to {$jobInvitation->talentCv->name}.",
@@ -126,7 +130,6 @@ class CandidateController extends Controller
             ], 400);
         }
     }
-
 
     //  Interview Result
     public function result(Request $request, $id){

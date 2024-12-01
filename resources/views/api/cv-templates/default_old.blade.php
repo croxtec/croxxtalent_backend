@@ -168,7 +168,7 @@
                             @endif
                             <!-- <br> -->
                             <div class="star-image">
-                                @if ($skill->level == 'advanced')
+                                @if ($skill->level == 'advance')
                                     <img src="{{$star3_image_url}}" alt="3 Stars" />
                                 @elseif($skill->level == 'intermediate')
                                     <img src="{{$star2_image_url}}" alt="2 Stars" />
@@ -199,7 +199,7 @@
                         <span class="pills">{{ $language->language_name ?? '' }}</span>
                         <br>
                         <div class="star-image">
-                            @if ($language->level == 'advanced')
+                            @if ($language->level == 'advance')
                                 <img src="{{ $star3_image_url ?? '' }}" alt="3 Stars" />
                             @elseif($language->level == 'intermediate')
                                 <img src="{{ $star2_image_url ?? '' }}" alt="2 Stars" />

@@ -810,14 +810,14 @@
                                                     <i class="dot-primary"></i>
                                                 @endfor
                                                 @for ($i = 0; $i < 3; $i++)
-                                                    @if($skill->level == 'intermediate' || $skill->level == 'advanced')
+                                                    @if($skill->level == 'intermediate' || $skill->level == 'advance')
                                                         <i class="dot-primary"></i>
                                                     @else
                                                         <i class="dot"></i>
                                                     @endif
                                                 @endfor
                                                 @for ($i = 0; $i < 3; $i++)
-                                                    @if($skill->level == 'advanced')
+                                                    @if($skill->level == 'advance')
                                                         <i class="dot-primary"></i>
                                                     @else
                                                         <i class="dot"></i>

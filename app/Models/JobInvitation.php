@@ -25,6 +25,7 @@ class JobInvitation extends Model
         'employer_user_id',
         'talent_user_id',
         'talent_cv_id',
+        'campaign_id',
         'interview_at',
         'status',
         'accepted_at',

@@ -15,9 +15,10 @@ use Illuminate\Support\Facades\Route;
 */
 
 
+// require __DIR__.'/v2/guest.php';
+
 
 // Direct publicly accessible routes (No API Key)
-
 Route::any('/', function (Request $request) {
     return response()->json([
         'status' => true,
@@ -34,23 +35,6 @@ Route::prefix('croxtec')->middleware('web')->name('api.croxtec.')->group( functi
     Route::post('/contact', 'Api\v2\GeneralController@contact')->name('contact');
     Route::post('/newsletter', 'Api\v2\GeneralController@newsletter')->name('newsletter');
 });
-
-Route::prefix('auth')->name('api.')->group( function () {
-    Route::get('/', 'Api\v2\AuthController@index')->name('auth.index');
-    Route::post('login', 'Api\v2\AuthController@login')->name('auth.login');
-    Route::post('company/login', 'Api\v2\AuthController@companyLogin')->name('company.login');
-    Route::post('register', 'Api\v2\AuthController@register')->name('auth.register');
-    Route::middleware('auth:sanctum')->group( function () {
-        Route::post('logout', 'Api\v2\AuthController@logout')->name('auth.logout');
-        Route::post('refresh', 'Api\v2\AuthController@refresh')->name('auth.refresh');
-        Route::get('user', 'Api\v2\AuthController@user')->name('auth.user');
-    });
-
-    Route::get('confirm-code', 'Api\v2\AuthController@confirmResetCode')->name('users.confirm_reset_code');
-    Route::post('forgot-passwword', 'Api\v2\AuthController@sendPasswordVerification')->name('users.send_password_verification');
-    Route::post('reset-password', 'Api\v2\AuthController@resetNewPassword')->name('users.reset_new_password');
-});
-
 
 Route::prefix('links')->middleware('web')->name('api.links.')->group( function () {
     // Verifications
@@ -71,7 +55,6 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
 
         Route::get('cvs/{id}/import-linkedin', 'Api\v2\Link\CvLinkController@importLinkedIn')->name('cvs.import_linkedin');
         Route::get('cvs/import-linkedin-callback', 'Api\v2\Link\CvLinkController@importLinkedIn')->name('cvs.import_linkedin_callback');
-
         // CV References
         Route::get('cv-references/{id}/questionnaire', 'Api\v2\Link\CvReferenceLinkController@questionnaireForm')->name('cv_references.questionnaire_form');
         Route::post('cv-references/{id}/questionnaire', 'Api\v2\Link\CvReferenceLinkController@storeQuestionnaireForm')->name('cv_references.questionnaire_form.store');
@@ -84,6 +67,33 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
     // Unsigned Routes
     Route::get('cvs/import-linkedin-callback', 'Api\v2\Link\CvLinkController@importLinkedInCallback')->name('cvs.import_linkedin_callback');
 });
+
+Route::prefix('auth')->name('api.')->group( function () {
+    Route::get('/', 'Api\v2\AuthController@index')->name('auth.index');
+    Route::post('login', 'Api\v2\AuthController@login')->name('auth.login');
+    Route::post('company/login', 'Api\v2\AuthController@companyLogin')->name('company.login');
+    Route::post('register', 'Api\v2\AuthController@register')->name('auth.register');
+
+    Route::middleware('auth:sanctum')->group( function () {
+        Route::post('logout', 'Api\v2\AuthController@logout')->name('auth.logout');
+        Route::post('refresh', 'Api\v2\AuthController@refresh')->name('auth.refresh');
+        Route::get('user', 'Api\v2\AuthController@user')->name('auth.user');
+    });
+
+    Route::get('confirm-code', 'Api\v2\AuthController@confirmResetCode')->name('users.confirm_reset_code');
+    Route::post('forgot-passwword', 'Api\v2\AuthController@sendPasswordVerification')->name('users.send_password_verification');
+    Route::post('reset-password', 'Api\v2\AuthController@resetNewPassword')->name('users.reset_new_password');
+
+    //Google
+    Route::group(['middleware' => ['web']], function () {
+        Route::get('/google', 'Api\v2\Auth\GoogleAuthController@redirect');
+        Route::get('/google/callback', 'Api\v2\Auth\GoogleAuthController@handleGoogleCallback');
+        Route::get('/linkedin', 'Api\v2\Auth\LinkedInController@redirect');
+        Route::get('/linkedin/callback', 'Api\v2\Auth\LinkedInController@handleLinkedInCallback');
+        Route::get('/linkedin/import', 'Api\v2\Auth\LinkedInController@importProfile');
+    });
+});
+
 
 
 // Below API routes secured with API Key
@@ -98,8 +108,11 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             Route::get('company/employee/{id}', 'Api\v2\Talent\TalentCompanyController@employeeInformation')->name('company.employee');
             Route::get('company/team/performance', 'Api\v2\Talent\TalentCompanyController@teamPerformanceProgress')->name('company.performance');
             // Competence
+            Route::get('career/progress', 'Api\v2\Talent\TalentCompetencyController@progress')->name('competence.progress');
             Route::get('career/suggestion', 'Api\v2\Talent\TalentCompetencyController@suggestion')->name('competence.suggestion');
             Route::get('career/competency/match', 'Api\v2\Talent\TalentCompetencyController@competencyMatch')->name('competence.match');
+            Route::get('career/competency/recommendation', 'Api\v2\Talent\TalentCompetencyController@competencyRecommendation')->name('competence.recommendation');
+            Route::get('career/job/training', 'Api\v2\Talent\TalentCompetencyController@jobTraining')->name('competence.job-training');
             Route::get('career/explore', 'Api\v2\Talent\TalentCompetencyController@exploreAssessment')->name('competence.explore');
             // Old
             // Route::get('competence', 'Api\v2\Talent\TalentCompetencyController@index')->name('competence.index');
@@ -109,7 +122,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             // Resume
             Route::get('resume', 'Api\v2\Resume\TalentCVController@index')->name('resume.index');
             Route::post('resume', 'Api\v2\Resume\TalentCVController@storeInformation')->name('resume.store');
-            Route::post('resume/import', 'Api\v2\Resume\TalentCVController@importResume')->name('resume.import');
+            Route::post('resume/import', 'Api\v2\Resume\TalentImprtCVController@importResume')->name('resume.import');
 
             Route::post('resume/contact', 'Api\v2\Resume\TalentCVController@storeContact')->name('resume.contact');
             Route::post('resume/photo', 'Api\v2\Resume\TalentCVController@photo')->name('resume.update_photo');
@@ -224,6 +237,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
 
     // Croxx Jobs
     Route::middleware('auth:sanctum')->name('api.')->group( function () {
+        Route::get('jobs/dashboard', 'Api\v2\CroxxJobsController@dashboard')->name('jobs.dashboard');
         Route::get('jobs/recommendations', 'Api\v2\CroxxJobsController@recommendations')->name('jobs.recommendations');
         Route::post('jobs/applied', 'Api\v2\CroxxJobsController@apply')->name('jobs.apply');
         Route::post('jobs/saved', 'Api\v2\CroxxJobsController@saved')->name('jobs.saved');
@@ -241,10 +255,10 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         // Route::put('job-invitations/{id}', 'Api\v2\JobInvitationController@update')->name('job_invitations.update');
 
         Route::get('candidate/{id}', 'Api\v2\CandidateController@index')->name('candidate.index');
+        Route::post('candidate/{id}/rating', 'Api\v2\CandidateController@rateCandidate')->name('candidate.rating');
+        Route::post('candidate/invite', 'Api\v2\CandidateController@invite')->name('candidate.invite');
         // Route::post('candidate/check', 'Api\v2\CandidateController@check')->name('job_invitations.check');
         // Route::get('candidate/invited', 'Api\v2\CandidateController@index')->name('candidate.index');
-        Route::post('candidate/{id}/rating', 'Api\v2\CandidateController@rateCandidate')->name('candidate.rating');
-        Route::post('candidate/{id}/invite', 'Api\v2\CandidateController@invite')->name('candidate.invite');
         Route::post('candidate/{id}/withdraw', 'Api\v2\CandidateController@withdraw')->name('candidate.withdraw');
         // Route::post('candidate/{id}/result', 'Api\v2\CandidateController@result')->name('candidate.result');
     });
@@ -258,40 +272,40 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             'supervisor' => 'Api\v2\Company\SupervisorController',
             'department' => 'Api\v2\Company\DepartmentController'
         ]);
+
         // Overview
-        Route::get('overview', 'Api\v2\Company\CompanyReportController@overview')->name('company.insights');
-        Route::get('overview/department', 'Api\v2\Company\CompanyReportController@summary')->name('company.summary');
-        Route::get('overview/assessment/feedback', 'Api\v2\Company\CompanyReportController@recentFeedback')->name('company.assessment.feedback');
-        Route::get('overview/assessment/chart', 'Api\v2\Company\CompanyReportController@assessmentChart')->name('company.assessment.chart');
-        Route::get('overview/employees/gap', 'Api\v2\Company\CompanyReportController@gapAnalysisReport')->name('company.employyes.gap');
-        Route::get('overview/courses/chart', 'Api\v2\Company\CompanyReportController@coursesChart')->name('company.courses.chart');
+        Route::get('/overview', 'Api\v2\Company\CompanyReportController@overview')->name('company.insights');
+        Route::get('/overview/department', 'Api\v2\Company\CompanyReportController@departmentOverview')->name('company.summary');
+        Route::get('/overview/assessment/feedback', 'Api\v2\Company\CompanyReportController@recentFeedback')->name('company.assessment.feedback');
+        Route::get('/overview/assessment/chart', 'Api\v2\Company\CompanyReportController@assessmentChart')->name('company.assessment.chart');
+        Route::get('/overview/courses/chart', 'Api\v2\Company\CompanyReportController@coursesChart')->name('company.courses.chart');
+        // Report
+        Route::get('/refresh/performance', 'Api\v2\Company\CompanyReportController@refreshPerformance');
+        Route::get('/overview/employees/gap', 'Api\v2\Company\ReportAnalysisController@gapAnalysisReport');
 
         // Mapping
         Route::get('competency/mapping', 'Api\v2\EmployerCompetencyController@index')->name('competency.index');
         Route::post('competency/mapping/{id}', 'Api\v2\EmployerCompetencyController@storeCompetency')->name('competency.store');
+        Route::post('competency/add/{id}', 'Api\v2\EmployerCompetencyController@addCompetency')->name('competency.add');
         Route::get('onboarding/welcome', 'Api\v2\EmployerCompetencyController@confirmWelcome')->name('confirm.welcome');
 
         // Route::get('competency/gap', 'Api\v2\EmployerCompetencyController@competency')->name('competency.skill');
+        Route::post('employee/{id}/resend-invitation', 'Api\v2\Company\ManageEmployeeController@resendInvitation')->name('employee.resend_invitation');
         // Route::patch('employee/{id}/archive', 'Api\v2\EmployeeController@archive')->name('employee.archive');
         // Route::patch('employee/{id}/unarchive', 'Api\v2\EmployeeController@unarchive')->name('employee.unarchive');
     });
 
     Route::middleware('auth:sanctum')->group( function () {
-        Route::resources([
-            'campaigns' => 'Api\v2\CampaignController',
-            'goals' => 'Api\v2\GoalController',
-            'assessments/evaluation' => 'Api\v2\Operations\EvaluationAssessmentController',
-            'assessments' => 'Api\v2\Operations\ExperienceAssessmentController',
-            'courses' => 'Api\v2\Learning\CourseController',
-            'lessons' => 'Api\v2\Learning\LessonController',
-        ]);
+        // Goals
         Route::get('goals/employee/{code}', 'Api\v2\GoalController@employee');//->name('assesments.index');
         Route::get('goals/overview/performance', 'Api\v2\GoalController@overview')->name('goals.overview');
         Route::get('goals/overview/calendar', 'Api\v2\GoalController@calendarOverview')->name('goals.overview.calendar');
         Route::patch('goals/{id}/archive', 'Api\v2\GoalController@archive')->name('goals.archive');
         Route::patch('goals/{id}/unarchive', 'Api\v2\GoalController@unarchive')->name('goals.unarchive');
         // Course
-        Route::get('courses/progres', 'Api\v2\Learning\CourseController@progres')->name('courses.progress');
+        Route::get('courses/progress', 'Api\v2\Learning\CourseController@progress')->name('courses.progress');
+        Route::get('courses/suggest/{id}', 'Api\v2\Learning\CourseController@suggest')->name('courses.suggest');
+        Route::post('courses/suggest/{id}', 'Api\v2\Learning\CourseController@cloneSuggestionRequest')->name('courses.curatr_suggest');
         Route::get('company/courses', 'Api\v2\Learning\CourseController@courses')->name('company.courses');
         Route::patch('courses/{id}/publish', 'Api\v2\Learning\CourseController@publish')->name('courses.publish');
         // Assesment Options
@@ -317,7 +331,6 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::patch('assessments/questions/{id}/archive', 'Api\v2\Operations\AssesmentQuestionController@archive')->name('assessments.archive');
         Route::patch('assessments/questions/{id}/unarchive', 'Api\v2\Operations\AssesmentQuestionController@unarchive')->name('assessments.unpublish');
         Route::delete('assessments/questions/{id}', 'Api\v2\Operations\AssesmentQuestionController@destroy');//->name('assessments.index');
-
         // Campaigns
         Route::post('campaigns/{id}/photo', 'Api\v2\CampaignController@photo')->name('campaigns.update_photo');
         Route::patch('campaigns/{id}/publish', 'Api\v2\CampaignController@publish')->name('campaigns.publish');
@@ -330,16 +343,29 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         // Route::post('campaigns', 'Api\v2\CampaignController@store')->name('campaigns.store');
         // Route::put('campaigns/{id}', 'Api\v2\CampaignController@update')->name('campaigns.update');
         // Route::delete('campaigns/{id}', 'Api\v2\CampaignController@destroy')->name('campaigns.destroy');
+        Route::resources([
+            'campaigns' => 'Api\v2\CampaignController',
+            'goals' => 'Api\v2\GoalController',
+            'assessments/evaluation' => 'Api\v2\Operations\EvaluationAssessmentController',
+            'assessments' => 'Api\v2\Operations\ExperienceAssessmentController',
+            'courses' => 'Api\v2\Learning\CourseController',
+            'lessons' => 'Api\v2\Learning\LessonController',
+        ]);
+
     });
 
+    Route::get('jobs', 'Api\v2\CroxxJobsController@index')->name('jobs.index');
+    Route::get('jobs/{id}', 'Api\v2\CroxxJobsController@show')->name('jobs.show');
+    Route::get('{username}', 'Api\v2\CroxxProfileController@index')->name('profile');
 
 
     Route::middleware('auth:sanctum')->prefix('croxxtalent')->group( function () {
         // Professional
-        Route::resources([ 'professional' => 'Api\v2\ProfessionalController' ]);
-        Route::patch('professional/{id}/archive', 'Api\v2\ProfessionalController@archive')->name('professional.archive');
-        Route::patch('professional/{id}/unarchive', 'Api\v2\ProfessionalController@unarchive')->name('professional.unarchive');
+        Route::resources([ 'professional' => 'Api\v2\Admin\ProfessionalController' ]);
+        Route::patch('professional/{id}/archive', 'Api\v2\Admin\ProfessionalController@archive')->name('professional.archive');
+        Route::patch('professional/{id}/unarchive', 'Api\v2\Admin\ProfessionalController@unarchive')->name('professional.unarchive');
     });
+
     // Configurations
     Route::prefix('settings')->name('api.settings.')->group( function () {
         // Timezones
@@ -429,6 +455,9 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
             Route::patch('job-titles/{id}/unarchive', 'Api\v2\Settings\JobTitleController@unarchive')->name('job_titles.unarchive');
             Route::delete('job-titles/{id}', 'Api\v2\Settings\JobTitleController@destroy')->name('job_titles.destroy');
         });
+        // Career Competenciees
+        Route::resources([ 'carrer/competencies' => 'Api\v2\Admin\CareerController' ]);
+
         // Industries
         Route::get('industries', 'Api\v2\Settings\IndustryController@index')->name('industries.index');
         Route::get('industries/{id}', 'Api\v2\Settings\IndustryController@show')->name('industries.show');
@@ -461,9 +490,7 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         });
     });
 
-    Route::get('jobs', 'Api\v2\CroxxJobsController@index')->name('jobs.index');
-    Route::get('jobs/{id}', 'Api\v2\CroxxJobsController@show')->name('jobs.show');
-    Route::get('{username}', 'Api\v2\CroxxProfileController@index')->name('profile');
+
     // The fallback route should always be the last route registered by your application.
     Route::fallback(function () {
         return response()->json([

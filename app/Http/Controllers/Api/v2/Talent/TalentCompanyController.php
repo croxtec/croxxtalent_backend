@@ -24,8 +24,8 @@ class TalentCompanyController extends Controller
     public function index(Request $request){
 
         $user = $request->user();
-        $companies = Employee::where('user_id', $user->id)->with('employer')
-                        ->select(['id', 'employer_id', 'user_id', 'name','code', 'supervisor_id','photo_url', 'photo_updated_at','job_code_id','level'])->get();
+        $companies = Employee::where('user_id', $user->id)->with('employer')->get();
+                        // ->select(['id', 'employer_id', 'user_id', 'name','code', 'supervisor_id','photo_url', 'photo_updated_at','job_code_id','level'])
         $default_company =  null;
 
         if (count($companies)) {
@@ -38,11 +38,20 @@ class TalentCompanyController extends Controller
             }
 
             $default_company = $companies->firstWhere('id', $user->default_company_id);
+
             if($default_company){
                 $default_company->department;
                 $default_company->department_role;
                 $default_company->employer;
+
+
                 if($default_company->department && !$default_company->supervisor_id){
+                    $dashboard = [
+                        'completed_assessment' => $default_company->completedAssessment()->count(),
+                        'learning_paths' => $default_company->learningPaths()->count(),
+                        'goals_completed' => $default_company->goalsCompleted()->count(),
+                    ];
+
                     $default_company->department->technical_skill;
                     $default_company->department->soft_skill;
 
@@ -52,7 +61,7 @@ class TalentCompanyController extends Controller
 
                     if(count($technical_skills)){
                         foreach($technical_skills as $skill){
-                            array_push($assessment_distribution, mt_rand(0, 10));
+                            array_push($assessment_distribution, mt_rand(0, 100));
                         }
                     }
 
@@ -62,6 +71,15 @@ class TalentCompanyController extends Controller
                         'trainings_distribution' =>  $assessment_distribution,
                     ];
                 }
+
+                if($default_company->supervisor){
+                    $dashboard = [
+                        'feedback_sent' => $default_company->feedbackSent()->count(),
+                        'task_assigned' => $default_company->taskAssigned()->count(),
+                    ];
+                }
+
+                $default_company->summary = $dashboard;
             }
         }
 
@@ -93,6 +111,7 @@ class TalentCompanyController extends Controller
                 // Supervisor Detail
                 $team_structure =  Employee::where('employer_id', $supervisor->employer_id)
                                      ->where('job_code_id',  $supervisor->department_id)
+                                     ->with(['department', 'department_role'])
                                      ->whereNull('supervisor_id')->get();
 
 
@@ -129,9 +148,9 @@ class TalentCompanyController extends Controller
             if(isset($myinfo->supervisor_id)){
 
                 if (is_numeric($id)) {
-                    $employee = Employee::where('id', $id)->where('employer_id', $myinfo->employer_id)->firstOrFail();
+                    $employee = Employee::where('id', $id)->where('employer_id', $myinfo->employer_id)->first();
                 } else {
-                    $employee = Employee::where('code', $id)->where('employer_id', $myinfo->employer_id)->firstOrFail();
+                    $employee = Employee::where('code', $id)->where('employer_id', $myinfo->employer_id)->first();
                 }
 
 
@@ -147,35 +166,31 @@ class TalentCompanyController extends Controller
                 if(count($technical_skills)){
                     foreach($technical_skills as $skill){
                         array_push($assessment_distribution, mt_rand(0, 10));
+                        array_push($trainings_distribution, mt_rand(0, 10));
                     }
                 }
 
                 $employee->technical_distribution = [
                     'categories' => $technical_skills,
                     'assessment_distribution' =>  $assessment_distribution,
-                    'trainings_distribution' =>  $assessment_distribution,
+                    'trainings_distribution' =>  $trainings_distribution,
                 ];
-
-
-                $goals_taken =  Goal::where('employee_id', $employee->id)
-                                    ->where('employer_id', $employee->employer_id)->count();
 
                 $employee->proficiency = [
                     'total' =>  '90%',
                     'assessment' => [
-                        'taken' => 8,
-                        'performance' => '27%'
+                        'taken' => $employee->completedAssessment()->count(),
+                        'performance' => '0%'
                     ],
                     'goals' => [
-                        'taken' => $goals_taken,
-                        'performance' => '80%'
+                        'taken' => $employee->goalsCompleted()->count(),
+                        'performance' => '0%'
                     ],
                     'trainings' => [
-                        'taken' => 12,
-                        'performance' => '70%'
+                        'taken' => $employee->learningPaths()->count(),
+                        'performance' => '0%'
                     ],
                 ];
-
 
                 return response()->json([
                     'status' => true,
@@ -214,11 +229,12 @@ class TalentCompanyController extends Controller
                 // Add Pagination here
                 $employees = Employee::where('employer_id', $supervisor->employer_id)
                                     ->where('job_code_id', $supervisor->department_id)
+                                    ->with(['department', 'department_role'])
                                     ->whereNull('supervisor_id')
                                     ->paginate($per_page);
 
                 $employeeIds =  $employees->pluck('id');
-                // Query the goals with the specified employee IDs
+
                 $goals = Goal::whereIn('employee_id', $employeeIds)
                                 ->orderBy('created_at', 'desc')
                                 ->limit(3)->get();
@@ -236,7 +252,7 @@ class TalentCompanyController extends Controller
                 $team_goals = $employees->map(function ($employee) use ($groupedGoals) {
                     return [
                         'employee' => $employee,
-                        'goals' => $groupedGoals->get($employee->id, collect()), // Default to empty collection if no goals
+                        'goals' => $groupedGoals->get($employee->id, collect()),
                     ];
                 });
 

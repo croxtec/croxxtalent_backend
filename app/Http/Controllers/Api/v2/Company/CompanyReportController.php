@@ -8,14 +8,22 @@ use Illuminate\Http\Request;
 use App\Models\Goal;
 use App\Models\Employee;
 use App\Models\Campaign;
+use App\Models\Assessment\CroxxAssessment;
 use App\Models\Training\CroxxTraining;
 use App\Models\EmployerJobcode as Department;
 use App\Models\Competency\DepartmentMapping as CompentencyMapping;
 use App\Models\Assessment\EmployerAssessmentFeedback;
 use App\Models\Assessment\EmployeeLearningPath;
+use App\Services\RefreshCompanyPerformance;
 
 class CompanyReportController extends Controller
 {
+
+    protected $companyPerformanceService;
+
+    public function __construct(RefreshCompanyPerformance $companyPerformanceService){
+        $this->companyPerformanceService = $companyPerformanceService;
+    }
 
     public function overview(Request $request){
         $employer = $request->user();
@@ -27,31 +35,54 @@ class CompanyReportController extends Controller
 
         $top_employees = Employee::where('employer_id', $employer->id)
                             ->select(['id', 'name', 'photo_url','code', 'performance'])
-                            ->orderBy('performance', 'asc')
+                            ->orderBy('performance', 'desc')
                             ->limit(12)->get();
 
         $total_campaigns = Campaign::where('user_id', $employer->id)->count();
-
         $total_employees = $employees->count();
 
         $gender_distribution = $employees->groupBy('gender')
-        ->reduce(function ($carry, $group) use ($employees) {
+            ->reduce(function ($carry, $group) use ($employees) {
             $count = $group->count();
             $total = $employees->count();
 
-            $carry[$group->first()->gender] = $total > 0
-                ? round(($count / $total) * 100, 2) . '%'
-                : '0%';
+            // Handle empty or null genders by setting them to 'others'
+            $gender = strtolower($group->first()->gender) ?: 'others';
+            $carry[$gender] = $count;
 
             return $carry;
         }, ['male' => 0, 'female' => 0, 'others' => 0]);
 
+        // Retrieve total goals (tasks) completed
+        $totalGoalsCompleted = Goal::where('employer_id', $employer->id)
+                ->where('status', 'done')->whereNull('archived_at')
+                ->count();
+
+        // Retrieve goals (tasks) completed this month
+        $currentMonthGoalsCompleted = Goal::where('employer_id', $employer->id)
+                ->where('status', 'done')->whereNull('archived_at')
+                ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
+                ->count();
+
+        // Retrieve goals (tasks) completed last month
+        $lastMonthGoalsCompleted = Goal::where('employer_id', $employer->id)
+                ->where('status', 'done')->whereNull('archived_at')
+                ->whereBetween('created_at', [  now()->subMonth()->startOfMonth(),now()->subMonth()->endOfMonth()])
+                ->count();
+
+        $differences = $currentMonthGoalsCompleted - $lastMonthGoalsCompleted;
+        $totalPerformance = $employees->sum('performance');
+        $averagePerformance = $total_employees > 0 ? $totalPerformance / $total_employees : 0;
 
         $competency_summary = [
-            'current_rating' => 70,
-            'task_completed' => 12,
-            'diffrences' => 10,
-            'summary' => "",
+            'current_rating' => $averagePerformance,
+            'task_completed' => $currentMonthGoalsCompleted,
+            'differences' => $differences,
+            'summary' => $differences > 0
+                ? "Improved by $differences tasks this month."
+                : ($differences < 0
+                    ? "Completed " . abs($differences) . " fewer tasks than last month."
+                    : "Performance is consistent with last month."),
         ];
 
         $data = compact(
@@ -67,59 +98,65 @@ class CompanyReportController extends Controller
 
     }
 
-    public function summary(Request $request){
+    public function departmentOverview(Request $request){
         $employer = $request->user();
-        $default_department = $request->input('department') ?? $employer->default_company_id;
         $per_page = $request->input('per_page', 12);
+        $default_department = $request->input('department') ?? $employer->default_company_id;
 
         if($request->input('department')) {
             $employer->default_company_id = $request->input('department');
             $employer->save();
         }
 
-        $department = Department::findOrFail($default_department) ?? Department::where('employer_id', $employer->id)->firstOrFail();
+        $department = Department::find($default_department) ?? Department::where('employer_id', $employer->id)->first();
 
-        $technical_skills = array_column($department->technical_skill->toArray(0),'competency');
+        if(!$department){
+            return response()->json([
+                'status' => true,
+                'data' => [
+                    'title' => '',
+                    'technical_distribution' => [],
+                    'softskill_distribution' => [],
+                ],
+                'message' => ''
+            ], 200);
+        }
+
+        $all_skills = array_merge(
+            $department->technical_skill->toArray(0),
+            $department->soft_skill->toArray(0)
+        );
+
         $assessment_distribution = [];
-        if(count($technical_skills)){
-            foreach($technical_skills as $skill){
-                array_push($assessment_distribution, mt_rand(0, 10));
+        $training_distribution = [];
+        $categories = [];
+
+        if (count($all_skills)) {
+            foreach ($all_skills as $skill) {
+                $categories[] = $skill['competency'];
+                $assessment_distribution[] = $skill['performance'] ?? 0; // Adjust based on your data structure
+                $training_distribution[] = $skill['training'] ?? 0; // Adjust based on your data structure
             }
         }
 
+        // Now split the distributions into technical and soft skill
+        $technical_skills = array_column($department->technical_skill->toArray(0), 'competency');
+        $soft_skills = array_column($department->soft_skill->toArray(0), 'competency');
+
         $technical_distribution = [
             'categories' => $technical_skills,
-            'assessment_distribution' =>  $assessment_distribution,
-            'trainings_distribution' =>  $assessment_distribution,
+            'assessment_distribution' => array_slice($assessment_distribution, 0, count($technical_skills)),
+            'trainings_distribution' => array_slice($training_distribution, 0, count($technical_skills)),
         ];
 
-        $soft_skills = array_column($department->soft_skill->toArray(0),'competency');
         $softskill_distribution = [
             'categories' => $soft_skills,
-            'assessment_distribution' =>  $assessment_distribution,
-            'trainings_distribution' =>  $assessment_distribution,
+            'assessment_distribution' => array_slice($assessment_distribution, count($technical_skills)),
+            'trainings_distribution' => array_slice($training_distribution, count($technical_skills)),
         ];
 
-        $employees = Employee::where('employer_id', $employer->id)
-                            ->where('job_code_id', $department->id)
-                            ->paginate($per_page);
-
-        $employeeIds =  $employees->pluck('id');
-        $goals = Goal::whereIn('employee_id', $employeeIds)
-                            ->orderBy('created_at', 'desc')
-                            ->limit(3)->get();
-
-        $groupedGoals = $goals->groupBy('employee_id');
-
-         // Map employee details and goals
-        $department_goals = $employees->map(function ($employee) use ($groupedGoals) {
-            return [
-                'employee' => $employee,
-                'goals' => $groupedGoals->get($employee->id, collect()), // Default to empty collection if no goals
-            ];
-        });
-
-        $data = compact('technical_distribution', 'softskill_distribution','department_goals');
+        $title = $department->job_code;
+        $data = compact('title', 'technical_distribution', 'softskill_distribution');
 
         return response()->json([
             'status' => true,
@@ -131,59 +168,21 @@ class CompanyReportController extends Controller
 
     public function recentFeedback(Request $request){
         $employer = $request->user();
+        $per_page = $request->input('per_page', 12);
 
         $feedbacks = EmployerAssessmentFeedback::where('employer_user_id', $employer->id)
-                        ->with('employee','supervisor')
-                        ->latest()->limit(8) ->get();
+                        ->where('is_published', true)->whereNotNull('supervisor_id')
+                        ->with('employee','supervisor', 'assessment')
+                        ->latest();
+
+        $feedbacks = $feedbacks->paginate($per_page);
+                        // ->limit(8) ->get();
 
         return response()->json([
             'status' => true,
             'data' => $feedbacks,
             'message' => ''
         ], 200);
-    }
-
-    public function gapAnalysisReport(Request $request){
-        $employer = $request->user();
-
-        $groups = array();
-        $department = $request->input('department');
-        $per_page = $request->input('per_page', 12);
-
-        $assessmentGap = Employee::join('employer_assessment_feedback', 'employees.id', '=', 'employer_assessment_feedback.employee_id')
-        ->where('employees.employer_id', $employer->id)
-        ->select('employees.id', 'employees.name', 'employees.status', 'employees.performance', 'employer_assessment_feedback.employee_id', 'employer_assessment_feedback.graded_score')
-        ->when($department, function ($query) use ($department) {
-            // Filter by department
-            $query->where('employees.job_code_id', $department);
-        })
-        ->paginate($per_page);
-
-        $categories = [];
-        $series = [];
-
-        foreach ($assessmentGap as $gap) {
-            $employeeName = $gap['name'];
-            $score = $gap['graded_score'];
-
-            // Add employee name to categories if not already present
-            if (!in_array($employeeName, $categories)) {
-                $categories[] = $employeeName;
-                $series[$employeeName] = []; // Initialize an empty series for the employee
-            }
-
-            // Add score to the employee's series
-            $series[$employeeName][] = $score;
-        }
-        $alternative = array_values($series);
-        $chartData = compact('categories', 'series', 'alternative');
-
-        return response()->json([
-            'status' => true,
-            'data' => $chartData,
-            'message' => ''
-        ], 200);
-
     }
 
     public function assessmentChart(Request $request){
@@ -193,19 +192,17 @@ class CompanyReportController extends Controller
         $departments = [];
         $datasets = [];
 
-        // Fetch the department assessments
         $department_assessments = Department::join('croxx_assessments', 'employer_jobcodes.id', '=', 'croxx_assessments.department_id')
             ->where('croxx_assessments.employer_id', $employer->id)
             ->select('croxx_assessments.id', 'croxx_assessments.employer_id', 'croxx_assessments.level', 'croxx_assessments.is_published', 'croxx_assessments.expected_percentage', 'employer_jobcodes.job_code')
             ->get();
 
-        // Calculate department scores and prepare data for charting
         foreach ($department_assessments as $item) {
             $item->department_score = EmployerAssessmentFeedback::where('assessment_id', $item->id)->avg('graded_score');
         }
 
         // Initialize datasets array with level keys
-        $levels = ['beginner', 'intermediate', 'advanced', 'expert'];
+        $levels = ['beginner', 'intermediate', 'advance', 'expert'];
         foreach ($levels as $level) {
             $datasets[$level] = [
                 'label' => $level,
@@ -235,12 +232,11 @@ class CompanyReportController extends Controller
         foreach ($datasets as $level => &$dataset) {
             for ($i = 0; $i < count($departments); $i++) {
                 if (!isset($dataset['data'][$i])) {
-                    $dataset['data'][$i] = null;
+                    $dataset['data'][$i] = 0;
                 }
             }
         }
 
-        // Prepare the final chart data
         $chartData = [
             'labels' => $departments,
             'datasets' => array_values($datasets),
@@ -257,9 +253,9 @@ class CompanyReportController extends Controller
         $employer = $request->user();
 
         $takenTrainings = CroxxTraining::select('croxx_trainings.id', 'croxx_trainings.title', DB::raw('COUNT(employee_learning_paths.id) AS taken_count'))
+                        ->join('employee_learning_paths', 'croxx_trainings.id', '=', 'employee_learning_paths.training_id')
                         ->where('croxx_trainings.user_id', $employer->id)
                         ->where('croxx_trainings.type', 'company')
-                        ->join('employee_learning_paths', 'croxx_trainings.id', '=', 'employee_learning_paths.training_id')
                         ->groupBy('croxx_trainings.id', 'croxx_trainings.title')
                         ->orderBy('taken_count', 'DESC') // Order by taken_count in descending order (most taken first)
                         ->limit(10) // Limit to top 10 most taken trainings
@@ -276,4 +272,42 @@ class CompanyReportController extends Controller
             'message' => ''
         ], 200);
     }
+
+
+    protected function refreshPerformance(Request $request)
+    {
+        $employer = $request->user();
+        $perPage = $request->input('per_page', 12);
+        $period = [now()->startOfMonth(), now()->endOfMonth()];
+        $default_department = $request->input('department');
+
+        $competencies = $this->companyPerformanceService->refreshCompetenciesPerformance($employer);
+        $employees = $this->companyPerformanceService->refreshEmployeesPerformance($employer);
+
+        return response()->json([
+            'status' => true,
+            'data' => compact('employees', 'competencies'),
+            'message' => 'Company perfoemance refreshed'
+        ], 200);
+    }
+
 }
+
+ // $employees = Employee::where('employer_id', $employer->id)
+        //                     ->where('job_code_id', $department->id)
+        //                     ->paginate($per_page);
+
+        // $employeeIds =  $employees->pluck('id');
+        // $goals = Goal::whereIn('employee_id', $employeeIds)
+        //                     ->orderBy('created_at', 'desc')
+        //                     ->limit(3)->get();
+
+        // $groupedGoals = $goals->groupBy('employee_id');
+
+         // Map employee details and goals
+        // $department_goals = $employees->map(function ($employee) use ($groupedGoals) {
+        //     return [
+        //         'employee' => $employee,
+        //         'goals' => $groupedGoals->get($employee->id, collect()), // Default to empty collection if no goals
+        //     ];
+        // });department_goals

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests\GoalRequest;
 use App\Models\Goal;
 use App\Models\Employee;
+use App\Notifications\SupervisorGoalNotification;
 use Illuminate\Support\Carbon;
 
 class GoalController extends Controller
@@ -65,7 +66,7 @@ class GoalController extends Controller
 
         $response = collect([
             'status' => true,
-            'message' => "Successful."
+            'message' => ""
         ])->merge($goals)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
     }
@@ -136,6 +137,7 @@ class GoalController extends Controller
 
 
         $goals = Goal::whereNull('archived_at')
+            ->where('user_id', $user->id)
             ->when($period, function($query) use($period){
                 $query->whereBetween('created_at', $period);
             })
@@ -197,26 +199,29 @@ class GoalController extends Controller
 
         if($validatedData['type'] == 'career'){
             $validatedData['user_id'] = $user->id;
+            $goal = Goal::create($validatedData);
         }
 
         if($validatedData['type'] == 'supervisor'){
+            // Supervisor selected company
             $current_company = Employee::where('id', $user->default_company_id)
                              ->where('user_id', $user->id)->with('supervisor')->first();
             $employee = Employee::where('code', $validatedData['employee_code'])->first();
+
             $validatedData['supervisor_id'] = $current_company->id;
             $validatedData['employee_id'] = $employee->id;
-
             $validatedData['employer_id'] = $current_company->employer_id;
             $validatedData['user_id'] = $validatedData['supervisor_id'];
+
+            $goal = Goal::create($validatedData);
+
+            if($employee->talent) $employee->talent->notify(new SupervisorGoalNotification($goal, $current_company, $employee));
         }
-
-
-        $goal = Goal::create($validatedData);
 
         if($goal){
             return response()->json([
                 'status' => true,
-                'message' => "New future goal  created successfully.",
+                'message' => "New future goal created successfully.",
                 'data' => Goal::find($goal->id)
             ], 201);
         } else {

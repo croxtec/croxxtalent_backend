@@ -66,7 +66,7 @@ class EvaluationQuestionBankSeeder extends Seeder
                 'option2' => 'Autocratic',
                 'option3' => 'Laissez-faire',
                 'option4' => 'Transformational',
-                'level' => 'advanced',
+                'level' => 'advance',
                 'answer' => 'option2',
             ],
             [
@@ -76,7 +76,7 @@ class EvaluationQuestionBankSeeder extends Seeder
                 'option2' => 'Vision',
                 'option3' => 'Task-oriented',
                 'option4' => 'Passivity',
-                'level' => 'advanced',
+                'level' => 'advance',
                 'answer' => 'option2',
             ],
             // Problem Solving
@@ -210,7 +210,7 @@ class EvaluationQuestionBankSeeder extends Seeder
                 'option2' => 'Clock',
                 'option3' => 'Calculator',
                 'option4' => 'Phone',
-                'level' => 'advanced',
+                'level' => 'advance',
                 'answer' => 'option1',
             ],
             // Conflict Resolution
@@ -398,7 +398,7 @@ class EvaluationQuestionBankSeeder extends Seeder
                 'option2' => 'Generating multiple solutions to a problem',
                 'option3' => 'Analyzing dagta',
                 'option4' => 'Following a predefined path',
-                'level' => 'advanced',
+                'level' => 'advance',
                 'answer' => 'option2',
             ],
             // Time Management

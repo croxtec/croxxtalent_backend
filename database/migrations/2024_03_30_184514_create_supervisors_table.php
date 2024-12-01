@@ -23,6 +23,7 @@ return new class extends Migration
             $table->foreignId('employee_id')->nullable();
             $table->string('email')->nullable(); //extrnal supervisor
             $table->json('employees')->nullable();
+            $table->timestamp('archived_at')->nullable();
             $table->timestamps();
         });
     }

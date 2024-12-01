@@ -16,11 +16,17 @@ class Employee extends Model
         'name',
         'email',
         'phone',
-        'birth_date',
+        'birth_date', 'hired_date',
         'job_code_id',
         'department_role_id',
+        'photo_url',
         //
-        'code', 'gender', 'work_type', 'language'
+        'performance',
+        'level','code',
+        'gender',
+        'work_type',
+        'language',
+        'location'
     ];
 
     // DOB, Job title, job code, employee number and a lot more;
@@ -53,13 +59,34 @@ class Employee extends Model
         return $this->belongsTo('App\Models\Supervisor', 'supervisor_id', 'id');
     }
 
-    // public function verifications()
-    // {
-    //     return $this->morphMany('App\Models\Verification', 'verifiable');
-    // }
-
-    public function routeNotificationForMail()
+    public function verifications()
     {
-        return $this->email; // Assuming the employee model has an email attribute
+        return $this->morphMany('App\Models\Verification', 'verifiable');
     }
+
+    public function completedAssessment(){
+        return $this->hasMany('App\Models\Assessment\EmployerAssessmentFeedback', 'employee_id', 'id');
+    }
+
+    public function learningPaths(){
+        return $this->hasMany('App\Models\Assessment\EmployeeLearningPath', 'employee_id', 'id');
+    }
+
+    public function goalsCompleted(){
+        return $this->hasMany('App\Models\Goal', 'employee_id', 'id');
+    }
+
+    public function feedbackSent(){
+        return $this->hasMany('App\Models\Assessment\EmployerAssessmentFeedback', 'supervisor_id', 'id');
+    }
+
+    public function taskAssigned(){
+        return $this->hasMany('App\Models\Goal', 'supervisor_id', 'id');
+    }
+
+
+    // public function routeNotificationForMail()
+    // {
+    //     return $this->email; // Assuming the employee model has an email attribute
+    // }
 }

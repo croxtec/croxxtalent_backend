@@ -12,7 +12,7 @@ class TalentJobInvitation extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $cvReference;
+    protected $cvReference;
 
     /**
      * Create a new message instance.
@@ -30,7 +30,7 @@ class TalentJobInvitation extends Mailable
      * @return $this
      */
     public function build()
-    {   
+    {
         $subject = "New job invitation";
         return $this->subject($subject)
                     ->view('api.emails.talent_job_invitation')

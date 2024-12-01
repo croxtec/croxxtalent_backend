@@ -18,4 +18,12 @@ class CompetencySetup extends Model
         'description'
     ];
 
+
+    public function competencies()
+    {
+        return $this->hasMany(CompetencySetup::class, 'job_title', 'job_title');
+    }
+
+
+
 }

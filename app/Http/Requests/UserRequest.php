@@ -21,7 +21,7 @@ class UserRequest extends FormRequest
                 return $this->user()->id == 1 || $this->user()->can('create', User::class);
             case 'PUT':
             case 'PATCH':
-                $user = User::findOrFail($this->id);
+                $user = $this->user();
                 return $this->user()->can('update', [User::class, $user]);
             case 'DELETE':
                 return false;
@@ -44,6 +44,7 @@ class UserRequest extends FormRequest
                     'type' => 'required|in:admin,talent,employer,affiliate', // optional for admin
                     'first_name' => 'required|max:30',
                     'last_name' => 'required|max:30',
+
                     // 'email' => 'required|email|max:150|unique:users,email',
                 ];
             case 'PUT':
@@ -53,6 +54,7 @@ class UserRequest extends FormRequest
                     'last_name' => 'required|max:30',
                     // 'email' => 'required|email|max:150|unique:users,email,' . $this->id,
                     'phone' => 'required|max:25',
+                    'username' => 'sometimes|max:50|unique:users,username',
                     'company_name' => 'nullable|max:100',
                 ];
             case 'DELETE':

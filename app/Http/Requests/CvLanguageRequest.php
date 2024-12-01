@@ -48,13 +48,13 @@ class CvLanguageRequest extends FormRequest
             case 'POST':
                 return [
                     'language_id' => 'required|exists:languages,id',
-                    'level' => 'required|max:50',
+                    'level' => 'required|in:beginner,intermediate,advance,expert',
                 ];
             case 'PUT':
             case 'PATCH':
                 return [
                     'language_id' => 'required|exists:languages,id',
-                    'level' => 'required|max:50',
+                    'level' => 'required|in:beginner,intermediate,advance,expert',
                 ];
             case 'DELETE':
                 return [];

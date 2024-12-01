@@ -13,7 +13,7 @@ class CroxxAssessment extends Model
         'user_id', //created by [S]
         'employer_id',
         'code',
-        'type',   //company,vetting,pre-jobs,competency
+        'type',   //company,supervisor,company_training,vetting,training,competency_match
         'category', // competency_evaluation, peer_review, experience
         'is_published',
 
@@ -33,10 +33,14 @@ class CroxxAssessment extends Model
         // 'total_questions'
     ];
 
+    public function company(){
+        return $this->belongsTo('App\Models\User', 'employer_id', 'id')
+                 ->select(['id','photo', 'first_name','last_name','company_name']);
+    }
+
     public function competencies()
     {
         return $this->belongsToMany('App\Models\Competency\DepartmentMapping', 'assessment_competency', 'assessment_id', 'competency_id');
-            // ->select(['id', 'competency']);
     }
 
     public function department(){
@@ -73,8 +77,61 @@ class CroxxAssessment extends Model
                     ->select(['id','competency', 'description']);
     }
 
+    public function feedbacks()
+    {
+        return $this->hasMany('App\Models\Assessment\EmployerAssessmentFeedback', 'assessment_id', 'id');
+    }
+
+    public function assignedEmployees()
+    {
+        return $this->hasMany('App\Models\Assessment\AssignedEmployee', 'assessment_id', 'id');
+    }
+
     // public function getTotalQuestionsAttribute(){
     //     return $this->questions->count();
     // }
 
 }
+
+
+// foreach ($employees as $employee) {
+//     $employeeAssessments = CroxxAssessment::whereHas('competencies', function ($query) use ($competenciesIds) {
+//         $query->whereIn('competency_id', $competenciesIds);
+//     })
+//     ->with(['competencies','feedbacks' => function ($query) use ($employee) {
+//         $query->where('employee_id', $employee->id);
+//     }])
+//     ->get();
+
+//     $scores = [];
+//     $gaps = [];
+
+//     $feedbacks[] = $employeeAssessments->map->feedbacks;
+
+//     foreach ($competenciesIds as $competencyId) {
+//         $feedback = $employeeAssessments->map->feedbacks->flatten()->firstWhere('competency_id', $competencyId);
+//         info($feedback); $
+//         $assessment = $employeeAssessments->first();
+//         $expectedPercentage = $assessment ? $assessment->expected_percentage : 100;
+
+//         $gradedScore = $feedback ? $feedback->graded_score : 0;
+
+//         $gap = max(0, min(10, ($gradedScore - $expectedPercentage) / 10));
+
+//         $gaps[] = [
+//             'competency' => DepartmentMapping::find($competencyId)?->competency,
+//             'graded_score' => $gradedScore,
+//             'expected_percentage' => $expectedPercentage,
+//             'gap' => $gap
+//         ];
+
+//         $scores[] = $gradedScore;
+//     }
+
+//     $employeeData[] = [
+//         'name' => $employee->name,
+//         'competencies' => $competencies,
+//         'scores' => $scores,
+//         'gaps' => $gaps,
+//     ];
+// }

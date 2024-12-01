@@ -9,13 +9,12 @@ class Goal extends Model
 {
     use HasFactory;
 
-
     protected $fillable = [
         'user_id',
         'employee_id',
         'supervisor_id',
         'employer_id',
-        'type',
+        'type', // career,supervisor,company
 
         'title',
         'period',
@@ -23,4 +22,8 @@ class Goal extends Model
         'reminder_date',
         'metric'
     ];
+
+
+
+
 }

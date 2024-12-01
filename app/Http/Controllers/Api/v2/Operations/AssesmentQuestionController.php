@@ -7,9 +7,18 @@ use Illuminate\Http\Request;
 use App\Models\AssesmentQuestion as Question;
 use App\Models\Assesment;
 use App\Models\EvaluationQuestionBank as QuestionBank;
+use App\Services\OpenAIService;
 
 class AssesmentQuestionController extends Controller
 {
+
+    protected $openAIService;
+
+    public function __construct(OpenAIService $openAIService)
+    {
+        $this->openAIService = $openAIService;
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -18,23 +27,48 @@ class AssesmentQuestionController extends Controller
     public function generate(Request $request)
     {
         $rules = [
-            'competency' => 'required',
-            'level' => 'required',
-            'total_question' => 'required|integer|between:1,10'
+            'title' => 'required|string',
+            'competencies' => 'required|array',
+            'competencies.*' => 'string',
+            'level' => 'required|max:50|in:beginner,intermediate,advance,expert',
+            'total_question' => 'required|integer|between:1,10',
         ];
 
         $validatedData = $request->validate($rules);
 
-        $questions = QuestionBank::where('competency_name', 'LiKE', "%{$validatedData['competency']}%")
-                        ->orWHere('question', 'LiKE', "%{$validatedData['competency']}%")
-                        ->limit($validatedData['total_question'])
-                        ->get();
+        $questions = QuestionBank::whereIn('competency_name', $validatedData['competencies'])
+                            ->where('level', $validatedData['level'])
+                            ->limit($validatedData['total_question'])
+                            ->get();
 
+        if ($questions->count() < $validatedData['total_question']) {
+            $generatedQuestions = $this->openAIService->generateAssessmentQuestion(
+                $validatedData['title'],
+                $validatedData['competencies'],
+                $validatedData['level'],
+                $validatedData['total_question']
+            );
+
+            // info($generatedQuestions);
+            // Validate and store the generated questions
+            foreach ($generatedQuestions as $question) {
+                if (isset($question['competency_name']) && isset($question['question']) && isset($question['option1'])
+                    && isset($question['option2']) && isset($question['answer'])) {
+                    QuestionBank::create($question);
+                }
+            }
+
+            // Refresh the questions after adding the newly generated ones
+            $questions = QuestionBank::whereIn('competency_name', $validatedData['competencies'])
+                            ->where('level', $validatedData['level'])
+                            ->limit($validatedData['total_question'])
+                            ->get();
+        }
 
         return response()->json([
             'status' => true,
-            'message' => "",
-            'data' => $questions
+            'message' => "Assessment questions generated successfully.",
+            'data' => $questions,
         ], 201);
     }
 
