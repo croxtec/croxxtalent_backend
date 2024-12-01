@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('company_id');
             $table->string('policy_name');
-            $table->foreignId('department_id')->default(1); //Default General
+            $table->foreignId('department_id')->nullable(); //Default General
             $table->text('policy_description');
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->string('policy_document')->nullable();
