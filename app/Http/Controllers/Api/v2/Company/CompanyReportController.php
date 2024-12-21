@@ -185,60 +185,60 @@ class CompanyReportController extends Controller
         ], 200);
     }
 
-    public function assessmentChart(Request $request){
+    public function assessmentChart(Request $request)
+    {
         $employer = $request->user();
 
-       // Initialize arrays to hold departments and datasets
         $departments = [];
         $datasets = [];
 
+        // Get department assessments and calculate average score
         $department_assessments = Department::join('croxx_assessments', 'employer_jobcodes.id', '=', 'croxx_assessments.department_id')
             ->where('croxx_assessments.employer_id', $employer->id)
-            ->select('croxx_assessments.id', 'croxx_assessments.employer_id', 'croxx_assessments.level', 'croxx_assessments.is_published', 'croxx_assessments.expected_percentage', 'employer_jobcodes.job_code')
+            ->select(
+                'croxx_assessments.id',
+                'croxx_assessments.level',
+                'croxx_assessments.is_published',
+                'croxx_assessments.expected_percentage',
+                'employer_jobcodes.job_code'
+            )
             ->get();
 
         foreach ($department_assessments as $item) {
             $item->department_score = EmployerAssessmentFeedback::where('assessment_id', $item->id)->avg('graded_score');
         }
 
-        // Initialize datasets array with level keys
+        // Levels and initial dataset structure
         $levels = ['beginner', 'intermediate', 'advance', 'expert'];
         foreach ($levels as $level) {
             $datasets[$level] = [
-                'label' => $level,
+                'label' => ucfirst($level),
                 'data' => []
             ];
         }
 
-        // Populate departments and datasets arrays
+        // Populate departments and datasets
         foreach ($department_assessments as $assessment) {
-            if (!in_array($assessment->job_code, $departments)) {
+            // Add unique departments
+            if (!in_array($assessment->job_code, $departments, true)) {
                 $departments[] = $assessment->job_code;
-            }
 
-            // Initialize data array for each level if not already set
-            if (!isset($datasets[$assessment->level]['data'])) {
-                $datasets[$assessment->level]['data'] = array_fill(0, count($departments), null);
-            }
-
-            // Find the index of the current job_code
-            $jobCodeIndex = array_search($assessment->job_code, $departments);
-
-            // Set the score for the appropriate level and job_code
-            $datasets[$assessment->level]['data'][$jobCodeIndex] = $assessment->department_score;
-        }
-
-        // Fill null values for levels that don't have scores for some job codes
-        foreach ($datasets as $level => &$dataset) {
-            for ($i = 0; $i < count($departments); $i++) {
-                if (!isset($dataset['data'][$i])) {
-                    $dataset['data'][$i] = 0;
+                // Ensure new department slots in all dataset levels
+                foreach ($levels as $level) {
+                    $datasets[$level]['data'][] = 0; // Placeholder for no score
                 }
             }
+
+            // Get the department index
+            $index = array_search($assessment->job_code, $departments, true);
+
+            // Assign the score to the correct dataset level
+            $datasets[$assessment->level]['data'][$index] = $assessment->department_score;
         }
 
+        // Prepare chart data
         $chartData = [
-            'labels' => $departments,
+            'labels' => $departments, // No need for array_values or array_unique as $departments is built uniquely
             'datasets' => array_values($datasets),
         ];
 
@@ -248,6 +248,7 @@ class CompanyReportController extends Controller
             'message' => ''
         ], 200);
     }
+
 
     public function coursesChart(Request $request){
         $employer = $request->user();

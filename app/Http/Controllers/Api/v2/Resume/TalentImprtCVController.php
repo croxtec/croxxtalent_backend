@@ -184,7 +184,7 @@ class TalentImprtCVController extends Controller
         if (!empty($resumeData['contact_info']) && is_array($resumeData['contact_info'])) {
 
             $contactInfo = $resumeData['contact_info'];
-            info($contactInfo);
+            // info($contactInfo);
             // Prepare location data
             $country = $contactInfo['country'] ?? '';
             $countryRecord = null;

@@ -29,7 +29,7 @@ class ExperienceAssessmentController extends Controller
     {
         $user = $request->user();
         $user_type = $user->type;
-        $per_page = $request->input('per_page', 25);
+        $per_page = $request->input('per_page', 10);
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'desc');
         $search = $request->input('search');
@@ -38,7 +38,6 @@ class ExperienceAssessmentController extends Controller
         $datatable_draw = $request->input('draw'); // if any
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
-        //
 
         $assessment = CroxxAssessment::withCount('questions')
             ->with('competencies')
@@ -90,6 +89,7 @@ class ExperienceAssessmentController extends Controller
             'data' => $assessment,
             'message' => ""
         ]);
+
         return response()->json($response, 200);
     }
 

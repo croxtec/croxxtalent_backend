@@ -13,8 +13,15 @@ class Policy extends Model
     /**
      * The attributes that are mass assignable.
      */
-    protected $fillable = [];
-    
+    protected $fillable = [
+        'company_id',
+        'policy_name',
+        'department_id',
+        'policy_description',
+        'status',
+        'policy_document'
+    ];
+
     protected static function newFactory(): PolicyFactory
     {
         //return PolicyFactory::new();

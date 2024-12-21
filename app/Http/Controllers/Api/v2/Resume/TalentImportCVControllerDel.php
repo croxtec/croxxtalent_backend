@@ -33,7 +33,7 @@ class TalentImprtCVController extends Controller
         $cv = CV::where('user_id', $user->id)->firstorFail();
         // Validate the uploaded file
         $request->validate([
-            'cv' => 'required|file|mimes:pdf,docx|max:2048',
+            'cv' => 'required|file|mimes:pdf,docx|max:4088',
         ]);
 
         $file = $request->file('cv');

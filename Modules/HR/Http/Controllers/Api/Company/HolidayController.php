@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\HR\Entities\Holiday;
+use Modules\HR\Http\Requests\HolidayRequest;
 
 class HolidayController extends Controller
 {
@@ -14,40 +15,75 @@ class HolidayController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $holidays = Holiday::where('company_id', auth()->user()->company_id)
-        ->orderBy('holiday_date', 'asc')
-        ->get();
+        $user = $request->user();
 
-        // return response()->json($holidays);
-        return response()->json($this->data);
+        // $this->authorize('view-any', Holiday::class);
+
+        $per_page = $request->input('per_page', 100);
+        $sort_by = $request->input('sort_by', 'created_at');
+        $sort_dir = $request->input('sort_dir', 'desc');
+        $search = $request->input('search');
+        $archived = $request->input('archived');
+        $datatable_draw = $request->input('draw');
+
+        $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
+
+        $holidays = Holiday::where( function ($query) use ($archived) {
+            if ($archived !== null ) {
+                // if ($archived === true ) {
+                //     $query->whereNotNull('archived_at');
+                // } else {
+                //     $query->whereNull('archived_at');
+                // }
+            }
+        })
+        ->where('company_id', $user->id)
+        ->where( function($query) use ($search) {
+            $query->where('holiday_name', 'LIKE', "%{$search}%");
+        })->orderBy($sort_by, $sort_dir);
+
+        if ($per_page === 'all' || $per_page <= 0 ) {
+            $results = $holidays->get();
+            $holidays = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
+        } else {
+            $holidays = $holidays->paginate($per_page);
+        }
+
+        $response = collect([
+            'status' => true,
+            'message' => "Successful."
+        ])->merge($holidays)->merge(['draw' => $datatable_draw]);
+
+        return response()->json($response, 200);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request): JsonResponse
+    public function store(HolidayRequest $request): JsonResponse
     {
-        //
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'holiday_date' => 'required|date',
-            'type' => 'required|in:public,optional,restricted',
-            'applicable_to' => 'nullable|array',
-            'is_recurring' => 'nullable|boolean',
-        ]);
+        $company = $request->user();
 
-        Holiday::create([
-            'name' => $validated['name'],
-            'holiday_date' => $validated['holiday_date'],
-            'type' => $validated['type'],
-            'company_id' => auth()->user()->company_id,
-            'applicable_to' => $validated['applicable_to'] ?? null,
-            'is_recurring' => $validated['is_recurring'] ?? false,
-        ]);
+        $validatedData = $request->validated();
+        $validatedData['company_id'] = $company->id;
 
-        return response()->json($this->data);
+        $holiday = Holiday::create($validatedData);
+
+        if($holiday){
+            return response()->json([
+                'status' => true,
+                'message' => "Holiday created successfully.",
+                'data' => Holiday::find($holiday->id)
+            ], 201);
+
+        } else {
+            return response()->json([
+                'status' => false,
+                'message' => "Could not complete request.",
+            ], 400);
+        }
     }
 
     /**
@@ -55,19 +91,29 @@ class HolidayController extends Controller
      */
     public function show($id): JsonResponse
     {
-        //
+        $holiday = Holiday::findOrFail($id);
 
-        return response()->json($this->data);
+        return response()->json([
+            'status' => true,
+            'message' => "Successful.",
+            'data' => $holiday
+        ], 200);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id): JsonResponse
+    public function update(HolidayRequest $request, $id): JsonResponse
     {
-        //
+        $validatedData = $request->validated();
+        $holiday = Holiday::findOrFail($id);
+        $holiday->update($validatedData);
 
-        return response()->json($this->data);
+        return response()->json([
+            'status' => true,
+            'message' => "Holiday updated successfully.",
+            'data' => Holiday::find($holiday->id)
+        ], 200);
     }
 
     /**
@@ -75,8 +121,23 @@ class HolidayController extends Controller
      */
     public function destroy($id): JsonResponse
     {
-        //
+        $holiday = Holiday::findOrFail($id);
 
-        return response()->json($this->data);
+        $name = $holiday->holiday_name;
+
+        $relatedRecordsCount = related_records_count(Holiday::class, $holiday);
+
+        if ($relatedRecordsCount <= 0) {
+            $holiday->delete();
+            return response()->json([
+                'status' => true,
+                'message' => "holiday deleted successfully.",
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => false,
+                'message' => "The \"{$name}\" record cannot be deleted because it is associated with {$relatedRecordsCount} other record(s). You can archive it instead.",
+            ], 400);
+        }
     }
 }
