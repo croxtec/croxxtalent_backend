@@ -302,12 +302,14 @@ Route::prefix('auth')->name('api.')->group( function () {
         Route::get('goals/overview/calendar', 'Api\v2\GoalController@calendarOverview')->name('goals.overview.calendar');
         Route::patch('goals/{id}/archive', 'Api\v2\GoalController@archive')->name('goals.archive');
         Route::patch('goals/{id}/unarchive', 'Api\v2\GoalController@unarchive')->name('goals.unarchive');
-        // Course
+        // Courses
         Route::get('courses/progress', 'Api\v2\Learning\CourseController@progress')->name('courses.progress');
         Route::get('courses/suggest/{id}', 'Api\v2\Learning\CourseController@suggest')->name('courses.suggest');
         Route::post('courses/suggest/{id}', 'Api\v2\Learning\CourseController@cloneSuggestionRequest')->name('courses.curatr_suggest');
         Route::get('company/courses', 'Api\v2\Learning\CourseController@courses')->name('company.courses');
         Route::patch('courses/{id}/publish', 'Api\v2\Learning\CourseController@publish')->name('courses.publish');
+        Route::get('courses/{id}/participants', 'Api\v2\Learning\CourseController@participants')->name('courses.participants');
+        Route::post('courses/add/participants', 'Api\v2\Learning\CourseController@enrollParticipants')->name('enroll.participants');
         // Assesment Options
         // Route::patch('assessments/{id}/unpublish', 'Api\v2\AssesmentController@unpublish')->name('assessments.unpublish');
         Route::get('assessments/talent/{id}', 'Api\v2\Operations\ExperienceAssessmentController@talent')->name('assessments.talent');

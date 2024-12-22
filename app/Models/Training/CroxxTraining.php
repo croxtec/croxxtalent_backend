@@ -28,7 +28,7 @@ class CroxxTraining extends Model
     ];
 
     protected $appends = [
-        'total_lessons'
+        'total_lessons', 'total_participants'
     ];
 
     public function author(){
@@ -49,6 +49,12 @@ class CroxxTraining extends Model
     public function getTotalLessonsAttribute()
     {
         return $this->hasMany('App\Models\Training\CroxxLesson', 'training_id', 'id')
+            ->whereNull('archived_at')->count();
+    }
+
+    public function getTotalParticipantsAttribute()
+    {
+        return $this->hasMany('App\Models\Assessment\EmployeeLearningPath', 'training_id', 'id')
             ->whereNull('archived_at')->count();
     }
 

@@ -144,6 +144,69 @@ class CourseController extends Controller
         ], 200);
     }
 
+    public function participants(Request $request, $id)
+    {
+        $user = $request->user();
+        $employerId =  $user->id;
+
+        if (is_numeric($id)) {
+            $training = CroxxTraining::where('id', $id)->where('employer_id', $employerId)->firstOrFail();
+        } else {
+            $training = CroxxTraining::where('code', $id)->where('employer_id', $employerId)->firstOrFail();
+        }
+
+        $per_page = $request->input('per_page', 12);
+        $sort_by = $request->input('sort_by', 'current_lesson');
+        $sort_dir = $request->input('sort_dir', 'desc');
+
+        $participants = EmployeeLearningPath::where('employer_user_id', $employerId)
+                            ->where('training_id', $training->id)
+                            ->with('employee', 'supervisor')
+                            ->orderBy($sort_by, $sort_dir);
+
+        if ($per_page === 'all' || $per_page <= 0 ) {
+            $results = $participants->get();
+            $participants = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
+        } else {
+            $participants = $participants->paginate($per_page);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $participants,
+            'message' => ""
+        ], 200);
+    }
+
+    public function enrollParticipants(Request $request){
+        $user = $request->user();
+        $employerId =  $user->id;
+
+        $validatedData = $request->validate([
+            'training_id' => 'required|integer',
+            'participants' => 'required|array',
+            'participants.*' => 'required|integer|exists:employees,id'
+        ]);
+
+        $training = CroxxTraining::where('id', $validatedData['training_id'])->where('employer_id', $employerId)->firstOrFail();
+
+        foreach ($validatedData['participants'] as $path) {
+            EmployeeLearningPath::firstOrCreate([
+                'employee_id' => $path,
+                'training_id' => $training->id
+            ],[
+                'employer_user_id' => $employerId,
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => "Employees has been adeded to this training.",
+            'data' => null
+        ], 200);
+
+    }
+
     /**
      * Display the specified resource.
      *
@@ -499,7 +562,6 @@ class CourseController extends Controller
         } else {
             $paths = $paths->paginate($per_page);
         }
-
 
         return response()->json([
             'status' => true,

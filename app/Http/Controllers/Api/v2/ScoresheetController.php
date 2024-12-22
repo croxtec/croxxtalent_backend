@@ -273,6 +273,7 @@ class ScoresheetController extends Controller
         $feedback = EmployerAssessmentFeedback::where([
             'assessment_id' => $assessment->id,
             'employee_id' => $employee->id,
+        ],[
             'employer_user_id' => $assessment->employer_id
         ])->firstOrFail();
 
