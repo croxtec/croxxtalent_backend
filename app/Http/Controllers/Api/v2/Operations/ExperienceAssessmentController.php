@@ -39,8 +39,8 @@ class ExperienceAssessmentController extends Controller
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
 
-        $assessment = CroxxAssessment::withCount('questions')
-            ->with('competencies')
+        $assessment = CroxxAssessment::whereIn('type', ['company', 'supervisor'])
+            ->withCount('questions')->with('competencies')
             ->when($user_type == 'employer', function($query) use ($user){
                 $query->where('employer_id', $user->id);
             })

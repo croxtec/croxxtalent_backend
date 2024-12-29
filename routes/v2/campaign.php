@@ -20,3 +20,12 @@ Route::middleware('auth:sanctum')->group( function () {
         'campaigns' => 'Api\v2\CampaignController',
     ]);
 });
+
+// dataTableFilter: {
+//     per_page: 25, // 25, -1 or all = all records,
+//     page: 1,
+//     search: null,
+//     active: "no",
+//     sort_by: "created_at",
+//     sort_dir: "desc"
+//   },

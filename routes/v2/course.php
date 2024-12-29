@@ -13,6 +13,9 @@ Route::middleware('auth:sanctum')->group( function () {
     Route::get('courses/{id}/participants', 'Api\v2\Learning\CourseController@participants')->name('courses.participants');
     Route::post('courses/add/participants', 'Api\v2\Learning\CourseController@enrollParticipants')->name('enroll.participants');
 
+    //
+    Route::post('lessons/resources', 'Api\v2\Learning\LessonResourceController@store');
+
     Route::resources([
         'courses' => 'Api\v2\Learning\CourseController',
         'lessons' => 'Api\v2\Learning\LessonController',
