@@ -42,7 +42,7 @@ class EvaluationAssessmentRequest extends FormRequest
                 return [];
             case 'POST':
                 return [
-                    'type' => 'required|in:company,supervisor,vetting,training,competency_match',
+                    'type' => 'required|in:company,supervisor,company_training,vetting,competency_match',
                     'category' => 'required|in:competency_evaluation',
                     'level' => 'required|in:beginner,intermediate,advance,expert',
                     'name' => 'required|max:100',

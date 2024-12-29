@@ -136,6 +136,8 @@ class CourseController extends Controller
         }
 
         $training->department;
+        $training->assessment;
+        $training->assessment->questions;
 
         return response()->json([
             'status' => true,
@@ -156,7 +158,7 @@ class CourseController extends Controller
         }
 
         $per_page = $request->input('per_page', 12);
-        $sort_by = $request->input('sort_by', 'current_lesson');
+        $sort_by = $request->input('sort_by', 'id');
         $sort_dir = $request->input('sort_dir', 'desc');
 
         $participants = EmployeeLearningPath::where('employer_user_id', $employerId)

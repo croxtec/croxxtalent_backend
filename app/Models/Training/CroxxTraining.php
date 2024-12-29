@@ -36,6 +36,9 @@ class CroxxTraining extends Model
                  ->select(['id','photo', 'first_name','last_name','company_name']);
     }
 
+    public function assessment(){
+        return $this->belongsTo('App\Models\Assessment\CroxxAssessment', 'assessment_id', 'id');
+    }
     public function department(){
         return $this->belongsTo('App\Models\EmployerJobcode', 'department_id', 'id')
                     ->select(['id','job_code', 'job_title']);

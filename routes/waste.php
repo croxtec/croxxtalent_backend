@@ -295,15 +295,66 @@ Route::prefix('auth')->name('api.')->group( function () {
         // Route::patch('employee/{id}/unarchive', 'Api\v2\EmployeeController@unarchive')->name('employee.unarchive');
     });
 
+    Route::middleware('auth:sanctum')->group( function () {
+        // Goals
+        Route::get('goals/employee/{code}', 'Api\v2\GoalController@employee');//->name('assesments.index');
+        Route::get('goals/overview/performance', 'Api\v2\GoalController@overview')->name('goals.overview');
+        Route::get('goals/overview/calendar', 'Api\v2\GoalController@calendarOverview')->name('goals.overview.calendar');
+        Route::patch('goals/{id}/archive', 'Api\v2\GoalController@archive')->name('goals.archive');
+        Route::patch('goals/{id}/unarchive', 'Api\v2\GoalController@unarchive')->name('goals.unarchive');
+        // Courses
+        Route::get('courses/progress', 'Api\v2\Learning\CourseController@progress')->name('courses.progress');
+        Route::get('courses/suggest/{id}', 'Api\v2\Learning\CourseController@suggest')->name('courses.suggest');
+        Route::post('courses/suggest/{id}', 'Api\v2\Learning\CourseController@cloneSuggestionRequest')->name('courses.curatr_suggest');
+        Route::get('company/courses', 'Api\v2\Learning\CourseController@courses')->name('company.courses');
+        Route::patch('courses/{id}/publish', 'Api\v2\Learning\CourseController@publish')->name('courses.publish');
+        Route::get('courses/{id}/participants', 'Api\v2\Learning\CourseController@participants')->name('courses.participants');
+        Route::post('courses/add/participants', 'Api\v2\Learning\CourseController@enrollParticipants')->name('enroll.participants');
+        // Assesment Options
+        // Route::patch('assessments/{id}/unpublish', 'Api\v2\AssesmentController@unpublish')->name('assessments.unpublish');
+        Route::get('assessments/talent/{id}', 'Api\v2\Operations\ExperienceAssessmentController@talent')->name('assessments.talent');
+        Route::patch('assessments/{id}/publish', 'Api\v2\Operations\ExperienceAssessmentController@publish')->name('assessments.publish');
+        Route::patch('assessments/{id}/archive', 'Api\v2\Operations\ExperienceAssessmentController@archive')->name('assessments.archive');
+        Route::patch('assessments/{id}/unarchive', 'Api\v2\Operations\ExperienceAssessmentController@unarchive')->name('assessments.unarchive');
+        // Employee Assessment
+        Route::get('assessments/employee/{code}', 'Api\v2\Operations\EmployeeAssessmentController@employee');//->name('assesments.index');
+        Route::get('assessments/feedbacks/{code}', 'Api\v2\Operations\EmployeeAssessmentController@feedbacks');//->name('assesments.index');
+        Route::post('assessments/talent/answer', 'Api\v2\Operations\EmployeeAssessmentController@storeTalentAnswer');//->name('assessments.index');
+        Route::patch('assessments/{id}/talent/publish', 'Api\v2\Operations\EmployeeAssessmentController@publishTalentAnswers');//->name('assessments.index');
+        // Manage Assesment
+        Route::get('assessments/{id}/assigned/employees', 'Api\v2\ScoresheetController@employeeList');//->name('assessments.index');
+        Route::get('assessments/{code}/result/{talent}', 'Api\v2\ScoresheetController@assessmentResult');//->name('assessments.index');
+        Route::get('assessments/{code}/feedback/{talent}', 'Api\v2\ScoresheetController@assessmentFeedback');//->name('assessments.index');
+        Route::post('assessments/{id}/supervisor/scoresheet', 'Api\v2\ScoresheetController@gradeAssessmentScoreSheet');//->name('assesments.index');
+        Route::patch('assessments/{id}/supervisor/feedback', 'Api\v2\ScoresheetController@publishSupervisorFeedback');//->name('assesments.index');
+        // Assesment Questions
+        Route::post('assessments/questions/generate', 'Api\v2\Operations\AssesmentQuestionController@generate');//->name('assessments.index');
+        Route::post('assessments/questions', 'Api\v2\Operations\AssesmentQuestionController@store');//->name('assessments.index');
+        Route::patch('assessments/questions/{id}/archive', 'Api\v2\Operations\AssesmentQuestionController@archive')->name('assessments.archive');
+        Route::patch('assessments/questions/{id}/unarchive', 'Api\v2\Operations\AssesmentQuestionController@unarchive')->name('assessments.unpublish');
+        Route::delete('assessments/questions/{id}', 'Api\v2\Operations\AssesmentQuestionController@destroy');//->name('assessments.index');
+        // Campaigns
+        Route::post('campaigns/{id}/photo', 'Api\v2\CampaignController@photo')->name('campaigns.update_photo');
+        Route::patch('campaigns/{id}/publish', 'Api\v2\CampaignController@publish')->name('campaigns.publish');
+        Route::patch('campaigns/{id}/unpublish', 'Api\v2\CampaignController@unpublish')->name('campaigns.unpublish');;
+        Route::patch('campaigns/{id}/archive', 'Api\v2\CampaignController@archive')->name('campaigns.archive');
+        Route::patch('campaigns/{id}/unarchive', 'Api\v2\CampaignController@unarchive')->name('campaigns.unarchive');;
+        Route::post('campaigns/delete-multiple', 'Api\v2\CampaignController@destroyMultiple')->name('campaigns.destroy_multiple');
+        // Route::get('campaigns', 'Api\v2\CampaignController@index')->name('campaigns.index');
+        // Route::get('campaigns/{id}', 'Api\v2\CampaignController@show')->name('campaigns.show');
+        // Route::post('campaigns', 'Api\v2\CampaignController@store')->name('campaigns.store');
+        // Route::put('campaigns/{id}', 'Api\v2\CampaignController@update')->name('campaigns.update');
+        // Route::delete('campaigns/{id}', 'Api\v2\CampaignController@destroy')->name('campaigns.destroy');
+        Route::resources([
+            'campaigns' => 'Api\v2\CampaignController',
+            'goals' => 'Api\v2\GoalController',
+            'assessments/evaluation' => 'Api\v2\Operations\EvaluationAssessmentController',
+            'assessments' => 'Api\v2\Operations\ExperienceAssessmentController',
+            'courses' => 'Api\v2\Learning\CourseController',
+            'lessons' => 'Api\v2\Learning\LessonController',
+        ]);
 
-    require __DIR__.'/v2/assessment.php';
-
-    require __DIR__.'/v2/course.php';
-
-    require __DIR__.'/v2/campaign.php';
-
-    require __DIR__.'/v2/goals.php';
-
+    });
 
     Route::get('jobs', 'Api\v2\CroxxJobsController@index')->name('jobs.index');
     Route::get('jobs/{id}', 'Api\v2\CroxxJobsController@show')->name('jobs.show');
