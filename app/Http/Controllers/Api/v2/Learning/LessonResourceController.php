@@ -41,12 +41,17 @@ class LessonResourceController extends Controller
 
             foreach ($files as $file) {
                 // Upload file to Cloudinary
+                $extension = $file->getClientOriginalExtension();
+                $filename = time() . '-' . Str::random(32);
+                $filename = "{$filename}.$extension";
+                $year = date('Y');
+
+                $rel_upload_path  = "$user->id/TRAINING/{$year}";
                 $uploadResult = $this->cloudinary->uploadApi()->upload(
                     $file->getRealPath(),
                     [
                         'resource_type' => 'raw',
-                        'folder' => 'lesson-resources',
-                        'public_id' => uniqid('lesson_resource_')
+                        'folder' =>  $rel_upload_path,
                     ]
                 );
 

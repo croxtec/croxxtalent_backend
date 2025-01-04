@@ -327,6 +327,15 @@ class CourseController extends Controller
         $validatedData = $request->validated();
         $training = CroxxTraining::findOrFail($id);
 
+        if ($request->hasFile('cover_photo')) {
+            $file = $request->file('cover_photo');
+            // Add your file upload logic here
+            $path = $file->store('training-covers', 'public');
+            $validatedData['cover_photo'] = $path;
+        }
+
+        info($validatedData);
+
         $training->update($validatedData);
 
         return response()->json([

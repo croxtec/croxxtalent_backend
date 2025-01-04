@@ -4,6 +4,7 @@ namespace App\Models\Training;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Training\LessonResource;
 
 class CroxxLesson extends Model
 {
@@ -20,5 +21,9 @@ class CroxxLesson extends Model
     ];
 
 
+    public function resources()
+    {
+        return $this->hasMany('App\Models\Training\LessonResource', 'lesson_id', 'id');
+    }
 
 }

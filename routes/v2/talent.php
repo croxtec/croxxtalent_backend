@@ -30,15 +30,3 @@ use Illuminate\Support\Facades\Route;
     Route::post('candidate/{id}/withdraw', 'Api\v2\CandidateController@withdraw')->name('candidate.withdraw');
     // Route::post('candidate/{id}/result', 'Api\v2\CandidateController@result')->name('candidate.result');
 });
-
-Route::get('jobs', 'Api\v2\CroxxJobsController@index')->name('jobs.index');
-Route::get('jobs/{id}', 'Api\v2\CroxxJobsController@show')->name('jobs.show');
-Route::get('{username}', 'Api\v2\CroxxProfileController@index')->name('profile');
-
- // Profile & Settings
- Route::get('settings', 'Api\v2\CroxxProfileController@settings')->name('profile.settings');
- Route::put('profile', 'Api\v2\CroxxProfileController@update')->name('users.update');
- Route::post('profile/photo', 'Api\v2\CroxxProfileController@photo')->name('users.update_photo');
- Route::get('notifications', 'Api\v2\UserController@notifications')->name('users.notifications');
- Route::get('notifications/seen/{id}', 'Api\v2\UserController@seenNotification')->name('users.notifications');
- Route::post('users/{id}/resend-verification', 'Api\v2\UserController@resendVerification')->name('users.resend_verification');

@@ -610,7 +610,7 @@ class UserController extends Controller
 
         $per_page = $request->input('per_page', 25);
 
-        $notifications = $user->notifications()->latest()->paginate($per_page);
+        $notifications = $user?->notifications()->latest()->paginate($per_page);
 
         foreach ($notifications as $notification) {
             if(!$notification->read_at){
@@ -623,7 +623,7 @@ class UserController extends Controller
         $response = [
             'status' => true,
             'message' => "Successful.",
-            'data' => $notificationResources,
+            'data' => $notificationResources ?? [],
         ];
 
         // Return the JSON response

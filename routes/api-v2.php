@@ -55,6 +55,8 @@ require __DIR__.'/v2/company.php';
 
 require __DIR__.'/v2/talent.php';
 
+require __DIR__.'/v2/general.php';
+
 
 
 

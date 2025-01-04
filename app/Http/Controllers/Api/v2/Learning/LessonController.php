@@ -51,6 +51,7 @@ class LessonController extends Controller
                 }
             }
         })
+        ->with('resources')
         ->where( function($query) use ($search) {
             $query->where('title', 'LIKE', "%{$search}%");
         })
@@ -147,6 +148,8 @@ class LessonController extends Controller
         } else {
             $lesson = CroxxLesson::where('alias', $id)->firstOrFail();
         }
+
+        $lesson->resources;
 
         return response()->json([
             'status' => true,

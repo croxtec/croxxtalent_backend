@@ -52,14 +52,15 @@ class TrainingRequest extends FormRequest
                     'career_id' => 'required_if:type,training,competency|integer',
                 ];
             case 'PUT':
-            case 'PATCH':
-                return [
+                return[
                     'experience_level' => 'sometimes|required|in:beginner,intermediate,advance,expert',
                     'title' => 'sometimes|required|max:100',
                     'objective' => 'sometimes|required|max:250',
                     'assessment_level' => 'nullable',
-                    'assessment_id' => 'nullable'
+                    'assessment_id' => 'nullable',
+                    'cover_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
                 ];
+            case 'PATCH':
             case 'DELETE':
                 return [];
             default:break;

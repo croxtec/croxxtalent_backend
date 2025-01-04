@@ -21,3 +21,4 @@ Route::middleware('auth:sanctum')->group( function () {
         'lessons' => 'Api\v2\Learning\LessonController',
     ]);
 });
+
