@@ -66,8 +66,14 @@ class ExperienceAssessmentRequest extends FormRequest
                     'supervisors.*' => 'nullable|integer|exists:employees,id',
                 ];
             case 'PUT':
+                return [
+                    'level' => 'sometimes|required|in:beginner,intermediate,advance,expert',
+                    'assessment_name' => 'sometimes|required|max:100',
+                    'assessment_description' => 'nullable|max:400',
+                    'validity_period' => 'nullable|date',
+                    'expected_score' => 'sometimes|required|integer',
+                ];
             case 'PATCH':
-                return [];
             case 'DELETE':
                 return [];
             default:break;

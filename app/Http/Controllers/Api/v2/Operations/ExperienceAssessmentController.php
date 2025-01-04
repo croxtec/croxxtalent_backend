@@ -337,9 +337,10 @@ class ExperienceAssessmentController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(ExperienceAssessmentRequest $request, $id)
     {
         $user = $request->user();
+        $validatedData = $request->validated();
         // $this->authorize('update', [CroxxAssessment::class, $assessment]);
 
         if (is_numeric($id)) {
@@ -348,19 +349,16 @@ class ExperienceAssessmentController extends Controller
             $assessment = CroxxAssessment::where('code', $id)->where('employer_id', $user->id)->firstOrFail();
         }
 
-        // $request->validate([
-        //     'questions' => 'required|array'
-        // ]);
-
-        // $questions = $request->questions;
-        // foreach ($questions as $question) {
-        //     $question['assessment_id'] = $assessment->id;
-        //     CompetencyQuestion::create($question);
-        // }
+        $assessment->update([
+            'name' => $validatedData['assessment_name'],
+            'description' => $validatedData['assessment_description'],
+            'level' => $validatedData['level'],
+            'expected_percentage' => $validatedData['expected_score']
+        ]);
 
         return response()->json([
             'status' => true,
-            'message' => "",
+            'message' => "Assessment updated successfully",
             'data' => $assessment
         ], 200);
 

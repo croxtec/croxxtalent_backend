@@ -334,8 +334,6 @@ class CourseController extends Controller
             $validatedData['cover_photo'] = $path;
         }
 
-        info($validatedData);
-
         $training->update($validatedData);
 
         return response()->json([
@@ -354,8 +352,7 @@ class CourseController extends Controller
     public function archive($id)
     {
         $training = CroxxTraining::findOrFail($id);
-
-        $this->authorize('delete', [CroxxTraining::class, $training]);
+        // $this->authorize('delete', [CroxxTraining::class, $training]);
 
         $training->archived_at = now();
         $training->save();

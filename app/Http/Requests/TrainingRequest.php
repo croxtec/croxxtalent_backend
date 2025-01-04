@@ -61,6 +61,7 @@ class TrainingRequest extends FormRequest
                     'cover_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
                 ];
             case 'PATCH':
+                return [];
             case 'DELETE':
                 return [];
             default:break;
