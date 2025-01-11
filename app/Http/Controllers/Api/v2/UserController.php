@@ -603,31 +603,40 @@ class UserController extends Controller
 
     public function notifications(Request $request)
     {
-        // $user = User::findOrFail($id);
         $user = $request->user();
 
-        // $this->authorize('view-any', JobInvitation::class);
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthenticated.',
+                'data' => []
+            ], 401);
+        }
 
         $per_page = $request->input('per_page', 25);
 
-        $notifications = $user?->notifications()->latest()->paginate($per_page);
+        try {
+            $notifications = $user->notifications()->latest()->paginate($per_page);
 
-        foreach ($notifications as $notification) {
-            if(!$notification->read_at){
-                $notification->update(['read_at' => now()]);
+            // Mark notifications as read
+            foreach ($notifications as $notification) {
+                if (!$notification->read_at) {
+                    $notification->update(['read_at' => now()]);
+                }
             }
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Successful.',
+                'data' => NotificationResource::collection($notifications)
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Error retrieving notifications.',
+                'data' => []
+            ], 500);
         }
-
-        $notificationResources = NotificationResource::collection($notifications);
-
-        $response = [
-            'status' => true,
-            'message' => "Successful.",
-            'data' => $notificationResources ?? [],
-        ];
-
-        // Return the JSON response
-        return response()->json($response, 200);
     }
 
     public function seenNotification(Request $request, $id)

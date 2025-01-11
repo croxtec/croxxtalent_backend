@@ -58,8 +58,6 @@ require __DIR__.'/v2/talent.php';
 require __DIR__.'/v2/general.php';
 
 
-
-
 Route::fallback(function () {
     return response()->json([
         'status' => false,

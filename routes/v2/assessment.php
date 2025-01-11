@@ -24,17 +24,20 @@ Route::middleware('auth:sanctum')->group( function () {
     Route::get('assessments/{code}/feedback/{talent}', 'Api\v2\ScoresheetController@assessmentFeedback');//->name('assessments.index');
     Route::post('assessments/{id}/supervisor/scoresheet', 'Api\v2\ScoresheetController@gradeAssessmentScoreSheet');//->name('assesments.index');
     Route::patch('assessments/{id}/supervisor/feedback', 'Api\v2\ScoresheetController@publishSupervisorFeedback');//->name('assesments.index');
+
     // Assesment Questions
-    Route::post('assessments/questions/generate', 'Api\v2\Operations\AssesmentQuestionController@generate');//->name('assessments.index');
-    Route::post('assessments/questions', 'Api\v2\Operations\AssesmentQuestionController@store');//->name('assessments.index');
-    Route::patch('assessments/questions/{id}/archive', 'Api\v2\Operations\AssesmentQuestionController@archive')->name('assessments.archive');
-     Route::patch('assessments/questions/{id}/unarchive', 'Api\v2\Operations\AssesmentQuestionController@unarchive')->name('assessments.unpublish');
-    Route::delete('assessments/questions/{id}', 'Api\v2\Operations\AssesmentQuestionController@destroy');//->name('assessments.index');
+    Route::post('assessments/questions/generate', 'Api\v2\Operations\AssessmentQuestionController@generate');//->name('assessments.index');
+    Route::post('assessments/questions', 'Api\v2\Operations\AssessmentQuestionController@storeAssessment');//->name('assessments.index');
+    Route::put('assessments/questions/{id}', 'Api\v2\Operations\AssessmentQuestionController@updateAssessment');//->name('assessments.index');
 
+    Route::patch('assessments/{code}/questions/{id}/archive', 'Api\v2\Operations\AssessmentQuestionController@archive')->name('assessments.archive');
+    Route::patch('assessments/{code}/questions/{id}/unarchive', 'Api\v2\Operations\AssessmentQuestionController@unarchive')->name('assessments.unpublish');
+    Route::delete('assessments/questions/{id}', 'Api\v2\Operations\AssessmentQuestionController@destroy');//->name('assessments.index');
 
-
+    //
+    Route::post('assessments/evaluation', 'Api\v2\Operations\EvaluationAssessmentController@store');
     Route::resources([
-        'assessments/evaluation' => 'Api\v2\Operations\EvaluationAssessmentController',
+        // 'assessments/evaluation' => 'Api\v2\Operations\EvaluationAssessmentController',
         'assessments' => 'Api\v2\Operations\ExperienceAssessmentController',
     ]);
 });
