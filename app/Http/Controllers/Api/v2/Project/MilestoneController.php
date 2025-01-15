@@ -28,7 +28,7 @@ class MilestoneController extends Controller
         $pcode = $request->input('pcode');
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
-        $project = Project::where('code', $pcode)->firstOrFail();
+        $project = Project::where('code', $pcode)->first();
 
         $milestone = Milestone::when($user_type == 'employer', function($query) use ($project){
                 $query->where('project_id', $project->id);

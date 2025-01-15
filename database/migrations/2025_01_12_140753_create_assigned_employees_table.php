@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('goal_id')->constrained('project_goals')->cascadeOnDelete(); // Goal being assigned
             $table->foreignId('employee_id')->constrained('employees')->cascadeOnDelete(); // Employee to be assigned
-            $table->foreignId('team_lead_id')->constrained('employees')->cascadeOnDelete(); // Team lead assigning task
+            $table->foreignId('assigned_by')->constrained('employees')->cascadeOnDelete(); // Team lead assigning task
             $table->timestamp('assigned_at')->nullable(); // When the assignment was made
             $table->timestamps();
         });

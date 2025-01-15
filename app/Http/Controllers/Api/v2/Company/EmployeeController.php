@@ -103,7 +103,7 @@ class EmployeeController extends Controller
                             ->where('employer_id', $employer->id)->first();
 
         if(!$isEmployer){
-            if (isset($validatedData['job_code']) && strlen($validatedData['job_code']) > 0) {
+            if (isset($validatedData['job_code']) && strlen($validatedData['job_code']) > 1) {
                 $department = Department::firstOrCreate([
                     'employer_id' => $validatedData['employer_id'],
                     'job_code' => $validatedData['job_code']
@@ -111,7 +111,7 @@ class EmployeeController extends Controller
                 $validatedData['job_code_id'] = $department->id;
             }
 
-            if (isset($validatedData['department_role']) &&  strlen($validatedData['department_role']) > 0) {
+            if (isset($validatedData['department_role']) &&  strlen($validatedData['department_role']) > 1) {
                 $department_role = DepartmentRole::firstOrCreate([
                     'employer_id' => $validatedData['employer_id'],
                     'department_id' => $validatedData['job_code_id'],
