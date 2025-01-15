@@ -26,6 +26,8 @@ return new class extends Migration
             $table->enum('project_type', ['internal', 'external'])->default('internal');
             $table->enum('priority_level', ['low', 'medium', 'high', 'urgent'])->default('medium');
             $table->string('category')->nullable();
+            $table->string('category')->nullable();
+            $table->char('currency_code', 3);
             $table->decimal('budget', 15, 2)->default(0);
             $table->integer('resource_allocation')->default(0); // Resource count or percentage
             // $table->json('team_leads')->nullable(); // Array of team lead user IDs

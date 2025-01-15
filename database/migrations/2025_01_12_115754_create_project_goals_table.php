@@ -19,9 +19,10 @@ return new class extends Migration
             $table->foreignId('employer_user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('milestone_id')->nullable();
             $table->string('title');
-            $table->longText('metric')->nullable(); // KPIs or progress metric
+            $table->string('code');
+            $table->longText('metric')->nullable();
             $table->timestamp('start_date')->nullable();
-            $table->timestamp('end_date')->nullable();
+            $table->timestamp('due_date')->nullable();
             $table->enum('priority_level', ['low', 'medium', 'high', 'urgent'])->default('medium');
             $table->enum('status', ['to-do', 'in-progress', 'in-review','rework', 'completed' ])->default('to-do');
             // $table->json('employees_assigned')->nullable(); // Array of assigned user IDs

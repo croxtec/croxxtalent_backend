@@ -101,7 +101,6 @@ class ExperienceAssessmentController extends Controller
      */
     public function store(ExperienceAssessmentRequest $request)
     {
-
          // Start a transaction
          DB::beginTransaction();
 

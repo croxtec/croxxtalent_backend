@@ -49,6 +49,8 @@ require __DIR__.'/v2/employee.php';
 
 require __DIR__.'/v2/goals.php';
 
+require __DIR__.'/v2/project.php';
+
 require __DIR__.'/v2/configuration.php';
 
 require __DIR__.'/v2/company.php';

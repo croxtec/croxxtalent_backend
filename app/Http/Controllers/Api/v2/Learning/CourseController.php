@@ -79,6 +79,7 @@ class CourseController extends Controller
             'data' => $training,
             'message' => ""
         ]);
+
         return response()->json($response, 200);
     }
 
