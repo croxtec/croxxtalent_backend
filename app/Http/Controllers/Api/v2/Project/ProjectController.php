@@ -17,6 +17,7 @@ class ProjectController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+
     public function index(Request $request)
     {
         $user = $request->user();
@@ -31,81 +32,53 @@ class ProjectController extends Controller
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
 
-        $project = Project::when($user_type == 'employer', function($query) use ($user){
+        $projects = Project::when($user_type == 'employer', function ($query) use ($user) {
                 $query->where('employer_user_id', $user->id);
             })
-            ->when($department,function ($query) use ($department) {
-                if ($department !== null  && is_numeric($department)) {
-                   $query->where('department_id', $department);
+            ->when($department, function ($query) use ($department) {
+                if ($department !== null && is_numeric($department)) {
+                    $query->where('department_id', $department);
                 }
             })
-            ->when($archived ,function ($query) use ($archived) {
-                if ($archived !== null ) {
-                    if ($archived === true ) {
+            ->when($archived, function ($query) use ($archived) {
+                if ($archived !== null) {
+                    if ($archived === true) {
                         $query->whereNotNull('archived_at');
                     } else {
                         $query->whereNull('archived_at');
                     }
                 }
             })
-            ->where( function($query) use ($search) {
+            ->where(function ($query) use ($search) {
                 $query->where('title', 'LIKE', "%{$search}%");
             })
-            ->with(['projectTeam' => function($query) {
-                $query->with('employee');
-            }])
+            ->with(['department'])
             ->withCount('team')
             ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0) {
-            $results = $project->get()->map(function($project) {
-                return [
-                    // Include all your project fields here
-                    'id' => $project->id,
-                    'name' => $project->name,
-                    'team_count' => $project->team_count,
-                    'team' => [
-                        'leads' => EmployeeTeamResource::collection(
-                            $project->projectTeam->where('is_team_lead', true)
-                        ),
-                        'members' => EmployeeTeamResource::collection(
-                            $project->projectTeam->where('is_team_lead', false)
-                        )
-                    ]
-                ];
-            });
-            $project = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
+            $results = $projects->get();
+            $projects = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
         } else {
-            $results = $project->paginate($per_page);
-            $results->getCollection()->transform(function($project) {
-                return [
-                    // Include all your project fields here
-                    'id' => $project->id,
-                    'name' => $project->name,
-                    // ... other project fields ...
-                    'team_count' => $project->team_count,
-                    'team' => [
-                        'leads' => EmployeeTeamResource::collection(
-                            $project->projectTeam->where('is_team_lead', true)
-                        ),
-                        'members' => EmployeeTeamResource::collection(
-                            $project->projectTeam->where('is_team_lead', false)
-                        )
-                    ]
-                ];
-            });
-            $project = $results;
+            $projects = $projects->paginate($per_page);
         }
 
+        // Transform and deduplicate `team` and `projectTeam`
+        $projects->setCollection(
+            $projects->getCollection()->map(function ($project) {
+                $teamStructure = $project->getTeamStructure();
+                $project->team_structure = $teamStructure;
+                return $project;
+            })
+        );
 
-        $response = collect([
+        return response()->json([
             'status' => true,
-            'data' => $project,
-            'message' => ""
-        ]);
-
-        return response()->json($response, 200);
+            'data' => $projects,
+            'message' => "Team structure and projects fetched successfully",
+        ], 200);
     }
+
 
     /**
      * Store a newly created resource in storage.
@@ -178,7 +151,20 @@ class ProjectController extends Controller
      */
     public function show($id)
     {
-        //
+        $user = auth()->user();
+        // $employerId =  $user->id;
+
+        $project = Project::where('code', $id)->firstOrFail();
+
+        $project->department;
+        $project->milestones;
+        $project->team_structure = $project->getTeamStructure();
+
+        return response()->json([
+            'status' => true,
+            'message' => "",
+            'data' => $project,
+        ], 200);
     }
 
     /**

@@ -30,8 +30,9 @@ class MilestoneController extends Controller
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
         $project = Project::where('code', $pcode)->first();
 
-        $milestone = Milestone::when($user_type == 'employer', function($query) use ($project){
-                $query->where('project_id', $project->id);
+        $milestone = Milestone::where('project_id', $project->id)
+            ->when($user_type == 'employer',function($query) use ($user){
+                $query->where('employer_user_id', $user->id);
             })
             ->when($archived ,function ($query) use ($archived) {
                 if ($archived !== null ) {
@@ -95,7 +96,16 @@ class MilestoneController extends Controller
      */
     public function show($id)
     {
-        //
+        $user = auth()->user();
+        // $employerId =  $user->id;
+
+        $milestone = Milestone::where('id', $id)->firstOrFail();
+
+        return response()->json([
+            'status' => true,
+            'message' => "",
+            'data' => $milestone,
+        ], 200);
     }
 
     /**

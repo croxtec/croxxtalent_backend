@@ -28,14 +28,20 @@ class ProjectGoalController extends Controller
         $sort_dir = $request->input('sort_dir', 'desc');
         $search = $request->input('search');
         $archived = $request->input('archived');
-        $department = $request->input('department');
-        $pcode = $request->input('pcode');
+        $code = $request->input('pcode');
+        $milestone = $request->input('milestone');
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
-        $project = Project::where('code', $pcode)->first();
+        $project = Project::where('code', $code)->first();
 
-        $milestone = ProjectGoal::when($user_type == 'employer', function($query) use ($project){
-                $query->where('project_id', $project->id);
+        $project_goals = ProjectGoal::where('project_id', $project->id)
+            ->when($user_type == 'employer',function($query) use ($user){
+                $query->where('employer_user_id', $user->id);
+            })
+            ->when($milestone, function($query) use ($milestone) {
+                if ($milestone !== null && is_numeric($milestone)) {
+                    $query->where('milestone_id', $milestone);
+                }
             })
             ->when($archived ,function ($query) use ($archived) {
                 if ($archived !== null ) {
@@ -49,18 +55,19 @@ class ProjectGoalController extends Controller
             ->where( function($query) use ($search) {
                 $query->where('title', 'LIKE', "%{$search}%");
             })
+            ->with('milestone')
             ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
-            $results = $milestone->get();
-            $milestone = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
+            $results = $project_goals->get();
+            $project_goals = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
         } else {
-            $milestone = $milestone->paginate($per_page);
+            $project_goals = $project_goals->paginate($per_page);
         }
 
         $response = collect([
             'status' => true,
-            'data' => $milestone,
+            'data' => $project_goals,
             'message' => ""
         ]);
 

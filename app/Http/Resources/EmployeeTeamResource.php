@@ -21,7 +21,6 @@ class EmployeeTeamResource extends JsonResource
             'department_role' => $this->employee->department_role_id,
             'photo_url' => $this->employee->photo_url,
             'code' => $this->employee->code,
-            // Add any additional fields you need
         ];
     }
 }

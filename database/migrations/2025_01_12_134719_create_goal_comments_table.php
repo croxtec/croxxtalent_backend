@@ -16,11 +16,18 @@ return new class extends Migration
         Schema::create('goal_comments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('goal_id')->constrained('project_goals')->cascadeOnDelete();
-            $table->foreignId('employee_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('employee_id')->constrained('employees')->cascadeOnDelete();
+            $table->foreignId('parent_id')->nullable()->constrained('goal_comments')->cascadeOnDelete();
             $table->text('comment');
             $table->string('attachment')->nullable();
+            $table->enum('status', ['pending', 'approved', 'rejected'])->default('approved');
+            $table->ipAddress('ip_address')->nullable();
+            $table->string('user_agent')->nullable();
+            $table->unsignedInteger('likes')->default(0);
             $table->timestamps();
+            $table->softDeletes();
         });
+
     }
 
     /**

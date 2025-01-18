@@ -8,4 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 class GoalComment extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'goal_id',
+        'employee_id',
+        'comment',
+        'attachment'
+    ];
+
 }

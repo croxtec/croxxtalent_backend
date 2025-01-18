@@ -23,4 +23,8 @@ class ProjectGoal extends Model
         'rating',
     ];
 
+    public function milestone(){
+        return $this->belongsTo(Milestone::class);
+    }
+
 }

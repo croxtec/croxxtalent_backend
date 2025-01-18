@@ -17,6 +17,7 @@ Route::middleware('auth:sanctum')->name('api.')->group( function () {
         'projects' => 'Api\v2\Project\ProjectController',
         'milestones' => 'Api\v2\Project\MilestoneController',
         'project_goals' => 'Api\v2\Project\ProjectGoalController',
+        'goal_comments' => 'Api\v2\Project\TaskCommentController',
     ]);
 
 });
