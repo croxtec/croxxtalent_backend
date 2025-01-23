@@ -17,9 +17,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('assessment_id');
             $table->foreignId('employee_id');
+            $table->foreignId('employer_id')->nullable();
             $table->foreignId('talent_id')->nullable();
             $table->boolean('is_supervisor')->default(false);
-            $table->foreignId('employer_id')->nullable();
             $table->json('meta')->nullable();
             $table->timestamp('archived_at')->nullable();
             $table->softDeletes();

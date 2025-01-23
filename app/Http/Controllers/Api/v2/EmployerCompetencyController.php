@@ -30,52 +30,52 @@ class EmployerCompetencyController extends Controller
         $job_code = $request->input('department');
 
         // Fetch department with its technical skills
-        $department = Department::where('employer_id', $user->id)
-                                ->where('id', $job_code)
-                                ->with('technical_skill')
-                                ->firstOrFail();
+        // $department = Department::where('employer_id', $user->id)
+        //                         ->where('id', $job_code)
+        //                         ->with('technical_skill')
+        //                         ->firstOrFail();
 
         // Check if preferred competencies are already attached to the department
-        if ($department->technical_skill->count()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Competency mapping already available.'
-            ], 400);
-        }
+        // if ($department->technical_skill->count()) {
+        //     return response()->json([
+        //         'status' => false,
+        //         'message' => 'Competency mapping already available.'
+        //     ], 400);
+        // }
 
-        $job_title = trim($department->job_code);
-
+        // $job_title = trim($department->job_code);
+        $competencies = $this->openAIService->generateDepartmentTemplate("Economics");
         // Check if there are stored competencies for this department
-        $storedCompetencies = DepartmentSetup::where('department', $job_title)
-                                             ->get()
-                                             ->groupBy('department_role');
+        // $storedCompetencies = DepartmentSetup::where('department', $job_title)
+        //                                      ->get()
+        //                                      ->groupBy('department_role');
 
-        if ($storedCompetencies->count()) {
-            $competencies = $storedCompetencies;
-        } else {
-            // Generate competencies using OpenAIService if not stored
-            $competencies = $this->openAIService->generateCompetencyMapping($job_title);
+        // if ($storedCompetencies->count()) {
+        //     $competencies = $storedCompetencies;
+        // } else {
+        //     // Generate competencies using OpenAIService if not stored
+        //     $competencies = $this->openAIService->generateCompetencyMapping($job_title);
 
-            // Save competencies to DepartmentSetup
-            foreach ($competencies as $competency) {
-                foreach (['technical_skill', 'soft_skill'] as $skillType) {
-                    foreach ($competency[$skillType] as $skill) {
-                        DepartmentSetup::create([
-                            'department' => $job_title,
-                            'competency' => $skill['competency'],
-                            'level' => strtolower($competency['level']),
-                            'department_role' => $skillType,
-                            'description' => $skill['description'],
-                            'generated_id' => $user->id
-                        ]);
-                    }
-                }
-            }
+        //     // Save competencies to DepartmentSetup
+        //     foreach ($competencies as $competency) {
+        //         foreach (['technical_skill', 'soft_skill'] as $skillType) {
+        //             foreach ($competency[$skillType] as $skill) {
+        //                 DepartmentSetup::create([
+        //                     'department' => $job_title,
+        //                     'competency' => $skill['competency'],
+        //                     'level' => strtolower($competency['level']),
+        //                     'department_role' => $skillType,
+        //                     'description' => $skill['description'],
+        //                     'generated_id' => $user->id
+        //                 ]);
+        //             }
+        //         }
+        //     }
 
-            $competencies = DepartmentSetup::where('department', $job_title)
-                ->get()
-                ->groupBy('department_role');
-        }
+        //     $competencies = DepartmentSetup::where('department', $job_title)
+        //         ->get()
+        //         ->groupBy('department_role');
+        // }
 
         return response()->json([
             'status' => true,

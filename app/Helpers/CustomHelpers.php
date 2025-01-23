@@ -126,3 +126,57 @@ if (! function_exists('croxxtalent_competency_tree') ){
         return $competence_tree;
     }
 }
+
+if (!function_exists('validateEmployeeAccess')) {
+    /**
+     * Validate if a user has access to a selected employee's company data or return unauthorized response.
+     *
+     * @param \App\Models\User $user
+     * @param \App\Models\Employee $selected_employee_company
+     * @return \Illuminate\Http\JsonResponse|bool
+     */
+    function validateEmployeeAccess($user, $selected_employee_company)
+    {
+        // Get the user's current company
+        $user_current_company = \App\Models\Employee::where('id', $user->default_company_id)
+            ->where('user_id', $user->id)
+            ->with('supervisor')
+            ->first();
+
+        // Check if the user's current company exists
+        if (!$user_current_company) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized Access: User company not found'
+            ], 400);
+        }
+
+        // Validate if the user's current company matches the selected employee's company
+        if ($user_current_company->id === $selected_employee_company->id) {
+            return true; // Access granted
+        }
+
+        // Validate supervisor permissions, if applicable
+        if ($user_current_company->supervisor) {
+            $supervisor = $user_current_company->supervisor;
+
+            // Check role-based access
+            if ($supervisor->type === 'role'
+                && $selected_employee_company->department_role_id === $supervisor->department_role_id) {
+                return true; // Access granted
+            }
+
+            // Check department-based access
+            if ($supervisor->type === 'department'
+                && $selected_employee_company->job_code_id === $supervisor->department_id) {
+                return true; // Access granted
+            }
+        }
+
+        // Unauthorized access
+        return response()->json([
+            'status' => false,
+            'message' => 'Unauthorized Access: Access to selected company denied'
+        ], 400);
+    }
+}

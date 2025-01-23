@@ -39,6 +39,14 @@ class TalentCompanyController extends Controller
 
             $default_company = $companies->firstWhere('id', $user->default_company_id);
 
+            if(!in_array($default_company->setatus, [1, 2])){
+                return response()->json([
+                    'status' => false,
+                    'data' => compact('default_company','companies'),
+                    'message' => 'Unautourized Access'
+                ], 400);
+            }
+
             if($default_company){
                 $default_company->department;
                 $default_company->department_role;

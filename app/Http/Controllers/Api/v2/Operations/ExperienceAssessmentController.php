@@ -61,6 +61,7 @@ class ExperienceAssessmentController extends Controller
         ->where( function($query) use ($search) {
             $query->where('code', 'LIKE', "%{$search}%");
         })->with('department', 'department_role')
+        ->withCount('assignedEmployees')
         ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {

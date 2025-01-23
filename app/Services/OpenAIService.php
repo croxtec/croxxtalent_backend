@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use Exception;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
 
 class OpenAIService
 {
@@ -159,7 +161,7 @@ class OpenAIService
                     'messages' => [
                         [
                             'role' => 'system',
-                            'content' => 'You are a helpful assistant that generates competencies required for a job role or job title based on their level. These levels are divided into four groups: Beginner, Intermediate, advance, and Expert. Provide a competency mapping for each level, including both technical and soft skills. Structure the response in JSON format as follows: [{"job_role": "<Job Role>", "level": "<Beginner>", "technical_skill": [{"competency": "<Competency Name>", "level": "<Beginner>", "description": "Competency Description"}], "soft_skill": [{"competency": "<Competency Name>", "level": "<Beginner>", "description": "Competency Description"}]}}, {"job_role": "<Job Role>", "level": "<Intermediate>", "technical_skill": [{"competency": "<Competency Name>", "level": "<Intermediate>", "description": "Competency Description"}], "soft_skill": [{"competency": "<Competency Name>", "level": "<Intermediate>", "description": "Competency Description"}]}}, {"job_role": "<Job Role>", "level": "<advance>", "technical_skill": [{"competency": "<Competency Name>", "level": "<advance>", "description": "Competency Description"}], "soft_skill": [{"competency": "<Competency Name>", "level": "<advance>", "description": "Competency Description"}]}}, {"job_role": "<Job Role>", "level": "<Expert>", "technical_skill": [{"competency": "<Competency Name>", "level": "<Expert>", "description": "Competency Description"}], "soft_skill": [{"competency": "<Competency Name>", "level": "<Expert>", "description": "Competency Description"}]}]',
+                            'content' => 'You are a helpful assistant that generates competencies required for a job role or job title based on their level. These levels are divided into four groups: Beginner, Intermediate, Advance, and Expert. Provide a competency mapping for each level, including both technical and soft skills. Structure the response in JSON format as follows: [{"job_role": "<Job Role>", "level": "<Beginner>", "technical_skill": [{"competency": "<Competency Name>", "level": "<Beginner>", "description": "Competency Description"}], "soft_skill": [{"competency": "<Competency Name>", "level": "<Beginner>", "description": "Competency Description"}]}}, {"job_role": "<Job Role>", "level": "<Intermediate>", "technical_skill": [{"competency": "<Competency Name>", "level": "<Intermediate>", "description": "Competency Description"}], "soft_skill": [{"competency": "<Competency Name>", "level": "<Intermediate>", "description": "Competency Description"}]}}, {"job_role": "<Job Role>", "level": "<advance>", "technical_skill": [{"competency": "<Competency Name>", "level": "<advance>", "description": "Competency Description"}], "soft_skill": [{"competency": "<Competency Name>", "level": "<advance>", "description": "Competency Description"}]}}, {"job_role": "<Job Role>", "level": "<Expert>", "technical_skill": [{"competency": "<Competency Name>", "level": "<Expert>", "description": "Competency Description"}], "soft_skill": [{"competency": "<Competency Name>", "level": "<Expert>", "description": "Competency Description"}]}]',
                         ],
                         [
                             'role' => 'user',
@@ -222,10 +224,113 @@ class OpenAIService
 
         } catch (\Exception $e) {
             // Log the error and rethrow it
-            \Log::error("Error generating competency mapping: " . $e->getMessage());
+            Log::error("Error generating competency mapping: " . $e->getMessage());
             throw new \Exception("Error generating competency mapping: " . $e->getMessage());
         }
     }
+
+    public function generateDepartmentTemplate($department)
+    {
+        try {
+            $system_prompt = 'You are an advanced AI assistant tasked with creating department templates for competency mapping and KPI generation.
+
+            The competency mapping should include a wide range of skills divided into technical and soft skills relevant to the department. Each competency should include a  description of its role and purpose in the department. Competencies should not only cover essential tasks but also growth opportunities.
+
+            Not all competencies in the mapping will be mandatory for KPIs. Only critical and measurable competencies should be included in the KPIs template.
+
+            For KPIs:
+            - Structure should define Beginner, Intermediate, Advance, and Expert levels.
+            - Each level must have unique KPIs with measurable targets and mandatory competencies.
+            - KPIs should be defined with clear names, descriptions, frequency, and weights to reflect their impact.
+
+            Provide a detailed JSON response with the following structure:
+            {
+                "department": "<Department Name>",
+                "department_goals": [
+                    {
+                        "goal_name": "<Goal Name>",
+                        "description": "<Goal Description>",
+                        "timeline": "<Timeline>"
+                    }
+                ],
+                "competency_mapping": [
+                    {
+                        "technical_skills": [
+                            {
+                                "competency": "<Competency Name>",
+                                "description": "<Description>",
+                            }
+                        ],
+                        "soft_skills": [
+                            {
+                                "competency": "<Competency Name>",
+                                "description": "<Description>",
+                            }
+                        ]
+                    }
+                ],
+                "level_kpis": [
+                    {
+                        "level": "<Beginner|Intermediate|Advance|Expert>",
+                        "kpis": [
+                            {
+                                "kpi_name": "<KPI Name>",
+                                "description": "<KPI Description>",
+                                "frequency": "<Measurement Frequency>",
+                                "mandatory_competencies": [
+                                    {
+                                        "competency": "<Competency Name from competency_mapping>",
+                                        "target_score": "<Target Score 0-100>",
+                                        "weight": "<Weight 0-5>"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }';
+
+            $response = $this->client->post('chat/completions', [
+                'json' => [
+                    'model' => 'gpt-4-turbo',
+                    'messages' => [
+                        [
+                            'role' => 'system',
+                            'content' => $system_prompt,
+                        ],
+                        [
+                            'role' => 'user',
+                            'content' => "Generate a detailed competency mapping and KPI template for the {$department} department. Include a broad range of competencies with clear descriptions, and ensure KPIs only use essential measurable skills.",
+                        ],
+                    ],
+                    'temperature' => 0.6,
+                    // 'max_tokens' => 2000, // Adjust based on required output length
+                ]
+            ]);
+
+            $apiResponse = json_decode($response->getBody()->getContents(), true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new Exception('Error decoding API response: ' . json_last_error_msg());
+            }
+
+            $content = $apiResponse['choices'][0]['message']['content'] ?? null;
+            if (!$content) {
+                throw new Exception('Invalid API response format: missing content');
+            }
+
+            $templateContent = json_decode($content, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new Exception('Error decoding template content: ' . json_last_error_msg());
+            }
+
+            return $templateContent;
+        } catch (Exception $e) {
+            Log::error('Error generating department template: ' . $e->getMessage());
+            throw new Exception('Failed to generate department template');
+        }
+    }
+
 
     public function curateCourseLessons($course) {
         try {

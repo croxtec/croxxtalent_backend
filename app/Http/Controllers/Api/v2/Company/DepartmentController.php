@@ -27,11 +27,12 @@ class DepartmentController extends Controller
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'asc');
         $search = $request->input('search');
-        $datatable_draw = $request->input('draw'); // if any
+        $datatable_draw = $request->input('draw');
 
         $departments = Department::where('employer_id', $company->id)
         ->when($search, function($query) use ($search) {
-            $query->where('id', 'LIKE', "%{$search}%");
+            $query->where('job_code', 'LIKE', "%{$search}%")
+                ->orWhere('job_code', 'LIKE', "%{$search}%");
         })
         ->orderBy($sort_by, $sort_dir);
 

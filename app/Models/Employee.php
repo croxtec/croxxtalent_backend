@@ -10,6 +10,7 @@ class Employee extends Model
 {
     use HasFactory,  Notifiable;
 
+
     protected $fillable = [
         'user_id',
         'employer_id',
@@ -32,8 +33,26 @@ class Employee extends Model
     // DOB, Job title, job code, employee number and a lot more;
 
     protected $appends = [
-
+        'status_info'
     ];
+
+    private const STATUS_LABELS = [
+        0 => 'Inactive',
+        1 => 'Active',
+        2 => 'On Leave',
+        3 => 'Suspended',
+        4 => 'Terminated',
+        5 => 'Resigned',
+        6 => 'Retired',
+        7 => 'Probation',
+        8 => 'Contract Expired',
+        9 => 'Account Deactivated',
+        10 => 'Transferred',
+    ];
+
+    public function getStatusInfoAttribute(){
+        return self::STATUS_LABELS[$this->status] ?? 'Unknown';
+    }
 
     public function department(){
         return $this->belongsTo('App\Models\EmployerJobcode', 'job_code_id', 'id')
