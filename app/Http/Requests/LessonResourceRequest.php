@@ -31,8 +31,7 @@ class LessonResourceRequest extends FormRequest
                     'title' => ['required', 'string', 'max:100'],
                     'files' => ['required', 'array'],
                     'files.*' => [
-                        'required',
-                        'file',
+                        'required','file',
                         'mimes:pdf,doc,docx,xls,xlsx,txt,csv',
                         'max:5120'  // 5MB limit
                     ],

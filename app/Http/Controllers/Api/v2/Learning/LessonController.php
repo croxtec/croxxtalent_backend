@@ -8,8 +8,10 @@ use Illuminate\Http\Request;
 use App\Models\Training\CroxxTraining;
 use App\Models\Training\CroxxLesson;
 use App\Http\Requests\CurrateLessonRequest;
+use App\Models\Training\LessonResource;
 use Cloudinary\Cloudinary;
-
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 class LessonController extends Controller
 {
@@ -40,8 +42,8 @@ class LessonController extends Controller
         $training = CroxxTraining::where('code', $tcode)->first();
 
         $lessons = CroxxLesson::where('training_id', $training->id)
-            ->when($user_type == 'employer', function($query) use ($user){
-                $query->where('user_id', $user->id);
+            ->when($user_type == 'employer', function($query) use ($training){
+                $query->where('training_id', $training->id);
             })
             ->when($archived ,function ($query) use ($archived) {
             if ($archived !== null ) {
@@ -80,58 +82,107 @@ class LessonController extends Controller
      */
     public function store(CurrateLessonRequest $request)
     {
-        $user = $request->user();
-        $validatedData = $request->validated();
+        try {
+            $user = $request->user();
+            $validatedData = $request->validated();
 
-        $validatedData['alias'] = Str::slug($validatedData['title']);
-        $training = CroxxTraining::findOrFail($validatedData['training_id']);
+            $validatedData['alias'] = Str::slug($validatedData['title']);
+            CroxxTraining::findOrFail($validatedData['training_id']);
 
-        $isLesson = CroxxLesson::where([
-            'training_id' =>  $validatedData['training_id'],
-            'alias' =>  $validatedData['alias']
-        ])->exists();
+            $isLesson = CroxxLesson::where([
+                'training_id' =>  $validatedData['training_id'],
+                'alias' =>  $validatedData['alias']
+            ])->exists();
 
-        if($isLesson){
-            return response()->json([
-                'status' => false,
-                'message' => "Lesson already available",
-            ], 400);
-        }
-
-        if ($request->hasFile('video') && $request->file('video')->isValid()) {
-            $file = $request->file('video');
-            $extension = $file->extension();
-
-            $filename = time() . '-' . Str::random(32);
-            $filename = "{$filename}.$extension";
-            $year = date('Y');
-            $rel_upload_path = "CroxxVd/TRAINING/{$year}";
-
-            try {
-                $result = $this->cloudinary->uploadApi()->upload($file->getRealPath(), [
-                    'folder' => $rel_upload_path, // Specify a folder
-                    'resource_type' => 'video', // Specify the resource type as video
-                ]);
-
-                // Update with the newly uploaded file
-                $validatedData['video_url'] = $result['secure_url'];
-            } catch (\Exception $e) {
-
+            if($isLesson){
                 return response()->json([
                     'status' => false,
-                    'message' => 'The video failed to upload.',
-                    'errors' => ['video' => ['The video failed to upload.']]
-                ], 422);
+                    'message' => "Lesson already available",
+                ], 400);
             }
+
+            DB::beginTransaction();
+
+            if ($request->hasFile('video') && $request->file('video')->isValid()) {
+                $file = $request->file('video');
+                $extension = $file->extension();
+
+                $filename = time() . '-' . Str::random(32);
+                $filename = "{$filename}.$extension";
+                $year = date('Y');
+                $rel_upload_path = "CroxxVd/TRAINING/{$year}";
+
+                try {
+                    $result = $this->cloudinary->uploadApi()->upload($file->getRealPath(), [
+                        'folder' => $rel_upload_path, // Specify a folder
+                        'resource_type' => 'video', // Specify the resource type as video
+                    ]);
+
+                    // Update with the newly uploaded file
+                    $validatedData['video_url'] = $result['secure_url'];
+                } catch (\Exception $e) {
+
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'The video failed to upload.',
+                        'errors' => ['video' => ['The video failed to upload.']]
+                    ], 422);
+                }
+            }
+
+            // Create Lesson and the prepre resources
+            $lesson = CroxxLesson::create($validatedData);
+            $files = $request->file('files');
+
+            if($files){
+                $resources = [];
+                foreach ($files as $file) {
+                    // Upload file to Cloudinary
+                    $extension = $file->getClientOriginalExtension();
+                    $filename = time() . '-' . Str::random(32);
+                    $filename = "{$filename}.$extension";
+                    $year = date('Y');
+
+                    $rel_upload_path  = "$user->id/TRAINING/{$year}";
+                    $uploadResult = $this->cloudinary->uploadApi()->upload(
+                        $file->getRealPath(),
+                        [
+                            'resource_type' => 'raw',
+                            'folder' =>  $rel_upload_path,
+                        ]
+                    );
+
+                    // Create resource record
+                    LessonResource::create([
+                        'training_id' => $validatedData['training_id'],
+                        'employer_user_id' => $user->id,
+                        'lesson_id' => $lesson->id,
+                        'title' => $request->title,
+                        'file_name' => $file->getClientOriginalName(),
+                        'file_type' => $file->getClientMimeType(),
+                        'file_size' => $file->getSize(),
+                        'file_url' => $uploadResult['secure_url']
+                    ]);
+                }
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => "",
+                'data' => $lesson,
+            ], 201);
+        }catch (\Exception $e) {
+            DB::rollBack();
+
+            // Log the error
+            \Log::error('Error creating lesson: ' . $e->getMessage());
+
+            return response()->json([
+                "status" => false,
+                'message' => 'Error creating lesson',
+                'error' =>"Fail to upload lesson"
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        $lesson = CroxxLesson::create($validatedData);
-
-        return response()->json([
-            'status' => true,
-            'message' => "",
-            'data' => $lesson,
-        ], 201);
     }
 
     /**

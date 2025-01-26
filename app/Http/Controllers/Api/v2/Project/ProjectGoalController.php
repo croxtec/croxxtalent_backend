@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\v2\Project;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TaskGoalRequest;
+use App\Http\Resources\EmployeeSummaryResource;
 use App\Models\Project\AssignedEmployee;
 use App\Models\Project\GoalCompetency;
 use App\Models\Project\Milestone;
@@ -55,7 +56,7 @@ class ProjectGoalController extends Controller
             ->where( function($query) use ($search) {
                 $query->where('title', 'LIKE', "%{$search}%");
             })
-            ->with('milestone')
+            ->with('milestone', 'assigned.employee')
             ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
@@ -112,9 +113,39 @@ class ProjectGoalController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        //
+        $user = auth()->user();
+        $pcode = $request->input('pcode');
+        // $employerId =  $user->id;
+
+        $goal = ProjectGoal::where('id', $id)
+            ->with(['assigned.employee', 'comments.employee'])
+            ->firstOrFail();
+
+        // Transform assigned employees
+        $goal->assigned_employees = $goal->assigned->pluck('employee');
+        // EmployeeSummaryResource::collection(
+        //     $goal->assigned->pluck('employee')
+        // );
+        $goal->assigned_employees_count = $goal->assigned->count();
+
+        // Transform comments
+        // $goal->comments = $goal->comments->map(function ($item) {
+        //     $item->employee = EmployeeSummaryResource::collection($item->employee);
+        // });
+        $goal->comments;
+        $goal->milestone;
+        $goal->competencies;
+        $goal->activities;
+
+        unset($goal->assigned);
+
+        return response()->json([
+            'status' => true,
+            'data' => $goal,
+            'message' => "",
+        ], 200);
     }
 
     /**
@@ -125,17 +156,6 @@ class ProjectGoalController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
     {
         //
     }

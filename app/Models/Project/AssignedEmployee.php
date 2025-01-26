@@ -14,4 +14,9 @@ class AssignedEmployee extends Model
     protected $fillable = [
         'goal_id', 'employee_id', 'assigned_by', 'assigned_at'
     ];
+
+    public function employee(){
+        return $this->belongsTo('App\Models\Employee', 'employee_id', 'id')
+                     ->select(['id','name', 'job_code_id', 'department_role_id', 'photo_url', 'code']);
+    }
 }

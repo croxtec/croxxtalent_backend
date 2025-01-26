@@ -94,17 +94,20 @@ class MilestoneController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $user = auth()->user();
+        $pcode = $request->input('pcode');
         // $employerId =  $user->id;
 
         $milestone = Milestone::where('id', $id)->firstOrFail();
+        $project = Project::where('code', $pcode)->first();
+        $project_milestones =  Milestone::where('project_id', $project->id)->get();
 
         return response()->json([
             'status' => true,
             'message' => "",
-            'data' => $milestone,
+            'data' => compact('milestone', 'project_milestones'),
         ], 200);
     }
 

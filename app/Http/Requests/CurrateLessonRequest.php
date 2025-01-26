@@ -32,12 +32,17 @@ class CurrateLessonRequest extends FormRequest
                     'title' => 'required|max:100',
                     'description' => 'required|min:20|max:2048',
                     'video_url' => [
-                        'nullable',
-                        'url',
+                        'nullable','url',
                         'regex:/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be|vimeo\.com)\/.+$/'
                     ],
                     'keyword' => 'nullable|string|max:255',
-                    // 'video' => 'nullable|mimetypes:video/mp4|max:61440', // 60MB in kilobytes
+                    // 'video' => 'nullable|mimetypes:video/mp4|max:61440', // 60MB in kilobytes,
+                    'files' => 'nullable', 'array',
+                    'files.*' => [
+                        'required','file',
+                        'mimes:pdf,doc,docx,xls,xlsx,txt,csv',
+                        'max:5120'  // 5MB limit
+                    ],
                 ];
 
             case 'PUT':

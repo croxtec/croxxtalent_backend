@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\v2\Project;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ProjectRequest;
-use App\Http\Resources\EmployeeTeamResource;
 use App\Models\Project\Project;
 use App\Models\Project\ProjectTeam;
 use Illuminate\Http\Request;

@@ -27,4 +27,21 @@ class ProjectGoal extends Model
         return $this->belongsTo(Milestone::class);
     }
 
+    public function assigned(){
+        return $this->hasMany(AssignedEmployee::class, 'goal_id', 'id');
+    }
+
+    public function competencies(){
+        // return $this->hasMany(GoalCompetency::class, 'goal_id', 'id');
+        return $this->belongsToMany('App\Models\Competency\DepartmentMapping', 'goal_competencies', 'goal_id', 'competency_id');
+    }
+
+    public function comments(){
+        return $this->hasMany(GoalComment::class, 'goal_id', 'id');
+    }
+
+    public function activities(){
+        return $this->hasMany(GoalActivity::class, 'goal_id', 'id');
+    }
+
 }
