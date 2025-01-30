@@ -9,6 +9,7 @@ use App\Models\Training\LessonResource;
 use Cloudinary\Cloudinary;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class LessonResourceController extends Controller
 {
