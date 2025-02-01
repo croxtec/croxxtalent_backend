@@ -94,34 +94,34 @@ class LessonController extends Controller
                 'alias' =>  $validatedData['alias']
             ])->exists();
 
-            if($isLesson){
+            if ($isLesson) {
                 return response()->json([
                     'status' => false,
                     'message' => "Lesson already available",
                 ], 400);
             }
 
-            DB::beginTransaction();
+            DB::beginTransaction(); // Start DB Transaction
 
             if ($request->hasFile('video') && $request->file('video')->isValid()) {
                 $file = $request->file('video');
                 $extension = $file->extension();
 
-                $filename = time() . '-' . Str::random(32);
-                $filename = "{$filename}.$extension";
+                $filename = time() . '-' . Str::random(32) . ".$extension";
                 $year = date('Y');
                 $rel_upload_path = "CroxxVd/TRAINING/{$year}";
 
                 try {
-                    $result = $this->cloudinary->uploadApi()->upload($file->getRealPath(), [
-                        'folder' => $rel_upload_path, // Specify a folder
-                        'resource_type' => 'video', // Specify the resource type as video
-                    ]);
+                    $result = $this->cloudinary->uploadApi()->upload(
+                        $file->getRealPath(),
+                        [
+                            'folder' => $rel_upload_path,
+                            'resource_type' => 'video',
+                        ]
+                    );
 
-                    // Update with the newly uploaded file
                     $validatedData['video_url'] = $result['secure_url'];
                 } catch (\Exception $e) {
-
                     return response()->json([
                         'status' => false,
                         'message' => 'The video failed to upload.',
@@ -130,25 +130,23 @@ class LessonController extends Controller
                 }
             }
 
-            // Create Lesson and the prepre resources
+            // Create Lesson and prepare resources
             $lesson = CroxxLesson::create($validatedData);
+
+            // Ensure $files is an array before iterating
             $files = $request->file('files');
-
-            if($files){
-                $resources = [];
+            if (is_array($files)) {
                 foreach ($files as $file) {
-                    // Upload file to Cloudinary
                     $extension = $file->getClientOriginalExtension();
-                    $filename = time() . '-' . Str::random(32);
-                    $filename = "{$filename}.$extension";
+                    $filename = time() . '-' . Str::random(32) . ".$extension";
                     $year = date('Y');
-
                     $rel_upload_path  = "$user->id/TRAINING/{$year}";
+
                     $uploadResult = $this->cloudinary->uploadApi()->upload(
                         $file->getRealPath(),
                         [
                             'resource_type' => 'raw',
-                            'folder' =>  $rel_upload_path,
+                            'folder' => $rel_upload_path,
                         ]
                     );
 
@@ -157,7 +155,7 @@ class LessonController extends Controller
                         'training_id' => $validatedData['training_id'],
                         'employer_user_id' => $user->id,
                         'lesson_id' => $lesson->id,
-                        'title' => $request->title,
+                        'title' => $validatedData['title'], // Corrected title
                         'file_name' => $file->getClientOriginalName(),
                         'file_type' => $file->getClientMimeType(),
                         'file_size' => $file->getSize(),
@@ -166,24 +164,25 @@ class LessonController extends Controller
                 }
             }
 
+            DB::commit(); // Commit transaction
+            $lesson->resources;
             return response()->json([
                 'status' => true,
-                'message' => "",
+                'message' => "New Lesson added successfully",
                 'data' => $lesson,
             ], 201);
-        }catch (\Exception $e) {
-            DB::rollBack();
-
-            // Log the error
+        } catch (\Exception $e) {
+            DB::rollBack(); // Rollback on error
             \Log::error('Error creating lesson: ' . $e->getMessage());
 
             return response()->json([
                 "status" => false,
                 'message' => 'Error creating lesson',
-                'error' =>"Fail to upload lesson"
+                'error' => "Failed to upload lesson"
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
 
     /**
      * Display the specified resource.

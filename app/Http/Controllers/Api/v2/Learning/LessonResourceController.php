@@ -67,7 +67,7 @@ class LessonResourceController extends Controller
                     'file_size' => $file->getSize(),
                     'file_url' => $uploadResult['secure_url']
                 ]);
-
+                info(['Lesson Created', $resource]);
                 $resources[] = $resource;
             }
 

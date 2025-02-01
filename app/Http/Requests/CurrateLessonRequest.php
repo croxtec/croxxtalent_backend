@@ -40,8 +40,8 @@ class CurrateLessonRequest extends FormRequest
                     'files' => 'nullable', 'array',
                     'files.*' => [
                         'required','file',
-                        'mimes:pdf,doc,docx,xls,xlsx,txt,csv',
-                        'max:5120'  // 5MB limit
+                        'mimes:pdf,doc,docx,xls,xlsx,txt,csv,jpg,jpeg,png,gif',
+                        'max:16000'  // 15MB limit
                     ],
                 ];
 
