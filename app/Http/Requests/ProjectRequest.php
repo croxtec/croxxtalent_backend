@@ -43,10 +43,11 @@ class ProjectRequest extends FormRequest
             case 'PUT':
                 return[
                     'title' => 'required|max:100',
-                    'description' => 'required|max:550',
+                    'description' => 'required|max:400',
                     'start_date' => 'required|date',
                     'end_date' => 'required|date',
                     'department_id' => 'required|integer|exists:employer_jobcodes,id',
+                    'budget' => 'nullable|numeric',
                     'resource_allocation' => 'nullable|integer',
                     'category' => 'nullable|string',
                     'priority_level' => 'required|in:low,medium,high,urgent',

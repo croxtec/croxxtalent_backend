@@ -18,6 +18,9 @@ Route::middleware('auth:sanctum')->group( function () {
     Route::post('courses/add/participants', 'Api\v2\Learning\CourseController@enrollParticipants')->name('enroll.participants');
 
     //
+    Route::patch('lessons/{id}/archive', 'Api\v2\Learning\LessonController@archive')->name('lessons.archive');
+    Route::patch('lessons/{id}/unarchive', 'Api\v2\Learning\LessonController@unarchive')->name('lessons.unarchive');
+
     Route::post('lessons/resources', 'Api\v2\Learning\LessonResourceController@store');
 
     Route::resources([

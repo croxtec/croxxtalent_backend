@@ -270,17 +270,32 @@ class LessonController extends Controller
      */
     public function archive($id)
     {
-        $training = CroxxTraining::findOrFail($id);
+        $lesson = CroxxLesson::findOrFail($id);
 
-        $this->authorize('delete', [CroxxTraining::class, $training]);
+        // $this->authorize('delete', [CroxxLesson::class, $lesson]);
 
-        $training->archived_at = now();
-        $training->save();
+        $lesson->archived_at = now();
+        $lesson->save();
 
         return response()->json([
             'status' => true,
-            'message' => "Training archived successfully.",
-            'data' => CroxxTraining::find($training->id)
+            'message' => "Lesson archived successfully.",
+            'data' => CroxxLesson::find($lesson->id)
+        ], 200);
+    }
+
+    public function unarchive($id)
+    {
+        $lesson = CroxxLesson::findOrFail($id);
+
+        // $this->authorize('delete', [CroxxLesson::class, $lesson]);
+        $lesson->archived_at = null;
+        $lesson->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => "Lesson archived successfully.",
+            'data' => CroxxLesson::find($lesson->id)
         ], 200);
     }
 }
