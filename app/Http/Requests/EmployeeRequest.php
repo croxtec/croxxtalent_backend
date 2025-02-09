@@ -45,46 +45,38 @@ class EmployeeRequest extends FormRequest
                 return [];
             case 'POST':
                 return [
-                    'name' => 'required|max:100',
-                    'email' => 'required|max:100',
-                    'phone' => 'required|max:100',
-                    'level' => 'required|in:beginner,intermediate,advance,expert',
-                    'job_code_id' => [
+                    'project_id' => 'required|integer|exists:projects,id',
+                    'milestone_id' => [
                         Rule::requiredIf(function () {
-                            return !request()->has('job_code');
+                            return !request()->has('milestone');
                         }),
                         'nullable',
-                        'exists:employer_jobcodes,id'
+                        'exists:milestones,id'
                     ],
-                    'job_code' => 'nullable|string|min:3|max:56',
-                    'department_role_id' => [
-                        Rule::requiredIf(function () {
-                            return !request()->has('department_role');
-                        }),
-                        'nullable',
-                        'exists:department_roles,id'
-                    ],
-                    'department_role' => 'nullable|string|min:3|max:56',
-                    'location' => 'nullable|min:5|max:256',
+                    'milestone' => 'nullable|string|min:3|max:56',
+                    'title' => 'required|max:100',
+                    'metric' => 'nullable|max:2048',
+                    'status' => 'required|in:to-do,in-progress,in-review,rework,completed',
+                    'priority_level' => 'nullable|in:low,medium,high,urgent',
+                    // 'attachment' => 'nullable|mimetypes:video/mp4|max:61440',
                 ];
-            case 'PUT':
             case 'PATCH':
                 return [
-                    'name' => 'sometimes|required|max:100',
-                    'phone' => 'sometimes|required|max:100',
-                    'level' => 'sometimes|required|in:beginner,intermediate,advance,expert',
-                    'job_code_id' =>  'sometimes|exists:employer_jobcodes,id',
-                    'department_role_id' =>  'sometimes|exists:department_roles,id',
-                    'location' => 'nullable',
-                    'work_type' =>  'nullable',
-                    'gender' =>  'nullable',
-                    'language' =>  'nullable',
-                    'hired_date' =>  'nullable|date',
-                    'birth_date' =>  'nullable|date',
+                    'project_id' => 'sometimes|integer|exists:projects,id',
+                    'milestone_id' => 'nullable|exists:milestones,id',
+                    'milestone' => 'nullable|string|min:3|max:56',
+                    'title' => 'sometimes|required|max:100',
+                    'metric' => 'nullable|max:2048',
+                    'status' => 'sometimes|required|in:to-do,in-progress,in-review,rework,completed',
+                    'priority_level' => 'nullable|in:low,medium,high,urgent',
                 ];
-            default:break;
+            case 'DELETE':
+                return [];
+            default:
+                return [];
         }
     }
+
 
       /**
      * Get the error messages for the defined validation rules.

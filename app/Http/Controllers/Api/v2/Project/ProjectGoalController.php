@@ -10,6 +10,7 @@ use App\Models\Project\GoalCompetency;
 use App\Models\Project\Milestone;
 use App\Models\Project\Project;
 use App\Models\Project\ProjectGoal;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -155,9 +156,40 @@ class ProjectGoalController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(TaskGoalRequest $request, $id)
     {
-        //
+        try {
+            $projectGoal = ProjectGoal::findOrFail($id);
+
+            // if ($projectGoal->employer_user_id !== $request->user()->id) {
+            //     return response()->json([
+            //         'status' => false,
+            //         'message' => 'Unauthorized to update this goal',
+            //     ], 403);
+            // }
+
+            $validatedData = $request->validated();
+
+            $projectGoal->update($validatedData);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Task updated successfully',
+                'data' => $projectGoal->fresh(),
+            ], 200);
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Task not found',
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to update goal',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
     }
 
     public function addCompetency($goalId, Request $request)
