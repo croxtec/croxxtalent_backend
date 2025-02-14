@@ -86,12 +86,11 @@ class ProjectGoalController extends Controller
     {
         $user = $request->user();
         $validatedData = $request->validated();
-        $validatedData['code'] = $user->id . md5(time());
 
         $validatedData['employer_user_id'] = $user->id;
-        // $validatedData['user_id'] = $user->id;
 
-        if (isset($validatedData['milestone']) &&  strlen($validatedData['milestone']) > 2) {
+        // Milestone handling
+        if (!empty($validatedData['milestone'])) {
             $milestone = Milestone::firstOrCreate([
                 'employer_user_id' => $validatedData['employer_user_id'],
                 'project_id' => $validatedData['project_id'],
@@ -102,10 +101,78 @@ class ProjectGoalController extends Controller
 
         $task = ProjectGoal::create($validatedData);
 
+        // Handle assigned employees using createOrUpdate to avoid duplicates
+        if(!empty($validatedData['assigned'])) {
+            foreach($validatedData['assigned'] as $employeeId) {
+                AssignedEmployee::updateOrCreate(
+                    [
+                        'goal_id' => $task->id,
+                        'employee_id' => $employeeId,
+                    ],
+                    [
+                        'assigned_at' => now(),
+                    ]
+                );
+            }
+        }
+
         return response()->json([
             'status' => true,
-            'message' => "",
-            'data' => $task,
+            'message' => 'Task created successfully',
+            'data' => $task->load('assigned.employee', 'milestone'),
+        ], 201);
+    }
+
+    public function addCompetency($goalId, Request $request)
+    {
+        $data = $request->validate([
+            'competency_ids' => 'required|array',
+            'competency_ids.*' => 'integer|exists:department_mappings,id',
+        ]);
+
+        foreach ($data['competency_ids'] as $competencyId) {
+            GoalCompetency::updateOrCreate(
+                [
+                    'goal_id' => $goalId,
+                    'competency_id' => $competencyId,
+                ],
+                [
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+        }
+
+        return response()->json([
+            'message' => 'Competencies added successfully!',
+            'data' => GoalCompetency::where('goal_id', $goalId)->get(),
+        ], 201);
+    }
+
+    public function assignEmployee($goalId, Request $request)
+    {
+        $data = $request->validate([
+            'employee_ids' => 'required|array',
+            'employee_ids.*' => 'integer|exists:employees,id',
+        ]);
+
+        foreach ($data['employee_ids'] as $employeeId) {
+            AssignedEmployee::updateOrCreate(
+                [
+                    'goal_id' => $goalId,
+                    'employee_id' => $employeeId,
+                ],
+                [
+                    'assigned_at' => now(),
+                ]
+            );
+        }
+
+        return response()->json([
+            'message' => 'Employees assigned successfully!',
+            'data' => AssignedEmployee::where('goal_id', $goalId)
+                ->with('employee')
+                ->get(),
         ], 201);
     }
     /**
@@ -192,32 +259,6 @@ class ProjectGoalController extends Controller
         }
     }
 
-    public function addCompetency($goalId, Request $request)
-    {
-        $data = $request->validate([
-            'competency_ids' => 'required|array', // Accept an array of competency IDs
-            'competency_ids.*' => 'integer|exists:department_mappings,id', // Validate each item in the array
-        ]);
-
-        $competencies = [];
-        foreach ($data['competency_ids'] as $competencyId) {
-            $competencies[] = [
-                'goal_id' => $goalId,
-                'competency_id' => $competencyId,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-            // $competency = GoalCompetency::create($data);
-        }
-
-        DB::table('goal_competencies')->insert($competencies);
-
-        return response()->json([
-            'message' => 'Competency added successfully!',
-            'data' => $competencies,
-        ], 201);
-    }
-
     // Remove Competency from a Goal
     public function removeCompetency($goalId, $competencyId)
     {
@@ -232,37 +273,6 @@ class ProjectGoalController extends Controller
         $competency->delete();
 
         return response()->json(['message' => 'Competency removed successfully.']);
-    }
-
-    // Assign Employee to a Goal
-    public function assignEmployee($goal, Request $request)
-    {
-        $user = auth()->user();
-        return $goal;
-        $data = $request->validate([
-            'employee_ids' => 'required|array', // Accept an array of employee IDs
-            'employee_ids.*' => 'integer|exists:employees,id', // Validate each item in the array
-            // 'assigned_by' => 'required|integer|exists:users,id',
-        ]);
-
-        $assignments = [];
-        foreach ($data['employee_ids'] as $employeeId) {
-            $assignments[] = [
-                'goal_id' => $goal,
-                'employee_id' => $employeeId,
-                // 'assigned_by' =>  $user->id,
-                'assigned_at' => now(),
-            ];
-            // $assignment = AssignedEmployee::create($data);
-        }
-
-        DB::table('goal_assigned_employees')->insert($assignments);
-
-
-        return response()->json([
-            'message' => 'Employee assigned successfully!',
-            'data' => $assignment,
-        ], 201);
     }
 
     // Remove Assigned Employee from a Goal

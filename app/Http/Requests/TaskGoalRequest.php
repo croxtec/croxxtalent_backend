@@ -23,7 +23,6 @@ class TaskGoalRequest extends FormRequest
      */
     public function rules()
     {
-        info($this);
         switch($this->method()) {
             case 'GET':
                 return [];
@@ -42,6 +41,7 @@ class TaskGoalRequest extends FormRequest
                     'metric' => 'nullable|max:2048',
                     'status' => 'required|in:to-do,in-progress',//in-review,rework,completed
                     'priority_level' => 'nullable|in:low,medium,high,urgent',
+                    'assigned.*' => 'integer|exists:employees,id',
                     // 'attachment' => 'nullable|mimetypes:video/mp4|max:61440', // 60MB in kilobytes
                 ];
             case 'PATCH':

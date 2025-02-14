@@ -138,7 +138,7 @@ class CourseController extends Controller
 
         $training->department;
         $training->assessment;
-        $training->assessment->questions;
+        $training->assessment?->questions;
 
         return response()->json([
             'status' => true,
