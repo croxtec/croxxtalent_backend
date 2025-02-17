@@ -20,6 +20,7 @@ return new class extends Migration
             $table->foreignId('assigned_by')->constrained('employees')->cascadeOnDelete(); // Team lead assigning task
             $table->timestamp('assigned_at')->nullable(); // When the assignment was made
             $table->timestamps();
+
         });
     }
 

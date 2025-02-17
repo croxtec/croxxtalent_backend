@@ -9,10 +9,11 @@ use App\Models\Project\Milestone;
 use App\Models\Project\ProjectGoal;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Project extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
 
     protected $fillable = [
@@ -118,4 +119,48 @@ class Project extends Model
             })
         ];
     }
+
+
+
+    public function completedGoalTask(){
+        return $this->hasMany(ProjectGoal::class)->where('status', 'completed')->count();
+    }
+
+    /**
+     * Get total number of tasks across all goals
+     */
+    public function totalTasks()
+    {
+        return $this->goals()->withCount('tasks')
+             ->get()->sum('tasks_count');
+    }
+
+    /**
+     * Get total number of completed tasks across all goals
+     */
+    public function completedTasks()
+    {
+        return $this->goals()
+            ->withCount(['tasks' => function ($query) {
+                $query->where('status', 'completed');
+            }])
+            ->get()->sum('tasks_count');
+    }
+
+    /**
+     * Get task completion statistics
+     */
+    public function getTaskStatistics()
+    {
+        $total = $this->totalTasks();
+        $completed = $this->completedTasks();
+
+        return [
+            'total_tasks' => $total,
+            'completed_tasks' => $completed,
+            'completion_percentage' => $total > 0 ? round(($completed / $total) * 100, 2) : 0
+        ];
+    }
+
+
 }

@@ -52,7 +52,11 @@ class ProjectController extends Controller
                 $query->where('title', 'LIKE', "%{$search}%");
             })
             ->with(['department'])
-            ->withCount('team')
+            ->withCount(['team', 'goals', 'goals as completed_tasks_count' => function ($query) {
+                $query->whereHas('tasks', function ($q) {
+                    $q->where('status', 'completed');
+                });
+            }])
             ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0) {
@@ -62,11 +66,17 @@ class ProjectController extends Controller
             $projects = $projects->paginate($per_page);
         }
 
-        // Transform and deduplicate `team` and `projectTeam`
         $projects->setCollection(
             $projects->getCollection()->map(function ($project) {
-                $teamStructure = $project->getTeamStructure();
-                $project->team_structure = $teamStructure;
+                $project->team_structure = $project->getTeamStructure();
+                $project->task_statistics = [
+                    'total_tasks' => $project->goals_count,
+                    'completed_tasks' => $project->completed_tasks_count,
+                    'completion_percentage' => $project->goals_count > 0
+                        ? round(($project->completed_tasks_count / $project->goals_count) * 100, 2)
+                        : 0
+                ];
+
                 return $project;
             })
         );
@@ -150,18 +160,34 @@ class ProjectController extends Controller
      */
     public function show($id)
     {
-        $user = auth()->user();
-        // $employerId =  $user->id;
+        $project = Project::where('code', $id)
+        ->with([
+            'department',
+            'milestones',
+            'goals',
+            'goals.tasks' => function ($query) {
+                $query->select('id', 'goal_id', 'status', 'title');
+            }
+        ])
+        ->withCount(['goals', 'goals as completed_tasks_count' => function ($query) {
+            $query->whereHas('tasks', function ($q) {
+                $q->where('status', 'completed');
+            });
+        }])
+        ->firstOrFail();
 
-        $project = Project::where('code', $id)->firstOrFail();
-
-        $project->department;
-        $project->milestones;
         $project->team_structure = $project->getTeamStructure();
+        $project->task_statistics = [
+            'total_tasks' => $project->goals_count,
+            'completed_tasks' => $project->completed_tasks_count,
+            'completion_percentage' => $project->goals_count > 0
+                ? round(($project->completed_tasks_count / $project->goals_count) * 100, 2)
+                : 0
+        ];
 
         return response()->json([
             'status' => true,
-            'message' => "",
+            'message' => "Project details fetched successfully",
             'data' => $project,
         ], 200);
     }

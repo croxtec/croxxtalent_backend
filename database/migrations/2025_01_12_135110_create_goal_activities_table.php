@@ -20,6 +20,7 @@ return new class extends Migration
             $table->text('description')->nullable(); // Description of the activity
             $table->foreignId('performed_by')->constrained('users')->cascadeOnDelete(); // User who performed the activity
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
