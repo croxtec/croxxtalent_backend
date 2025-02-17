@@ -152,14 +152,12 @@ class ProjectController extends Controller
     public function show($id)
     {
         $project = Project::where('code', $id)
-            ->with([
-                'department',
-                'milestones',
-                'goals.tasks' => function ($query) {
-                    $query->select('id', 'goal_id', 'status', 'title');
-                }
-            ])
-            ->firstOrFail();
+        ->with([
+            'department',
+            'milestones',
+            'goals'
+        ])
+        ->firstOrFail();
 
         $project->team_structure = $project->getTeamStructure();
         $project->task_statistics = $project->getTaskStatistics();
