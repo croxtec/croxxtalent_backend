@@ -17,69 +17,60 @@ class ProjectController extends Controller
      * @return \Illuminate\Http\Response
      */
 
-    public function index(Request $request)
-    {
-        $user = $request->user();
-        $user_type = $user->type;
-        $per_page = $request->input('per_page', 25);
-        $sort_by = $request->input('sort_by', 'created_at');
-        $sort_dir = $request->input('sort_dir', 'desc');
-        $search = $request->input('search');
-        $archived = $request->input('archived');
-        $department = $request->input('department');
-        $datatable_draw = $request->input('draw'); // if any
+     public function index(Request $request)
+     {
+         $user = $request->user();
+         $user_type = $user->type;
+         $per_page = $request->input('per_page', 25);
+         $sort_by = $request->input('sort_by', 'created_at');
+         $sort_dir = $request->input('sort_dir', 'desc');
+         $search = $request->input('search');
+         $archived = $request->input('archived');
+         $department = $request->input('department');
+         $datatable_draw = $request->input('draw');
 
-        $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
+         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
 
-        $projects = Project::when($user_type == 'employer', function ($query) use ($user) {
-                $query->where('employer_user_id', $user->id);
-            })
-            ->when($department, function ($query) use ($department) {
-                if ($department !== null && is_numeric($department)) {
-                    $query->where('department_id', $department);
-                }
-            })
-            ->when($archived, function ($query) use ($archived) {
-                if ($archived !== null) {
-                    if ($archived === true) {
-                        $query->whereNotNull('archived_at');
-                    } else {
-                        $query->whereNull('archived_at');
-                    }
-                }
-            })
-            ->where(function ($query) use ($search) {
-                $query->where('title', 'LIKE', "%{$search}%");
-            })
-            ->with(['department'])
-            ->withCount(['team', 'goals', 'goals as completed_tasks_count' => function ($query) {
-                $query->whereHas('tasks', function ($q) {
-                    $q->where('status', 'completed');
-                });
-            }])
-            ->orderBy($sort_by, $sort_dir);
+         $projects = Project::when($user_type == 'employer', function ($query) use ($user) {
+                 $query->where('employer_user_id', $user->id);
+             })
+             ->when($department, function ($query) use ($department) {
+                 if ($department !== null && is_numeric($department)) {
+                     $query->where('department_id', $department);
+                 }
+             })
+             ->when($archived, function ($query) use ($archived) {
+                 if ($archived !== null) {
+                     if ($archived === true) {
+                         $query->whereNotNull('archived_at');
+                     } else {
+                         $query->whereNull('archived_at');
+                     }
+                 }
+             })
+             ->where(function ($query) use ($search) {
+                 $query->where('title', 'LIKE', "%{$search}%");
+             })
+             ->with(['department'])
+             ->withCount('team')
+             ->orderBy($sort_by, $sort_dir);
 
-        if ($per_page === 'all' || $per_page <= 0) {
-            $results = $projects->get();
-            $projects = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
-        } else {
-            $projects = $projects->paginate($per_page);
-        }
+         if ($per_page === 'all' || $per_page <= 0) {
+             $results = $projects->get();
+             $projects = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
+         } else {
+             $projects = $projects->paginate($per_page);
+         }
 
-        $projects->setCollection(
-            $projects->getCollection()->map(function ($project) {
-                $project->team_structure = $project->getTeamStructure();
-                $project->task_statistics = [
-                    'total_tasks' => $project->goals_count,
-                    'completed_tasks' => $project->completed_tasks_count,
-                    'completion_percentage' => $project->goals_count > 0
-                        ? round(($project->completed_tasks_count / $project->goals_count) * 100, 2)
-                        : 0
-                ];
+         $projects->setCollection(
+             $projects->getCollection()->map(function ($project) {
+                 $project->team_structure = $project->getTeamStructure();
+                 $project->task_statistics = $project->getTaskStatistics();
+                 unset($project->goals);
+                 return $project;
+             })
+         );
 
-                return $project;
-            })
-        );
 
         return response()->json([
             'status' => true,
@@ -161,29 +152,17 @@ class ProjectController extends Controller
     public function show($id)
     {
         $project = Project::where('code', $id)
-        ->with([
-            'department',
-            'milestones',
-            'goals',
-            'goals.tasks' => function ($query) {
-                $query->select('id', 'goal_id', 'status', 'title');
-            }
-        ])
-        ->withCount(['goals', 'goals as completed_tasks_count' => function ($query) {
-            $query->whereHas('tasks', function ($q) {
-                $q->where('status', 'completed');
-            });
-        }])
-        ->firstOrFail();
+            ->with([
+                'department',
+                'milestones',
+                'goals.tasks' => function ($query) {
+                    $query->select('id', 'goal_id', 'status', 'title');
+                }
+            ])
+            ->firstOrFail();
 
         $project->team_structure = $project->getTeamStructure();
-        $project->task_statistics = [
-            'total_tasks' => $project->goals_count,
-            'completed_tasks' => $project->completed_tasks_count,
-            'completion_percentage' => $project->goals_count > 0
-                ? round(($project->completed_tasks_count / $project->goals_count) * 100, 2)
-                : 0
-        ];
+        $project->task_statistics = $project->getTaskStatistics();
 
         return response()->json([
             'status' => true,

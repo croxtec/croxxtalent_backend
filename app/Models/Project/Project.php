@@ -122,34 +122,18 @@ class Project extends Model
 
 
 
-    public function completedGoalTask(){
-        return $this->hasMany(ProjectGoal::class)->where('status', 'completed')->count();
-    }
-
-    /**
-     * Get total number of tasks across all goals
-     */
     public function totalTasks()
     {
-        return $this->goals()->withCount('tasks')
-             ->get()->sum('tasks_count');
+        return $this->goals()->count();
     }
 
-    /**
-     * Get total number of completed tasks across all goals
-     */
     public function completedTasks()
     {
         return $this->goals()
-            ->withCount(['tasks' => function ($query) {
-                $query->where('status', 'completed');
-            }])
-            ->get()->sum('tasks_count');
+            ->where('status', 'completed')
+            ->count();
     }
 
-    /**
-     * Get task completion statistics
-     */
     public function getTaskStatistics()
     {
         $total = $this->totalTasks();
@@ -161,6 +145,5 @@ class Project extends Model
             'completion_percentage' => $total > 0 ? round(($completed / $total) * 100, 2) : 0
         ];
     }
-
 
 }
