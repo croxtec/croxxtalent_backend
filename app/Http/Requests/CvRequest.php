@@ -39,10 +39,6 @@ class CvRequest extends FormRequest
         switch($this->method()) {
             case 'GET':
                 return [];
-            // case 'POST':
-            //     return [
-            //         'user_id' => 'required|exists:users,id',
-            //     ];
             case 'PUT':
                 // return [
                 //     'phone' => 'required|max:25',

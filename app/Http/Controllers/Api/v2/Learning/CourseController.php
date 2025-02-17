@@ -365,6 +365,30 @@ class CourseController extends Controller
         ], 200);
     }
 
+
+    /**
+     * Unarchive the specified resource from archived storage.
+     *
+     * @param  string  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function unarchive($id)
+    {
+        $training = CroxxTraining::findOrFail($id);
+
+        // $this->authorize('delete', [CroxxTraining::class, $training]);
+
+        $training->archived_at = null;
+        $training->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => "Training unarchived successfully.",
+            'data' => CroxxTraining::find($training->id)
+        ], 200);
+    }
+
+
     /**
      * Publish Training.
      *
@@ -427,28 +451,6 @@ class CourseController extends Controller
         ], 200);
     }
 
-
-    /**
-     * Unarchive the specified resource from archived storage.
-     *
-     * @param  string  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function unarchive($id)
-    {
-        $training = CroxxTraining::findOrFail($id);
-
-        // $this->authorize('delete', [CroxxTraining::class, $training]);
-
-        $training->archived_at = null;
-        $training->save();
-
-        return response()->json([
-            'status' => true,
-            'message' => "Training unarchived successfully.",
-            'data' => CroxxTraining::find($training->id)
-        ], 200);
-    }
 
     /**
      * Remove the specified resource from storage.

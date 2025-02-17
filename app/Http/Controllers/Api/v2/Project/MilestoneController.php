@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\MilestoneRequest;
 use App\Models\Project\Milestone;
 use App\Models\Project\Project;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class MilestoneController extends Controller
@@ -118,9 +120,32 @@ class MilestoneController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(MilestoneRequest $request, $id) : JsonResponse
     {
-        //
+        try {
+            $milestone = Milestone::findOrFail($id);
+            $validatedData = $request->validated();
+
+            $milestone->update($validatedData);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Milestone updated successfully',
+                'data' => $milestone->fresh(),
+            ], 200);
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Milestone not found',
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to update goal',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
     }
 
     /**

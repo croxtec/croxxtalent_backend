@@ -173,10 +173,71 @@ class ProjectController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+     /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(ProjectRequest $request, $id)
     {
-        //
+        $validatedData = $request->validated();
+        $project = Project::findOrFail($id);
+
+        $project->update($validatedData);
+
+        return response()->json([
+            'status' => true,
+            'message' => "Project updated successfully.",
+            'data' => Project::find($project->id)
+        ], 200);
     }
+
+    /**
+     * Archive the specified resource from active list.
+     *
+     * @param  string  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function archive($id)
+    {
+        $project = Project::findOrFail($id);
+        // $this->authorize('delete', [Project::class, $project]);
+
+        $project->archived_at = now();
+        $project->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => "Project archived successfully.",
+            'data' => Project::find($project->id)
+        ], 200);
+    }
+
+
+    /**
+     * Unarchive the specified resource from archived storage.
+     *
+     * @param  string  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function unarchive($id)
+    {
+        $project = Project::findOrFail($id);
+
+        // $this->authorize('delete', [Project::class, $project]);
+
+        $project->archived_at = null;
+        $project->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => "Project unarchived successfully.",
+            'data' => Project::find($project->id)
+        ], 200);
+    }
+
 
     /**
      * Remove the specified resource from storage.

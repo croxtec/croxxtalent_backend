@@ -291,4 +291,43 @@ class ProjectGoalController extends Controller
 
         return response()->json(['message' => 'Employee unassigned successfully.']);
     }
+
+    public function archive($id)
+    {
+        $projectGoal = ProjectGoal::findOrFail($id);
+        // $this->authorize('delete', [Project::class, $project]);
+
+        $projectGoal->archived_at = now();
+        $projectGoal->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => "Project archived successfully.",
+            'data' => ProjectGoal::find($projectGoal->id)
+        ], 200);
+    }
+
+
+    /**
+     * Unarchive the specified resource from archived storage.
+     *
+     * @param  string  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function unarchive($id)
+    {
+        $projectGoal = ProjectGoal::findOrFail($id);
+
+        // $this->authorize('delete', [Project::class, $project]);
+
+        $projectGoal->archived_at = null;
+        $projectGoal->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => "Project unarchived successfully.",
+            'data' => ProjectGoal::find($projectGoal->id)
+        ], 200);
+    }
+
 }
