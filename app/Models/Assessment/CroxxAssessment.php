@@ -91,6 +91,23 @@ class CroxxAssessment extends Model
     //     return $this->questions->count();
     // }
 
+    public function peerReviews()
+    {
+        return $this->hasMany(PeerReview::class, 'assessment_id');
+    }
+
+    public function reviewers()
+    {
+        return $this->belongsToMany('App\Models\Employee', 'peer_reviews', 'assessment_id', 'reviewer_id')
+            ->select(['employees.id', 'name', 'job_code_id', 'department_role_id', 'photo_url', 'code']);
+    }
+
+    public function reviewees()
+    {
+        return $this->belongsToMany('App\Models\Employee', 'peer_reviews', 'assessment_id', 'employee_id')
+            ->select(['employees.id', 'name', 'job_code_id', 'department_role_id', 'photo_url', 'code']);
+    }
+
 }
 
 

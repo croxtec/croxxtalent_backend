@@ -13,8 +13,10 @@ use App\Models\VettingSummary;
 use App\Models\EmployerJobcode as Department;
 use App\Models\Competency\DepartmentMapping;
 use App\Models\Competency\DepartmentSetup;
+use App\Models\CompetencyKpiSetup;
 use App\Models\DepartmentKpiSetup;
 use App\Services\OpenAIService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class EmployerCompetencyController extends Controller
@@ -29,6 +31,8 @@ class EmployerCompetencyController extends Controller
     public function index(Request $request)
     {
         try {
+            DB::beginTransaction();
+
             $user = $request->user();
             $job_code = $request->input('department');
 
@@ -50,7 +54,7 @@ class EmployerCompetencyController extends Controller
 
             // Generate department template (includes KPI data)
             $templateData = $this->openAIService->generateDepartmentTemplate($job_title);
-
+            // info($templateData);
             // Store or update the Department KPI Setup
             $kpiSetup = DepartmentKpiSetup::updateOrCreate(
                 ['department' => $job_title],
@@ -95,6 +99,8 @@ class EmployerCompetencyController extends Controller
                     ->groupBy('department_role');
             }
 
+            DB::commit();
+
             return response()->json([
                 'status'  => true,
                 'data'    => $competencies,
@@ -110,9 +116,95 @@ class EmployerCompetencyController extends Controller
         }
     }
 
+    public function storeCompetency(Request $request, $id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $employer = $request->user();
+
+            // Get department info
+            if (is_numeric($id)) {
+                $department = Department::where('id', $id)
+                    ->where('employer_id', $employer->id)
+                    ->select(['id', 'job_code', 'job_title', 'description'])
+                    ->firstOrFail();
+            } else {
+                $department = Department::where('job_title', $id)
+                    ->where('employer_id', $employer->id)
+                    ->select(['id', 'job_code', 'job_title', 'description'])
+                    ->firstOrFail();
+            }
+
+            $validatedData = $request->validate([
+                'mapping' => 'required|array',
+                'mapping.*' => 'required|exists:department_setups,id'
+            ]);
+
+            $departmentKpiSetup = DepartmentKpiSetup::where('department', $department->job_code)
+                ->firstOrFail();
+
+            $mapping_setups = DepartmentSetup::whereIn('id', $validatedData['mapping'])->get();
+
+            foreach ($mapping_setups as $map) {
+                $departmentMapping = DepartmentMapping::firstOrCreate([
+                    'employer_id' => $employer->id,
+                    'department_id' => $department->id,
+                    'competency' => $map['competency'],
+                ], [
+                    'competency_role' => $map['department_role'],
+                    'description' => $map['description'],
+                ]);
+
+                // Get relevant KPIs for this competency
+                $levelKpis = json_decode($departmentKpiSetup->level_kpis, true) ?? [];
+
+                foreach ($levelKpis as $levelData) {
+                    foreach ($levelData['kpis'] as $kpi) {
+                        foreach ($kpi['mandatory_competencies'] as $mandatoryCompetency) {
+                            if ($mandatoryCompetency['competency'] === $map['competency']) {
+
+                                CompetencyKpiSetup::updateOrCreate([
+                                    'department_mapping_id' => $departmentMapping->id,
+                                    'kpi_name' => $kpi['kpi_name'],
+                                    'level' => $levelData['level']
+                                ], [
+                                    'description' => $kpi['description'],
+                                    'frequency' => $kpi['frequency'],
+                                    'target_score' => $mandatoryCompetency['target_score'],
+                                    'weight' => $mandatoryCompetency['weight']
+                                ]);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Update onboarding stage if needed
+            if (isset($employer->onboarding_stage) && $employer->onboarding_stage == 2) {
+                $employer->onboarding_stage = 3;
+                $employer->save();
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => "Competency and KPI mapping stored successfully.",
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error storing competency mapping: ' . $e->getMessage());
+            return response()->json([
+                'status' => false,
+                'message' => 'Error storing competency mapping'
+            ], 500);
+        }
+    }
 
 
-    public function storeCompetency(Request $request, $id){
+    public function storeCompetencyOld(Request $request, $id){
         $employer = $request->user();
 
         if (is_numeric($id)) {
@@ -245,3 +337,30 @@ class EmployerCompetencyController extends Controller
     //         'message' => 'Suggested Competency Mapping.'
     //     ], 200);
     // }
+
+    // [
+    //     532,
+    //     533,
+    //     534,
+    //     538,
+    //     539,
+    //     540,
+    //     544,
+    //     545,
+    //     546,
+    //     550,
+    //     551,
+    //     552,
+    //     529,
+    //     530,
+    //     531,
+    //     535,
+    //     536,
+    //     537,
+    //     541,
+    //     542,
+    //     543,
+    //     547,
+    //     548,
+    //     549
+    // ];
