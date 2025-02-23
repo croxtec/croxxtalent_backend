@@ -54,6 +54,19 @@ class Employee extends Model
         return self::STATUS_LABELS[$this->status] ?? 'Unknown';
     }
 
+    public function performanceRecords()
+    {
+        return $this->morphMany(PerformanceRecord::class, 'recordable');
+    }
+
+    public function getMonthlyPerformance($year, $month)
+    {
+        return $this->performanceRecords()
+            ->where('year', $year)
+            ->where('month', $month)
+            ->first();
+    }
+
     public function department(){
         return $this->belongsTo('App\Models\EmployerJobcode', 'job_code_id', 'id')
                     ->select(['id','job_code', 'job_title']);

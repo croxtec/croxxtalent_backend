@@ -9,6 +9,7 @@ use App\Models\Goal;
 use App\Models\Employee;
 use App\Models\Campaign;
 use App\Models\Assessment\CroxxAssessment;
+use App\Models\Competency\DepartmentMapping;
 use App\Models\EmployerJobcode as Department;
 
 class ReportAnalysisController extends Controller
@@ -171,5 +172,73 @@ class ReportAnalysisController extends Controller
         if ($criticalCount <= 2) return 'Good';
         if ($criticalCount <= 4) return 'Needs Improvement';
         return 'Critical';
+    }
+
+    public function getEmployeeCompetencyGap(Request $request)
+    {
+        try {
+            $employeeId = $request->input('employee_id');
+            $departmentId = $request->input('department_id');
+
+            // Get all competencies for the department
+            $competencies = DepartmentMapping::where('department_id', $departmentId)
+                ->with('competency')
+                ->get();
+
+            // Get all assessments with these competencies for the employee
+            $assessments = CroxxAssessment::whereHas('competencies', function ($query) use ($competencies) {
+                    $query->whereIn('competency_id', $competencies->pluck('id'));
+                })
+                ->with(['competencies', 'feedbacks' => function ($query) use ($employeeId) {
+                    $query->where('employee_id', $employeeId);
+                }])
+                ->get();
+
+            $competencyGaps = [];
+
+            foreach ($competencies as $competency) {
+                // Find relevant assessments for this competency
+                $relevantAssessments = $assessments->filter(function ($assessment) use ($competency) {
+                    return $assessment->competencies->contains('id', $competency->id);
+                });
+
+                // Calculate average scores and gaps
+                $scores = $relevantAssessments->map(function ($assessment) {
+                    return $assessment->feedbacks->first()->graded_score ?? 0;
+                });
+
+                $averageScore = $scores->avg() ?? 0;
+                $expectedScore = $relevantAssessments->first()->expected_percentage ?? 100;
+                $gap = max(0, $expectedScore - $averageScore);
+
+                $competencyGaps[] = [
+                    'competency_name' => $competency->competency->name,
+                    'competency_description' => $competency->competency->description,
+                    'current_score' => round($averageScore, 2),
+                    'expected_score' => $expectedScore,
+                    'gap' => round($gap, 2),
+                    'assessments_count' => $relevantAssessments->count(),
+                    'last_assessment_date' => $relevantAssessments->max('created_at'),
+                ];
+            }
+
+            return response()->json([
+                'status' => true,
+                'data' => [
+                    'employee_id' => $employeeId,
+                    'department_id' => $departmentId,
+                    'competency_gaps' => $competencyGaps,
+                    'average_gap' => round(collect($competencyGaps)->avg('gap'), 2),
+                    'total_competencies' => count($competencyGaps),
+                    'assessment_count' => $assessments->count(),
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => "Error retrieving competency gaps: " . $e->getMessage()
+            ], 500);
+        }
     }
 }

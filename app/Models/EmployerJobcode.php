@@ -31,6 +31,18 @@ class EmployerJobcode extends Model
     //         set: fn ($value) => json_encode($value),
     //     );
     // }
+    public function performanceRecords()
+    {
+        return $this->morphMany(PerformanceRecord::class, 'recordable');
+    }
+
+    public function getMonthlyPerformance($year, $month)
+    {
+        return $this->performanceRecords()
+            ->where('year', $year)
+            ->where('month', $month)
+            ->first();
+    }
 
     public function employees(){
         return $this->hasMany('App\Models\Employee', 'job_code_id', 'id');

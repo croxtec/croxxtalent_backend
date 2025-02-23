@@ -16,10 +16,17 @@ use App\Models\Assessment\EvaluationQuestion;
 use App\Http\Requests\ExperienceAssessmentRequest;
 use App\Models\Assessment\CroxxAssessment;
 use App\Models\Assessment\AssignedEmployee;
-
+use App\Services\AssessmentService;
 
 class ExperienceAssessmentController extends Controller
 {
+
+    protected $assessmentService;
+
+    public function __construct(AssessmentService $assessmentService)
+    {
+        $this->assessmentService = $assessmentService;
+    }
     /**
      * Display a listing of the resource.
      *
@@ -102,98 +109,143 @@ class ExperienceAssessmentController extends Controller
      */
     public function store(ExperienceAssessmentRequest $request)
     {
-         // Start a transaction
-         DB::beginTransaction();
+        try {
 
-         try {
-             $user = $request->user();
-             $validatedData = $request->validated();
-             $validatedData['code'] = $user->id . md5(time());
-             $competency_ids = $validatedData['competency_ids'];
-             unset($validatedData['competency_ids']);
+            $assessment =$this->assessmentService->store($request);
 
-             if ($validatedData['type'] == 'company') {
-                 $validatedData['user_id'] = $user->id;
-                 $validatedData['employer_id'] = $user->id;
-             }
+            return response()->json([
+                'status' => true,
+                'message' => "Assessment created successfully.",
+                'data' => $assessment
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => false,
+                'message' => "Failed to create assessment.",
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 
-             if ($validatedData['type'] == 'supervisor') {
-                 $employee = Supervisor::where('supervisor_id', $validatedData['supervisor_id'])->firstOrFail();
-                 $validatedData['employer_id'] = $employee->employer_id;
-                 $validatedData['user_id'] = $validatedData['supervisor_id'];
-             }
+    public function storeOld(ExperienceAssessmentRequest $request)
+    {
+        DB::beginTransaction();
 
-            // Create assessment
+        try {
+            $user = $request->user();
+            $validatedData = $request->validated();
+            $validatedData['code'] = $user->id . md5(time());
+
+            // Separate competency IDs from the rest of the data
+            $competency_ids = $validatedData['competency_ids'];
+            unset($validatedData['competency_ids']);
+
+            // If type is 'company', link to the user as employer
+            if ($validatedData['type'] === 'company') {
+                $validatedData['user_id']     = $user->id;
+                $validatedData['employer_id'] = $user->id;
+            }
+
+            // If type is 'supervisor', link to the supervisor as user
+            if ($validatedData['type'] === 'supervisor') {
+                $employee = Supervisor::where('supervisor_id', $validatedData['supervisor_id'])->firstOrFail();
+                $validatedData['employer_id'] = $employee->employer_id;
+                $validatedData['user_id']     = $validatedData['supervisor_id'];
+            }
+
+            // Create the assessment
             $assessment = CroxxAssessment::create($validatedData);
             $assessment->competencies()->attach($competency_ids);
 
             // Create questions
-            $questions = $validatedData['questions'];
-            foreach ($questions as $question) {
+            foreach ($validatedData['questions'] as $question) {
                 $question['assessment_id'] = $assessment->id;
                 CompetencyQuestion::create($question);
             }
 
-            // Create assigned employees
-            $employeeInstances = [];
-            $supervisorInstances = [];
+            // Arrays to hold assigned records for notification
+            $assignedReviewees = [];
+            $assignedReviewers = [];
 
-            if ($validatedData['type'] == 'supervisor' || $validatedData['type'] == 'company') {
-                $employees = $validatedData['employees'];
-                foreach ($employees as $employee) {
-                    $assignedEmployee = AssignedEmployee::create([
+            // Handle peer_review scenario
+            if ($validatedData['category'] === 'peer_review') {
+                // For each employee, assign them and their reviewers
+                foreach ($validatedData['employees_reviewers'] as $entry) {
+                    $employeeId = $entry['employee_id'];
+                    $reviewers  = $entry['reviewers'];
+
+                    // Create assigned record for the employee (reviewee)
+                    $assignedReviewees[] = AssignedEmployee::create([
                         'assessment_id' => $assessment->id,
-                        'employee_id' => $employee,
-                        'is_supervisor' => false
+                        'employee_id'   => $employeeId,
+                        'is_reviewer'   => false, // This employee is being reviewed
                     ]);
-                    $employeeInstances[] = $assignedEmployee;
-                }
 
-                if ($validatedData['type'] == 'company') {
-                    // Create assigned supervisors
-                    $supervisors = $validatedData['supervisors'];
-                    foreach ($supervisors as $supervisor) {
-                        $assignedEmployee = AssignedEmployee::create([
+                    // Create assigned records for each reviewer
+                    foreach ($reviewers as $revId) {
+                        $assignedReviewers[] = AssignedEmployee::create([
                             'assessment_id' => $assessment->id,
-                            'employee_id' => $supervisor,
-                            'is_supervisor' => true
+                            'employee_id'   => $revId,
+                            'is_reviewer'   => true, // This employee is a reviewer
                         ]);
-                        $supervisorInstances[] = $assignedEmployee;
                     }
                 }
+            } else {
+                // Existing logic for other categories/types (e.g., experience, company, supervisor)
+                if (in_array($validatedData['type'], ['company','supervisor'])) {
+                    if (isset($validatedData['employees'])) {
+                        foreach ($validatedData['employees'] as $empId) {
+                            AssignedEmployee::create([
+                                'assessment_id' => $assessment->id,
+                                'employee_id'   => $empId,
+                                'is_supervisor' => false,
+                            ]);
+                        }
+                    }
+
+                    // If company type, optionally assign supervisors
+                    if ($validatedData['type'] === 'company' && isset($validatedData['supervisors'])) {
+                        foreach ($validatedData['supervisors'] as $supId) {
+                            AssignedEmployee::create([
+                                'assessment_id' => $assessment->id,
+                                'employee_id'   => $supId,
+                                'is_supervisor' => true,
+                            ]);
+                        }
+                    }
+                }
+
+                // If supervisor type, assign the supervisor as well
+                if ($validatedData['type'] === 'supervisor') {
+                    AssignedEmployee::create([
+                        'assessment_id' => $assessment->id,
+                        'employee_id'   => $validatedData['supervisor_id'],
+                        'is_supervisor' => true,
+                    ]);
+                }
             }
 
-            if ($validatedData['type'] == 'supervisor') {
-                $assignedEmployee = AssignedEmployee::create([
-                    'assessment_id' => $assessment->id,
-                    'employee_id' => $validatedData['supervisor_id'],
-                    'is_supervisor' => true
-                ]);
-                $employeeInstances[] = $assignedEmployee;
-            }
+            // Send notifications
+            AssessmentNotificationHelper::notifyAssignedUsers($assignedReviewees, $assignedReviewers, $assessment);
 
-            // Send Notification
-            AssessmentNotificationHelper::notifyAssignedUsers($employeeInstances, $supervisorInstances, $assessment);
-
-            // Commit the transaction
             DB::commit();
 
-             return response()->json([
-                 'status' => true,
-                 'message' => "Assessment created successfully.",
-                 'data' => CroxxAssessment::find($assessment->id),
-             ], 201);
+            return response()->json([
+                'status'  => true,
+                'message' => "Assessment created successfully.",
+                'data'    => CroxxAssessment::find($assessment->id),
+            ], 201);
 
-         } catch (\Exception $e) {
-             // Rollback the transaction on error
-             DB::rollBack();
-
-             return response()->json([
-                 'status' => false,
-                 'message' => "Could not complete request. " . $e->getMessage(),
-             ], 400);
-         }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status'  => false,
+                'message' => "Could not complete request. " . $e->getMessage(),
+            ], 400);
+        }
     }
+
 
     // private function notifyAssignedUsers($employeeInstances, $supervisorInstances, $assessment)
     // {

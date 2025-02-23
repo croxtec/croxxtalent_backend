@@ -38,6 +38,12 @@ class Kernel extends ConsoleKernel
         $schedule->command('backup:clean')
             ->weeklyOn(1, '03:00') // weekly on monday at 3am
             ->withoutOverlapping();
+
+        // call performance calculate command
+        $schedule->command('performance:calculate-monthly')
+            ->monthly()
+            ->lastDayOfMonth()
+            ->at('23:55');
     }
 
     /**

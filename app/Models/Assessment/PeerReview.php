@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class PeerReview extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'assessment_id',
         'employee_id',      // Employee being reviewed
