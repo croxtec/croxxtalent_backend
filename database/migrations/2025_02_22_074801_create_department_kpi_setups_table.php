@@ -17,11 +17,9 @@ return new class extends Migration
             $table->id();
             $table->string('department');
             $table->json('department_goals')->nullable();
-            $table->json('beginner_kpis')->nullable();
-            $table->json('intermediate_kpis')->nullable();
-            $table->json('advance_kpis')->nullable();
-            $table->json('expert_kpis')->nullable();
             $table->json('level_kpis')->nullable();
+            $table->json('recommended_assessments')->nullable();
+            $table->json('recommended_trainings')->nullable();
             $table->timestamps();
         });
     }

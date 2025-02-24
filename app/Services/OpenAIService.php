@@ -124,34 +124,6 @@ class OpenAIService
         }
     }
 
-//     public function generateCompetencyMapping($job_role)
-//     {
-//         $response = $this->client->post('chat/completions', [
-//             'json' => [
-//                 'model' => 'gpt-3.5-turbo', // Use the standard GPT-3.5-turbo model
-//                 'messages' => [
-//                     [
-//                         'role' => 'system',
-//                         'content' => 'You are a helpful assistant that generates competencies required for a job role or job title based on their level. These levels are divided into four groups: Beginner, Intermediate, advance, and Expert. Provide a competency mapping for each level, including both technical and soft skills. Structure the response in JSON format for each level as follows: [{"job_role": "<Job Role>", "level": "<Beginner>", "technical_skill": [{"competency": "<Competency Name>", "description": "Competency Description"}], "soft_skill": [{"competency": "<Competency Name>", "description": "Competency Description"}]}}, {"job_role": "<Job Role>", "level": "<Intermediate>", "technical_skill": [{"competency": "<Competency Name>", "description": "Competency Description"}], "soft_skill": [{"competency": "<Competency Name>", "description": "Competency Description"}]}}, {"job_role": "<Job Role>", "level": "<advance>", "technical_skill": [{"competency": "<Competency Name>", "description": "Competency Description"}], "soft_skill": [{"competency": "<Competency Name>", "description": "Competency Description"}]}}, {"job_role": "<Job Role>", "level": "<Expert>", "technical_skill": [{"competency": "<Competency Name>", "description": "Competency Description"}], "soft_skill": [{"competency": "<Competency Name>", "description": "Competency Description"}]}]',
-//                     ],
-//                     [
-//                         'role' => 'user',
-//                         'content' => "Generate a competency mapping for the job role of Supply Chain at all levels (Beginner, Intermediate, advance, Expert). Include both technical skills and soft skills for each level.",
-//                     ],
-//                     [
-//                         'role' => 'user',
-//                         'content' => "Provide examples of competency mappings for each level, including technical and soft skills for the job role of Supply Chain.",
-//                     ],
-//                 ],
-//                 'temperature' => 0.8,
-//             ]
-//         ]);
-
-//         $completion = json_decode($response->getBody()->getContents(), true);
-//         return json_decode($completion['choices'][0]['message']['content'], true);
-//     }
-// }
-
     public function generateCompetencyMapping($job_role)
     {
         try {
@@ -230,6 +202,104 @@ class OpenAIService
     }
 
     public function generateDepartmentTemplate($department)
+    {
+        try {
+            $system_prompt = '
+            You are an advance AI assistant tasked with creating department templates for competency mapping and assessment recommendations.
+
+            The competency mapping should include a comprehensive range of skills divided into technical and soft skills relevant.
+
+            For competency mapping:
+            - Generates competencies required for a job role or job title based on their level. These levels are divided into four groups: Beginner, Intermediate, Advance, and Expert.
+            - Provide a simple description that explains the competency
+            - Assign a reasonable default target score based on the level
+
+            For assessments:
+            - Recommend assessment types that effectively measure the competencies
+            - Ensure assessments are practical and implementable
+            - Include expected performance metrics
+            - Specify which competencies each assessment can measure
+
+            Provide a detailed JSON response with the following structure:
+            {
+                "department": "<Department Name>",
+                "department_goals": [
+                    {
+                        "goal_name": "<Goal Name>",
+                        "description": "<Goal Description>",
+                        "timeline": "<Timeline>"
+                    }
+                ],
+                "competency_mapping": {
+                    "technical_skills": [
+                        {
+                            "competency": "<Competency Name>",
+                            "description": "<Description>",
+                            "level": "<beginner|intermediate|advance|expert>",
+                            "target_score": <Default target score (1-100)>
+                        }
+                    ],
+                    "soft_skills": [
+                        {
+                            "competency": "<Competency Name>",
+                            "description": "<Description>",
+                            "level": "<beginner|intermediate|advance|expert>",
+                            "target_score": <Default target score (1-100)>
+                        }
+                    ]
+                },
+                "recommended_assessments": [
+                    {
+                        "name": "<Assessment Name>",
+                        "description": "<Assessment Description>",
+                        "suitable_levels": ["<level>", "<level>"],
+                        "expected_percentage": <Expected performance percentage (1-100)>,
+                        "applicable_competencies": ["<Competency Name>", "<Competency Name>"]
+                    }
+                ]
+            }';
+
+            $response = $this->client->post('chat/completions', [
+                'json' => [
+                    'model' => 'gpt-4-turbo',
+                    'messages' => [
+                        [
+                            'role' => 'system',
+                            'content' => $system_prompt,
+                        ],
+                        [
+                            'role' => 'user',
+                            'content' => "Generate a comprehensive competency mapping and assessment recommendations for the {$department} department. Focus on core competencies with appropriate levels and practical assessment methods.",
+                        ],
+                    ],
+                    'temperature' => 0.6,
+                ]
+            ]);
+
+            $apiResponse = json_decode($response->getBody()->getContents(), true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new Exception('Error decoding API response: ' . json_last_error_msg());
+            }
+
+            $content = $apiResponse['choices'][0]['message']['content'] ?? null;
+            if (!$content) {
+                throw new Exception('Invalid API response format: missing content');
+            }
+
+            $templateContent = json_decode($content, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new Exception('Error decoding template content: ' . json_last_error_msg());
+            }
+
+            return $templateContent;
+        } catch (Exception $e) {
+            Log::error('Error generating department template: ' . $e->getMessage());
+            throw new Exception('Failed to generate department template: ' . $e->getMessage());
+        }
+    }
+
+    public function generateDepartmentLevelTemplate($department)
     {
         try {
             $system_prompt = 'You are an advanced AI assistant tasked with creating department templates for competency mapping and KPI generation.
@@ -331,7 +401,6 @@ class OpenAIService
         }
     }
 
-
     public function curateCourseLessons($course) {
         try {
             // Prepare the data for the API request
@@ -342,7 +411,7 @@ class OpenAIService
                     'messages' => [
                         [
                             'role' => 'system',
-                            'content' => 'You are an educational content creator tasked with generating detailed lessons based on the course title, department, and experience level. Generate 4 lessons, each structured in a JSON response with the following fields: "title", "content", "level", and "keywords". The output should be in the format: [{"title": "<Lesson Title>", "content": "<Main Lesson Content>", "level": "<Lesson Level>", "keywords": "[<2 - 3 Keywords>]"}]. Ensure that the "content" field provides comprehensive, detailed information that effectively teaches the lesson, and does not exceed 3400 words. The lesson’s competency should align with the lesson title.',
+                            'content' => 'You are an educational content creator tasked with generating detailed lessons based on the course title, department, and experience level. Generate 4 lessons, each structured in a JSON response with the following fields: "title", "content", "level", and "keywords". The output should be in the format: [{"title": "<Lesson Title>", "content": "<Lesson Content>", "level": "<Lesson Level>", "keywords": "[<2 - 3 Keywords>]"}]. Ensure that the "content" field provides comprehensive, detailed information that effectively teaches the lesson, and does not exceed 3400 words. The lesson’s competency should align with the lesson title.',
                         ],
                         [
                             'role' => 'user',

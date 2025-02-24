@@ -25,7 +25,6 @@ return new class extends Migration
 
             // Prevent duplicate feedback
             $table->unique(['peer_review_id', 'competency_id', 'question_id']);
-            $table->timestamps();
         });
     }
 

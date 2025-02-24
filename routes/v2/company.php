@@ -20,7 +20,15 @@ Route::get('/overview/assessment/chart', 'Api\v2\Company\CompanyReportController
 Route::get('/overview/courses/chart', 'Api\v2\Company\CompanyReportController@coursesChart')->name('company.courses.chart');
 // Report
 Route::get('/refresh/performance', 'Api\v2\Company\CompanyReportController@refreshPerformance');
-Route::get('/overview/employees/gap', 'Api\v2\Company\ReportAnalysisController@gapAnalysisReport');
+Route::get('/overview/employees/gap', 'Api\v2\Company\ReportAnalysisController@gapAnalysisReport001');
+
+
+Route::get('/report/competency/gap', 'Api\v2\Company\ReportAnalysisController@gapAnalysisReport');
+Route::get('/report/employee/gap', 'Api\v2\Company\ReportAnalysisController@getEmployeeCompetencyGap');
+Route::get('/report/team/gap', 'Api\v2\Company\ReportAnalysisController@getTeamCompetencyGap');
+
+Route::get('/report/performance/employee', 'Api\v2\Company\PerformanceController@getEmployeePerformance');
+Route::get('/report/performance/department', 'Api\v2\Company\PerformanceController@getDepartmentPerformance');
 
 // Mapping
 Route::get('competency/mapping', 'Api\v2\EmployerCompetencyController@index')->name('competency.index');

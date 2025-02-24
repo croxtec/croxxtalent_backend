@@ -13,8 +13,12 @@ class DepartmentSetup extends Model
         'department',
         'competency',
         'level',
+        'target_score',
         'department_role',
         'description'
     ];
+
+
+
 
 }

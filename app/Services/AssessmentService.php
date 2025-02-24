@@ -156,4 +156,53 @@ class AssessmentService
             ]);
         }
     }
+
+    private function setAssessmentOwnership(array &$data, $user)
+    {
+        $ownershipMap = [
+            'company' => [
+                'user_id' => $user->id,
+                'employer_id' => $user->id
+            ],
+            'supervisor' => function($data) {
+                $supervisor = Supervisor::where('supervisor_id', $data['supervisor_id'])->firstOrFail();
+                return [
+                    'employer_id' => $supervisor->employer_id,
+                    'user_id' => $data['supervisor_id']
+                ];
+            }
+        ];
+
+        $ownership = $ownershipMap[$data['type']] ?? ['user_id' => $user->id];
+
+        if (is_callable($ownership)) {
+            $ownership = $ownership($data);
+        }
+
+        foreach ($ownership as $key => $value) {
+            $data[$key] = $value;
+        }
+    }
+
+    // private function createInitialPerformanceReport($assessment, $data)
+    // {
+    //     PerformanceReport::create([
+    //         'assessment_id' => $assessment->id,
+    //         'type' => $data['type'],
+    //         'category' => $data['category'],
+    //         'initial_competency_scores' => $this->getInitialCompetencyScores($assessment),
+    //         'created_at' => now()
+    //     ]);
+    // }
+
+    // private function getInitialCompetencyScores($assessment)
+    // {
+    //     return $assessment->competencies->mapWithKeys(function($competency) {
+    //         return [$competency->id => [
+    //             'name' => $competency->name,
+    //             'initial_score' => 0,
+    //             'target_score' => $assessment->expected_percentage
+    //         ]];
+    //     })->toArray();
+    // }
 }

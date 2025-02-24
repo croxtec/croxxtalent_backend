@@ -12,7 +12,9 @@ class DepartmentKpiSetup extends Model
     protected $fillable = [
         'department',
         'department_goals',
-        'level_kpis'
+        'level_kpis',
+        'recommended_assessments',
+        'recommended_trainings'
     ];
 
     // protected $casts = [

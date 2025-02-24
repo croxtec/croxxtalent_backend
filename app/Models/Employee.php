@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Performance\PerformanceRecord;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
@@ -12,6 +13,7 @@ class Employee extends Model
 
 
     protected $fillable = [
+        'code',
         'user_id',
         'employer_id',
         'name',
@@ -23,7 +25,7 @@ class Employee extends Model
         'photo_url',
         //
         'performance',
-        'level','code',
+        'level',
         'gender',
         'work_type',
         'language',

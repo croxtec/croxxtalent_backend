@@ -14,6 +14,8 @@ class DepartmentMapping extends Model
         'department_id',
         'competency',
         'competency_role',
+        'level',
+        'target_score',
         'description',
         'performance'
     ];

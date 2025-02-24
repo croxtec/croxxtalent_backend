@@ -57,6 +57,11 @@ class Project extends Model
         return $this->hasMany(ProjectGoal::class);
     }
 
+    public function tasks()
+    {
+        return $this->hasMany(ProjectGoal::class);
+    }
+
     public function team()
     {
         return $this->hasMany(ProjectTeam::class);
