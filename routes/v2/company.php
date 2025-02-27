@@ -26,8 +26,10 @@ Route::get('/overview/employees/gap', 'Api\v2\Company\ReportAnalysisController@g
 Route::get('/report/competency/gap', 'Api\v2\Company\ReportAnalysisController@gapAnalysisReport');
 Route::get('/report/employee/gap', 'Api\v2\Company\ReportAnalysisController@getEmployeeCompetencyGap');
 Route::get('/report/team/gap', 'Api\v2\Company\ReportAnalysisController@getTeamCompetencyGap');
+// Report
+Route::get('/report/kpi/employee', 'Api\v2\Company\PerformanceController@getEmployeeKPIPerformance');
+Route::get('/report/performance/employee', 'Api\v2\Company\PerformanceController@getEmployeeFeedbackPerformance');
 
-Route::get('/report/performance/employee', 'Api\v2\Company\PerformanceController@getEmployeePerformance');
 Route::get('/report/performance/department', 'Api\v2\Company\PerformanceController@getDepartmentPerformance');
 
 // Mapping

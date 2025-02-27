@@ -281,7 +281,7 @@ class ReportAnalysisController extends Controller
     {
         try {
             $employer = $request->user();
-            $employeeId = $request->input('employee');
+            $employeeId = $request->input('uid');
             // $departmentId = $request->input('department_id');
 
             $employee = Employee::with('department.technical_skill', 'department.soft_skill')
@@ -458,7 +458,7 @@ class ReportAnalysisController extends Controller
 
     private function generateAnalysisSummary($employeeData, $competencyData)
     {
-        info('Summary', ['data' => $employeeData, 'competency_data' => $competencyData]);
+        // info('Summary', ['data' => $employeeData, 'competency_data' => $competencyData]);
         return [
             'critical_gaps' => $this->identifyCriticalGaps($employeeData, $competencyData),
             'strength_areas' => $this->identifyStrengthAreas($employeeData, $competencyData),

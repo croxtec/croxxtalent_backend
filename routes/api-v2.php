@@ -53,7 +53,7 @@ require __DIR__.'/v2/project.php';
 
 require __DIR__.'/v2/configuration.php';
 
-require __DIR__.'/v2/company.php';
+// require __DIR__.'/v2/company.php';
 
 require __DIR__.'/v2/talent.php';
 
