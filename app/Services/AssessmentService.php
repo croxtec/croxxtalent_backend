@@ -157,32 +157,32 @@ class AssessmentService
         }
     }
 
-    private function setAssessmentOwnership(array &$data, $user)
-    {
-        $ownershipMap = [
-            'company' => [
-                'user_id' => $user->id,
-                'employer_id' => $user->id
-            ],
-            'supervisor' => function($data) {
-                $supervisor = Supervisor::where('supervisor_id', $data['supervisor_id'])->firstOrFail();
-                return [
-                    'employer_id' => $supervisor->employer_id,
-                    'user_id' => $data['supervisor_id']
-                ];
-            }
-        ];
+    // private function setAssessmentOwnership(array &$data, $user)
+    // {
+    //     $ownershipMap = [
+    //         'company' => [
+    //             'user_id' => $user->id,
+    //             'employer_id' => $user->id
+    //         ],
+    //         'supervisor' => function($data) {
+    //             $supervisor = Supervisor::where('supervisor_id', $data['supervisor_id'])->firstOrFail();
+    //             return [
+    //                 'employer_id' => $supervisor->employer_id,
+    //                 'user_id' => $data['supervisor_id']
+    //             ];
+    //         }
+    //     ];
 
-        $ownership = $ownershipMap[$data['type']] ?? ['user_id' => $user->id];
+    //     $ownership = $ownershipMap[$data['type']] ?? ['user_id' => $user->id];
 
-        if (is_callable($ownership)) {
-            $ownership = $ownership($data);
-        }
+    //     if (is_callable($ownership)) {
+    //         $ownership = $ownership($data);
+    //     }
 
-        foreach ($ownership as $key => $value) {
-            $data[$key] = $value;
-        }
-    }
+    //     foreach ($ownership as $key => $value) {
+    //         $data[$key] = $value;
+    //     }
+    // }
 
     // private function createInitialPerformanceReport($assessment, $data)
     // {

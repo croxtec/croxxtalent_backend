@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api\v2\Company;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use App\Models\Goal;
 use App\Models\Employee;
@@ -13,97 +12,9 @@ use App\Models\EmployerJobcode as Department;
 
 class ReportAnalysisController extends Controller
 {
-    protected $assessmentService;
-    protected $reportingService;
-
-    public function __construct(
-        // ReportingService $reportingService
-    ) {
-        // $this->reportingService = $reportingService;
-    }
-
-    public function gapAnalysisReport001(Request $request)
-    {
-        $employer = $request->user();
-        $perPage = $request->input('per_page', 12);
-        $default_department = $request->input('department') ?? $employer->default_company_id;
-
-        if($request->input('department')) {
-            $employer->default_company_id = $request->input('department');
-            $employer->save();
-        }
-
-        $department = Department::find($default_department) ?? Department::where('employer_id', $employer->id)->first();
-
-        if(!$department){
-            return response()->json([
-                'status' => true,
-                'data' => [
-                    'competencies' => [],
-                    'employeeData' => []
-                ],
-                'message' => ''
-            ], 200);
-        }
-
-        $competenciesIds = $department->technical_skill->pluck('id');
-        $competencies = $department->technical_skill->pluck('competency')->toArray();
-        $expectedScores = array_fill_keys($competenciesIds->toArray(), 10);
-
-        $employees = Employee::where('employer_id', $employer->id)
-                            ->where('job_code_id', $department->id)
-                            ->get();
-
-        $employeeData = [];
-        foreach ($employees as $employee) {
-            $scores = [];
-            $gaps = [];
-
-            foreach ($competenciesIds as $competencyId) {
-                // Get all assessments for this competency
-                $assessments = CroxxAssessment::whereHas('competencies', function ($query) use ($competencyId) {
-                    $query->where('competency_id', $competencyId);
-                })->with(['feedbacks' => function ($query) use ($employee) {
-                    $query->where('employee_id', $employee->id)
-                          ->where('is_published', 1)
-                          ->orderBy('created_at', 'desc');
-                }])->get();
-
-                // Calculate average score across all assessments for this competency
-                $totalScore = 0;
-                $assessmentCount = 0;
-
-                foreach ($assessments as $assessment) {
-                    $feedback = $assessment->feedbacks->first();
-                    if ($feedback) {
-                        $totalScore += ($feedback->graded_score / 100) * 10; // Convert to 0-10 scale
-                        $assessmentCount++;
-                    }
-                }
-
-                $actualScore = $assessmentCount > 0 ? $totalScore / $assessmentCount : 0;
-                $expectedScore = $expectedScores[$competencyId];
-
-                $gap = max(0, min(10, $expectedScore - $actualScore));
-
-                $scores[] = round($actualScore, 2);
-                $gaps[] = round($gap, 2);
-            }
-
-            $employeeData[] = [
-                'name' => $employee->name,
-                'data' => $scores,
-                'gaps' => $gaps,
-            ];
-        }
-
-        return response()->json([
-            'status' => true,
-            'data' => compact('competencies', 'employeeData'),
-            'message' => ''
-        ], 200);
-    }
-
+    /**
+     * Get gap analysis report
+     */
     public function gapAnalysisReport(Request $request)
     {
         try {
@@ -139,16 +50,14 @@ class ReportAnalysisController extends Controller
         }
     }
 
+    /**
+     * Get team competency gap analysis
+     */
     public function getTeamCompetencyGap(Request $request)
     {
         try {
             $employer = $request->user();
-            $employeeIds = $request->input('employees', []);
-
-            // If single employee is passed, convert to array
-            if ($request->has('employee')) {
-                $employeeIds = [$request->input('employee')];
-            }
+            $employeeIds = $this->parseEmployeeIds($request);
 
             // Validate we have employees to process
             if (empty($employeeIds)) {
@@ -158,73 +67,7 @@ class ReportAnalysisController extends Controller
                 ], 400);
             }
 
-            $results = [];
-
-            foreach ($employeeIds as $employeeId) {
-                $employee = Employee::with('department.technical_skill', 'department.soft_skill')
-                    ->where('code', $employeeId)
-                    ->where('employer_id', $employer->id)
-                    ->first();
-
-                if (!$employee) {
-                    continue; // Skip invalid employees
-                }
-
-                $department = $employee->department;
-                $technicalCompetencies = $department->technical_skill;
-                $softSkillCompetencies = $department->soft_skill;
-
-                // Get all competency IDs
-                $competencyIds = $technicalCompetencies->pluck('id')
-                    ->concat($softSkillCompetencies->pluck('id'))
-                    ->toArray();
-
-                // Get assessments with proper relationship loading
-                $assessments = CroxxAssessment::whereHas('competencies', function ($query) use ($competencyIds) {
-                    $query->whereIn('competency_id', $competencyIds);
-                })
-                ->with([
-                    'competencies',
-                    'feedbacks' => function ($query) use ($employee) {
-                        $query->where('employee_id', $employee->id)
-                            ->where('is_published', 1)
-                            ->orderBy('created_at', 'desc');
-                    }
-                ])
-                ->get();
-
-                $technicalGaps = [];
-                $softSkillGaps = [];
-
-                // Process technical competencies
-                foreach ($technicalCompetencies as $competency) {
-                    $gapData = $this->calculateCompetencyGap($competency, $assessments, $employee->level);
-                    if ($gapData) {
-                        $technicalGaps[] = $gapData;
-                    }
-                }
-
-                // Process soft skill competencies
-                foreach ($softSkillCompetencies as $competency) {
-                    $gapData = $this->calculateCompetencyGap($competency, $assessments, $employee->level);
-                    if ($gapData) {
-                        $softSkillGaps[] = $gapData;
-                    }
-                }
-
-                $allGaps = array_merge($technicalGaps, $softSkillGaps);
-
-                $results[] = [
-                    'employee_id' => $employeeId,
-                    'competency_gaps' => [
-                        'technical' => $technicalGaps,
-                        'soft_skill' => $softSkillGaps
-                    ],
-                    'average_gap' => round(collect($allGaps)->avg('gap'), 2),
-                    'total_competencies' => count($allGaps),
-                    'assessment_count' => $assessments->count(),
-                ];
-            }
+            $results = $this->processTeamCompetencyGaps($employer, $employeeIds);
 
             return response()->json([
                 'status' => true,
@@ -240,134 +83,32 @@ class ReportAnalysisController extends Controller
     }
 
     /**
-     * Helper method to calculate competency gap for a specific competency
+     * Get individual employee competency gap
      */
-    private function calculateCompetencyGap($competency, $assessments, $employeeLevel)
-    {
-        // Find relevant assessments for this competency
-        $relevantAssessments = $assessments->filter(function ($assessment) use ($competency) {
-            return $assessment->competencies->contains('id', $competency->id);
-        });
-
-        if ($relevantAssessments->isEmpty()) {
-            return null;
-        }
-
-        // Calculate average scores and gaps
-        $scores = $relevantAssessments->map(function ($assessment) {
-            return $assessment->feedbacks->first()->graded_score ?? 0;
-        });
-
-        $averageScore = $scores->avg() ?? 0;
-        $expectedScore = $relevantAssessments->first()->expected_percentage ?? 100;
-        $gap = max(0, $expectedScore - $averageScore);
-
-        // Check if competency is core (same level as employee)
-        $isCore = ($competency->level == $employeeLevel);
-
-        return [
-            'competency_name' => $competency->competency,
-            'competency_description' => $competency->description,
-            'current_score' => round($averageScore, 2),
-            'expected_score' => $expectedScore,
-            'gap' => round($gap, 2),
-            'is_core' => $isCore,
-            'assessments_count' => $relevantAssessments->count(),
-            'last_assessment_date' => $relevantAssessments->max('created_at'),
-        ];
-    }
-
     public function getEmployeeCompetencyGap(Request $request)
     {
         try {
             $employer = $request->user();
             $employeeId = $request->input('uid');
-            // $departmentId = $request->input('department_id');
 
             $employee = Employee::with('department.technical_skill', 'department.soft_skill')
                     ->where('code', $employeeId)
                     ->where('employer_id', $employer->id)
                     ->firstOrFail();
 
-
             $department = $employee->department;
-            $technicalCompetencies = $department->technical_skill;
-            $softSkillCompetencies = $department->soft_skill;
+            $competencyGaps = $this->processEmployeeCompetencyGaps($employee, $department);
 
-            // Get all competencies
-            $competencies = $technicalCompetencies->concat($softSkillCompetencies);
-            $competencyIds = $competencies->pluck('id')->toArray();
-
-            // Log with proper structure
-            \Log::info('Competencies', ['data' => $competencies->toArray()]);
-
-            // Get assessments with proper relationship loading
-            $assessments = CroxxAssessment::whereHas('competencies', function ($query) use ($competencyIds) {
-                $query->whereIn('competency_id', $competencyIds);
-            })
-            ->with([
-                'competencies',
-                'feedbacks' => function ($query) use ($employee) {
-                    $query->where('employee_id', $employee->id)
-                        ->where('is_published', 1)
-                        ->orderBy('created_at', 'desc');
-                }
-            ])
-            ->get();
-
-            $technicalGaps = [];
-            $softSkillGaps = [];
-
-            foreach ($competencies as $competency) {
-                // Find relevant assessments for this competency
-                $relevantAssessments = $assessments->filter(function ($assessment) use ($competency) {
-                    return $assessment->competencies->contains('id', $competency->id);
-                });
-
-                // Calculate average scores and gaps
-                $scores = $relevantAssessments->map(function ($assessment) {
-                    return $assessment->feedbacks->first()->graded_score ?? 0;
-                });
-
-                $averageScore = $scores->avg() ?? 0;
-                $expectedScore = $relevantAssessments->first()->expected_percentage ?? 100;
-                $gap = max(0, $expectedScore - $averageScore);
-
-                // Check if competency is core (same level as employee)
-                $isCore = ($competency->level == $employee->level);
-
-                $gapData = [
-                    'competency_name' => $competency->competency,
-                    'competency_description' => $competency->description,
-                    'current_score' => round($averageScore, 2),
-                    'expected_score' => $expectedScore,
-                    'gap' => round($gap, 2),
-                    'is_core' => $isCore,
-                    'assessments_count' => $relevantAssessments->count(),
-                    'last_assessment_date' => $relevantAssessments->max('created_at'),
-                ];
-
-                // Categorize as technical or soft skill
-                if ($technicalCompetencies->contains('id', $competency->id)) {
-                    $technicalGaps[] = $gapData;
-                } else {
-                    $softSkillGaps[] = $gapData;
-                }
-            }
-
-            $competencyGaps = array_merge($technicalGaps, $softSkillGaps);
+            $allGaps = array_merge($competencyGaps['technical'], $competencyGaps['soft_skill']);
 
             return response()->json([
                 'status' => true,
                 'data' => [
                     'employee_id' => $employeeId,
-                    'competency_gaps' =>[
-                        'technical' => $technicalGaps,
-                        'soft_skill' => $softSkillGaps
-                    ],
-                    'average_gap' => round(collect($competencyGaps)->avg('gap'), 2),
-                    'total_competencies' => count($competencyGaps),
-                    'assessment_count' => $assessments->count(),
+                    'competency_gaps' => $competencyGaps,
+                    'average_gap' => round(collect($allGaps)->avg('gap'), 2),
+                    'total_competencies' => count($allGaps),
+                    'assessment_count' => $competencyGaps['assessment_count'],
                 ]
             ]);
 
@@ -379,6 +120,356 @@ class ReportAnalysisController extends Controller
         }
     }
 
+    /**
+     * Get employee skill distribution data
+     */
+    public function getEmployeesDistribution(Request $request)
+    {
+        try {
+            $employer = $request->user();
+            $perPage = $request->input('per_page', 10);
+            $departmentId = $this->getDepartmentId($request, $employer);
+
+            // Retrieve all employees for this department with related skills
+            $employees = Employee::where('employer_id', $employer->id)
+                ->where('job_code_id', $departmentId)
+                ->with('department.technical_skill', 'department.soft_skill')
+                ->paginate($perPage);
+
+            $employeesDistribution = [];
+            // $allTechnicalScores = [];
+            // $allSoftScores = [];
+
+            foreach ($employees as $employee) {
+                // Extract technical and soft competencies from the employee's department
+                $technicalSkills = $employee->department->technical_skill->pluck('competency')->toArray();
+                $softSkills = $employee->department->soft_skill->pluck('competency')->toArray();
+
+                // Calculate distributions for the employee
+                $technicalDistribution = $this->calculateSkillDistribution($employee, $technicalSkills);
+                $softDistribution = $this->calculateSkillDistribution($employee, $softSkills, 'soft');
+
+                // Compute average scores for technical and soft skills
+                $avgTechnical = count($technicalDistribution['assessment_distribution']) > 0
+                    ? array_sum($technicalDistribution['assessment_distribution']) / count($technicalDistribution['assessment_distribution'])
+                    : 0;
+                $avgSoft = count($softDistribution['assessment_distribution']) > 0
+                    ? array_sum($softDistribution['assessment_distribution']) / count($softDistribution['assessment_distribution'])
+                    : 0;
+                // $employeeOverall = ($avgTechnical + $avgSoft) / 2;
+
+                $insights = $this->generateDistributionInsights(
+                    $technicalDistribution,
+                    $softDistribution,
+                    $avgTechnical,
+                    $avgSoft
+                );
+
+                // Save each employee's distribution data
+                $employeesDistribution[] = [
+                    'employee_id' => $employee->id,
+                    'name' => $employee->name,
+                    'role' => $employee->department_role?->name,
+                    'technical_distribution' => $technicalDistribution,
+                    'soft_distribution' => $softDistribution,
+                    'insights' => $insights,
+                    // 'average_scores' => [
+                    //     'technical' => round($avgTechnical, 2),
+                    //     'soft' => round($avgSoft, 2),
+                    //     'overall' => round($employeeOverall, 2),
+                    // ],
+                ];
+
+                // Collect scores for overall aggregation
+                // $allTechnicalScores[] = $avgTechnical;
+                // $allSoftScores[] = $avgSoft;
+            }
+
+
+            return response()->json([
+                'status' => true,
+                'data' => [
+                    'employees_distribution' => $employeesDistribution,
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => "Error retrieving employees distribution: " . $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    /**
+     * Calculate skill distribution for a given employee and skill set
+     */
+    private function calculateSkillDistribution($employee, $skills, $skillType = 'technical')
+    {
+        $assessment_distribution = [];
+        $trainings_distribution = array_fill(0, count($skills), 0); // Initialize with zeros
+
+        // Get assessments for relevant skills
+        $assessments = CroxxAssessment::whereHas('competencies', function ($query) use ($skills) {
+            $query->whereIn('competency', $skills);
+        })->with([
+            'competencies',
+            'feedbacks' => function ($query) use ($employee) {
+                $query->where('employee_id', $employee->id)
+                      ->where('is_published', 1)
+                      ->orderBy('created_at', 'desc');
+            }
+        ])->get();
+
+        // Map skills to scores
+        foreach ($skills as $skill) {
+            $score = 0;
+
+            // Find matching assessment for this skill
+            foreach ($assessments as $assessment) {
+                foreach ($assessment->competencies as $competency) {
+                    if ($competency->competency === $skill) {
+                        $feedback = $assessment->feedbacks->first();
+                        if ($feedback) {
+                            $score = $feedback->graded_score;
+                            break 2; // Break both loops once score is found
+                        }
+                    }
+                }
+            }
+
+            $assessment_distribution[] = $score;
+        }
+
+        return [
+            'categories' => $skills,
+            'assessment_distribution' => $assessment_distribution,
+            'trainings_distribution' => $trainings_distribution,
+        ];
+    }
+
+    /**
+     * Generate insights based on skill distribution analysis
+     */
+    private function generateDistributionInsights($technical_distribution, $soft_distribution, $avg_technical, $avg_soft)
+    {
+        $insights = [];
+
+        // Find strengths (scores above 80)
+        $strengths = [];
+        foreach ($technical_distribution['categories'] as $index => $skill) {
+            if ($technical_distribution['assessment_distribution'][$index] >= 80) {
+                $strengths[] = [
+                    'skill' => $skill,
+                    'score' => $technical_distribution['assessment_distribution'][$index],
+                    'type' => 'technical'
+                ];
+            }
+        }
+
+        foreach ($soft_distribution['categories'] as $index => $skill) {
+            if ($soft_distribution['assessment_distribution'][$index] >= 80) {
+                $strengths[] = [
+                    'skill' => $skill,
+                    'score' => $soft_distribution['assessment_distribution'][$index],
+                    'type' => 'soft'
+                ];
+            }
+        }
+
+        // Find improvement areas (scores below 60)
+        $improvement_areas = [];
+        foreach ($technical_distribution['categories'] as $index => $skill) {
+            if ($technical_distribution['assessment_distribution'][$index] < 60 &&
+                $technical_distribution['assessment_distribution'][$index] > 0) {
+                $improvement_areas[] = [
+                    'skill' => $skill,
+                    'score' => $technical_distribution['assessment_distribution'][$index],
+                    'type' => 'technical'
+                ];
+            }
+        }
+
+        foreach ($soft_distribution['categories'] as $index => $skill) {
+            if ($soft_distribution['assessment_distribution'][$index] < 60 &&
+                $soft_distribution['assessment_distribution'][$index] > 0) {
+                $improvement_areas[] = [
+                    'skill' => $skill,
+                    'score' => $soft_distribution['assessment_distribution'][$index],
+                    'type' => 'soft'
+                ];
+            }
+        }
+
+        // Find skills without assessments
+        // $unassessed_skills = [];
+        // foreach ($technical_distribution['categories'] as $index => $skill) {
+        //     if ($technical_distribution['assessment_distribution'][$index] === 0) {
+        //         $unassessed_skills[] = [
+        //             'skill' => $skill,
+        //             'type' => 'technical'
+        //         ];
+        //     }
+        // }
+
+        // foreach ($soft_distribution['categories'] as $index => $skill) {
+        //     if ($soft_distribution['assessment_distribution'][$index] === 0) {
+        //         $unassessed_skills[] = [
+        //             'skill' => $skill,
+        //             'type' => 'soft'
+        //         ];
+        //     }
+        // }
+
+        // Generate overall insights
+        $insights = [
+            'overall_performance' => $this->determineOverallPerformance(($avg_technical + $avg_soft) / 2),
+            'strengths' => $strengths,
+            'improvement_areas' => $improvement_areas,
+            // 'unassessed_skills' => $unassessed_skills,
+            'balance' => [
+                'status' => abs($avg_technical - $avg_soft) <= 15 ? 'balanced' : 'imbalanced',
+                'recommendation' => $this->getBalanceRecommendation($avg_technical, $avg_soft)
+            ]
+        ];
+
+        return $insights;
+    }
+
+    /**
+     * Determine overall performance category
+     */
+    private function determineOverallPerformance($averageScore)
+    {
+        if ($averageScore >= 90) return ['status' => 'excellent', 'description' => 'Performing exceptionally well across competencies'];
+        if ($averageScore >= 80) return ['status' => 'strong', 'description' => 'Strong performer with good competency coverage'];
+        if ($averageScore >= 70) return ['status' => 'good', 'description' => 'Good overall performance with some development opportunities'];
+        if ($averageScore >= 60) return ['status' => 'satisfactory', 'description' => 'Meeting basic requirements but has several areas for improvement'];
+        if ($averageScore >= 40) return ['status' => 'needs_improvement', 'description' => 'Requires significant improvement in multiple areas'];
+        return ['status' => 'insufficient_data', 'description' => 'Not enough assessment data for reliable evaluation'];
+    }
+
+    /**
+     * Get recommendation for balancing technical and soft skills
+     */
+    private function getBalanceRecommendation($avg_technical, $avg_soft)
+    {
+        $diff = $avg_technical - $avg_soft;
+
+        if (abs($diff) <= 15) {
+            return 'Skills are well balanced between technical and soft competencies';
+        }
+
+        if ($diff > 15) {
+            return 'Focus on developing soft skills to balance with strong technical competencies';
+        }
+
+        return 'Focus on strengthening technical skills to balance with soft competencies';
+    }
+
+    /**
+     * Process employee competency gaps
+     */
+    private function processEmployeeCompetencyGaps($employee, $department)
+    {
+        $technicalCompetencies = $department->technical_skill;
+        $softSkillCompetencies = $department->soft_skill;
+        $competencies = $technicalCompetencies->concat($softSkillCompetencies);
+        $competencyIds = $competencies->pluck('id')->toArray();
+
+        // Get assessments
+        $assessments = CroxxAssessment::whereHas('competencies', function ($query) use ($competencyIds) {
+            $query->whereIn('competency_id', $competencyIds);
+        })
+        ->with([
+            'competencies',
+            'feedbacks' => function ($query) use ($employee) {
+                $query->where('employee_id', $employee->id)
+                    ->where('is_published', 1)
+                    ->orderBy('created_at', 'desc');
+            }
+        ])
+        ->get();
+
+        $technicalGaps = [];
+        $softSkillGaps = [];
+
+        // Process each competency
+        foreach ($competencies as $competency) {
+            // Calculate gap data
+            $gapData = $this->calculateCompetencyGap($competency, $assessments, $employee->level);
+
+            // Skip if no data was found
+            if (!$gapData) continue;
+
+            // Categorize as technical or soft skill
+            if ($technicalCompetencies->contains('id', $competency->id)) {
+                $technicalGaps[] = $gapData;
+            } else {
+                $softSkillGaps[] = $gapData;
+            }
+        }
+
+        return [
+            'technical' => $technicalGaps,
+            'soft_skill' => $softSkillGaps,
+            'assessment_count' => $assessments->count()
+        ];
+    }
+
+    /**
+     * Process team competency gaps for multiple employees
+     */
+    private function processTeamCompetencyGaps($employer, $employeeIds)
+    {
+        $results = [];
+
+        foreach ($employeeIds as $employeeId) {
+            $employee = Employee::with('department.technical_skill', 'department.soft_skill')
+                ->where('code', $employeeId)
+                ->where('employer_id', $employer->id)
+                ->first();
+
+            if (!$employee) {
+                continue; // Skip invalid employees
+            }
+
+            $department = $employee->department;
+            $competencyGaps = $this->processEmployeeCompetencyGaps($employee, $department);
+            $allGaps = array_merge($competencyGaps['technical'], $competencyGaps['soft_skill']);
+
+            $results[] = [
+                'employee_id' => $employeeId,
+                'competency_gaps' => [
+                    'technical' => $competencyGaps['technical'],
+                    'soft_skill' => $competencyGaps['soft_skill']
+                ],
+                'average_gap' => round(collect($allGaps)->avg('gap'), 2),
+                'total_competencies' => count($allGaps),
+                'assessment_count' => $competencyGaps['assessment_count'],
+            ];
+        }
+
+        return $results;
+    }
+
+    /**
+     * Parse employee IDs from request
+     */
+    private function parseEmployeeIds(Request $request)
+    {
+        $employeeIds = $request->input('employees', []);
+
+        // If single employee is passed, convert to array
+        if ($request->has('employee')) {
+            $employeeIds = [$request->input('employee')];
+        }
+
+        return $employeeIds;
+    }
+
+    // The rest of the helper methods remain the same
+    // ...
     private function getDepartmentId($request, $employer)
     {
         $departmentId = $request->input('department') ?? $employer->default_company_id;
@@ -424,7 +515,6 @@ class ReportAnalysisController extends Controller
                 'data' => $scores,
                 'gaps' => $gaps,
                 'average_gap' => array_sum($gaps) / count($gaps),
-                // 'development_needs' => $this->identifyDevelopmentNeeds($gaps, $competencyData['names'])
             ];
         })->toArray();
     }
@@ -456,9 +546,43 @@ class ReportAnalysisController extends Controller
         ];
     }
 
+    private function calculateCompetencyGap($competency, $assessments, $employeeLevel)
+    {
+        // Find relevant assessments for this competency
+        $relevantAssessments = $assessments->filter(function ($assessment) use ($competency) {
+            return $assessment->competencies->contains('id', $competency->id);
+        });
+
+        if ($relevantAssessments->isEmpty()) {
+            return null;
+        }
+
+        // Calculate average scores and gaps
+        $scores = $relevantAssessments->map(function ($assessment) {
+            return $assessment->feedbacks->first()->graded_score ?? 0;
+        });
+
+        $averageScore = $scores->avg() ?? 0;
+        $expectedScore = $relevantAssessments->first()->expected_percentage ?? 100;
+        $gap = max(0, $expectedScore - $averageScore);
+
+        // Check if competency is core (same level as employee)
+        $isCore = ($competency->level == $employeeLevel);
+
+        return [
+            'competency_name' => $competency->competency,
+            'competency_description' => $competency->description,
+            'current_score' => round($averageScore, 2),
+            'expected_score' => $expectedScore,
+            'gap' => round($gap, 2),
+            'is_core' => $isCore,
+            'assessments_count' => $relevantAssessments->count(),
+            'last_assessment_date' => $relevantAssessments->max('created_at'),
+        ];
+    }
+
     private function generateAnalysisSummary($employeeData, $competencyData)
     {
-        // info('Summary', ['data' => $employeeData, 'competency_data' => $competencyData]);
         return [
             'critical_gaps' => $this->identifyCriticalGaps($employeeData, $competencyData),
             'strength_areas' => $this->identifyStrengthAreas($employeeData, $competencyData),
@@ -554,5 +678,4 @@ class ReportAnalysisController extends Controller
         if ($averageGap >= 3) return 'Satisfactory';
         return 'Good';
     }
-
 }

@@ -126,6 +126,7 @@ class DepartmentController extends Controller
         $department->soft_skill;
         $department->head_count = Employee::where('job_code_id', $department->id)->count();
 
+        $rolesPerformance =[];
         $departmentData = [
             'id' => $department->id,
             'label' => $department->job_code,
@@ -166,11 +167,28 @@ class DepartmentController extends Controller
             $departmentData['children'][] = $roleData;
         }
 
+        foreach ($department->roles as $role) {
+            // Retrieve employees for this role
+            $employees = Employee::where('department_role_id', $role->id)->select('performance')->get();
+
+            // Calculate total employees and average performance
+            $totalEmployees = $employees->count();
+            $totalPerformance = $employees->sum('performance');
+            $averagePerformance = $totalEmployees > 0 ? $totalPerformance / $totalEmployees : 0;
+
+            $rolesPerformance[] = [
+                'role_name' => $role->name,
+                'average_performance' => round($averagePerformance, 2)
+            ];
+        }
+
         array_walk($departmentData['children'], function(&$roleData) {
             unset($roleData['role_supervisor']);
         });
 
         $department->chart = $departmentData;
+
+        $department->teamGap = $rolesPerformance;
 
         return response()->json([
             'status' => true,
