@@ -12,6 +12,36 @@ use App\Models\EmployerJobcode as Department;
 
 class ReportAnalysisController extends Controller
 {
+    public function gapAnalysisSummary(Request $request)
+    {
+        try {
+            $employer = $request->user();
+            $departmentId = $this->getDepartmentId($request, $employer);
+
+            if (!$departmentId) {
+                return $this->emptyResponse();
+            }
+
+            $department = Department::with('technical_skill', 'soft_skill')->find($departmentId);
+
+            $competencyData = $this->getCompetencyData($department);
+            $employeeData = $this->calculateEmployeeGaps($employer, $department, $competencyData);
+
+            return response()->json([
+                'status' => true,
+                'data' => [
+                    'competencies' => $competencyData['names'],
+                    'employeeData' => $employeeData,
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => "Error generating gap analysis: " . $e->getMessage()
+            ], 500);
+        }
+    }
     /**
      * Get gap analysis report
      */
@@ -25,16 +55,17 @@ class ReportAnalysisController extends Controller
                 return $this->emptyResponse();
             }
 
-            $department = Department::with('technical_skill')->find($departmentId);
-            $competencyData = $this->getCompetencyData($department);
-            $employeeData = $this->calculateEmployeeGaps($employer, $department, $competencyData);
+            $department = Department::with('technical_skill', 'soft_skill')->find($departmentId);
+            $technicalCompetencyData = $this->getCompetencyData($department);
+            // $competencyData = $this->getCompetencyData($department, 'all');
 
-            $summary = $this->generateAnalysisSummary($employeeData, $competencyData);
+            $employeeData = $this->calculateEmployeeGaps($employer, $department, $technicalCompetencyData);
+            $summary = $this->generateAnalysisSummary($employeeData, $technicalCompetencyData);
 
             return response()->json([
                 'status' => true,
                 'data' => [
-                    'competencies' => $competencyData['names'],
+                    'competencies' => $technicalCompetencyData['names'],
                     'employeeData' => $employeeData,
                     'summary' => $summary,
                     'department' => $department->only(['id', 'job_code', 'job_title']),
@@ -483,13 +514,23 @@ class ReportAnalysisController extends Controller
             ->value('id');
     }
 
-    private function getCompetencyData($department)
+   private function getCompetencyData($department, $type = 'technical_skill')
     {
-        $competencies = $department->technical_skill;
+        if ($type === 'all') {
+            $competencies = $department->technical_skill->concat($department->soft_skill);
+        } elseif ($type === 'technical_skill') {
+            $competencies = $department->technical_skill;
+        } elseif ($type === 'soft_skill') {
+            $competencies = $department->soft_skill;
+        } else {
+            $competencies = $department->technical_skill;
+        }
+
         return [
-            'ids' => $competencies->pluck('id'),
-            'names' => $competencies->pluck('competency')->toArray(),
-            'expected_scores' => array_fill_keys($competencies->pluck('id')->toArray(), 10)
+            'ids'             => $competencies->pluck('id')->toArray(),
+            'names'           => $competencies->pluck('competency')->toArray(),
+            'expected_scores' => array_fill_keys($competencies->pluck('id')->toArray(), 10),
+            'roles'           => $competencies->pluck('competency_role')->toArray(),
         ];
     }
 
@@ -584,7 +625,7 @@ class ReportAnalysisController extends Controller
     private function generateAnalysisSummary($employeeData, $competencyData)
     {
         return [
-            'critical_gaps' => $this->identifyCriticalGaps($employeeData, $competencyData),
+            // 'critical_gaps' => $this->identifyCriticalGaps($employeeData, $competencyData),
             'strength_areas' => $this->identifyStrengthAreas($employeeData, $competencyData),
             'overall_status' => $this->calculateOverallStatus($employeeData),
             'recommendations' => $this->generateRecommendations($employeeData, $competencyData)
@@ -602,7 +643,7 @@ class ReportAnalysisController extends Controller
 
     private function identifyCriticalGaps($employeeData, $competencyData)
     {
-        $criticalThreshold = 5; // Example threshold
+        $criticalThreshold = 4; // Example threshold
         $criticalGaps = [];
 
         foreach ($competencyData['names'] as $index => $competency) {
@@ -613,6 +654,7 @@ class ReportAnalysisController extends Controller
             if ($averageGap >= $criticalThreshold) {
                 $criticalGaps[] = [
                     'competency' => $competency,
+                    'role'        => $competencyData['roles'][$index] ?? null,
                     'average_gap' => round($averageGap, 2)
                 ];
             }
@@ -661,8 +703,10 @@ class ReportAnalysisController extends Controller
         $criticalGaps = $this->identifyCriticalGaps($employeeData, $competencyData);
 
         foreach ($criticalGaps as $gap) {
+            info($gap);
             $recommendations[] = [
                 'competency' => $gap['competency'],
+                'role' => $gap['role'],
                 'recommendation' => "Implement training programs for " . $gap['competency'],
                 'priority' => $gap['average_gap'] >= 7 ? 'High' : 'Medium'
             ];

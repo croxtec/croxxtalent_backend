@@ -82,6 +82,37 @@ class PerformanceController extends Controller
     /**
      * Get department performance breakdown
      */
+    public function getDepartmentSkillAnalysis(Request $request)
+    {
+        try {
+            $departmentId = $request->input('uid');
+            $month = $request->input('month', Carbon::now()->month);
+            $year = $request->input('year', Carbon::now()->year);
+
+            $department = EmployerJobcode::with(['technical_skill','soft_skill'])
+                                ->findOrFail($departmentId);
+
+            // Get all employees in department
+            // $employees = Employee::where('job_code_id', $departmentId)->get();
+
+            $overview = $this->performanceMetric->calculateDepartmentAnalysis($department, $year, $month);
+
+            return response()->json([
+                'status' => true,
+                'data' => $overview
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => "Error calculating department performance: " . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get department performance breakdown
+     */
     public function getDepartmentPerformance(Request $request)
     {
         try {

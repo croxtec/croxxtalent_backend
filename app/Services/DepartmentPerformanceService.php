@@ -532,7 +532,7 @@ class DepartmentPerformanceService
     /**
      * Generate insights for department performance
      */
-    public function generateDepartmentInsights($department, $sections, $overallScore, $kpiAchievement, $startDate, $endDate)
+    public function generateDepartmentInsights($department, $sections, $overallScore, $kpiAchievement = '')
     {
         $insights = [];
 

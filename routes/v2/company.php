@@ -20,7 +20,7 @@ Route::middleware('auth:sanctum')->prefix('employers')->name('employers.')->grou
     Route::get('/overview/courses/chart', 'Api\v2\Company\CompanyReportController@coursesChart')->name('company.courses.chart');
     // Report
     Route::get('/refresh/performance', 'Api\v2\Company\CompanyReportController@refreshPerformance');
-    Route::get('/overview/employees/gap', 'Api\v2\Company\ReportAnalysisController@gapAnalysisReport001');
+    Route::get('/overview/employees/gap', 'Api\v2\Company\ReportAnalysisController@gapAnalysisSummary');
 
 
     Route::get('/report/competency/gap', 'Api\v2\Company\ReportAnalysisController@gapAnalysisReport');
@@ -28,9 +28,10 @@ Route::middleware('auth:sanctum')->prefix('employers')->name('employers.')->grou
     Route::get('/report/team/compare', 'Api\v2\Company\ReportAnalysisController@getTeamCompetencyGap');
     Route::get('/report/team/distribution', 'Api\v2\Company\ReportAnalysisController@getEmployeesDistribution');
     // Report
-    Route::get('/report/kpi/employee', 'Api\v2\Company\PerformanceController@getEmployeeKPIPerformance');
-    Route::get('/report/performance/employee', 'Api\v2\Company\PerformanceController@getEmployeeFeedbackPerformance');
-    Route::get('/report/performance/department', 'Api\v2\Company\PerformanceController@getDepartmentPerformance');
+    Route::get('/report/employee/kpi', 'Api\v2\Company\PerformanceController@getEmployeeKPIPerformance');
+    Route::get('/report/employee/performance', 'Api\v2\Company\PerformanceController@getEmployeeFeedbackPerformance');
+    Route::get('/report/department/analysis', 'Api\v2\Company\PerformanceController@getDepartmentSkillAnalysis');
+    Route::get('/report/department/performance', 'Api\v2\Company\PerformanceController@getDepartmentPerformance');
 
     // Mapping
     Route::get('competency/mapping', 'Api\v2\EmployerCompetencyController@index')->name('competency.index');

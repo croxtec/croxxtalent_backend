@@ -30,7 +30,7 @@ class PerformanceMetricsService {
      */
     public function employeeKPIPerformance(Employee $employee, $year, $month)
     {
-        $startDate = Carbon::create('2024', $month, 1)->startOfMonth();
+        $startDate = Carbon::create(Carbon::now()->year - 1, 1, 1)->startOfMonth();
         $endDate = Carbon::create($year, $month, 1)->endOfMonth();
 
         // Calculate metrics for each section
@@ -89,12 +89,39 @@ class PerformanceMetricsService {
         ];
     }
 
+     /**
+     * Calculate department performance for a specific month
+     */
+    public function calculateDepartmentAnalysis(EmployerJobcode $department, $year, $month)
+    {
+        $startDate = Carbon::create(Carbon::now()->year - 1, 1, 1)->startOfMonth();
+        $endDate = Carbon::create($year, $month, 1)->endOfMonth();
+
+        $sections = [
+            'competencies' => $this->teamCalculator->calculateDepartmentCompetencyMetrics($department->id, $startDate, $endDate)
+        ];
+
+        $overallScore = $this->calculator->calculateOverallScore($sections);
+
+        // Add performance insights
+        $insights = $this->teamCalculator->generateDepartmentInsights($department, $sections, $overallScore);
+
+        return [
+            // 'department' => $department,
+            'month' => $month,
+            'year' => $year,
+            'overall_score' => $overallScore,
+            'sections' => $sections,
+            'insights' => $insights,
+        ];
+    }
+
     /**
      * Calculate department performance for a specific month
      */
     public function calculateDepartmentPerformance(EmployerJobcode $department, $year, $month)
     {
-        $startDate = Carbon::create($year, $month, 1)->startOfMonth();
+       $startDate = Carbon::create(Carbon::now()->year - 1, 1, 1)->startOfMonth();
         $endDate = Carbon::create($year, $month, 1)->endOfMonth();
 
         // Get all employees in department
@@ -117,7 +144,7 @@ class PerformanceMetricsService {
         $kpiAchievement = $this->teamCalculator->calculateDepartmentKPIAchievement($department, $startDate, $endDate);
 
         // Add performance insights
-        $insights = $this->teamCalculator->generateDepartmentInsights($department, $sections, $overallScore, $kpiAchievement, $startDate, $endDate);
+        $insights = $this->teamCalculator->generateDepartmentInsights($department, $sections, $overallScore, $kpiAchievement);
 
         // Add historical data
         // $historical = $this->teamCalculator->getDepartmentHistoricalPerformance($department->id, $year);
