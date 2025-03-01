@@ -626,7 +626,16 @@ class DepartmentPerformanceService
      */
     public function generateDepartmentInsights($department, $sections, $overallScore, $kpiAchievement = '')
     {
-        $insights = [];
+        $insights = [
+            'assessments' => [],
+            'peer_reviews' => [],
+            'goals' => [],
+            'trainings' => [],
+            'projects' => [],
+            'competencies' => [],
+            'kpi' => [],
+            'overall' => []
+        ];
 
         // Assessment insights
         if (isset($sections['assessments'])) {
@@ -634,13 +643,13 @@ class DepartmentPerformanceService
             $participationRate = $sections['assessments']['employee_participation_rate'] ?? 0;
 
             if ($assessmentScore >= 85) {
-                $insights[] = "Department showing strong technical knowledge in assessments.";
+                $insights['assessments'][] = "Department showing strong technical knowledge in assessments.";
             } elseif ($assessmentScore < 70) {
-                $insights[] = "Department-wide training may improve technical knowledge scores.";
+                $insights['assessments'][] = "Department-wide training may improve technical knowledge scores.";
             }
 
             if ($participationRate < 75) {
-                $insights[] = "Increase assessment participation to better evaluate department skills.";
+                $insights['assessments'][] = "Increase assessment participation to better evaluate department skills.";
             }
         }
 
@@ -650,13 +659,13 @@ class DepartmentPerformanceService
             $trend = $sections['peer_reviews']['trend']['direction'] ?? 'stable';
 
             if ($reviewScore >= 85) {
-                $insights[] = "Strong collaborative culture reflected in high peer review scores.";
+                $insights['peer_reviews'][] = "Strong collaborative culture reflected in high peer review scores.";
             } elseif ($reviewScore < 65) {
-                $insights[] = "Team-building activities may improve interdepartmental collaboration.";
+                $insights['peer_reviews'][] = "Team-building activities may improve interdepartmental collaboration.";
             }
 
             if ($trend === 'down') {
-                $insights[] = "Declining peer review trend suggests potential team dynamics issues.";
+                $insights['peer_reviews'][] = "Declining peer review trend suggests potential team dynamics issues.";
             }
         }
 
@@ -666,13 +675,13 @@ class DepartmentPerformanceService
             $participationRate = $sections['goals']['employee_participation_rate'] ?? 0;
 
             if ($completionRate >= 85) {
-                $insights[] = "Department effectively achieves set goals and objectives.";
+                $insights['goals'][] = "Department effectively achieves set goals and objectives.";
             } elseif ($completionRate < 60) {
-                $insights[] = "Consider reviewing goal-setting processes for better achievement.";
+                $insights['goals'][] = "Consider reviewing goal-setting processes for better achievement.";
             }
 
             if ($participationRate < 80) {
-                $insights[] = "Encourage broader participation in departmental goal-setting.";
+                $insights['goals'][] = "Encourage broader participation in departmental goal-setting.";
             }
         }
 
@@ -683,24 +692,24 @@ class DepartmentPerformanceService
             $participationRate = $sections['trainings']['employee_participation_rate'] ?? 0;
 
             if ($trainingScore >= 85) {
-                $insights[] = "Department shows excellent learning outcomes from training programs.";
+                $insights['trainings'][] = "Department shows excellent learning outcomes from training programs.";
             } elseif ($trainingScore < 70) {
-                $insights[] = "Consider revising training approach to improve learning outcomes.";
+                $insights['trainings'][] = "Consider revising training approach to improve learning outcomes.";
             }
 
             if ($completionRate < 80) {
-                $insights[] = "Improve training completion rates to maximize development benefits.";
+                $insights['trainings'][] = "Improve training completion rates to maximize development benefits.";
             }
 
             if ($participationRate < 70) {
-                $insights[] = "Increase employee participation in training programs for better skill development.";
+                $insights['trainings'][] = "Increase employee participation in training programs for better skill development.";
             }
 
             // Compare assessment scores with training scores
             if (isset($sections['assessments']) && $trainingScore > $assessmentScore + 10) {
-                $insights[] = "Training outcomes are strong, but not translating to assessment performance.";
+                $insights['trainings'][] = "Training outcomes are strong, but not translating to assessment performance.";
             } elseif (isset($sections['assessments']) && $trainingScore < $assessmentScore - 10) {
-                $insights[] = "Assessment performance is good despite lower training scores. Consider optimizing training effectiveness.";
+                $insights['trainings'][] = "Assessment performance is good despite lower training scores. Consider optimizing training effectiveness.";
             }
         }
 
@@ -710,13 +719,13 @@ class DepartmentPerformanceService
             $onTimeRate = $sections['projects']['on_time_completion_rate'] ?? 0;
 
             if ($onTimeRate >= 85) {
-                $insights[] = "Department consistently delivers projects on schedule.";
+                $insights['projects'][] = "Department consistently delivers projects on schedule.";
             } elseif ($onTimeRate < 65) {
-                $insights[] = "Project management practices may need improvement.";
+                $insights['projects'][] = "Project management practices may need improvement.";
             }
 
             if ($completionRate < 70) {
-                $insights[] = "Focus on task completion to improve project delivery rates.";
+                $insights['projects'][] = "Focus on task completion to improve project delivery rates.";
             }
         }
 
@@ -725,38 +734,38 @@ class DepartmentPerformanceService
             $competencyScore = $sections['competencies']['average_score'] ?? 0;
 
             if ($competencyScore >= 85) {
-                $insights[] = "Department demonstrates strong proficiency in key competencies.";
+                $insights['competencies'][] = "Department demonstrates strong proficiency in key competencies.";
             } elseif ($competencyScore < 65) {
-                $insights[] = "Targeted training in core competencies recommended.";
+                $insights['competencies'][] = "Targeted training in core competencies recommended.";
             }
         }
 
         // KPI insights
-        if (isset($kpiAchievement)) {
+        if (!empty($kpiAchievement)) {
             $overallKPIAchievement = $kpiAchievement['overall_achievement'] ?? 0;
             $technicalAchievement = $kpiAchievement['technical_achievement'] ?? 0;
             $softAchievement = $kpiAchievement['soft_achievement'] ?? 0;
 
             if ($overallKPIAchievement >= 85) {
-                $insights[] = "Department successfully meeting or exceeding key performance indicators.";
+                $insights['kpi'][] = "Department successfully meeting or exceeding key performance indicators.";
             } elseif ($overallKPIAchievement < 65) {
-                $insights[] = "KPI targets may need review or additional support for achievement.";
+                $insights['kpi'][] = "KPI targets may need review or additional support for achievement.";
             }
 
             if ($technicalAchievement > $softAchievement + 15) {
-                $insights[] = "Department stronger in technical skills than soft skills; consider soft skill development.";
+                $insights['kpi'][] = "Department stronger in technical skills than soft skills; consider soft skill development.";
             } elseif ($softAchievement > $technicalAchievement + 15) {
-                $insights[] = "Department stronger in soft skills than technical skills; consider technical training.";
+                $insights['kpi'][] = "Department stronger in soft skills than technical skills; consider technical training.";
             }
         }
 
         // Overall performance insights
         if ($overallScore >= 85) {
-            $insights[] = "High-performing department with strong results across all areas.";
+            $insights['overall'][] = "High-performing department with strong results across all areas.";
         } elseif ($overallScore >= 75) {
-            $insights[] = "Solid departmental performance with specific areas for enhancement.";
+            $insights['overall'][] = "Solid departmental performance with specific areas for enhancement.";
         } elseif ($overallScore < 65) {
-            $insights[] = "Department may benefit from a comprehensive improvement plan.";
+            $insights['overall'][] = "Department may benefit from a comprehensive improvement plan.";
         }
 
         // Check for balanced or unbalanced performance
@@ -771,9 +780,16 @@ class DepartmentPerformanceService
         $stdDev = $this->calculator->calculateStandardDeviation($scores);
 
         if ($stdDev > 15) {
-            $insights[] = "Performance varies significantly across different areas; consider more balanced approach.";
+            $insights['overall'][] = "Performance varies significantly across different areas; consider more balanced approach.";
         } elseif ($stdDev < 8 && $overallScore >= 75) {
-            $insights[] = "Department shows consistently strong performance across all evaluation areas.";
+            $insights['overall'][] = "Department shows consistently strong performance across all evaluation areas.";
+        }
+
+        // Remove empty sections
+        foreach ($insights as $key => $value) {
+            if (empty($value)) {
+                unset($insights[$key]);
+            }
         }
 
         return $insights;
