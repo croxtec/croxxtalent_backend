@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Assessment\CroxxAssessment;
+use App\Models\Assessment\EmployeeLearningPath;
 use App\Models\Assessment\PeerReview;
 use App\Models\Competency\DepartmentMapping;
 use App\Models\Employee;
@@ -112,6 +113,64 @@ class DepartmentPerformanceService
             'trend' => $this->calculateDepartmentTrend('peer_reviews', $departmentId, $startDate, $endDate),
             'employee_participation_rate' => count($employeeScores) > 0 ?
                 (count($employeeScores) / count($employeeIds)) * 100 : 0
+        ];
+    }
+
+    public function calculateDepartmentTrainingMetrics($departmentId, $startDate, $endDate)
+    {
+        // Get all employees in the department
+        $employeeIds = Employee::where('job_code_id', $departmentId)->pluck('id');
+
+        // Get all learning paths for employees in this department
+        $learningPaths = EmployeeLearningPath::whereIn('employee_id', $employeeIds)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->with(['training', 'assessment_feedback', 'employee'])
+            ->get();
+
+        $totalTrainings = $learningPaths->count();
+        $completedTrainings = $learningPaths->filter(function($lp) {
+            return $lp->training && $lp->training->status === 'completed';
+        })->count();
+
+        // Calculate average scores per employee first
+        $employeeScores = [];
+        $participatingEmployees = [];
+
+        foreach ($employeeIds as $empId) {
+            $empLearningPaths = $learningPaths->filter(function($lp) use ($empId) {
+                return $lp->employee_id == $empId;
+            });
+
+            if ($empLearningPaths->isNotEmpty()) {
+                $participatingEmployees[] = $empId;
+
+                $empScores = $empLearningPaths->filter(function($lp) {
+                    return $lp->assessment_feedback && isset($lp->assessment_feedback->graded_score);
+                })->map(function($lp) {
+                    return $lp->assessment_feedback->graded_score;
+                });
+
+                if ($empScores->isNotEmpty()) {
+                    $employeeScores[] = $empScores->avg();
+                }
+            }
+        }
+
+        // Department average is the average of all employee averages
+        $averageScore = count($employeeScores) > 0 ? array_sum($employeeScores) / count($employeeScores) : 0;
+
+        // Calculate trend
+        $trend = $this->calculateDepartmentTrend('trainings', $departmentId, $startDate, $endDate);
+
+        return [
+            'count' => $totalTrainings,
+            'average_score' => $averageScore,
+            'completed' => $completedTrainings,
+            'pending' => $totalTrainings - $completedTrainings,
+            'completion_rate' => $totalTrainings > 0 ? ($completedTrainings / $totalTrainings) * 100 : 0,
+            'trend' => $trend,
+            'employee_participation_rate' => count($employeeIds) > 0 ?
+                (count($participatingEmployees) / count($employeeIds)) * 100 : 0
         ];
     }
 
@@ -423,7 +482,8 @@ class DepartmentPerformanceService
                 ->count(),
             'projects' => $this->getDepartmentProjectTrend($employeeIds, $startDate, $endDate),
             'competencies' => $this->getDepartmentCompetencyAverage($departmentId, $startDate, $endDate),
-            default => 0
+            'trainings' => $this->getDepartmentTrainingTrend($employeeIds, $startDate, $endDate),
+             default => 0
         };
     }
 
@@ -493,6 +553,38 @@ class DepartmentPerformanceService
         return $completedCount;
     }
 
+    private function getDepartmentTrainingTrend($employeeIds, $startDate, $endDate)
+    {
+        // Get learning paths for all employees in the department
+        $learningPaths = EmployeeLearningPath::whereIn('employee_id', $employeeIds)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->with(['training', 'assessment_feedback'])
+            ->get();
+
+        // Calculate average scores per employee first
+        $employeeScores = [];
+
+        foreach ($employeeIds as $empId) {
+            $empLearningPaths = $learningPaths->filter(function($lp) use ($empId) {
+                return $lp->employee_id == $empId;
+            });
+
+            if ($empLearningPaths->isNotEmpty()) {
+                $empScores = $empLearningPaths->filter(function($lp) {
+                    return $lp->assessment_feedback && isset($lp->assessment_feedback->graded_score);
+                })->map(function($lp) {
+                    return $lp->assessment_feedback->graded_score;
+                });
+
+                if ($empScores->isNotEmpty()) {
+                    $employeeScores[] = $empScores->avg();
+                }
+            }
+        }
+
+        // Department average is the average of all employee averages
+        return count($employeeScores) > 0 ? array_sum($employeeScores) / count($employeeScores) : 0;
+    }
 
     /**
      *
@@ -501,7 +593,7 @@ class DepartmentPerformanceService
    public function getDepartmentCompetencyAverage($departmentId, $startDate, $endDate)
    {
        $employeeIds = Employee::where('job_code_id', $departmentId)->pluck('id');
-       info(['calculateDepartmentCompetencyAverage', $departmentId]);
+    //    info(['calculateDepartmentCompetencyAverage', $departmentId]);
        $mappings = DepartmentMapping::where('department_id', $departmentId)
            // ->with(['competencyKPIs', 'competency'])
            ->get();
@@ -581,6 +673,34 @@ class DepartmentPerformanceService
 
             if ($participationRate < 80) {
                 $insights[] = "Encourage broader participation in departmental goal-setting.";
+            }
+        }
+
+        // Training insights
+        if (isset($sections['trainings'])) {
+            $trainingScore = $sections['trainings']['average_score'] ?? 0;
+            $completionRate = $sections['trainings']['completion_rate'] ?? 0;
+            $participationRate = $sections['trainings']['employee_participation_rate'] ?? 0;
+
+            if ($trainingScore >= 85) {
+                $insights[] = "Department shows excellent learning outcomes from training programs.";
+            } elseif ($trainingScore < 70) {
+                $insights[] = "Consider revising training approach to improve learning outcomes.";
+            }
+
+            if ($completionRate < 80) {
+                $insights[] = "Improve training completion rates to maximize development benefits.";
+            }
+
+            if ($participationRate < 70) {
+                $insights[] = "Increase employee participation in training programs for better skill development.";
+            }
+
+            // Compare assessment scores with training scores
+            if (isset($sections['assessments']) && $trainingScore > $assessmentScore + 10) {
+                $insights[] = "Training outcomes are strong, but not translating to assessment performance.";
+            } elseif (isset($sections['assessments']) && $trainingScore < $assessmentScore - 10) {
+                $insights[] = "Assessment performance is good despite lower training scores. Consider optimizing training effectiveness.";
             }
         }
 

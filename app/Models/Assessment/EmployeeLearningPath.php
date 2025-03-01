@@ -22,9 +22,13 @@ class EmployeeLearningPath extends Model
                     ->select(['id','name', 'job_code_id', 'department_role_id', 'photo_url', 'code']);
     }
 
-
-    public function supervisor(){
-        return $this->belongsTo('App\Models\User', 'employer_user_id', 'id');
+    public function assessment_feedback(){
+        return $this->belongsTo('App\Models\Assessment\EmployerAssessmentFeedback', 'assessment_feedback_id', 'id');
     }
+
+    public function training(){
+        return $this->belongsTo('App\Models\Training\CroxxTraining', 'training_id', 'id');
+    }
+
 
 }

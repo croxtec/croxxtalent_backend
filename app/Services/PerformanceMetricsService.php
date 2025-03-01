@@ -3,10 +3,6 @@
 namespace App\Services;
 
 use App\Models\Employee;
-use App\Models\EmployerJobcode;
-use App\Models\Goal;
-use App\Models\PerformanceRecord;
-use App\Models\Project\Project;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use  App\Services\PerformanceCalculatorService;
@@ -92,13 +88,14 @@ class PerformanceMetricsService {
      /**
      * Calculate department performance for a specific month
      */
-    public function calculateDepartmentAnalysis(EmployerJobcode $department, $year, $month)
+    public function calculateDepartmentAnalysis($department, $year, $month)
     {
         $startDate = Carbon::create(Carbon::now()->year - 1, 1, 1)->startOfMonth();
         $endDate = Carbon::create($year, $month, 1)->endOfMonth();
 
         $sections = [
-            'competencies' => $this->teamCalculator->calculateDepartmentCompetencyMetrics($department->id, $startDate, $endDate)
+            'competencies' => $this->teamCalculator->calculateDepartmentCompetencyMetrics($department->id, $startDate, $endDate),
+            'trainings' => $this->teamCalculator->calculateDepartmentTrainingMetrics($department->id, $startDate, $endDate),
         ];
 
         $overallScore = $this->calculator->calculateOverallScore($sections);
@@ -119,7 +116,7 @@ class PerformanceMetricsService {
     /**
      * Calculate department performance for a specific month
      */
-    public function calculateDepartmentPerformance(EmployerJobcode $department, $year, $month)
+    public function calculateDepartmentPerformance($department, $year, $month)
     {
        $startDate = Carbon::create(Carbon::now()->year - 1, 1, 1)->startOfMonth();
         $endDate = Carbon::create($year, $month, 1)->endOfMonth();

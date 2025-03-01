@@ -22,7 +22,6 @@ Route::middleware('auth:sanctum')->prefix('employers')->name('employers.')->grou
     Route::get('/refresh/performance', 'Api\v2\Company\CompanyReportController@refreshPerformance');
     Route::get('/overview/employees/gap', 'Api\v2\Company\ReportAnalysisController@gapAnalysisSummary');
 
-
     Route::get('/report/competency/gap', 'Api\v2\Company\ReportAnalysisController@gapAnalysisReport');
     Route::get('/report/employee/gap', 'Api\v2\Company\ReportAnalysisController@getEmployeeCompetencyGap');
     Route::get('/report/team/compare', 'Api\v2\Company\ReportAnalysisController@getTeamCompetencyGap');

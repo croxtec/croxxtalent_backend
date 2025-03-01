@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Assessment\CroxxAssessment;
+use App\Models\Assessment\EmployeeLearningPath;
 use App\Models\Assessment\PeerReview;
 use App\Models\Competency\DepartmentMapping;
 use App\Models\Employee;
@@ -30,7 +31,6 @@ class PerformanceCalculatorService
     /**
      * Calculate assessment metrics for an employee
      */
-
     public function calculateAssessmentMetrics($employeeId, $startDate, $endDate)
     {
         // Get assessments with their feedbacks for this employee
@@ -225,6 +225,53 @@ class PerformanceCalculatorService
             'average_score' => $averageScore,
             'trend' => $this->calculateTrend('competencies', $employeeId, $startDate, $endDate),
             'details' => $competencyScores
+        ];
+    }
+
+    public function calculateEmployeeTrainingMetrics($employeeId, $startDate, $endDate)
+    {
+        // Get all learning paths for this employee
+        $learningPaths = EmployeeLearningPath::where('employee_id', $employeeId)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->with(['training', 'assessment_feedback'])
+            ->get();
+
+        $totalTrainings = $learningPaths->count();
+        $completedTrainings = $learningPaths->filter(function($lp) {
+            // Assuming you have a 'status' or 'completed' field in your training model
+            // If not, you may need to adjust this logic based on your data structure
+            return $lp->training && $lp->training->status === 'completed';
+        })->count();
+
+        // Calculate average score from linked assessments
+        $scoresFromAssessments = $learningPaths->filter(function($lp) {
+            return $lp->assessment_feedback && isset($lp->assessment_feedback->graded_score);
+        })->map(function($lp) {
+            return $lp->assessment_feedback->graded_score;
+        });
+
+        $averageScore = $scoresFromAssessments->count() > 0 ?
+            $scoresFromAssessments->avg() : 0;
+
+        // Calculate trend by comparing with previous period
+        $trend = $this->calculateTrend('trainings', $employeeId, $startDate, $endDate);
+
+        return [
+            'count' => $totalTrainings,
+            'average_score' => $averageScore,
+            'completed' => $completedTrainings,
+            'pending' => $totalTrainings - $completedTrainings,
+            'completion_rate' => $totalTrainings > 0 ? ($completedTrainings / $totalTrainings) * 100 : 0,
+            'trend' => $trend,
+            'details' => $learningPaths->map(function($lp) {
+                return [
+                    'name' => $lp->training ? $lp->training->name : 'Unknown Training',
+                    'score' => $lp->assessment_feedback ?
+                        ($lp->assessment_feedback->graded_score ?? 0) : 0,
+                    'date' => $lp->created_at,
+                    'status' => $lp->training ? $lp->training->status : 'unknown'
+                ];
+            })
         ];
     }
 
@@ -505,7 +552,7 @@ class PerformanceCalculatorService
         if (!$employee) {
             return 0;
         }
-        info(['calculateCompetencyAverage', $employeeId, $employee->job_code_id]);
+        // info(['calculateCompetencyAverage', $employeeId, $employee->job_code_id]);
         $mappings = DepartmentMapping::where('department_id', $employee->job_code_id)
             ->get();
 
