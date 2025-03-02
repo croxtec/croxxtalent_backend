@@ -31,6 +31,7 @@ Route::middleware('auth:sanctum')->prefix('employers')->name('employers.')->grou
     Route::get('/report/employee/performance', 'Api\v2\Company\PerformanceController@getEmployeeFeedbackPerformance');
     Route::get('/report/department/analysis', 'Api\v2\Company\PerformanceController@getDepartmentSkillAnalysis');
     Route::get('/report/department/performance', 'Api\v2\Company\PerformanceController@getDepartmentPerformance');
+    Route::get('/report/department/historical', 'Api\v2\Company\PerformanceController@getDepartmentHistoricalPerformance');
 
     // Mapping
     Route::get('competency/mapping', 'Api\v2\EmployerCompetencyController@index')->name('competency.index');

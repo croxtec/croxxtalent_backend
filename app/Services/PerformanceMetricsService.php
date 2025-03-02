@@ -143,9 +143,23 @@ class PerformanceMetricsService {
         // Add performance insights
         $insights = $this->teamCalculator->generateDepartmentInsights($department, $sections, $overallScore, $kpiAchievement);
 
-        // Add historical data
-        // $historical = $this->teamCalculator->getDepartmentHistoricalPerformance($department->id, $year);
+        return [
+            // 'department' => $department,
+            'month' => $month,
+            'year' => $year,
+            'employee_count' => $employeeCount,
+            'overall_score' => $overallScore,
+            'sections' => $sections,
+            'kpi_achievement' => $kpiAchievement,
+            'insights' => $insights,
+        ];
+    }
 
+    public function calculateDepartmentHistoricalPerformance($department, $year){
+        // Add historical data
+        $historical = $this->teamCalculator->getDepartmentHistoricalPerformance($department->id, $year);
+
+        return $historical;
         // Create or update performance record
         // $performanceRecord = PerformanceRecord::updateOrCreate(
         //     [
@@ -166,19 +180,8 @@ class PerformanceMetricsService {
         //         ]
         //     ]
         // );
-
-        return [
-            // 'department' => $department,
-            'month' => $month,
-            'year' => $year,
-            'employee_count' => $employeeCount,
-            'overall_score' => $overallScore,
-            'sections' => $sections,
-            'kpi_achievement' => $kpiAchievement,
-            'insights' => $insights,
-            'historical' => $historical ?? []
-        ];
     }
+
 
     /**
      * Run monthly performance calculations for all employees and departments
@@ -204,7 +207,7 @@ class PerformanceMetricsService {
     //         // Calculate for all departments
     //         EmployerJobcode::chunk(50, function($departments) use ($year, $month) {
     //             foreach ($departments as $department) {
-    //                 $this->teamCalculator->calculateDepartmentPerformance($department, $year, $month);
+    //                 $this->calculateDepartmentPerformance($department, $year, $month);
     //             }
     //         });
 

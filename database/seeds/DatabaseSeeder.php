@@ -12,24 +12,25 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        $this->call(EvaluationQuestionBankSeeder::class);
+        $this->call(PerformanceRecordSeeder::class);
+        // $this->call(EvaluationQuestionBankSeeder::class);
 
-        $this->call(CountrySeeder::class);
-		$this->call(StateSeeder::class);
-        $this->call(TimezoneSeeder::class);
+        // $this->call(CountrySeeder::class);
+		// $this->call(StateSeeder::class);
+        // $this->call(TimezoneSeeder::class);
 
-        $this->call(RoleAndPermissionSeeder::class);
-        $this->call(UserSeeder::class);
+        // $this->call(RoleAndPermissionSeeder::class);
+        // $this->call(UserSeeder::class);
 
-        $this->call(SkillSeeder::class);
-        $this->call(IndustrySeeder::class);
-        $this->call(JobTitleSeeder::class);
-        $this->call(DegreeSeeder::class);
-        $this->call(CourseOfStudySeeder::class);
-        $this->call(CertificationCourseSeeder::class);
-        $this->call(LanguageSeeder::class);
-        $this->call(SubscriptionPlanSeeder::class);
-        $this->call(ReferenceQuestionSeeder::class);
+        // $this->call(SkillSeeder::class);
+        // $this->call(IndustrySeeder::class);
+        // $this->call(JobTitleSeeder::class);
+        // $this->call(DegreeSeeder::class);
+        // $this->call(CourseOfStudySeeder::class);
+        // $this->call(CertificationCourseSeeder::class);
+        // $this->call(LanguageSeeder::class);
+        // $this->call(SubscriptionPlanSeeder::class);
+        // $this->call(ReferenceQuestionSeeder::class);
 
         // php artisan db:seed --class=UserSeeder
         // php artisan db:seed --class=ReferenceQuestionSeeder

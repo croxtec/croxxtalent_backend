@@ -85,15 +85,14 @@ class PerformanceController extends Controller
     public function getDepartmentSkillAnalysis(Request $request)
     {
         try {
+            $employer = $request->user();
             $departmentId = $request->input('uid');
             $month = $request->input('month', Carbon::now()->month);
             $year = $request->input('year', Carbon::now()->year);
 
+            $departmentId = $this->getDepartmentId($request, $employer);
             $department = EmployerJobcode::with(['technical_skill','soft_skill'])
                                 ->findOrFail($departmentId);
-
-            // Get all employees in department
-            // $employees = Employee::where('job_code_id', $departmentId)->get();
 
             $overview = $this->performanceMetric->calculateDepartmentAnalysis($department, $year, $month);
 
@@ -116,15 +115,14 @@ class PerformanceController extends Controller
     public function getDepartmentPerformance(Request $request)
     {
         try {
+            $employer = $request->user();
             $departmentId = $request->input('uid');
             $month = $request->input('month', Carbon::now()->month);
             $year = $request->input('year', Carbon::now()->year);
 
+            $departmentId = $this->getDepartmentId($request, $employer);
             $department = EmployerJobcode::with(['technical_skill','soft_skill'])
                                 ->findOrFail($departmentId);
-
-            // Get all employees in department
-            // $employees = Employee::where('job_code_id', $departmentId)->get();
 
             $performance = $this->performanceMetric->calculateDepartmentPerformance($department, $year, $month);
 
@@ -141,5 +139,45 @@ class PerformanceController extends Controller
         }
     }
 
+    public function getDepartmentHistoricalPerformance(Request $request)
+    {
+        try {
+            $employer = $request->user();
+            $departmentId = $request->input('uid');
+            $month = $request->input('month', Carbon::now()->month);
+            $year = $request->input('year', Carbon::now()->year);
+
+            $departmentId = $this->getDepartmentId($request, $employer);
+            $department = EmployerJobcode::with(['technical_skill','soft_skill'])
+                                ->findOrFail($departmentId);
+
+            $performance = $this->performanceMetric->calculateDepartmentHistoricalPerformance($department, $year, $month);
+
+            return response()->json([
+                'status' => true,
+                'data' => $performance
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => "Error calculating department performance: " . $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    private function getDepartmentId($request, $employer)
+    {
+        $departmentId = $request->input('uid') ?? $employer->default_company_id;
+
+        if ($request->input('uid')) {
+            $employer->default_company_id = $departmentId;
+            $employer->save();
+        }
+
+        return $departmentId ?: EmployerJobcode::where('employer_id', $employer->id)
+            ->value('id');
+    }
 
 }

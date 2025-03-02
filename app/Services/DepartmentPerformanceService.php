@@ -388,7 +388,7 @@ class DepartmentPerformanceService
                 'department_achievement_rate' => $avgAchievement,
                 'status' => $this->calculator->getKPIStatus($avgAchievement),
                 'employee_participation' => count($employeeAchievements),
-                'employee_achievements' => $employeeAchievements
+                // 'employee_achievements' => $employeeAchievements
             ];
         }
 

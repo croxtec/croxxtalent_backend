@@ -196,9 +196,10 @@ class ReportAnalysisController extends Controller
                     $avgSoft
                 );
 
-                // Save each employee's distribution data
                 $employeesDistribution[] = [
                     'employee_id' => $employee->id,
+                    'employee_code' => $employee->code,
+                    'photo_url' => $employee->photo_url,
                     'name' => $employee->name,
                     'role' => $employee->department_role?->name,
                     'technical_distribution' => $technicalDistribution,
@@ -210,10 +211,6 @@ class ReportAnalysisController extends Controller
                     //     'overall' => round($employeeOverall, 2),
                     // ],
                 ];
-
-                // Collect scores for overall aggregation
-                // $allTechnicalScores[] = $avgTechnical;
-                // $allSoftScores[] = $avgSoft;
             }
 
 
@@ -289,7 +286,7 @@ class ReportAnalysisController extends Controller
         // Find strengths (scores above 80)
         $strengths = [];
         foreach ($technical_distribution['categories'] as $index => $skill) {
-            if ($technical_distribution['assessment_distribution'][$index] >= 80) {
+            if ($technical_distribution['assessment_distribution'][$index] >= 30) {
                 $strengths[] = [
                     'skill' => $skill,
                     'score' => $technical_distribution['assessment_distribution'][$index],
@@ -299,7 +296,7 @@ class ReportAnalysisController extends Controller
         }
 
         foreach ($soft_distribution['categories'] as $index => $skill) {
-            if ($soft_distribution['assessment_distribution'][$index] >= 80) {
+            if ($soft_distribution['assessment_distribution'][$index] >= 30) {
                 $strengths[] = [
                     'skill' => $skill,
                     'score' => $soft_distribution['assessment_distribution'][$index],
@@ -311,7 +308,7 @@ class ReportAnalysisController extends Controller
         // Find improvement areas (scores below 60)
         $improvement_areas = [];
         foreach ($technical_distribution['categories'] as $index => $skill) {
-            if ($technical_distribution['assessment_distribution'][$index] < 60 &&
+            if ($technical_distribution['assessment_distribution'][$index] < 10 &&
                 $technical_distribution['assessment_distribution'][$index] > 0) {
                 $improvement_areas[] = [
                     'skill' => $skill,
@@ -322,7 +319,7 @@ class ReportAnalysisController extends Controller
         }
 
         foreach ($soft_distribution['categories'] as $index => $skill) {
-            if ($soft_distribution['assessment_distribution'][$index] < 60 &&
+            if ($soft_distribution['assessment_distribution'][$index] < 10 &&
                 $soft_distribution['assessment_distribution'][$index] > 0) {
                 $improvement_areas[] = [
                     'skill' => $skill,
@@ -499,8 +496,7 @@ class ReportAnalysisController extends Controller
         return $employeeIds;
     }
 
-    // The rest of the helper methods remain the same
-    // ...
+
     private function getDepartmentId($request, $employer)
     {
         $departmentId = $request->input('department') ?? $employer->default_company_id;
