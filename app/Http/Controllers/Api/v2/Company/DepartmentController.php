@@ -113,12 +113,18 @@ class DepartmentController extends Controller
     {
         $employer = $request->user();
 
-        if (is_numeric($id)) {
+        if (empty($id) || $id === 'undefined') {
+            $department = Department::where('employer_id', $employer->id)
+                ->select(['id', 'job_code', 'job_title', 'description'])
+                ->firstOrFail();
+        } elseif (is_numeric($id)) {
             $department = Department::where('id', $id)->where('employer_id', $employer->id)
-                ->select(['id','job_code', 'job_title', 'description'])->firstOrFail();
+                ->select(['id', 'job_code', 'job_title', 'description'])
+            ->firstOrFail();
         } else {
             $department = Department::where('job_title', $id)->where('employer_id', $employer->id)
-                ->select(['id','job_code', 'job_title', 'description'])->firstOrFail();
+                ->select(['id', 'job_code', 'job_title', 'description'])
+                ->firstOrFail();
         }
 
         $department->roles;

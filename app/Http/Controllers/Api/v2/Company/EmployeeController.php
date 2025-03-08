@@ -201,7 +201,9 @@ class EmployeeController extends Controller
     {
         $employer = $request->user();
 
-        if (is_numeric($id)) {
+        if (empty($id) || $id === 'undefined') {
+            $employee = Employee::where('employer_id', $employer->id)->firstOrFail();
+        } elseif (is_numeric($id)) {
             $employee = Employee::where('id', $id)->where('employer_id', $employer->id)->firstOrFail();
         } else {
             $employee = Employee::where('code', $id)->where('employer_id', $employer->id)->firstOrFail();
