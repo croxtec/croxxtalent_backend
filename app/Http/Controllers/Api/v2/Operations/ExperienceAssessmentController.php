@@ -110,7 +110,6 @@ class ExperienceAssessmentController extends Controller
     public function store(ExperienceAssessmentRequest $request)
     {
         try {
-
             $assessment =$this->assessmentService->store($request);
 
             return response()->json([

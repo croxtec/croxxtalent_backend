@@ -32,7 +32,8 @@ class PerformanceController extends Controller
     public function getEmployeeKPIPerformance(Request $request)
     {
         try {
-            $employeeId = $request->input('uid');
+            $employeeId = $request->input('uid')
+    ?: Employee::where('employer_id', $employer->id)->value('id');
             $month = $request->input('month', Carbon::now()->month);
             $year = $request->input('year', Carbon::now()->year);
 
@@ -57,7 +58,8 @@ class PerformanceController extends Controller
     public function getEmployeeFeedbackPerformance(Request $request)
     {
         try {
-            $employeeId = $request->input('uid');
+            $employeeId = $request->input('uid')
+    ?: Employee::where('employer_id', $employer->id)->value('id');
             $month = $request->input('month', Carbon::now()->month);
             $year = $request->input('year', Carbon::now()->year);
 
@@ -169,15 +171,18 @@ class PerformanceController extends Controller
 
     private function getDepartmentId($request, $employer)
     {
-        $departmentId = $request->input('uid') ?? $employer->default_company_id;
+        $departmentId = $request->input('department') ?? $request->input('uid') ?? $employer->default_company_id;
 
-        if ($request->input('uid')) {
+        $departmentExists = EmployerJobcode::where('employer_id', $employer->id)
+                                      ->where('id', $departmentId)
+                                      ->exists();
+
+        if ($departmentExists && $departmentId !== $employer->default_company_id) {
             $employer->default_company_id = $departmentId;
             $employer->save();
         }
 
-        return $departmentId ?: EmployerJobcode::where('employer_id', $employer->id)
-            ->value('id');
+        return $departmentExists ? $departmentId : EmployerJobcode::where('employer_id', $employer->id)->value('id');
     }
 
 }

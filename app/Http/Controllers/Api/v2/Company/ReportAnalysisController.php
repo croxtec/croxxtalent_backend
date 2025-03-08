@@ -120,7 +120,8 @@ class ReportAnalysisController extends Controller
     {
         try {
             $employer = $request->user();
-            $employeeId = $request->input('uid');
+            $employeeId = $request->input('uid')
+                ?: Employee::where('employer_id', $employer->id)->value('id');
 
             $employee = Employee::with('department.technical_skill', 'department.soft_skill')
                     ->where('code', $employeeId)
@@ -499,15 +500,18 @@ class ReportAnalysisController extends Controller
 
     private function getDepartmentId($request, $employer)
     {
-        $departmentId = $request->input('department') ?? $employer->default_company_id;
+        $departmentId = $request->input('department') ?? $request->input('uid') ?? $employer->default_company_id;
 
-        if ($request->input('department')) {
+        $departmentExists = Department::where('employer_id', $employer->id)
+                                      ->where('id', $departmentId)
+                                      ->exists();
+
+        if ($departmentExists && $departmentId !== $employer->default_company_id) {
             $employer->default_company_id = $departmentId;
             $employer->save();
         }
 
-        return $departmentId ?: Department::where('employer_id', $employer->id)
-            ->value('id');
+        return $departmentExists ? $departmentId : Department::where('employer_id', $employer->id)->value('id');
     }
 
    private function getCompetencyData($department, $type = 'technical_skill')
