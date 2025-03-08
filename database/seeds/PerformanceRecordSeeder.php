@@ -1,6 +1,7 @@
 <?php
 namespace Database\Seeders;
 
+use App\Models\Employee;
 use Illuminate\Database\Seeder;
 
 use App\Models\EmployerJobcode;
@@ -11,8 +12,8 @@ class PerformanceRecordSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     */
-
+     *
+    */
     public function run(): void
     {
         // Sample department IDs - replace with actual IDs from your database
@@ -112,7 +113,7 @@ class PerformanceRecordSeeder extends Seeder
 
         $record = new PerformanceRecord();
         $record->recordable_id = $employeeId;
-        $record->recordable_type = User::class;
+        $record->recordable_type = Employee::class;
         $record->year = $year;
         $record->month = $month;
         $record->overall_score = max(0, min(100, $baseScore + $variance));

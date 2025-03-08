@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Competency\DepartmentMapping;
 use App\Models\Employee;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -39,8 +40,6 @@ class PerformanceMetricsService {
 
         $insights = $this->calculator->generateEmployeeInsights($employee, $sections, $overallScore, $startDate, $endDate);
 
-        // Add historical performance data
-        // $historical = $this->calculator->getEmployeeHistoricalPerformance($employee->id, $year);
 
         return [
             // 'employee' => $employee,
@@ -57,6 +56,9 @@ class PerformanceMetricsService {
     {
         $startDate = Carbon::create('2024', $month, 1)->startOfMonth();
         $endDate = Carbon::create($year, $month, 1)->endOfMonth();
+        $mappings = DepartmentMapping::where('department_id', $employee->job_code_id)
+                ->whereNotNull('competency')
+                ->get();
 
         // Calculate metrics for each section
         $sections = [
@@ -67,12 +69,10 @@ class PerformanceMetricsService {
 
         // Calculate overall score
         $overallScore = $this->calculator->calculateOverallScore($sections);
-
+        // Add KPI achievement metrics
+        $kpiAchievement = []; //$this->calculator->calculateEmployeeKPIAchievement($employee->id, $mappings, $startDate, $endDate);
         // Add performance insights
         $insights = $this->calculator->generateEmployeeInsights($employee, $sections, $overallScore, $startDate, $endDate);
-
-        // Add historical performance data
-        // $historical = $this->calculator->getEmployeeHistoricalPerformance($employee->id, $year);
 
         return [
             'employee' => $employee,
@@ -80,8 +80,8 @@ class PerformanceMetricsService {
             'year' => $year,
             'overall_score' => $overallScore,
             'sections' => $sections,
+            'kpi_achievement' => $kpiAchievement,
             'insights' => $insights,
-            'historical' => $historical ?? []
         ];
     }
 
@@ -100,7 +100,6 @@ class PerformanceMetricsService {
 
         $overallScore = $this->calculator->calculateOverallScore($sections);
 
-        // Add performance insights
         $insights = $this->teamCalculator->generateDepartmentInsights($department, $sections, $overallScore);
 
         return [
@@ -127,7 +126,7 @@ class PerformanceMetricsService {
 
         // Calculate department sections
         $sections = [
-            'assessments' => $this->teamCalculator->calculateDepartmentAssessmentMetrics($department->id, $startDate, $endDate),
+            // 'assessments' => $this->teamCalculator->calculateDepartmentAssessmentMetrics($department->id, $startDate, $endDate),
             'peer_reviews' => $this->teamCalculator->calculateDepartmentPeerReviewMetrics($department->id, $startDate, $endDate),
             'goals' => $this->teamCalculator->calculateDepartmentGoalMetrics($department->id, $startDate, $endDate),
             'projects' => $this->teamCalculator->calculateDepartmentProjectMetrics($department->id, $startDate, $endDate),
@@ -156,9 +155,14 @@ class PerformanceMetricsService {
     }
 
     public function calculateDepartmentHistoricalPerformance($department, $year){
-        // Add historical data
         // $historical = $this->teamCalculator->getDepartmentHistoricalPerformance($department->id, $year);
         $summary = $this->teamCalculator->getDepartmentHistoricalSummary($department->id, $year);
+        return $summary;
+    }
+
+    public function calculateEmployeeHistoricalPerformance($employee, $year){
+        // $historical = $this->teamCalculator->getemployeeHistoricalPerformance($employee->id, $year);
+        $summary = $this->calculator->getEmployeeHistoricalSummary($employee->id, $year);
         return $summary;
     }
 

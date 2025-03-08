@@ -43,7 +43,7 @@ class PerformanceCalculatorService
         }])
         ->get();
 
-        $completedCount = $assessments->count(); // All retrieved assessments have feedbacks
+        $completedCount = $assessments->count();
         $totalCount = $assessments->count();
 
 
@@ -282,10 +282,9 @@ class PerformanceCalculatorService
     {
         // Calculate actual value for this KPI
         $actual = $this->getKPIActualValue($employeeId, $mapping, $startDate, $endDate);
-        // Use target_score from the mapping object based on the sample data
+
         $target = $mapping->target_score ?? 75;
 
-        // Calculate achievement rate (capped at 100%)
         $achievementRate = $target > 0 ? min(($actual / $target) * 100, 100) : 0;
 
         // Return a single KPI achievement array
@@ -304,6 +303,7 @@ class PerformanceCalculatorService
      */
     public function getKPIActualValue($employeeId, $kpi, $startDate, $endDate)
     {
+        // info(["KPI Status", $kpi?->type]);
         return match($kpi?->type) {
             'task_completion' => DB::table('tasks')
                 ->where('assigned_to', $employeeId)
@@ -577,7 +577,16 @@ class PerformanceCalculatorService
      */
     public function generateEmployeeInsights($employee, $sections, $overallScore, $startDate, $endDate)
     {
-        $insights = [];
+        $insights = [
+            'assessments' => [],
+            'peer_reviews' => [],
+            'goals' => [],
+            'trainings' => [],
+            'projects' => [],
+            'competencies' => [],
+            'kpi' => [],
+            'overall' => []
+        ];
 
         // Assessment insights
         if (isset($sections['assessments'])) {
@@ -585,13 +594,13 @@ class PerformanceCalculatorService
             $completionRate = $sections['assessments']['completion_rate'] ?? 0;
 
             if ($assessmentScore >= 90) {
-                $insights[] = "Exceptional assessment scores indicating strong technical knowledge.";
+                $insights['assessments'][] = "Exceptional assessment scores indicating strong technical knowledge.";
             } elseif ($assessmentScore < 70) {
-                $insights[] = "Consider focused skill development to improve assessment scores.";
+                $insights['assessments'][] = "Consider focused skill development to improve assessment scores.";
             }
 
             if ($completionRate < 80) {
-                $insights[] = "Improve assessment completion rate to better evaluate skills.";
+                $insights['assessments'][] = "Improve assessment completion rate to better evaluate skills.";
             }
         }
 
@@ -601,13 +610,13 @@ class PerformanceCalculatorService
             $trend = $sections['peer_reviews']['trend']['direction'] ?? 'stable';
 
             if ($reviewScore >= 85) {
-                $insights[] = "Well-regarded by peers with consistently positive feedback.";
+                $insights['peer_reviews'][] = "Well-regarded by peers with consistently positive feedback.";
             } elseif ($reviewScore < 65) {
-                $insights[] = "Consider improving collaboration and communication with peers.";
+                $insights['peer_reviews'][] = "Consider improving collaboration and communication with peers.";
             }
 
             if ($trend === 'down') {
-                $insights[] = "Declining peer review scores may indicate interpersonal challenges.";
+                $insights['peer_reviews'][] = "Declining peer review scores may indicate interpersonal challenges.";
             }
         }
 
@@ -617,13 +626,13 @@ class PerformanceCalculatorService
             $inProgressCount = $sections['goals']['in_progress'] ?? 0;
 
             if ($completionRate >= 90) {
-                $insights[] = "Excellent at achieving set goals and objectives.";
+                $insights['goals'][] = "Excellent at achieving set goals and objectives.";
             } elseif ($completionRate < 60) {
-                $insights[] = "Focus on goal completion to improve overall performance.";
+                $insights['goals'][] = "Focus on goal completion to improve overall performance.";
             }
 
             if ($inProgressCount > 5) {
-                $insights[] = "Consider prioritizing current goals before taking on new ones.";
+                $insights['goals'][] = "Consider prioritizing current goals before taking on new ones.";
             }
         }
 
@@ -633,13 +642,13 @@ class PerformanceCalculatorService
             $onTimeRate = $sections['projects']['on_time_completion_rate'] ?? 0;
 
             if ($onTimeRate >= 90) {
-                $insights[] = "Consistently delivers project tasks on or ahead of schedule.";
+                $insights['projects'][] = "Consistently delivers project tasks on or ahead of schedule.";
             } elseif ($onTimeRate < 70) {
-                $insights[] = "Work on time management to improve on-time task delivery.";
+                $insights['projects'][] = "Work on time management to improve on-time task delivery.";
             }
 
             if ($taskCompletion < 60) {
-                $insights[] = "Focus on completing assigned project tasks to improve contribution.";
+                $insights['projects'][] = "Focus on completing assigned project tasks to improve contribution.";
             }
         }
 
@@ -649,25 +658,25 @@ class PerformanceCalculatorService
             $trend = $sections['competencies']['trend']['direction'] ?? 'stable';
 
             if ($competencyScore >= 85) {
-                $insights[] = "Demonstrates strong proficiency in key competencies for the role.";
+                $insights['competencies'] = "Demonstrates strong proficiency in key competencies for the role.";
             } elseif ($competencyScore < 65) {
-                $insights[] = "Targeted development in core competencies could enhance performance.";
+                $insights['competencies'] = "Targeted development in core competencies could enhance performance.";
             }
 
             if ($trend === 'up') {
-                $insights[] = "Showing positive development in role-specific competencies.";
+                $insights['competencies'] = "Showing positive development in role-specific competencies.";
             }
         }
 
         // Overall performance insights
         if ($overallScore >= 90) {
-            $insights[] = "Outstanding overall performance across all evaluation areas.";
+            $insights['overall'] = "Outstanding overall performance across all evaluation areas.";
         } elseif ($overallScore >= 80) {
-            $insights[] = "Strong performer with consistent results across multiple areas.";
+            $insights['overall'] = "Strong performer with consistent results across multiple areas.";
         } elseif ($overallScore >= 70) {
-            $insights[] = "Solid performance with opportunities for targeted improvement.";
+            $insights['overall'] = "Solid performance with opportunities for targeted improvement.";
         } elseif ($overallScore < 60) {
-            $insights[] = "Performance improvement plan recommended to address key areas.";
+            $insights['overall'] = "Performance improvement plan recommended to address key areas.";
         }
 
         // Check for balanced or unbalanced performance
@@ -685,6 +694,12 @@ class PerformanceCalculatorService
             $insights[] = "Performance varies significantly across different areas; consider more balanced development.";
         } elseif ($stdDev < 10 && $overallScore >= 75) {
             $insights[] = "Shows consistently strong performance across all evaluation categories.";
+        }
+
+        foreach ($insights as $key => $value) {
+            if (empty($value)) {
+                unset($insights[$key]);
+            }
         }
 
         return $insights;
@@ -755,11 +770,55 @@ class PerformanceCalculatorService
 
         return sqrt($variance);
     }
+
+    public function getEmployeeHistoricalSummary($employeeId, $year)
+    {
+        $historicalRecords = PerformanceRecord::where('recordable_id', $employeeId)
+            ->where('recordable_type', Employee::class)
+            ->where('year', $year)
+            ->orderBy('month')
+            ->get();
+
+        if ($historicalRecords->isEmpty()) {
+            return [];
+        }
+
+        $monthNames = [
+            1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'May', 6 => 'Jun',
+            7 => 'Jul', 8 => 'Aug', 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dec'
+        ];
+
+        $formattedData = [];
+
+        $categories = [
+            'overall_score' => 'Overall',
+            'assessment_score' => 'Assessment',
+            'peer_review_score' => 'Peer Review',
+            'kpi_overall_achievement' => 'KPI Achievement'
+        ];
+
+        // Process each record
+        foreach ($historicalRecords as $record) {
+            $month = $monthNames[$record->month];
+
+            // For each category, add a data point
+            foreach ($categories as $field => $label) {
+                $formattedData[] = [
+                    'historical' => $month,
+                    'category' => $label,
+                    'score' => round($record->$field, 1)
+                ];
+            }
+        }
+
+        return $formattedData;
+    }
+
+
+
 }
 
 // Waste
-
-
     /**
      * Calculate department project metrics
      */

@@ -32,8 +32,9 @@ class PerformanceController extends Controller
     public function getEmployeeKPIPerformance(Request $request)
     {
         try {
+            $employer = $request->user();
             $employeeId = $request->input('uid')
-    ?: Employee::where('employer_id', $employer->id)->value('id');
+                ?: Employee::where('employer_id', $employer->id)->value('id');
             $month = $request->input('month', Carbon::now()->month);
             $year = $request->input('year', Carbon::now()->year);
 
@@ -58,8 +59,9 @@ class PerformanceController extends Controller
     public function getEmployeeFeedbackPerformance(Request $request)
     {
         try {
+            $employer = $request->user();
             $employeeId = $request->input('uid')
-    ?: Employee::where('employer_id', $employer->id)->value('id');
+                ?: Employee::where('employer_id', $employer->id)->value('id');
             $month = $request->input('month', Carbon::now()->month);
             $year = $request->input('year', Carbon::now()->year);
 
@@ -80,6 +82,34 @@ class PerformanceController extends Controller
             ], 500);
         }
     }
+
+    public function getEmployeeHistoricalPerformance(Request $request)
+    {
+        try {
+            $employer = $request->user();
+            $employeeId = $request->input('uid')
+                ?: Employee::where('employer_id', $employer->id)->value('id');
+            $month = $request->input('month', Carbon::now()->month);
+            $year = $request->input('year', Carbon::now()->year);
+
+
+            $employee = Employee::with('department')->where('code', $employeeId)->firstOrFail();
+
+            $performance = $this->performanceMetric->calculateEmployeeHistoricalPerformance($employee, $year, $month);
+
+            return response()->json([
+                'status' => true,
+                'data' => $performance
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => "Error calculating department performance: " . $e->getMessage()
+            ], 500);
+        }
+    }
+
 
     /**
      * Get department performance breakdown
@@ -167,7 +197,6 @@ class PerformanceController extends Controller
             ], 500);
         }
     }
-
 
     private function getDepartmentId($request, $employer)
     {

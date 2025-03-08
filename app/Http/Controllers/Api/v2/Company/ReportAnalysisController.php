@@ -423,13 +423,27 @@ class ReportAnalysisController extends Controller
         $technicalGaps = [];
         $softSkillGaps = [];
 
-        // Process each competency
+        // Process each competency regardless of whether it has assessments
         foreach ($competencies as $competency) {
             // Calculate gap data
             $gapData = $this->calculateCompetencyGap($competency, $assessments, $employee->level);
 
-            // Skip if no data was found
-            if (!$gapData) continue;
+            // If no data was found, create a consistent data structure with null values
+            if (!$gapData) {
+                $isCore = ($competency->level ==  $employee->level);
+                $gapData = [
+                    'id' => $competency->id,
+                    'name' => $competency->competency,
+                    'description' => $competency->description,
+                    'level' => $employee->level,
+                    'current_score' => round(0, 2),
+                    'expected_score' => 10,
+                    'gap' => round(0, 2),
+                    'is_core' => $isCore,
+                    'assessments_count' => 0,
+                    'last_assessment_date' => null
+                ];
+            }
 
             // Categorize as technical or soft skill
             if ($technicalCompetencies->contains('id', $competency->id)) {
@@ -460,7 +474,7 @@ class ReportAnalysisController extends Controller
                 ->first();
 
             if (!$employee) {
-                continue; // Skip invalid employees
+                continue;
             }
 
             $department = $employee->department;
