@@ -157,29 +157,9 @@ class PerformanceMetricsService {
 
     public function calculateDepartmentHistoricalPerformance($department, $year){
         // Add historical data
-        $historical = $this->teamCalculator->getDepartmentHistoricalPerformance($department->id, $year);
-
-        return $historical;
-        // Create or update performance record
-        // $performanceRecord = PerformanceRecord::updateOrCreate(
-        //     [
-        //         'recordable_id' => $department->id,
-        //         'recordable_type' => EmployerJobcode::class,
-        //         'year' => $year,
-        //         'month' => $month,
-        //     ],
-        //     [
-        //         'overall_score' => $overallScore,
-        //         'sections' => $sections,
-        //         'kpi_achievement' => $kpiAchievement,
-        //         'insights' => $insights,
-        //         'historical' => $historical,
-        //         'metadata' => [
-        //             'employee_count' => $employeeCount,
-        //             'calculated_at' => now()
-        //         ]
-        //     ]
-        // );
+        // $historical = $this->teamCalculator->getDepartmentHistoricalPerformance($department->id, $year);
+        $summary = $this->teamCalculator->getDepartmentHistoricalSummary($department->id, $year);
+        return $summary;
     }
 
 

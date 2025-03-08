@@ -814,14 +814,41 @@ class DepartmentPerformanceService
             ];
         }
 
-        $monthlyScores = $historicalRecords->map(function($record) {
-            return [
-                'month' => $record->month,
-                'score' => $record->overall_score
-            ];
-        });
+        // Format data for chart consumption
+        $monthlyScores = [
+            'labels' => [],
+            'datasets' => [
+                [
+                    'label' => 'Overall Score',
+                    'data' => []
+                ],
+                [
+                    'label' => 'Assessment Score',
+                    'data' => []
+                ],
+                [
+                    'label' => 'Peer Review Score',
+                    'data' => []
+                ]
+            ]
+        ];
 
-        $averageScore = $historicalRecords->avg('overall_score');
+        // Map month numbers to names for better readability
+        $monthNames = [
+            1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'May', 6 => 'Jun',
+            7 => 'Jul', 8 => 'Aug', 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dec'
+        ];
+
+        // Populate the datasets
+        foreach ($historicalRecords as $record) {
+            $monthlyScores['labels'][] = $monthNames[$record->month];
+            $monthlyScores['datasets'][0]['data'][] = round($record->overall_score, 1);
+            $monthlyScores['datasets'][1]['data'][] = round($record->assessment_score, 1);
+            $monthlyScores['datasets'][2]['data'][] = round($record->peer_review_score, 1);
+        }
+
+        // Calculate additional metrics
+        $averageScore = round($historicalRecords->avg('overall_score'), 1);
 
         // Calculate trend
         $firstHalf = $historicalRecords->filter(fn($r) => $r->month <= 6)->avg('overall_score') ?? 0;
@@ -834,11 +861,72 @@ class DepartmentPerformanceService
             $trend = 'declining';
         }
 
+        // Include raw data for any custom processing
+        $rawData = $historicalRecords->map(function($record) {
+            return [
+                'month' => $record->month,
+                'overall_score' => $record->overall_score,
+                'assessment_score' => $record->assessment_score,
+                'peer_review_score' => $record->peer_review_score,
+                'goal_completion_rate' => $record->goal_completion_rate,
+                'project_completion_rate' => $record->project_completion_rate,
+                'kpi_overall_achievement' => $record->kpi_overall_achievement,
+                // Add any other metrics you'd like to include
+            ];
+        });
+
         return [
             'monthly_scores' => $monthlyScores,
+            'raw_data' => $rawData,
             'average_score' => $averageScore,
             'trend' => $trend
         ];
+    }
+
+    public function getDepartmentHistoricalSummary($departmentId, $year)
+    {
+        $historicalRecords = PerformanceRecord::where('recordable_id', $departmentId)
+        ->where('recordable_type', EmployerJobcode::class)
+        ->where('year', $year)
+        ->orderBy('month')
+        ->get();
+
+    if ($historicalRecords->isEmpty()) {
+        return [];
+    }
+
+    // Map month numbers to names for better readability
+    $monthNames = [
+        1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'May', 6 => 'Jun',
+        7 => 'Jul', 8 => 'Aug', 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dec'
+    ];
+
+    // Create a simplified data structure with only what the frontend needs
+    $formattedData = [];
+
+    // Categories to include in the chart
+    $categories = [
+        'overall_score' => 'Overall',
+        'assessment_score' => 'Assessment',
+        'peer_review_score' => 'Peer Review',
+        'kpi_overall_achievement' => 'KPI Achievement'
+    ];
+
+    // Process each record
+    foreach ($historicalRecords as $record) {
+        $month = $monthNames[$record->month];
+
+        // For each category, add a data point
+        foreach ($categories as $field => $label) {
+            $formattedData[] = [
+                'historical' => $month,
+                'category' => $label,
+                'score' => round($record->$field, 1)
+            ];
+        }
+    }
+
+    return $formattedData;
     }
 
 }
