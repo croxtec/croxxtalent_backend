@@ -432,12 +432,11 @@ class ReportAnalysisController extends Controller
             if (!$gapData) {
                 $isCore = ($competency->level ==  $employee->level);
                 $gapData = [
-                    'id' => $competency->id,
-                    'name' => $competency->competency,
-                    'description' => $competency->description,
-                    'level' => $employee->level,
+                    'competency_name' => $competency->competency,
+                    'competency_description' => $competency->description,
+                    // 'competency_level' => $competency->level,
                     'current_score' => round(0, 2),
-                    'expected_score' => 10,
+                    'expected_score' => $competency->target_score ?? 75,
                     'gap' => round(0, 2),
                     'is_core' => $isCore,
                     'assessments_count' => 0,
@@ -636,6 +635,7 @@ class ReportAnalysisController extends Controller
         return [
             'competency_name' => $competency->competency,
             'competency_description' => $competency->description,
+            // 'competency_level' => $competency->level,
             'current_score' => round($averageScore, 2),
             'expected_score' => $expectedScore,
             'gap' => round($gap, 2),
