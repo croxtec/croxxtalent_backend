@@ -127,17 +127,25 @@ class ReportAnalysisController extends Controller
                     ->where('code', $employeeId)
                     ->where('employer_id', $employer->id)
                     ->firstOrFail();
-
+            // Gaps
             $department = $employee->department;
             $competencyGaps = $this->processEmployeeCompetencyGaps($employee, $department);
-
-            $allGaps = array_merge($competencyGaps['technical'], $competencyGaps['soft_skill']);
+            $allGaps = array_merge($competencyGaps['technical_skill'], $competencyGaps['soft_skill']);
+            // Distribution
+            $technicalSkills = $department->technical_skill->pluck('competency')->toArray();
+            $softSkills = $department->soft_skill->pluck('competency')->toArray();
+            $technicalDistribution = $this->calculateSkillDistribution($employee, $technicalSkills);
+            $softDistribution = $this->calculateSkillDistribution($employee, $softSkills, 'soft');
 
             return response()->json([
                 'status' => true,
                 'data' => [
                     'employee_id' => $employeeId,
                     'competency_gaps' => $competencyGaps,
+                    'distributions' => [
+                        'technical_skill' => $technicalDistribution,
+                        'soft_skill' => $softDistribution,
+                    ],
                     'average_gap' => round(collect($allGaps)->avg('gap'), 2),
                     'total_competencies' => count($allGaps),
                     'assessment_count' => $competencyGaps['assessment_count'],
@@ -453,7 +461,7 @@ class ReportAnalysisController extends Controller
         }
 
         return [
-            'technical' => $technicalGaps,
+            'technical_skill' => $technicalGaps,
             'soft_skill' => $softSkillGaps,
             'assessment_count' => $assessments->count()
         ];
@@ -483,7 +491,7 @@ class ReportAnalysisController extends Controller
             $results[] = [
                 'employee_id' => $employeeId,
                 'competency_gaps' => [
-                    'technical' => $competencyGaps['technical'],
+                    'technical_skill' => $competencyGaps['technical'],
                     'soft_skill' => $competencyGaps['soft_skill']
                 ],
                 'average_gap' => round(collect($allGaps)->avg('gap'), 2),

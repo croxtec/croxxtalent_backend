@@ -38,14 +38,17 @@ class PerformanceController extends Controller
             $month = $request->input('month', Carbon::now()->month);
             $year = $request->input('year', Carbon::now()->year);
 
+            // $employeePerformance = $this->performanceMetric->employeeKPIPerformance ($employee, $year, $month);
+
             // Get employee with department
             $employee = Employee::with('department')->where('code', $employeeId)->firstOrFail();
 
-            $employeePerformance = $this->performanceMetric->employeeKPIPerformance ($employee, $year, $month);
+            $performance = $this->performanceMetric->calculateEmployeeHistoricalPerformance($employee, $year, $month);
+
 
             return response()->json([
                 'status' => true,
-                'data' => $employeePerformance
+                'data' => $performance
             ]);
 
         } catch (\Exception $e) {

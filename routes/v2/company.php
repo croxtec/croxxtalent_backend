@@ -42,7 +42,7 @@ Route::middleware('auth:sanctum')->prefix('employers')->name('employers.')->grou
     Route::get('onboarding/welcome', 'Api\v2\EmployerCompetencyController@confirmWelcome')->name('confirm.welcome');
 
     // Route::get('competency/gap', 'Api\v2\EmployerCompetencyController@competency')->name('competency.skill');
-    Route::post('employee/{id}/resend-invit ation', 'Api\v2\Company\ManageEmployeeController@resendInvitation')->name('employee.resend_invitation');
+    Route::post('employee/{id}/resend-invitation', 'Api\v2\Company\ManageEmployeeController@resendInvitation')->name('employee.resend_invitation');
     // Route::patch('employee/{id}/archive', 'Api\v2\EmployeeController@archive')->name('employee.archive');
     // Route::patch('employee/{id}/unarchive', 'Api\v2\EmployeeController@unarchive')->name('employee.unarchive');
 });

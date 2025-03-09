@@ -771,7 +771,7 @@ class PerformanceCalculatorService
         return sqrt($variance);
     }
 
-    public function getEmployeeHistoricalSummary($employeeId, $year)
+    public function getEmployeeHistoricalSummary($employeeId, $year, $categories=[])
     {
         $historicalRecords = PerformanceRecord::where('recordable_id', $employeeId)
             ->where('recordable_type', Employee::class)
@@ -790,12 +790,14 @@ class PerformanceCalculatorService
 
         $formattedData = [];
 
-        $categories = [
-            'overall_score' => 'Overall',
-            'assessment_score' => 'Assessment',
-            'peer_review_score' => 'Peer Review',
-            'kpi_overall_achievement' => 'KPI Achievement'
-        ];
+        if(empty($categories)) {
+            $categories = [
+                'overall_score' => 'Overall',
+                'goal_completion_rate' => 'Goal Completion',
+                'peer_review_score' => 'Peer Review',
+                'kpi_overall_achievement' => 'KPI Achievement'
+            ];
+        }
 
         // Process each record
         foreach ($historicalRecords as $record) {

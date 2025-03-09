@@ -161,8 +161,24 @@ class PerformanceMetricsService {
     }
 
     public function calculateEmployeeHistoricalPerformance($employee, $year){
-        // $historical = $this->teamCalculator->getemployeeHistoricalPerformance($employee->id, $year);
-        $summary = $this->calculator->getEmployeeHistoricalSummary($employee->id, $year);
+        $categories = [
+            'overall_score' => 'Overall',
+            'goal_completion_rate' => 'Goal Completion',
+            'peer_review_score' => 'Peer Review',
+            'kpi_overall_achievement' => 'KPI Achievement'
+        ];
+        $summary = $this->calculator->getEmployeeHistoricalSummary($employee->id, $year, $categories);
+        return $summary;
+    }
+
+    public function calculateEmployeeHistoricalKpi($employee, $year){
+        $categories = [
+            'overall_score' => 'Overall',
+            'assessment_score' => 'Assessment',
+            'project_completion_rate' => 'Project Completion',
+            'training_score' => 'Training'
+        ];
+        $summary = $this->calculator->getEmployeeHistoricalSummary($employee->id, $year, $categories);
         return $summary;
     }
 
