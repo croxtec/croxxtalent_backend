@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 // Company
 Route::middleware('auth:sanctum')->prefix('employers')->name('employers.')->group( function () {
     Route::post('employee/import', 'Api\v2\Company\EmployeeController@importEmployees')->name('employee.import');
+
     Route::resources([
         'employee' => 'Api\v2\Company\EmployeeController',
         'supervisor' => 'Api\v2\Company\SupervisorController',
@@ -43,6 +44,7 @@ Route::middleware('auth:sanctum')->prefix('employers')->name('employers.')->grou
 
     // Route::get('competency/gap', 'Api\v2\EmployerCompetencyController@competency')->name('competency.skill');
     Route::post('employee/{id}/resend-invitation', 'Api\v2\Company\ManageEmployeeController@resendInvitation')->name('employee.resend_invitation');
-    // Route::patch('employee/{id}/archive', 'Api\v2\EmployeeController@archive')->name('employee.archive');
-    // Route::patch('employee/{id}/unarchive', 'Api\v2\EmployeeController@unarchive')->name('employee.unarchive');
+    // Route::patch('employee/{id}/archive', 'Api\v2\Company\EmployeeController@archive')->name('employee.archive');
+    // Route::patch('employee/{id}/unarchive', 'Api\v2\Company\EmployeeController@unarchive')->name('employee.unarchive');
+    Route::put('employee/{id}/status', 'Api\v2\Company\EmployeeController@updateStatus')->name('employee.update_status');
 });

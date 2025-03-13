@@ -43,7 +43,8 @@ class SupervisorRequest extends FormRequest
                 return [];
             case 'POST':
                 return [
-                    'supervisor_id' => 'required|exists:employees,id',
+                    'supervisor_ids' => 'required|array|min:1',
+                    'supervisor_ids.*' => 'required|distinct|exists:employees,id',
                     'type' => 'required|in:department,role,employees',
                     'department_id' => 'required_if:type,department,role|exists:employer_jobcodes,id',
                     'department_role_id' => 'nullable|required_if:type,role|exists:department_roles,id'
@@ -51,12 +52,14 @@ class SupervisorRequest extends FormRequest
             case 'PUT':
             case 'PATCH':
                 return [
-                    'supervisor_id' => 'required|exists:employees,id',
+                    'supervisor_ids' => 'required|array|min:1',
+                    'supervisor_ids.*' => 'required|distinct|exists:employees,id',
                     'type' => 'required|in:department,role,employees',
                     'department_id' => 'required_if:type,department,role|exists:employer_jobcodes,id',
                     'department_role_id' => 'nullable|required_if:type,role|exists:department_roles,id'
                 ];
-            default:break;
+            default:
+                break;
         }
     }
 

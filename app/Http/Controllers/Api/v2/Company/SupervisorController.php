@@ -94,27 +94,44 @@ class SupervisorController extends Controller
         $validatedData = $request->validated();
         $validatedData['employer_id'] = $employer->id;
 
-        $employee = Employee::where('id', $validatedData['supervisor_id'])->first();
-        $isSupervisor = Supervisor::where('supervisor_id', $validatedData['supervisor_id'])
-                             ->where('employer_id', $employer->id)->first();
+        // Check if any of the supervisors already exist
+        $existingSupervisors = Supervisor::whereIn('supervisor_id', $validatedData['supervisor_ids'])
+                                    ->where('employer_id', $employer->id)
+                                    ->pluck('supervisor_id')
+                                    ->toArray();
 
-        if(!$isSupervisor){
-            $supervisor =  Supervisor::create($validatedData);
+        if (!empty($existingSupervisors)) {
+            return response()->json([
+                "status" => false,
+                "message" => "Some supervisors already exist.",
+                "existing_supervisors" => $existingSupervisors
+            ], 422);
+        }
+
+        // Proceed to add all supervisors since none exists
+        $addedSupervisors = [];
+
+        foreach ($validatedData['supervisor_ids'] as $supervisorId) {
+            $employee = Employee::where('id', $supervisorId)->first();
+
+            $supervisorData = $validatedData;
+            $supervisorData['supervisor_id'] = $supervisorId;
+
+            $supervisor = Supervisor::create($supervisorData);
+
             $employee->supervisor_id = $supervisor->id;
             $employee->save();
 
-            return response()->json([
-                'status' => true,
-                'message' => "Supervisor added successfully.",
-                'data' => Employee::find($validatedData['supervisor_id'])
-            ], 201);
-        }  else{
-            return response()->json([
-                "status" => false,
-                "message" => 'Supervisor already exist'
-            ], 422);
+            $addedSupervisors[] = $employee;
         }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Supervisors added successfully.',
+            'data' => $addedSupervisors
+        ], 201);
     }
+
 
     /**
      * Update the specified resource in storage.

@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\Performance\PerformanceRecord;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
@@ -39,7 +38,7 @@ class Employee extends Model
     ];
 
     private const STATUS_LABELS = [
-        0 => 'Inactive',
+        0 => 'Pending',
         1 => 'Active',
         2 => 'On Leave',
         3 => 'Suspended',
@@ -48,7 +47,7 @@ class Employee extends Model
         6 => 'Retired',
         7 => 'Probation',
         8 => 'Contract Expired',
-        9 => 'Account Deactivated',
+        9 => 'Deactivated',
         10 => 'Transferred',
     ];
 

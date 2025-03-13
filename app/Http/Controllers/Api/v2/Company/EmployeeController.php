@@ -323,6 +323,44 @@ class EmployeeController extends Controller
         ], 201);
     }
 
+    private const STATUS_LABELS = [
+        0 => 'Pending',
+        1 => 'Active',
+        2 => 'On Leave',
+        3 => 'Suspended',
+        4 => 'Terminated',
+        5 => 'Resigned',
+        6 => 'Retired',
+        7 => 'Probation',
+        8 => 'Contract Expired',
+        9 => 'Account Deactivated',
+        10 => 'Transferred',
+    ];
+
+    public function updateStatus(Request $request, $id)
+    {
+        $employer = $request->user();
+
+        $validatedData = $request->validate([
+            'status' => ['required', 'integer', 'in:1,9'],
+        ]);
+
+        $employee = is_numeric($id)
+            ? Employee::where('id', $id)->where('employer_id', $employer->id)->firstOrFail()
+            : Employee::where('code', $id)->where('employer_id', $employer->id)->firstOrFail();
+
+        // Update status
+        $employee->status = $validatedData['status'];
+        $employee->save();
+
+        // Return response
+        return response()->json([
+            'status' => true,
+            'message' => "Employee \"{$employee->name}\" status updated to \"" . self::STATUS_LABELS[$employee->status] . "\" successfully.",
+            'data' => $employee->fresh()
+        ], 200);
+    }
+
     /**
      * Archive the specified resource from active list.
      *
