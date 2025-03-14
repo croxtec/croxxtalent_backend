@@ -585,7 +585,7 @@ class ReportAnalysisController extends Controller
                 'name' => $employee->name,
                 'data' => $scores,
                 'gaps' => $gaps,
-                'average_gap' => array_sum($gaps) / count($gaps),
+                'average_gap' => array_sum($gaps) / count($gaps) ?? 1,
             ];
         })->toArray();
     }

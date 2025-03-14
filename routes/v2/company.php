@@ -44,7 +44,8 @@ Route::middleware('auth:sanctum')->prefix('employers')->name('employers.')->grou
 
     // Route::get('competency/gap', 'Api\v2\EmployerCompetencyController@competency')->name('competency.skill');
     Route::post('employee/{id}/resend-invitation', 'Api\v2\Company\ManageEmployeeController@resendInvitation')->name('employee.resend_invitation');
-    // Route::patch('employee/{id}/archive', 'Api\v2\Company\EmployeeController@archive')->name('employee.archive');
-    // Route::patch('employee/{id}/unarchive', 'Api\v2\Company\EmployeeController@unarchive')->name('employee.unarchive');
     Route::put('employee/{id}/status', 'Api\v2\Company\EmployeeController@updateStatus')->name('employee.update_status');
+    // Manage
+    Route::patch('department/{id}/archive', 'Api\v2\Company\DepartmentController@archive')->name('department.archive');
+    Route::patch('department/{id}/unarchive', 'Api\v2\Company\DepartmentController@unarchive')->name('department.unarchive');
 });

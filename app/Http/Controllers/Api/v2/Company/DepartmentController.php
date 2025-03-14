@@ -115,15 +115,12 @@ class DepartmentController extends Controller
 
         if (empty($id) || $id === 'undefined') {
             $department = Department::where('employer_id', $employer->id)
-                ->select(['id', 'job_code', 'job_title', 'description'])
                 ->firstOrFail();
         } elseif (is_numeric($id)) {
             $department = Department::where('id', $id)->where('employer_id', $employer->id)
-                ->select(['id', 'job_code', 'job_title', 'description'])
-            ->firstOrFail();
+                ->firstOrFail();
         } else {
             $department = Department::where('job_title', $id)->where('employer_id', $employer->id)
-                ->select(['id', 'job_code', 'job_title', 'description'])
                 ->firstOrFail();
         }
 
@@ -214,24 +211,58 @@ class DepartmentController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $employer  = $request->user();
+        try {
+            $employer  = $request->user();
 
-        $rules = [
-            'job_code' => 'required',
-            'description' => 'nullable'
-        ];
+            $rules = [
+                'job_code' => 'required',
+                'description' => 'nullable|max:55'
+            ];
 
-        $validatedData = $request->validate($rules);
+            $validatedData = $request->validate($rules);
 
-        $job_code = Department::where('id',$id)->where('employer_id', $employer->id)->first();
-        $job_code->update($request->all());
+            if (is_numeric($id)) {
+                $department = Department::where('id', $id)
+                    ->where('employer_id', $employer->id)
+                    ->firstOrFail();
+            } else {
+                $department = Department::where('job_title', $id)
+                    ->where('employer_id', $employer->id)
+                    ->firstOrFail();
+            }
 
-        return response()->json([
-            'status' => true,
-            'message' => "Department updated successfully.",
-            'data' =>  Department::findOrFail($id)
-        ], 201);
+            $department->update($validatedData);
+
+            return response()->json([
+                'status' => true,
+                'message' => "Department updated successfully.",
+                'data' => Department::findOrFail($department->id)
+            ], 200);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation failed.',
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // Handle case when department is not found
+            return response()->json([
+                'status' => false,
+                'message' => 'Department not found.'
+            ], 404);
+
+        } catch (\Exception $e) {
+            // Handle all other unexpected errors
+            return response()->json([
+                'status' => false,
+                'message' => 'An unexpected error occurred.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
+
 
        /**
      * Archive the specified resource from active list.
@@ -241,17 +272,17 @@ class DepartmentController extends Controller
      */
     public function archive($id)
     {
-        $job_code = Department::findOrFail($id);
+        $departmet = Department::findOrFail($id);
 
-        // $this->authorize('delete', [Department::class, $job_code]);
+        // $this->authorize('delete', [Department::class, $departmet]);
 
-        $job_code->archived_at = now();
-        $job_code->save();
+        $departmet->archived_at = now();
+        $departmet->save();
 
         return response()->json([
             'status' => true,
-            'message' => "Jobcode \"{$job_code->name}\" archived successfully.",
-            'data' => Department::find($job_code->id)
+            'message' => "Jobcode \"{$departmet->job_code}\" archived successfully.",
+            'data' => Department::find($departmet->id)
         ], 200);
     }
 
@@ -263,17 +294,17 @@ class DepartmentController extends Controller
      */
     public function unarchive($id)
     {
-        $job_code = Department::findOrFail($id);
+        $department = Department::findOrFail($id);
 
-        // $this->authorize('delete', [Department::class, $job_code]);
+        // $this->authorize('delete', [Department::class, $department]);
 
-        $job_code->archived_at = null;
-        $job_code->save();
+        $department->archived_at = null;
+        $department->save();
 
         return response()->json([
             'status' => true,
-            'message' => "Jobcode \"{$job_code->name}\" unarchived successfully.",
-            'data' => Department::find($job_code->id)
+            'message' => "Jobcode \"{$department->job_code}\" unarchived successfully.",
+            'data' => Department::find($department->id)
         ], 200);
     }
 
