@@ -124,10 +124,10 @@ class DepartmentController extends Controller
                 ->firstOrFail();
         }
 
-        $department->roles;
-        $department->technical_skill;
-        $department->soft_skill;
+        $department->load(['roles', 'technical_skill', 'soft_skill']);
         $department->head_count = Employee::where('job_code_id', $department->id)->count();
+        $department->roles_count = $department->roles ? $department->roles->count() : 0;
+        $department->supervisor_count = Supervisor::where('department_id', $department->id)->count();
 
         $rolesPerformance =[];
         $departmentData = [
@@ -145,6 +145,7 @@ class DepartmentController extends Controller
                 'children' => []
             ];
         })->toArray();
+
 
         foreach ($department->roles as $role) {
             $roleData = [

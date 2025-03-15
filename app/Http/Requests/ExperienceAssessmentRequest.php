@@ -57,7 +57,7 @@ class ExperienceAssessmentRequest extends FormRequest
                     'questions.*.desctiption'  => 'nullable',
 
                     // For company/supervisor (non-peer_review), we still expect employees:
-                    'employees'     => 'required_if:type,company,supervisor|array',
+                    'employees'     => 'required_if:type,company,supervisor|category,experience||array',
                     'employees.*'   => 'integer|exists:employees,id',
 
                     // For peer_review, we now require a structured array of employees_reviewers
