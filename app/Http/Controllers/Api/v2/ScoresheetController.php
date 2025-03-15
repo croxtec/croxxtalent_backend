@@ -16,13 +16,149 @@ use App\Models\Assessment\AssignedEmployee;
 use App\Models\Assessment\EmployeeLearningPath;
 use App\Models\Assessment\EmployerAssessmentFeedback;
 use App\Http\Resources\AssignedEmployeeResouce;
+use App\Models\Assessment\PeerReview;
 use App\Notifications\AssessmentFeedbackNotification;
 use App\Models\Assessment\TalentAssessmentSummary;
 use App\Models\Training\CroxxTraining;
 
 class ScoresheetController extends Controller
 {
-    public function employeeList(Request $request, $id){
+    public function employeeList(Request $request, $id) {
+        $user = $request->user();
+
+        if (is_numeric($id)) {
+            $assessment = CroxxAssessment::where('id', $id)->where('is_published', 1)->firstOrFail();
+        } else {
+            $assessment = CroxxAssessment::where('code', $id)->where('is_published', 1)->firstOrFail();
+        }
+
+        $user_type = $user->type;
+        $per_page = $request->input('per_page', 100);
+        $sort_by = $request->input('sort_by', 'created_at');
+        $sort_dir = $request->input('sort_dir', 'desc');
+        $search = $request->input('search');
+        $archived = $request->input('archived');
+        $supervisor = $request->input('supervisor', 0);
+
+        $assessment->competencies;
+        if($user->type == "employer") {
+            $supervisor = $supervisor == 'yes' ? 1 : 0;
+            $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
+        }
+
+        // Different handling based on assessment category
+        if ($assessment->category === 'peer_review') {
+            // For peer reviews, we want to organize by reviewee with their reviewers
+            $query = PeerReview::where('assessment_id', $assessment->id)
+                ->when($search, function($query) use ($search) {
+                    $query->whereHas('employee', function($q) use ($search) {
+                        $q->where('name', 'LIKE', "%{$search}%");
+                    })
+                    ->orWhereHas('reviewer', function($q) use ($search) {
+                        $q->where('name', 'LIKE', "%{$search}%");
+                    });
+                })
+                ->with(['employee', 'reviewer'])
+                ->orderBy($sort_by, $sort_dir);
+
+            if ($per_page === 'all' || $per_page <= 0) {
+                $results = $query->get();
+                $paginatedResults = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
+            } else {
+                $paginatedResults = $query->paginate($per_page);
+            }
+
+            // Reorganize data to group by reviewee
+            $revieweesMap = [];
+            foreach ($paginatedResults as $review) {
+                $employeeId = $review->employee_id;
+
+                if (!isset($revieweesMap[$employeeId])) {
+                    $revieweesMap[$employeeId] = [
+                        'employee' => $review->employee,
+                        'reviewers' => [],
+                        'completion' => [
+                            'total' => 0,
+                            'completed' => 0
+                        ]
+                    ];
+                }
+
+                // Add reviewer with their review status
+                $revieweesMap[$employeeId]['reviewers'][] = [
+                    'reviewer' => $review->reviewer,
+                    'status' => $review->status,
+                    'due_date' => $review->due_date,
+                    'completed_at' => $review->completed_at
+                ];
+
+                $revieweesMap[$employeeId]['completion']['total']++;
+                if ($review->status === 'completed') {
+                    $revieweesMap[$employeeId]['completion']['completed']++;
+                }
+            }
+
+            // Convert to array for the response
+            $summaries = array_values($revieweesMap);
+
+            return response()->json([
+                'status' => true,
+                'message' => "Successful.",
+                'data' => [
+                    'summaries' => $summaries,
+                    'assessment' => $assessment,
+                    'type' => 'peer_review'
+                ]
+            ], 200);
+        } else {
+            // Original code for standard assessments
+            $summaries = AssignedEmployee::where('assessment_id', $assessment->id)
+                ->where('is_supervisor', $supervisor)
+                ->when($archived, function ($query) use ($archived) {
+                    if ($archived !== null) {
+                        if ($archived === true) {
+                            $query->whereNotNull('archived_at');
+                        } else {
+                            $query->whereNull('archived_at');
+                        }
+                    }
+                })->when($search, function($query) use ($search) {
+                    $query->where('assessment_id', 'LIKE', "%{$search}%");
+                })
+                ->with('employee')
+                ->orderBy($sort_by, $sort_dir);
+
+            if ($per_page === 'all' || $per_page <= 0) {
+                $results = $summaries->get();
+                $summaries = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
+            } else {
+                $summaries = $summaries->paginate($per_page);
+            }
+
+            foreach ($summaries as $summary) {
+                $feedback = EmployerAssessmentFeedback::where([
+                    'assessment_id' => $summary->assessment_id,
+                    'employee_id' => $summary->employee_id,
+                    'employer_user_id' => $assessment->employer_id
+                ])->first();
+
+                $summary->is_submitted = $feedback ? true : false;
+                $summary->feedback = $feedback;
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => "Successful.",
+                'data' => [
+                    'summaries' => $summaries,
+                    'assessment' => $assessment,
+                    'type' => 'standard'
+                ]
+            ], 200);
+        }
+    }
+
+    public function employeeListOld(Request $request, $id){
         $user = $request->user();
 
         if (is_numeric($id)) {
@@ -140,7 +276,7 @@ class ScoresheetController extends Controller
         ], 200);
     }
 
-    public function assessmentFeedback(Request $request, $code, $talent){
+    public function viewAssessmentFeedback(Request $request, $code, $talent){
         $user = $request->user();
         $employee = Employee::where('code', $talent)->first();
 

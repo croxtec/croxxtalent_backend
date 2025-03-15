@@ -183,26 +183,4 @@ class AssessmentService
     //         $data[$key] = $value;
     //     }
     // }
-
-    // private function createInitialPerformanceReport($assessment, $data)
-    // {
-    //     PerformanceReport::create([
-    //         'assessment_id' => $assessment->id,
-    //         'type' => $data['type'],
-    //         'category' => $data['category'],
-    //         'initial_competency_scores' => $this->getInitialCompetencyScores($assessment),
-    //         'created_at' => now()
-    //     ]);
-    // }
-
-    // private function getInitialCompetencyScores($assessment)
-    // {
-    //     return $assessment->competencies->mapWithKeys(function($competency) {
-    //         return [$competency->id => [
-    //             'name' => $competency->name,
-    //             'initial_score' => 0,
-    //             'target_score' => $assessment->expected_percentage
-    //         ]];
-    //     })->toArray();
-    // }
 }

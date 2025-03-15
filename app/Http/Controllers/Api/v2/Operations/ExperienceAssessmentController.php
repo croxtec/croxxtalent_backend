@@ -16,6 +16,7 @@ use App\Models\Assessment\EvaluationQuestion;
 use App\Http\Requests\ExperienceAssessmentRequest;
 use App\Models\Assessment\CroxxAssessment;
 use App\Models\Assessment\AssignedEmployee;
+use App\Models\Assessment\PeerReview;
 use App\Services\AssessmentService;
 
 class ExperienceAssessmentController extends Controller
@@ -333,6 +334,7 @@ class ExperienceAssessmentController extends Controller
         }
 
         $assessment->competencies;
+        // $assessment->peerReviews;
         $assessment->questions = $questions;
 
        return response()->json([
@@ -356,13 +358,15 @@ class ExperienceAssessmentController extends Controller
             ], 401);
         }
 
+        $employee = Employee::where('user_id', $user->id)->where('id', $user->default_company_id)->firstOrFail();
+
         if (is_numeric($id)) {
             $assessment = CroxxAssessment::where('id', $id)->whereIn('category', ['competency_evaluation'])->firstOrFail();
         } else {
             $assessment = CroxxAssessment::where('code', $id)->whereIn('category', ['competency_evaluation'])->firstOrFail();
         }
 
-        if ($assessment->category == 'competency_evaluation') {
+        if ($assessment->category === 'competency_evaluation') {
            $questions = EvaluationQuestion::where('assessment_id', $assessment->id)
                     ->whereNull('archived_at')->get();
         } else {
@@ -371,6 +375,28 @@ class ExperienceAssessmentController extends Controller
         }
 
         $assessment->questions = $questions;
+
+        if($assessment->category === 'peer_review') {
+            // People who are reviewing me (I am being reviewed by)
+            $reviewers = PeerReview::where('assessment_id', $assessment->id)
+                                  ->where('employee_id', $employee->id)
+                                  ->with('reviewer:id,name,job_code_id,department_role_id,photo_url,code')
+                                  ->get()
+                                  ->pluck('reviewer')
+                                  ->toArray();
+
+            // People I am reviewing (I am reviewer for)
+            $reviewees = PeerReview::where('assessment_id', $assessment->id)
+                                  ->where('reviewer_id', $employee->id)
+                                  ->with('employee:id,name,job_code_id,department_role_id,photo_url,code')
+                                  ->get()
+                                  ->pluck('employee')
+                                  ->toArray();
+
+            $assessment->reviewers = $reviewers;
+
+            $assessment->reviewees = $reviewees;
+        }
 
         return response()->json([
             'status' => true,

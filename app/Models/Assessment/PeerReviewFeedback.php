@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class PeerReviewFeedback extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'peer_review_id',
         'competency_id',

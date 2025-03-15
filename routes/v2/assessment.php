@@ -21,7 +21,7 @@ Route::middleware('auth:sanctum')->group( function () {
     // Manage Assesment
     Route::get('assessments/{id}/assigned/employees', 'Api\v2\ScoresheetController@employeeList');//->name('assessments.index');
     Route::get('assessments/{code}/result/{talent}', 'Api\v2\ScoresheetController@assessmentResult');//->name('assessments.index');
-    Route::get('assessments/{code}/feedback/{talent}', 'Api\v2\ScoresheetController@assessmentFeedback');//->name('assessments.index');
+    Route::get('assessments/{code}/feedback/{talent}', 'Api\v2\ScoresheetController@viewAssessmentFeedback');//->name('assessments.index');
     Route::post('assessments/{id}/supervisor/scoresheet', 'Api\v2\ScoresheetController@gradeAssessmentScoreSheet');//->name('assesments.index');
     Route::patch('assessments/{id}/supervisor/feedback', 'Api\v2\ScoresheetController@publishSupervisorFeedback');//->name('assesments.index');
 

@@ -141,10 +141,9 @@ class EmployeeAssessmentController extends Controller
         if($user->type == 'talent'){
            $validation_result = validateEmployeeAccess($user, $employee);
 
-        // If validation fails, return the response
-        if ($validation_result !== true) {
-            return $validation_result;
-        }
+            if ($validation_result !== true) {
+                return $validation_result;
+            }
         }
 
         if ($show == "supervisor") {
