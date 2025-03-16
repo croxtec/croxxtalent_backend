@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::middleware('auth:sanctum')->name('api.')->group( function () {
+    Route::get('projects/overview', 'Api\v2\Project\ProjectController@overview')->name('projects.overview');
     // Project operations
     Route::patch('projects/{id}/archive', 'Api\v2\Project\ProjectController@archive')->name('projects.archive');
     Route::patch('projects/{id}/unarchive', 'Api\v2\Project\ProjectController@unarchive')->name('projects.unarchive');

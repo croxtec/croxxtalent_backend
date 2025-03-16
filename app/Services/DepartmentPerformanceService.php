@@ -218,10 +218,13 @@ class DepartmentPerformanceService
     }
 
 
-    public function calculateDepartmentProjectMetrics($departmentId, $startDate, $endDate)
+    public function calculateDepartmentProjectMetrics($departmentId, $startDate, $endDate, $type = 'department')
     {
-        // Get IDs of all employees in the department
-        $employeeIds = Employee::where('job_code_id', $departmentId)->pluck('id');
+        if ($type === 'company') {
+            $employeeIds = Employee::where('employer_id', $departmentId)->pluck('id');
+        } else {
+            $employeeIds = Employee::where('job_code_id', $departmentId)->pluck('id');
+        }
 
         // Fetch projects that have tasks assigned to these employees
         $projects = Project::whereHas('tasks.assigned', function($query) use ($employeeIds) {
@@ -238,8 +241,12 @@ class DepartmentPerformanceService
 
         $tasks = collect($projects->pluck('tasks')->flatten());
 
-        $completedCount = $tasks->where('status', 'completed')->count();
+        $todoCount = $tasks->where('status', 'to-do')->count();
         $inProgressCount = $tasks->where('status', 'in_progress')->count();
+        $inReviewCount = $tasks->where('status', 'in-review')->count();
+        $reworkCount = $tasks->where('status', 'rework')->count();
+        $completedCount = $tasks->where('status', 'completed')->count();
+
         $totalCount = $tasks->count();
 
         // Calculate on-time completion rate
@@ -269,8 +276,13 @@ class DepartmentPerformanceService
         return [
             'project_count' => $projects->count(),
             'task_count' => $totalCount,
-            'completed_tasks' => $completedCount,
-            'in_progress_tasks' => $inProgressCount,
+            'status_overview' => [
+                'todo_tasks' => $todoCount,
+                'inreview_tasks' => $inReviewCount,
+                'rework_tasks' => $reworkCount,
+                'completed_tasks' => $completedCount,
+                'in_progress_tasks' => $inProgressCount,
+            ],
             'completion_rate' => $avgCompletionRate,
             'on_time_completion_rate' => $onTimeRate,
             'trend' => $this->calculateDepartmentTrend('projects', $departmentId, $startDate, $endDate),

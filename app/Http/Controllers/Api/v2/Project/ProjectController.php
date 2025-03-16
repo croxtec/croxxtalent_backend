@@ -6,11 +6,21 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ProjectRequest;
 use App\Models\Project\Project;
 use App\Models\Project\ProjectTeam;
+use App\Services\DepartmentPerformanceService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ProjectController extends Controller
 {
+
+    protected $teamCalculator;
+
+    public function __construct(DepartmentPerformanceService $teamCalculator)
+    {
+        $this->teamCalculator = $teamCalculator;
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -77,6 +87,25 @@ class ProjectController extends Controller
             'data' => $projects,
             'message' => "Team structure and projects fetched successfully",
         ], 200);
+    }
+
+    public function overview(Request $request){
+        $employer = $request->user();
+
+        $month = $request->input('month', Carbon::now()->month);
+        $year = $request->input('year', Carbon::now()->year);
+        $startDate = Carbon::create(Carbon::now()->year - 1, 1, 1)->startOfMonth();
+        $endDate = Carbon::create($year, $month, 1)->endOfMonth();
+
+        $performance = $this->teamCalculator->calculateDepartmentProjectMetrics($employer->id, $startDate, $endDate, 'company');
+
+        $response = collect([
+            'status' => true,
+            'data' => $performance,
+            'message' => "Successful.",
+        ]);
+
+        return response()->json($response, 200);
     }
 
 
