@@ -242,7 +242,7 @@ class DepartmentPerformanceService
         $tasks = collect($projects->pluck('tasks')->flatten());
 
         $todoCount = $tasks->where('status', 'to-do')->count();
-        $inProgressCount = $tasks->where('status', 'in_progress')->count();
+        $inProgressCount = $tasks->where('status', 'in-progress')->count();
         $inReviewCount = $tasks->where('status', 'in-review')->count();
         $reworkCount = $tasks->where('status', 'rework')->count();
         $completedCount = $tasks->where('status', 'completed')->count();

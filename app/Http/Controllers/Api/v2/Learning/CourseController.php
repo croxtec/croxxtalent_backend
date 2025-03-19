@@ -164,7 +164,7 @@ class CourseController extends Controller
 
         $participants = EmployeeLearningPath::where('employer_user_id', $employerId)
                             ->where('training_id', $training->id)
-                            ->with('employee', 'supervisor')
+                            ->with('employee')
                             ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {

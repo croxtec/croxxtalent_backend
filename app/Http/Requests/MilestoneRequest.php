@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class MilestoneRequest extends FormRequest
 {
@@ -20,7 +21,9 @@ class MilestoneRequest extends FormRequest
                 return true;
                 //$this->user()->can('create', Assesment::class);
             case 'PUT':
+                return true;
             case 'PATCH':
+                return true;
                 // return $this->user()->can('update', [Assessment::class, $assessment]);
             case 'DELETE':
                 return false;
@@ -41,11 +44,17 @@ class MilestoneRequest extends FormRequest
             case 'POST':
                 return [
                     'project_id' => 'required|integer|exists:projects,id',
-                    'milestone_name' => 'required|max:100',
+                    'milestone_name' => [
+                        'required',
+                        'max:100',
+                        Rule::unique('milestones')->where(function ($query) {
+                            return $query->where('project_id', $this->project_id);
+                        })
+                    ],
                     'description' => 'required|max:550',
                     'start_date' => 'nullable|date',
                     'end_date' => 'nullable|date',
-                    'priority_level' => 'nullable|low,medium,high,urgent',
+                    'priority_level' => 'nullable|in:low,medium,high,urgent',
                 ];
             case 'PUT':
             case 'PATCH':
@@ -55,7 +64,7 @@ class MilestoneRequest extends FormRequest
                     'start_date' => 'sometimes|required|date',
                     'end_date' => 'sometimes|required|date',
                     'project_id' => 'sometimes|required|integer|exists:projects,id',
-                    'priority_level' => 'nullable|low,medium,high,urgent',
+                    'priority_level' => 'nullable|in:low,medium,high,urgent',
                 ];
             case 'DELETE':
                 return [];

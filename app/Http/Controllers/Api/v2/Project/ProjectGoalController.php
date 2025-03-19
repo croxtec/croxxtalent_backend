@@ -32,6 +32,7 @@ class ProjectGoalController extends Controller
         $archived = $request->input('archived');
         $code = $request->input('pcode');
         $milestone = $request->input('milestone');
+        $status = $request->input('status');
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
         $project = Project::where('code', $code)->first();
@@ -44,6 +45,9 @@ class ProjectGoalController extends Controller
                 if ($milestone !== null && is_numeric($milestone)) {
                     $query->where('milestone_id', $milestone);
                 }
+            })
+            ->when($status, function($query) use ($status) {
+                $query->where('status', $status);
             })
             ->when($archived ,function ($query) use ($archived) {
                 if ($archived !== null ) {

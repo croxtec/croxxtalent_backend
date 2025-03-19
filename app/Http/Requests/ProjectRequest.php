@@ -21,6 +21,7 @@ class ProjectRequest extends FormRequest
                 //$this->user()->can('create',Assesment::class);
             case 'PUT':
             case 'PATCH':
+                return true;
                 // $assessment = Assessment::findOrFail(1);
                 // return $this->user()->can('update',[Assessment::class,$assessment]);
             case 'DELETE':
@@ -40,7 +41,6 @@ class ProjectRequest extends FormRequest
             case 'GET':
                 return [];
             case 'POST':
-            case 'PUT':
                 return[
                     'title' => 'required|max:100',
                     'description' => 'required|max:400',
@@ -54,14 +54,13 @@ class ProjectRequest extends FormRequest
                     'team_members.*' => 'integer|exists:employees,id',
                     'team_leads.*' => 'nullable|integer|exists:employees,id',
                 ];
+            case 'PUT':
             case 'PATCH':
                 return [
                     'title' => 'sometimes|required|max:100',
                     'description' => 'sometimes|required|max:550',
                     'start_date' => 'sometimes|required|date',
                     'end_date' => 'sometimes|required|date',
-                    'department_id' => 'sometimes|required|integer|exists:employer_jobcodes,id',
-                    'resource_allocation' => 'sometimes|nullable|integer',
                     'category' => 'sometimes|required|string',
                     'priority_level' => 'sometimes|nullable|in:low,medium,high,urgent',
                 ];
