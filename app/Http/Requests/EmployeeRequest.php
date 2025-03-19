@@ -80,6 +80,7 @@ class EmployeeRequest extends FormRequest
                     'gender' =>  'nullable',
                     'language' =>  'nullable',
                     'hired_date' =>  'nullable|date',
+                    'birth_date' =>  'nullable|date',
                 ];
             default:break;
         }

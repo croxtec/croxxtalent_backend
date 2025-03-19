@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Api\v2\Company;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\DepartmentRequest;
 use Illuminate\Http\Request;
 use App\Models\EmployerJobcode as Department;
 use App\Models\DepartmentRole;
 use App\Models\Employee;
 use App\Models\Supervisor;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class DepartmentController extends Controller
@@ -76,32 +78,50 @@ class DepartmentController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(DepartmentRequest $request)
     {
         $company = $request->user();
-        $rules = [
-            'job_code' => 'required',
-            'description' => 'nullable'
-        ];
 
-        $validatedData = $request->validate($rules);
+        $validatedData = $request->validated();
         $validatedData['employer_id'] = $company->id;
 
-        $job_code = Department::create($validatedData);
+        $departmentPrefix = substr($validatedData['job_code'], 0, 3);
+        $uniqueCode = Str::random(12);
+        $validatedData['job_title'] = strtolower($departmentPrefix . $uniqueCode);
 
-       if ($job_code) {
+        DB::beginTransaction();
+        try {
+            $department = Department::create($validatedData);
+
+            // Create roles for this department
+            foreach($validatedData['roles'] as $role){
+                DepartmentRole::firstOrCreate([
+                    'employer_id' =>  $company->id,
+                    'department_id' => $department->id,
+                    'name' => $role['name']
+                ],[
+                    'description' => $role['description'] ?? null,
+                ]);
+            }
+
+            DB::commit();
+
             return response()->json([
                 'status' => true,
-                'message' => "Job Code \"{$job_code->job_code}\" created successfully.",
-                'data' => Department::find($job_code->id)
+                'message' => "Department \"{$department->job_code}\" created successfully.",
+                'data' => Department::with('roles')->find($department->id)
             ], 201);
-        } else {
+        } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'status' => false,
                 'message' => "Could not complete request.",
-            ], 400);
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
+
+
 
     /**
      * Display the specified resource.
@@ -213,11 +233,11 @@ class DepartmentController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            $employer  = $request->user();
+            $employer = $request->user();
 
             $rules = [
-                'job_code' => 'required',
-                'description' => 'nullable|max:55'
+                'department_name' => 'required|max:30',
+                'description' => 'nullable|max:130'
             ];
 
             $validatedData = $request->validate($rules);
@@ -227,7 +247,7 @@ class DepartmentController extends Controller
                     ->where('employer_id', $employer->id)
                     ->firstOrFail();
             } else {
-                $department = Department::where('job_title', $id)
+                $department = Department::where('department_slug', $id)
                     ->where('employer_id', $employer->id)
                     ->firstOrFail();
             }
@@ -237,7 +257,7 @@ class DepartmentController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => "Department updated successfully.",
-                'data' => Department::findOrFail($department->id)
+                'data' => Department::with('roles')->findOrFail($department->id)
             ], 200);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -248,14 +268,12 @@ class DepartmentController extends Controller
             ], 422);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            // Handle case when department is not found
             return response()->json([
                 'status' => false,
                 'message' => 'Department not found.'
             ], 404);
 
         } catch (\Exception $e) {
-            // Handle all other unexpected errors
             return response()->json([
                 'status' => false,
                 'message' => 'An unexpected error occurred.',
@@ -263,6 +281,7 @@ class DepartmentController extends Controller
             ], 500);
         }
     }
+
 
 
        /**
@@ -338,4 +357,6 @@ class DepartmentController extends Controller
             ], 400);
         }
     }
+
+
 }

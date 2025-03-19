@@ -10,7 +10,8 @@ Route::middleware('auth:sanctum')->prefix('employers')->name('employers.')->grou
     Route::resources([
         'employee' => 'Api\v2\Company\EmployeeController',
         'supervisor' => 'Api\v2\Company\SupervisorController',
-        'department' => 'Api\v2\Company\DepartmentController'
+        'department' => 'Api\v2\Company\DepartmentController',
+        'roles' => 'Api\v2\Company\DepartmentRoleController'
     ]);
 
     // Overview
