@@ -605,7 +605,6 @@ class DepartmentPerformanceService
    public function getDepartmentCompetencyAverage($departmentId, $startDate, $endDate)
    {
        $employeeIds = Employee::where('job_code_id', $departmentId)->pluck('id');
-    //    info(['calculateDepartmentCompetencyAverage', $departmentId]);
        $mappings = DepartmentMapping::where('department_id', $departmentId)
            // ->with(['competencyKPIs', 'competency'])
            ->get();

@@ -51,7 +51,7 @@ class MilestoneRequest extends FormRequest
                             return $query->where('project_id', $this->project_id);
                         })
                     ],
-                    'description' => 'required|max:550',
+                    'description' => 'nullable|max:155',
                     'start_date' => 'nullable|date',
                     'end_date' => 'nullable|date',
                     'priority_level' => 'nullable|in:low,medium,high,urgent',

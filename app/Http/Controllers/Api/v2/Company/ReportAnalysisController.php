@@ -177,8 +177,6 @@ class ReportAnalysisController extends Controller
                 ->paginate($perPage);
 
             $employeesDistribution = [];
-            // $allTechnicalScores = [];
-            // $allSoftScores = [];
 
             foreach ($employees as $employee) {
                 // Extract technical and soft competencies from the employee's department
@@ -189,14 +187,17 @@ class ReportAnalysisController extends Controller
                 $technicalDistribution = $this->calculateSkillDistribution($employee, $technicalSkills);
                 $softDistribution = $this->calculateSkillDistribution($employee, $softSkills, 'soft');
 
-                // Compute average scores for technical and soft skills
-                $avgTechnical = count($technicalDistribution['assessment_distribution']) > 0
-                    ? array_sum($technicalDistribution['assessment_distribution']) / count($technicalDistribution['assessment_distribution'])
+                // Compute average scores for technical and soft skills (prevent division by zero)
+                $technicalCount = count($technicalDistribution['assessment_distribution']);
+                $softCount = count($softDistribution['assessment_distribution']);
+
+                $avgTechnical = $technicalCount > 0
+                    ? array_sum($technicalDistribution['assessment_distribution']) / $technicalCount
                     : 0;
-                $avgSoft = count($softDistribution['assessment_distribution']) > 0
-                    ? array_sum($softDistribution['assessment_distribution']) / count($softDistribution['assessment_distribution'])
+
+                $avgSoft = $softCount > 0
+                    ? array_sum($softDistribution['assessment_distribution']) / $softCount
                     : 0;
-                // $employeeOverall = ($avgTechnical + $avgSoft) / 2;
 
                 $insights = $this->generateDistributionInsights(
                     $technicalDistribution,
@@ -214,14 +215,8 @@ class ReportAnalysisController extends Controller
                     'technical_distribution' => $technicalDistribution,
                     'soft_distribution' => $softDistribution,
                     'insights' => $insights,
-                    // 'average_scores' => [
-                    //     'technical' => round($avgTechnical, 2),
-                    //     'soft' => round($avgSoft, 2),
-                    //     'overall' => round($employeeOverall, 2),
-                    // ],
                 ];
             }
-
 
             return response()->json([
                 'status' => true,
@@ -236,6 +231,7 @@ class ReportAnalysisController extends Controller
             ], 500);
         }
     }
+
 
 
     /**
@@ -585,7 +581,7 @@ class ReportAnalysisController extends Controller
                 'name' => $employee->name,
                 'data' => $scores,
                 'gaps' => $gaps,
-                'average_gap' => array_sum($gaps) / count($gaps) ? count($gaps) :  1,
+               'average_gap' => count($gaps) > 0 ? array_sum($gaps) / count($gaps) : 0,
             ];
         })->toArray();
     }

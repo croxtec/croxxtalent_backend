@@ -136,7 +136,7 @@ class CourseController extends Controller
             $training = CroxxTraining::where('code', $id)->where('employer_id', $employerId)->firstOrFail();
         }
 
-        $training->department;
+        $training->load(['department', 'technical_skill', 'soft_skill']);
         $training->assessment;
         $training->assessment?->questions;
 
