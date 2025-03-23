@@ -59,9 +59,9 @@ class EmployerCompetencyController extends Controller
                 DepartmentKpiSetup::updateOrCreate(
                     ['department' => $job_title],
                     [
-                        'department_goals'         => $templateData['department_goals'] ?? null,
-                        'recommended_assessments'  => $templateData['recommended_assessments'] ?? null,
-                        'recommended_trainings'    => $templateData['recommended_trainings'] ?? null,
+                        'department_goals'         => isset($templateData['department_goals']) ? json_encode($templateData['department_goals']) : null,
+                        'recommended_assessments'  => isset($templateData['recommended_assessments']) ? json_encode($templateData['recommended_assessments']) : null,
+                        'recommended_trainings'    => isset($templateData['recommended_trainings']) ? json_encode($templateData['recommended_trainings']) : null,
                     ]
                 );
 
@@ -155,15 +155,11 @@ class EmployerCompetencyController extends Controller
                     'department_id' => $department->id,
                     'competency'    => $map->competency,
                 ], [
-                    'level' => $map->level,
-                    'target_score' => $map->target_score,
+                'level'          => strtolower($map->level) === 'advance' ? 'advanced' : $map->level,
+                    'target_score'   => min(max($map->target_score, 0), 100),
                     'competency_role' => $map->department_role,
                     'description'     => $map->description,
                 ]);
-
-                // At this point you can optionally use information from $departmentKpiSetup
-                // (like recommended_assessments or recommended_trainings) to update or trigger
-                // further logic if needed.
             }
 
             // Update the onboarding stage if applicable
