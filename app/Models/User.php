@@ -19,6 +19,7 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable, HasApiTokens;
 
+
     /**
      * The connection name for the model.
      *
@@ -326,6 +327,9 @@ class User extends Authenticatable
         return Notification::where('notifiable_id', $this->id)->whereNull('read_at')->count();
     }
 
+    public function onboardings(){
+        return $this->hasOne(TrackEmployerOnboarding::class, 'employer_id', 'id');
+    }
 
 }
 

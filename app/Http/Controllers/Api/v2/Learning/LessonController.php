@@ -135,6 +135,7 @@ class LessonController extends Controller
 
             // Ensure $files is an array before iterating
             $files = $request->file('files');
+
             if (is_array($files)) {
                 foreach ($files as $file) {
                     $extension = $file->getClientOriginalExtension();

@@ -18,6 +18,7 @@ use App\Models\Assessment\CroxxAssessment;
 use App\Models\Assessment\AssignedEmployee;
 use App\Models\Assessment\PeerReview;
 use App\Services\AssessmentService;
+use Carbon\Carbon;
 
 class ExperienceAssessmentController extends Controller
 {
@@ -65,6 +66,11 @@ class ExperienceAssessmentController extends Controller
                     $query->whereNull('archived_at');
                 }
             }
+        })
+        ->when($request->start_date && $request->end_date, function ($query) use ($request) {
+            $startDate = Carbon::parse($request->start_date);
+            $endDate = Carbon::parse($request->end_date);
+            $query->whereBetween('created_at', [$startDate, $endDate]);
         })
         ->where( function($query) use ($search) {
             $query->where('code', 'LIKE', "%{$search}%");

@@ -15,6 +15,7 @@ use App\Models\Competency\DepartmentMapping;
 use App\Models\Competency\DepartmentSetup;
 use App\Models\CompetencyKpiSetup;
 use App\Models\DepartmentKpiSetup;
+use App\Models\TrackEmployerOnboarding;
 use App\Services\OpenAIService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -281,6 +282,42 @@ class EmployerCompetencyController extends Controller
             'data' => []
         ], 201);
 
+    }
+
+    public function confirmOnboardingReview(Request $request)
+    {
+        $employer = $request->user();
+        $faqType = $request->input('faq_type');
+        $onboarding = TrackEmployerOnboarding::where('employer_id', $employer->id)->first();
+
+        $validFaqTypes = [
+            'department_faq', 'employees_faq', 'supervisors_faq', 'assessment_faq',
+            'projects_faq', 'trainings_faq', 'campaigns_faq', 'candidate_faq',
+            'skill_gap_faq', 'competency_analysis_faq', 'department_performance_faq',
+            'employee_performance_faq', 'department_development_faq',
+            'employee_development_faq', 'assessment_report_faq',
+            'training_report_faq', 'competency_report_faq'
+        ];
+
+        if (!in_array($faqType, $validFaqTypes)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid FAQ type provided',
+                'data' => []
+            ], 400);
+        }
+
+        $onboarding->{$faqType} = true;
+        $onboarding->save();
+
+
+        return response()->json([
+            'status' => true,
+            'message' => "FAQ $faqType has been marked as reviewed",
+            'data' => [
+                'onboarding' => $onboarding
+            ]
+        ], 200);
     }
 
 

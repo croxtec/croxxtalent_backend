@@ -13,6 +13,7 @@ use Cloudinary\Cloudinary;
 use Illuminate\Support\Str;
 use App\Services\OpenAIService;
 use App\Models\Training\CroxxLesson;
+use Carbon\Carbon;
 
 class CourseController extends Controller
 {
@@ -61,6 +62,11 @@ class CourseController extends Controller
                         $query->whereNull('archived_at');
                     }
                 }
+            })
+            ->when($request->start_date && $request->end_date, function ($query) use ($request) {
+                $startDate = Carbon::parse($request->start_date);
+                $endDate = Carbon::parse($request->end_date);
+                $query->whereBetween('created_at', [$startDate, $endDate]);
             })
             ->where( function($query) use ($search) {
                 $query->where('title', 'LIKE', "%{$search}%");

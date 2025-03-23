@@ -28,6 +28,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Mail\PasswordReset;
 use App\Mail\PasswordChanged;
 use App\Models\Employee;
+use App\Models\TrackEmployerOnboarding;
 use App\Services\RefreshCompanyPerformance;
 
 class AuthController extends Controller
@@ -291,15 +292,18 @@ class AuthController extends Controller
             $login_field = 'email'; // username
         }
 
-        $user = User::where($login_field, $validatedData['login'])
-                    ->whereIn('type', ['employer', 'training_organization'])->first();
-        // || !Hash::check($validatedData['password'], $user->password)
-        if ( !$user ) {
+        $user = User::with('onboardings')
+                        ->where($login_field, $validatedData['login'])
+                        ->whereIn('type', ['employer', 'training_organization'])
+                        ->first();
+        //
+        if (!$user || !Hash::check($validatedData['password'], $user->password)) {
             return response()->json([
                 'status' => false,
                 'message' => 'Invalid login credentials.'
             ], 401);
         }
+
         // Checking If A Password Needs To Be Rehashed// $user->saved();
         // if the work factor used by the hasher has changed since the password was hashed
         if (Hash::needsRehash($user->password)) {
@@ -321,6 +325,12 @@ class AuthController extends Controller
                 'message' => 'Your account is inactive, please contact support admin.'
             ], 401);
         }
+
+        if (!$user->onboardings) {
+            $onboardings = TrackEmployerOnboarding::create(['employer_id' => $user->id]);
+            $user->setRelation('onboardings', $onboardings);
+        }
+
         // create token
         array_push($abilities, "access:{$user->type}");
         $token =  $user->createToken('access-token', $abilities)->plainTextToken;

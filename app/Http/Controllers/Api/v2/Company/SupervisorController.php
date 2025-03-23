@@ -9,6 +9,7 @@ use App\Models\Employee;
 use App\Http\Requests\SupervisorRequest;
 
 use App\Notifications\SupervisorRemoved;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Notification;
 
 class SupervisorController extends Controller
@@ -27,7 +28,9 @@ class SupervisorController extends Controller
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'desc');
         $search = $request->input('search');
-        $archived = $request->input('archived', 'no');
+        $archived = $request->input('archived');
+        $department = $request->input('department');
+        $role = $request->input('role');
         $datatable_draw = $request->input('draw');
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
@@ -35,7 +38,6 @@ class SupervisorController extends Controller
         $supervisor = Supervisor::where('employer_id', $employer->id)
         ->whereNull('archived_at')
         ->when($archived, function ($query) use ($archived) {
-            info($archived);
             if ($archived !== null) {
                 if ($archived === true) {
                     $query->whereNotNull('archived_at');
@@ -43,6 +45,19 @@ class SupervisorController extends Controller
                     $query->whereNull('archived_at');
                 }
             }
+        })
+        ->when($department || $role,function ($query) use ($department, $role) {
+            if ($department !== null  && is_numeric($department)) {
+               $query->where('job_code_id', $department);
+               if ($role !== null  && is_numeric($role)) {
+
+               }
+            }
+        })
+        ->when($request->start_date && $request->end_date, function ($query) use ($request) {
+            $startDate = Carbon::parse($request->start_date);
+            $endDate = Carbon::parse($request->end_date);
+            $query->whereBetween('created_at', [$startDate, $endDate]);
         })
         ->with(['employee'])
         ->orderBy($sort_by, $sort_dir);

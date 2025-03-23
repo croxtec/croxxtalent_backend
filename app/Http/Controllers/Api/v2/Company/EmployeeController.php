@@ -17,6 +17,7 @@ use App\Models\EmployerJobcode as Department;
 use App\Models\DepartmentRole;
 use Illuminate\Support\Str;
 use App\Models\Goal;
+use Carbon\Carbon;
 
 class EmployeeController extends Controller
 {
@@ -29,13 +30,13 @@ class EmployeeController extends Controller
     {
         $employer = $request->user();
         // $this->authorize('view-any', Employee::class);
+        $search = $request->input('search');
         $per_page = $request->input('per_page', 100);
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'desc');
-        $search = $request->input('search');
         $archived = $request->input('archived');
-        $role = $request->input('role');
         $department = $request->input('department');
+        $role = $request->input('role');
         $datatable_draw = $request->input('draw'); // if any
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
@@ -59,7 +60,13 @@ class EmployeeController extends Controller
                     $query->whereNull('archived_at');
                 }
             }
-        })->where( function($query) use ($search) {
+        })
+        ->when($request->start_date && $request->end_date, function ($query) use ($request) {
+            $startDate = Carbon::parse($request->start_date);
+            $endDate = Carbon::parse($request->end_date);
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        })
+        ->where( function($query) use ($search) {
             $query->where('name', 'LIKE', "%{$search}%")
                 ->orWhere('email', 'LIKE', "%{$search}%");
         })->with('department','department_role', 'talent')

@@ -11,6 +11,7 @@ use App\Models\Campaign;
 use App\Mail\CampaignPublished;
 use App\Models\Cv;
 use App\Models\Notification;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class CampaignController extends Controller
@@ -45,6 +46,11 @@ class CampaignController extends Controller
             }
         })
         ->where('user_id', $user->id)
+        ->when($request->start_date && $request->end_date, function ($query) use ($request) {
+            $startDate = Carbon::parse($request->start_date);
+            $endDate = Carbon::parse($request->end_date);
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        })
         ->where( function($query) use ($search) {
             $query->where('title', 'LIKE', "%{$search}%");
         })->orderBy($sort_by, $sort_dir);
