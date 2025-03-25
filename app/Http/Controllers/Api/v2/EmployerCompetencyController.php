@@ -65,7 +65,6 @@ class EmployerCompetencyController extends Controller
                     ]
                 );
 
-                // Save the competency mapping into DepartmentSetup
                 if (isset($templateData['competency_mapping'])) {
                     // Process technical skills
                     if (isset($templateData['competency_mapping']['technical_skills'])) {

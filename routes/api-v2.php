@@ -37,8 +37,6 @@ require __DIR__ .'/v2/admin.php';
 
 require __DIR__.'/v2/assessment.php';
 
-require __DIR__.'/v2/career.php';
-
 require __DIR__.'/v2/course.php';
 
 require __DIR__.'/v2/company.php';
@@ -53,9 +51,11 @@ require __DIR__.'/v2/project.php';
 
 require __DIR__.'/v2/configuration.php';
 
-// require __DIR__.'/v2/company.php';
-
 require __DIR__.'/v2/talent.php';
+
+require __DIR__.'/v2/career.php';
+
+require __DIR__.'/v2/resume.php';
 
 require __DIR__.'/v2/general.php';
 

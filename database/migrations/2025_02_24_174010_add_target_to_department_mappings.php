@@ -14,7 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('department_mappings', function (Blueprint $table) {
-            // $table->string('level')->after('competency')->default('beginner');
+            $table->string('level')->after('competency')->default('beginner');
             $table->integer('target_score')->after('level')->default(70);
         });
 

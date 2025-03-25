@@ -39,7 +39,7 @@ class TalentCompanyController extends Controller
 
             $default_company = $companies->firstWhere('id', $user->default_company_id);
 
-            if(!in_array($default_company->setatus, [1, 2])){
+            if(!in_array($default_company->setatus, [0, 9])){
                 return response()->json([
                     'status' => false,
                     'data' => compact('default_company','companies'),
