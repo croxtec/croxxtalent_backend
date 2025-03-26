@@ -103,7 +103,7 @@ class ProjectGoalController extends Controller
             $validatedData['milestone_id'] = $milestone->id;
         }
 
-        $validatedData['task_code'] = $this->generateTaskCode($validatedData['project_id'], $validatedData['milestone_id'] ?? null);
+        $validatedData['code'] = $this->generateTaskCode($validatedData['project_id'], $validatedData['milestone_id'] ?? null);
 
         $task = ProjectGoal::create($validatedData);
 
