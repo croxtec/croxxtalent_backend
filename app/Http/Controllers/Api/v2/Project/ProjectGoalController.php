@@ -103,6 +103,8 @@ class ProjectGoalController extends Controller
             $validatedData['milestone_id'] = $milestone->id;
         }
 
+        $validatedData['task_code'] = $this->generateTaskCode($validatedData['project_id'], $validatedData['milestone_id'] ?? null);
+
         $task = ProjectGoal::create($validatedData);
 
         // Handle assigned employees using createOrUpdate to avoid duplicates
@@ -125,6 +127,33 @@ class ProjectGoalController extends Controller
             'message' => 'Task created successfully',
             'data' => $task->load('assigned.employee', 'milestone'),
         ], 201);
+    }
+
+    private function generateTaskCode($projectId, $milestoneId = null)
+    {
+        $project = Project::find($projectId);
+
+        if (!$project) {
+            throw new \Exception("Project not found.");
+        }
+
+        $projectTitle = strtoupper($project->title);
+        $words = explode(' ', preg_replace('/[^a-zA-Z0-9 ]/', '', $projectTitle));
+        $prefix = count($words) > 1
+            ? substr($words[0], 0, 1) . substr($words[1], 0, 1)
+            : substr($words[0], 0, 2); // Use first two letters if only one word
+
+        $projectPrefix = strtoupper($prefix) . '-' . str_pad($projectId, 3, '0', STR_PAD_LEFT);
+
+        // Count existing tasks under the same project/milestone
+        $taskCount = ProjectGoal::where('project_id', $projectId)
+            ->when($milestoneId, function ($query) use ($milestoneId) {
+                return $query->where('milestone_id', $milestoneId);
+            })
+            ->count() + 1;
+
+        // Generate unique task code (e.g., WD-001-T001)
+        return "{$projectPrefix}-T" . str_pad($taskCount, 3, '0', STR_PAD_LEFT);
     }
 
     public function addCompetency($goalId, Request $request)

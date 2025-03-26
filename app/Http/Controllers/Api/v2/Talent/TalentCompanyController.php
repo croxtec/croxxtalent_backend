@@ -122,7 +122,6 @@ class TalentCompanyController extends Controller
                                      ->with(['department', 'department_role'])
                                      ->whereNull('supervisor_id')->get();
 
-
                 return response()->json([
                     'status' => true,
                     'data' => compact('supervisor', 'team_structure'),
