@@ -3,48 +3,13 @@
 namespace App\Http\Controllers\Api\v2\Project;
 
 use App\Http\Controllers\Controller;
+use App\Models\Project\GoalActivity;
 use App\Models\Project\GoalComment;
-use App\Models\Project\Project;
-use App\Models\Project\ProjectGoal;
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class TaskCommentController extends Controller
 {
-    public function index(Request $request)
-    {
-        $user = $request->user();
-        $user_type = $user->type;
-        $per_page = $request->input('per_page', 'all');
-        $sort_by = $request->input('sort_by', 'created_at');
-        $sort_dir = $request->input('sort_dir', 'desc');
-        $search = $request->input('search');
-        $archived = $request->input('archived');
-        $pcode = $request->input('pcode');
-
-        $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
-        $goal = ProjectGoal::where('id', $pcode)->first();
-
-        $comments = GoalComment::when($user_type == 'employer', function($query) use ($goal){
-                $query->where('goal_id', $goal->id);
-            })
-            ->orderBy($sort_by, $sort_dir);
-
-        if ($per_page === 'all' || $per_page <= 0 ) {
-            $results = $comments->get();
-            $comments = new \Illuminate\Pagination\LengthAwarePaginator($results, $results->count(), -1);
-        } else {
-            $comments = $comments->paginate($per_page);
-        }
-
-        $response = collect([
-            'status' => true,
-            'data' => $comments,
-            'message' => ""
-        ]);
-
-        return response()->json($response, 200);
-    }
-
     /**
      * Store a newly created resource in storage.
      *
@@ -55,30 +20,27 @@ class TaskCommentController extends Controller
     {
         $user = $request->user();
 
-        $validatedData  = $request->validate([
+        $validatedData = $request->validate([
             'comment' => 'required|between:3,256',
             'employee_id' => 'required',
             'goal_id' => 'required|exists:project_goals,id'
         ]);
 
-        $comments = GoalComment::create($validatedData);
+        $comment = GoalComment::create($validatedData);
+
+        // Track comment creation activity
+        GoalActivity::create([
+            'goal_id' => $validatedData['goal_id'],
+            'activity_type' => 'comment_add',
+            'description' => 'Comment added to goal',
+            'performed_by' => $user->id
+        ]);
 
         return response()->json([
             'status' => true,
-            'message' => "",
-            'data' => $comments,
+            'message' => "Comment added successfully",
+            'data' => $comment,
         ], 201);
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
     }
 
     /**
@@ -90,7 +52,52 @@ class TaskCommentController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        try {
+            $user = $request->user();
+
+            $validatedData = $request->validate([
+                'comment' => 'required|between:3,256',
+            ]);
+
+            $comment = GoalComment::findOrFail($id);
+
+            // Optional: Add authorization check
+            // if ($comment->employee_id !== $user->id) {
+            //     return response()->json([
+            //         'status' => false,
+            //         'message' => 'Unauthorized to update this comment',
+            //     ], 403);
+            // }
+
+            $originalComment = $comment->comment;
+            $comment->update($validatedData);
+
+            // Track comment update activity
+            GoalActivity::create([
+                'goal_id' => $comment->goal_id,
+                'activity_type' => 'comment_update',
+                'description' => 'Comment updated',
+                'performed_by' => $user->id
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Comment updated successfully',
+                'data' => $comment->fresh(),
+            ], 200);
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Comment not found',
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to update comment',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
     }
 
     /**
@@ -101,6 +108,45 @@ class TaskCommentController extends Controller
      */
     public function destroy($id)
     {
-        //
+        try {
+            $user = auth()->user();
+            $comment = GoalComment::findOrFail($id);
+
+            // Optional: Add authorization check
+            // if ($comment->employee_id !== $user->id) {
+            //     return response()->json([
+            //         'status' => false,
+            //         'message' => 'Unauthorized to delete this comment',
+            //     ], 403);
+            // }
+
+            $goalId = $comment->goal_id;
+            $comment->delete();
+
+            // Track comment deletion activity
+            GoalActivity::create([
+                'goal_id' => $goalId,
+                'activity_type' => 'comment_delete',
+                'description' => 'Comment deleted from goal',
+                'performed_by' => $user->id
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Comment deleted successfully',
+            ], 200);
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Comment not found',
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to delete comment',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
     }
 }

@@ -277,13 +277,6 @@ class ProjectController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-     /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function update(ProjectRequest $request, $id)
     {
         $validatedData = $request->validated();
@@ -297,6 +290,41 @@ class ProjectController extends Controller
             'data' => Project::find($project->id)
         ], 200);
     }
+
+    public function rules()
+    {
+        switch($this->method()) {
+            case 'GET':
+                return [];
+            case 'POST':
+                return[
+                    'title' => 'required|max:100',
+                    'description' => 'required|max:400',
+                    'start_date' => 'required|date',
+                    'end_date' => 'required|date',
+                    'department_id' => 'required|integer|exists:employer_jobcodes,id',
+                    'budget' => 'nullable|numeric',
+                    'resource_allocation' => 'nullable|integer',
+                    'category' => 'nullable|string',
+                    'priority_level' => 'required|in:low,medium,high,urgent',
+                    'team_members.*' => 'integer|exists:employees,id',
+                    'team_leads.*' => 'nullable|integer|exists:employees,id',
+                ];
+            case 'PUT':
+            case 'PATCH':
+                return [
+                    'title' => 'sometimes|required|max:100',
+                    'description' => 'sometimes|required|max:550',
+                    'start_date' => 'sometimes|required|date',
+                    'end_date' => 'sometimes|required|date',
+                    'category' => 'sometimes|required|string',
+                    'priority_level' => 'sometimes|nullable|in:low,medium,high,urgent',
+                ];
+            case 'DELETE':
+                return [];
+            default:break;
+        }
+     }
 
     /**
      * Archive the specified resource from active list.
