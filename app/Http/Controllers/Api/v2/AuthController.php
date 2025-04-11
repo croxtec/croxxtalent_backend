@@ -259,7 +259,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'status' => true,
-                'message' => "\"{$user->name}\" created successfully.",
+                'message' => "\"{$user->name}\" created successfully. Please check your email to confirm your account. If you don't see the email, check your spam folder.",
                 'data' => $responseData
             ], 201);
         } else {
