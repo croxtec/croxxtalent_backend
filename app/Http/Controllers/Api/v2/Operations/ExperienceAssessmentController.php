@@ -253,47 +253,6 @@ class ExperienceAssessmentController extends Controller
     }
 
 
-    // private function notifyAssignedUsers($employeeInstances, $supervisorInstances, $assessment)
-    // {
-    //     // Notify employees
-    //     if (!empty($employeeInstances)) {
-    //         $employees = collect();
-
-    //         foreach ($employeeInstances as $assignedEmployee) {
-    //             $employee = Employee::find($assignedEmployee->employee_id);
-    //             if ($employee) {
-    //                 $employees->push($employee);
-    //             }
-    //         }
-
-    //         if ($employees->isNotEmpty()) {
-    //             // Send batch notifications to employees
-    //             foreach ($employees as $employee) {
-    //                 if($employee->talent)  Notification::send($employee->talent, new AssessmentPublishedNotification($assessment, $employee, 'employee'));
-    //             }
-    //         }
-    //     }
-
-    //     // Notify supervisors
-    //     if (!empty($supervisorInstances)) {
-    //         $supervisors = collect();
-
-    //         foreach ($supervisorInstances as $assignedEmployee) {
-    //             $supervisor = Employee::find($assignedEmployee->employee_id);
-    //             if ($supervisor) {
-    //                 $supervisors->push($supervisor);
-    //             }
-    //         }
-
-    //         if ($supervisors->isNotEmpty()) {
-    //             // Send batch notifications to supervisors
-    //             foreach ($supervisors as $supervisor) {
-    //                if($supervisor->talent) Notification::send($supervisor->talent, new AssessmentPublishedNotification($assessment, $supervisor, 'supervisor'));
-    //             }
-    //         }
-    //     }
-    // }
-
     /**
      * Display the specified resource.
      *
@@ -327,7 +286,7 @@ class ExperienceAssessmentController extends Controller
                 return response()->json([
                     'status' => false,
                     'message' => 'Unautourized Access'
-                ], 401);
+                ], 403);
             }
         }
 
@@ -351,56 +310,82 @@ class ExperienceAssessmentController extends Controller
     }
 
 
+     /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
     public function talent(Request $request, $id)
     {
         $user = $request->user();
+
         $user_type = $user->type;
-        $add = $request->input('add');
+
         // Confirm if employee is assigned
         if($user_type !== 'talent'){
             return response()->json([
                 'status' => false,
-                'message' => 'Unautourized Access'
-            ], 401);
+                'message' => 'Unauthorized Access'
+            ], 403);
         }
 
-        $employee = Employee::where('user_id', $user->id)->where('id', $user->default_company_id)->firstOrFail();
+        $employee = Employee::where('user_id', $user->id)
+                            ->where('id', $user->default_company_id)
+                            ->firstOrFail();
 
+        // Get assessment by ID or code
         if (is_numeric($id)) {
-            $assessment = CroxxAssessment::where('id', $id)->whereIn('category', ['competency_evaluation'])->firstOrFail();
+            $assessment = CroxxAssessment::where('id', $id)
+                        ->whereIn('type', ['company','supervisor','company_training'])
+                        ->firstOrFail();
         } else {
-            $assessment = CroxxAssessment::where('code', $id)->whereIn('category', ['competency_evaluation'])->firstOrFail();
+            $assessment = CroxxAssessment::where('code', $id)
+                        ->whereIn('type', ['company','supervisor','company_training'])
+                        ->firstOrFail();
         }
 
+        // Get appropriate questions based on assessment category
         if ($assessment->category === 'competency_evaluation') {
-           $questions = EvaluationQuestion::where('assessment_id', $assessment->id)
-                    ->whereNull('archived_at')->get();
+            $questions = EvaluationQuestion::where('assessment_id', $assessment->id)
+                        ->whereNull('archived_at')
+                        ->get();
         } else {
             $questions = CompetencyQuestion::where('assessment_id', $assessment->id)
-                    ->whereNull('archived_at')->get();
+                        ->whereNull('archived_at')
+                        ->get();
         }
 
         $assessment->questions = $questions;
 
         if($assessment->category === 'peer_review') {
-            // People who are reviewing me (I am being reviewed by)
-            $reviewers = PeerReview::where('assessment_id', $assessment->id)
-                                  ->where('employee_id', $employee->id)
-                                  ->with('reviewer:id,name,job_code_id,department_role_id,photo_url,code')
-                                  ->get()
-                                  ->pluck('reviewer')
-                                  ->toArray();
+            // Self assessment (I am reviewing myself)
+            $self_assessment = PeerReview::where('assessment_id', $assessment->id)
+                                        ->where('employee_id', $employee->id)
+                                        ->where('reviewer_id', $employee->id)
+                                        ->first();
 
-            // People I am reviewing (I am reviewer for)
+            $assessment->self_assessment = $self_assessment;
+
+            // People who are reviewing me (I am being reviewed by) - excluding self
+            $reviewers = PeerReview::where('assessment_id', $assessment->id)
+                                ->where('employee_id', $employee->id)
+                                ->where('reviewer_id', '!=', $employee->id)
+                                ->with('reviewer:id,name,job_code_id,department_role_id,photo_url,code')
+                                ->get()
+                                ->pluck('reviewer')
+                                ->toArray();
+
+            // People I am reviewing (I am reviewer for) - excluding self
             $reviewees = PeerReview::where('assessment_id', $assessment->id)
-                                  ->where('reviewer_id', $employee->id)
-                                  ->with('employee:id,name,job_code_id,department_role_id,photo_url,code')
-                                  ->get()
-                                  ->pluck('employee')
-                                  ->toArray();
+                                ->where('reviewer_id', $employee->id)
+                                ->where('employee_id', '!=', $employee->id)
+                                ->with('employee:id,name,job_code_id,department_role_id,photo_url,code')
+                                ->get()
+                                ->pluck('employee')
+                                ->toArray();
 
             $assessment->reviewers = $reviewers;
-
             $assessment->reviewees = $reviewees;
         }
 

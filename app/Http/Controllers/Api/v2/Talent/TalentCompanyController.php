@@ -22,16 +22,15 @@ class TalentCompanyController extends Controller
     }
 
     public function index(Request $request){
-
         $user = $request->user();
         $companies = Employee::where('user_id', $user->id)->with('employer')->get();
-                        // ->select(['id', 'employer_id', 'user_id', 'name','code', 'supervisor_id','photo_url', 'photo_updated_at','job_code_id','level'])
-        $default_company =  null;
+        $default_company = null;
+        $dashboard = [];
 
         if (count($companies)) {
             // Get the first company's employer_id as the default
             $firstCompanyEmployerId = $companies->first()->id;
-            // $defaultCompanyId = $request->input('employer', $firstCompanyEmployerId);
+
             if($request->input('employer')) {
                 $user->default_company_id = $request->input('employer');
                 $user->save();
@@ -39,19 +38,20 @@ class TalentCompanyController extends Controller
 
             $default_company = $companies->firstWhere('id', $user->default_company_id);
 
-            if(!in_array($default_company->setatus, [1, 2])){
-                return response()->json([
-                    'status' => false,
-                    'data' => compact('default_company','companies'),
-                    'message' => 'Unautourized Access'
-                ], 400);
-            }
+            // Check if $default_company exists before accessing properties
+            if($default_company) {
+                // Check company status
+                if(!in_array($default_company->status, [0, 9])){
+                    return response()->json([
+                        'status' => false,
+                        'data' => compact('default_company','companies'),
+                        'message' => 'Unauthorized Access'
+                    ], 403);
+                }
 
-            if($default_company){
                 $default_company->department;
                 $default_company->department_role;
                 $default_company->employer;
-
 
                 if($default_company->department && !$default_company->supervisor_id){
                     $dashboard = [
@@ -63,7 +63,7 @@ class TalentCompanyController extends Controller
                     $default_company->department->technical_skill;
                     $default_company->department->soft_skill;
 
-                    $technical_skills = array_column($default_company->department->technical_skill->toArray(0),'competency');
+                    $technical_skills = array_column($default_company->department->technical_skill->toArray(),'competency');
                     $assessment_distribution = [];
                     $trainings_distribution = [];
 
@@ -122,7 +122,6 @@ class TalentCompanyController extends Controller
                                      ->with(['department', 'department_role'])
                                      ->whereNull('supervisor_id')->get();
 
-
                 return response()->json([
                     'status' => true,
                     'data' => compact('supervisor', 'team_structure'),
@@ -132,7 +131,7 @@ class TalentCompanyController extends Controller
                 return response()->json([
                     'status' => false,
                     'message' => 'Unautourized Access'
-                ], 401);
+                ], 403);
             }
         }
 
@@ -209,7 +208,7 @@ class TalentCompanyController extends Controller
                 return response()->json([
                     'status' => false,
                     'message' => 'Unautourized Access'
-                ], 401);
+                ], 403);
             }
         }
 
@@ -273,7 +272,7 @@ class TalentCompanyController extends Controller
                 return response()->json([
                     'status' => false,
                     'message' => 'Unautourized Access'
-                ], 401);
+                ], 403);
             }
         }
 
