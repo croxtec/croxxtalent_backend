@@ -41,7 +41,7 @@ class TalentCompanyController extends Controller
             // Check if $default_company exists before accessing properties
             if($default_company) {
                 // Check company status
-                if(in_array($default_company->status, [0, 9])){
+                if(in_array($default_company->status, [0, 3, 9])){
                     return response()->json([
                         'status' => false,
                         'data' => compact('default_company','companies'),

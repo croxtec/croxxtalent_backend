@@ -13,6 +13,7 @@ use App\Models\Supervisor;
 use App\Models\Assessment\CompetencyQuestion;
 use App\Models\Assessment\EvaluationQuestion;
 use App\Models\Assessment\EmployerAssessmentFeedback;
+use App\Models\Assessment\PeerReview;
 use App\Models\Assessment\TalentAssessmentSummary;
 use Illuminate\Support\Facades\Storage;
 
@@ -81,6 +82,37 @@ class EmployeeAssessmentController extends Controller
             $assessment->estimated_time = $estimated_time;
 
             unset($assessment->questions);
+
+            if($assessment->category === 'peer_review') {
+                // Self assessment (I am reviewing myself)
+                $self_assessment = PeerReview::where('assessment_id', $assessment->id)
+                                            ->where('employee_id', $employee->id)
+                                            ->where('reviewer_id', $employee->id)
+                                            ->first();
+
+                $assessment->self_assessment = $self_assessment;
+
+                // People who are reviewing me (I am being reviewed by) - excluding self
+                $reviewers = PeerReview::where('assessment_id', $assessment->id)
+                                    ->where('employee_id', $employee->id)
+                                    ->where('reviewer_id', '!=', $employee->id)
+                                    ->with('reviewer:id,name,job_code_id,department_role_id,photo_url,code')
+                                    ->get()
+                                    ->pluck('reviewer')
+                                    ->toArray();
+
+                // People I am reviewing (I am reviewer for) - excluding self
+                $reviewees = PeerReview::where('assessment_id', $assessment->id)
+                                    ->where('reviewer_id', $employee->id)
+                                    ->where('employee_id', '!=', $employee->id)
+                                    ->with('employee:id,name,job_code_id,department_role_id,photo_url,code')
+                                    ->get()
+                                    ->pluck('employee')
+                                    ->toArray();
+
+                $assessment->reviewers = $reviewers;
+                $assessment->reviewees = $reviewees;
+            }
 
             $isSubmitted = EmployerAssessmentFeedback::where([
                 'assessment_id' => $assessment->id,
