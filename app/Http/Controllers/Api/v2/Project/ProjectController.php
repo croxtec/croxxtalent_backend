@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\v2\Project;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ProjectRequest;
+use App\Models\Employee;
 use App\Models\Project\Project;
 use App\Models\Project\ProjectTeam;
 use App\Services\DepartmentPerformanceService;
@@ -177,21 +178,87 @@ class ProjectController extends Controller
         }
     }
 
+
+    public function employee(Request $request, $code)
+    {
+        $user = $request->user();
+        $per_page = $request->input('per_page', 12);
+
+        $employee = Employee::where('code', $code)->firstOrFail();
+
+        if($user->type == 'talent'){
+           $validation_result = validateEmployeeAccess($user, $employee);
+
+             // If validation fails, return the response
+            if ($validation_result !== true) {
+                return $validation_result;
+            }
+        }
+
+        $projects = Project::join('project_teams', 'projects.id', '=', 'project_teams.project_id')
+                    ->where('project_teams.employee_id', $employee->id)
+                    ->where('projects.employer_user_id', $employee->employer_id)
+                    ->with(['department'])->withCount('team')
+                    ->latest()
+                    ->paginate($per_page);
+
+        $projects->setCollection(
+            $projects->getCollection()->map(function ($project) {
+                $project->team_structure = $project->getTeamStructure();
+                $project->task_statistics = $project->getTaskStatistics();
+                unset($project->goals);
+                return $project;
+            })
+        );
+
+        return response()->json([
+            'status' => true,
+            'data' => $projects,
+            'message' => ""
+        ], 200);
+    }
+
+
     /**
      * Display the specified resource.
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
+        $user = $request->user();
+        $user_type = $user->type;
+        $employerId = ($user_type == 'employer') ? $user->id: null;
+
+          // Validate Employee Access
+        if($user_type == 'talent'){
+            $employee = Employee::where('user_id', $user->id)->where('id', $user->default_company_id)->firstOrFail();
+            $employerId = $employee->employer_id;
+        }
+
+
         $project = Project::where('code', $id)
         ->with([
             'department',
             'milestones',
             'goals'
         ])
+        ->where('employer_user_id', $employerId)
         ->firstOrFail();
+
+        if($user_type == 'talent'){
+            $isAssigned = ProjectTeam::where('employee_id', $employee->id)
+                ->where('project_id', $project->id)->first();
+
+            if(!$isAssigned){
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unautourized Access'
+                ], 403);
+            }
+        }
+
 
         $project->team_structure = $project->getTeamStructure();
         $project->task_statistics = $project->getTaskStatistics();
@@ -204,13 +271,6 @@ class ProjectController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-     /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -230,6 +290,41 @@ class ProjectController extends Controller
             'data' => Project::find($project->id)
         ], 200);
     }
+
+    public function rules()
+    {
+        switch($this->method()) {
+            case 'GET':
+                return [];
+            case 'POST':
+                return[
+                    'title' => 'required|max:100',
+                    'description' => 'required|max:400',
+                    'start_date' => 'required|date',
+                    'end_date' => 'required|date',
+                    'department_id' => 'required|integer|exists:employer_jobcodes,id',
+                    'budget' => 'nullable|numeric',
+                    'resource_allocation' => 'nullable|integer',
+                    'category' => 'nullable|string',
+                    'priority_level' => 'required|in:low,medium,high,urgent',
+                    'team_members.*' => 'integer|exists:employees,id',
+                    'team_leads.*' => 'nullable|integer|exists:employees,id',
+                ];
+            case 'PUT':
+            case 'PATCH':
+                return [
+                    'title' => 'sometimes|required|max:100',
+                    'description' => 'sometimes|required|max:550',
+                    'start_date' => 'sometimes|required|date',
+                    'end_date' => 'sometimes|required|date',
+                    'category' => 'sometimes|required|string',
+                    'priority_level' => 'sometimes|nullable|in:low,medium,high,urgent',
+                ];
+            case 'DELETE':
+                return [];
+            default:break;
+        }
+     }
 
     /**
      * Archive the specified resource from active list.

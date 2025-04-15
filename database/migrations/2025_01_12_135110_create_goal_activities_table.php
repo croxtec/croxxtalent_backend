@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('goal_id')->constrained('project_goals')->cascadeOnDelete();
             $table->string('activity_type'); // Type of activity (e.g., review, update)
             $table->text('description')->nullable(); // Description of the activity
-            $table->foreignId('performed_by')->constrained('users')->cascadeOnDelete(); // User who performed the activity
+            $table->foreignId('performed_by')->constrained('employees')->cascadeOnDelete(); // User who performed the activity
             $table->timestamps();
             $table->softDeletes();
         });

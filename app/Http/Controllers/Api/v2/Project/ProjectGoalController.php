@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\TaskGoalRequest;
 use App\Http\Resources\EmployeeSummaryResource;
 use App\Models\Project\AssignedEmployee;
+use App\Models\Project\GoalActivity;
 use App\Models\Project\GoalCompetency;
 use App\Models\Project\Milestone;
 use App\Models\Project\Project;
@@ -107,6 +108,14 @@ class ProjectGoalController extends Controller
 
         $task = ProjectGoal::create($validatedData);
 
+        // Track goal creation activity
+        GoalActivity::create([
+            'goal_id' => $task->id,
+            'activity_type' => 'create',
+            'description' => 'Goal created: ' . $task->title,
+            'performed_by' => $user->id
+        ]);
+
         // Handle assigned employees using createOrUpdate to avoid duplicates
         if(!empty($validatedData['assigned'])) {
             foreach($validatedData['assigned'] as $employeeId) {
@@ -119,6 +128,14 @@ class ProjectGoalController extends Controller
                         'assigned_at' => now(),
                     ]
                 );
+
+                // Track employee assignment activity
+                GoalActivity::create([
+                    'goal_id' => $task->id,
+                    'activity_type' => 'employee_assign',
+                    'description' => 'Employee assigned to goal',
+                    'performed_by' => $user->id
+                ]);
             }
         }
 
@@ -158,6 +175,7 @@ class ProjectGoalController extends Controller
 
     public function addCompetency($goalId, Request $request)
     {
+        $user = $request->user();
         $data = $request->validate([
             'competency_ids' => 'required|array',
             'competency_ids.*' => 'integer|exists:department_mappings,id',
@@ -174,6 +192,14 @@ class ProjectGoalController extends Controller
                     'updated_at' => now(),
                 ]
             );
+
+            // Track competency addition activity
+            GoalActivity::create([
+                'goal_id' => $goalId,
+                'activity_type' => 'add_competency',
+                'description' => 'Competency added to goal',
+                'performed_by' => $user->id
+            ]);
         }
 
         return response()->json([
@@ -184,6 +210,7 @@ class ProjectGoalController extends Controller
 
     public function assignEmployee($goalId, Request $request)
     {
+        $user = $request->user();
         $data = $request->validate([
             'employee_ids' => 'required|array',
             'employee_ids.*' => 'integer|exists:employees,id',
@@ -199,6 +226,14 @@ class ProjectGoalController extends Controller
                     'assigned_at' => now(),
                 ]
             );
+
+            // Track employee assignment activity
+            GoalActivity::create([
+                'goal_id' => $goalId,
+                'activity_type' => 'employee_assign',
+                'description' => 'Employee assigned to goal',
+                'performed_by' => $user->id
+            ]);
         }
 
         return response()->json([
@@ -259,6 +294,7 @@ class ProjectGoalController extends Controller
     public function update(TaskGoalRequest $request, $id)
     {
         try {
+            $user = $request->user();
             $projectGoal = ProjectGoal::findOrFail($id);
 
             // if ($projectGoal->employer_user_id !== $request->user()->id) {
@@ -270,7 +306,27 @@ class ProjectGoalController extends Controller
 
             $validatedData = $request->validated();
 
+            // Get original values for activity tracking
+            $originalValues = $projectGoal->getOriginal();
+
             $projectGoal->update($validatedData);
+
+            // Track goal update activity
+            $changedFields = [];
+            foreach ($validatedData as $key => $value) {
+                if (isset($originalValues[$key]) && $originalValues[$key] != $value) {
+                    $changedFields[] = $key;
+                }
+            }
+
+            if (!empty($changedFields)) {
+                GoalActivity::create([
+                    'goal_id' => $projectGoal->id,
+                    'activity_type' => 'update',
+                    'description' => 'Goal updated: ' . implode(', ', $changedFields) . ' changed',
+                    'performed_by' => $user->id
+                ]);
+            }
 
             return response()->json([
                 'status' => true,
@@ -295,6 +351,7 @@ class ProjectGoalController extends Controller
     // Remove Competency from a Goal
     public function removeCompetency($goalId, $competencyId)
     {
+        $user = auth()->user();
         $competency = GoalCompetency::where('goal_id', $goalId)
             ->where('competency_id', $competencyId)
             ->first();
@@ -305,13 +362,21 @@ class ProjectGoalController extends Controller
 
         $competency->delete();
 
+        // Track competency removal activity
+        GoalActivity::create([
+            'goal_id' => $goalId,
+            'activity_type' => 'remove_competency',
+            'description' => 'Competency removed from goal',
+            'performed_by' => $user->id
+        ]);
+
         return response()->json(['message' => 'Competency removed successfully.']);
     }
 
     // Remove Assigned Employee from a Goal
     public function removeEmployee($goalId, $employeeId)
     {
-
+        $user = auth()->user();
         $assignment = AssignedEmployee::where('goal_id', $goalId)
             ->where('employee_id', $employeeId)
             ->first();
@@ -322,16 +387,33 @@ class ProjectGoalController extends Controller
 
         $assignment->delete();
 
+        // Track employee removal activity
+        GoalActivity::create([
+            'goal_id' => $goalId,
+            'activity_type' => 'employee_remove',
+            'description' => 'Employee removed from goal',
+            'performed_by' => $user->id
+        ]);
+
         return response()->json(['message' => 'Employee unassigned successfully.']);
     }
 
     public function archive($id)
     {
+        $user = auth()->user();
         $projectGoal = ProjectGoal::findOrFail($id);
         // $this->authorize('delete', [Project::class, $project]);
 
         $projectGoal->archived_at = now();
         $projectGoal->save();
+
+        // Track archiving activity
+        GoalActivity::create([
+            'goal_id' => $projectGoal->id,
+            'activity_type' => 'archive',
+            'description' => 'Goal archived',
+            'performed_by' => $user->id
+        ]);
 
         return response()->json([
             'status' => true,
@@ -349,6 +431,7 @@ class ProjectGoalController extends Controller
      */
     public function unarchive($id)
     {
+        $user = auth()->user();
         $projectGoal = ProjectGoal::findOrFail($id);
 
         // $this->authorize('delete', [Project::class, $project]);
@@ -356,11 +439,18 @@ class ProjectGoalController extends Controller
         $projectGoal->archived_at = null;
         $projectGoal->save();
 
+        // Track unarchiving activity
+        GoalActivity::create([
+            'goal_id' => $projectGoal->id,
+            'activity_type' => 'unarchive',
+            'description' => 'Goal unarchived',
+            'performed_by' => $user->id
+        ]);
+
         return response()->json([
             'status' => true,
             'message' => "Project unarchived successfully.",
             'data' => ProjectGoal::find($projectGoal->id)
         ], 200);
     }
-
 }

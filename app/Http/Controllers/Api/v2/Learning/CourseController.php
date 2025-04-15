@@ -539,7 +539,7 @@ class CourseController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => 'Unautourized Access'
-            ], 401);
+            ], 403);
         }
 
         $trainings = CroxxTraining::where('employer_id', $current_company->employer_id)

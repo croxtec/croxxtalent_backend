@@ -20,6 +20,47 @@ use App\Models\Competency\DepartmentMapping;
 class ReportAnalysisController extends Controller
 {
 
+        // private function notifyAssignedUsers($employeeInstances, $supervisorInstances, $assessment)
+    // {
+    //     // Notify employees
+    //     if (!empty($employeeInstances)) {
+    //         $employees = collect();
+
+    //         foreach ($employeeInstances as $assignedEmployee) {
+    //             $employee = Employee::find($assignedEmployee->employee_id);
+    //             if ($employee) {
+    //                 $employees->push($employee);
+    //             }
+    //         }
+
+    //         if ($employees->isNotEmpty()) {
+    //             // Send batch notifications to employees
+    //             foreach ($employees as $employee) {
+    //                 if($employee->talent)  Notification::send($employee->talent, new AssessmentPublishedNotification($assessment, $employee, 'employee'));
+    //             }
+    //         }
+    //     }
+
+    //     // Notify supervisors
+    //     if (!empty($supervisorInstances)) {
+    //         $supervisors = collect();
+
+    //         foreach ($supervisorInstances as $assignedEmployee) {
+    //             $supervisor = Employee::find($assignedEmployee->employee_id);
+    //             if ($supervisor) {
+    //                 $supervisors->push($supervisor);
+    //             }
+    //         }
+
+    //         if ($supervisors->isNotEmpty()) {
+    //             // Send batch notifications to supervisors
+    //             foreach ($supervisors as $supervisor) {
+    //                if($supervisor->talent) Notification::send($supervisor->talent, new AssessmentPublishedNotification($assessment, $supervisor, 'supervisor'));
+    //             }
+    //         }
+    //     }
+    // }
+
     public function gapAnalysisReport(Request $request)
     {
         $employer = $request->user();

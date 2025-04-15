@@ -88,8 +88,8 @@ class AuthController extends Controller
 
         $user = User::where($login_field, $validatedData['login'])
                          ->whereIn('type', ['talent', 'admin'])->first();
-        // || !Hash::check($validatedData['password'], $user->password)
-        if ( !$user ) {
+        //
+        if (!$user || !Hash::check($validatedData['password'], $user->password)) {
             return response()->json([
                 'status' => false,
                 'message' => 'Invalid login credentials.'
