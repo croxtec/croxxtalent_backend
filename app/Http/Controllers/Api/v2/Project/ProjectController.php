@@ -270,6 +270,157 @@ class ProjectController extends Controller
         ], 200);
     }
 
+    public function getProjectTeam(Request $request, $id)
+    {
+        $user = $request->user();
+        $user_type = $user->type;
+        $employerId = ($user_type == 'employer') ? $user->id: null;
+
+          // Validate Employee Access
+        if($user_type == 'talent'){
+            $employee = Employee::where('user_id', $user->id)->where('id', $user->default_company_id)->firstOrFail();
+            $employerId = $employee->employer_id;
+        }
+
+        $project = Project::where('code', $id)
+                ->where('employer_user_id', $employerId)
+                ->firstOrFail();
+
+        if($user_type == 'talent'){
+            $isAssigned = ProjectTeam::where('employee_id', $employee->id)
+                ->where('project_id', $project->id)->first();
+
+            if(!$isAssigned){
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unautourized Access'
+                ], 403);
+            }
+        }
+
+
+        $project->team_structure = $project->getTeamStructure();
+
+        return response()->json([
+            'status' => true,
+            'message' => "Project team fetched successfully",
+            'data' => $project,
+        ], 200);
+    }
+
+      /**
+     * Add team members or leads to a project
+     *
+     * @param ProjectRequest $request
+     * @param int $id Project ID
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function addTeam(Request $request, $id)
+    {
+        $user = $request->user();
+
+        $validatedData = $request->validate([
+            'team_members.*' => 'integer|exists:employees,id',
+            'team_leads.*' => 'nullable|integer|exists:employees,id',
+        ]);
+
+        $project = Project::findOrFail($id);
+        $employeeInstances = [];
+
+        // Add team members if provided
+        if (isset($validatedData['team_members']) && !empty($validatedData['team_members'])) {
+            $employees = $validatedData['team_members'];
+            foreach ($employees as $employee) {
+                // Check if employee is already a member to avoid duplicates
+                $exists = ProjectTeam::where('project_id', $project->id)
+                    ->where('employee_id', $employee)
+                    ->where('is_team_lead', false)
+                    ->exists();
+
+                if (!$exists) {
+                    $assignedMember = ProjectTeam::create([
+                        'project_id' => $project->id,
+                        'employee_id' => $employee,
+                        'is_team_lead' => false
+                    ]);
+
+                    $employeeInstances[] = $assignedMember;
+                }
+            }
+        }
+
+        // Add team leads if provided
+        if (isset($validatedData['team_leads']) && !empty($validatedData['team_leads'])) {
+            $leads = $validatedData['team_leads'];
+            foreach ($leads as $employee) {
+                // Check if employee is already a lead to avoid duplicates
+                $exists = ProjectTeam::where('project_id', $project->id)
+                    ->where('employee_id', $employee)
+                    ->where('is_team_lead', true)
+                    ->exists();
+
+                if (!$exists) {
+                    $assignedMember = ProjectTeam::create([
+                        'project_id' => $project->id,
+                        'employee_id' => $employee,
+                        'is_team_lead' => true
+                    ]);
+
+                    $employeeInstances[] = $assignedMember;
+                }
+            }
+        }
+
+        // Load fresh project data with team relationships
+        $refreshedProject = Project::with(['team.employee', 'team.department'])
+            ->findOrFail($project->id);
+
+        return response()->json([
+            'status' => true,
+            'message' => "Team updated successfully",
+            'data' => $refreshedProject
+        ], 200);
+    }
+
+    /**
+     * Remove a team member or lead from a project
+     *
+     * @param Request $request
+     * @param int $id Project ID
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function removeTeam(Request $request, $id)
+    {
+        $validatedData = $request->validate([
+            'employee_id' => 'required|integer|exists:employees,id',
+            'is_team_lead' => 'required|boolean',
+        ]);
+
+        $project = Project::findOrFail($id);
+
+        // Find and delete the team member
+        $deleted = ProjectTeam::where('project_id', $project->id)
+            ->where('employee_id', $validatedData['employee_id'])
+            ->where('is_team_lead', $validatedData['is_team_lead'])
+            ->delete();
+
+        if (!$deleted) {
+            return response()->json([
+                'status' => false,
+                'message' => "Team member not found",
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => "Team member removed successfully",
+            'data' => Project::with(['team.employee', 'team.department'])
+                ->findOrFail($project->id)
+        ], 200);
+    }
+
+
+
     /**
      * Update the specified resource in storage.
      *
@@ -290,41 +441,6 @@ class ProjectController extends Controller
             'data' => Project::find($project->id)
         ], 200);
     }
-
-    public function rules()
-    {
-        switch($this->method()) {
-            case 'GET':
-                return [];
-            case 'POST':
-                return[
-                    'title' => 'required|max:100',
-                    'description' => 'required|max:400',
-                    'start_date' => 'required|date',
-                    'end_date' => 'required|date',
-                    'department_id' => 'required|integer|exists:employer_jobcodes,id',
-                    'budget' => 'nullable|numeric',
-                    'resource_allocation' => 'nullable|integer',
-                    'category' => 'nullable|string',
-                    'priority_level' => 'required|in:low,medium,high,urgent',
-                    'team_members.*' => 'integer|exists:employees,id',
-                    'team_leads.*' => 'nullable|integer|exists:employees,id',
-                ];
-            case 'PUT':
-            case 'PATCH':
-                return [
-                    'title' => 'sometimes|required|max:100',
-                    'description' => 'sometimes|required|max:550',
-                    'start_date' => 'sometimes|required|date',
-                    'end_date' => 'sometimes|required|date',
-                    'category' => 'sometimes|required|string',
-                    'priority_level' => 'sometimes|nullable|in:low,medium,high,urgent',
-                ];
-            case 'DELETE':
-                return [];
-            default:break;
-        }
-     }
 
     /**
      * Archive the specified resource from active list.

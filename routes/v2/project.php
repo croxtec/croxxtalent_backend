@@ -9,6 +9,8 @@ Route::middleware('auth:sanctum')->name('api.')->group( function () {
     Route::get('projects/employee/{code}', 'Api\v2\Project\ProjectController@employee')->name('projects.employee');
     // Project operations
     Route::get('projects/overview', 'Api\v2\Project\ProjectController@overview')->name('projects.overview');
+    Route::pst('projects/{id}/add-team', 'Api\v2\Project\ProjectController@addTeam')->name('projects.addTeam');
+    Route::pst('projects/{id}/remove-team', 'Api\v2\Project\ProjectController@addTeam')->name('projects.removeTeam');
     Route::patch('projects/{id}/archive', 'Api\v2\Project\ProjectController@archive')->name('projects.archive');
     Route::patch('projects/{id}/unarchive', 'Api\v2\Project\ProjectController@unarchive')->name('projects.unarchive');
 

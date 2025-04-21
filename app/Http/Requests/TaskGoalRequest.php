@@ -50,6 +50,8 @@ class TaskGoalRequest extends FormRequest
                     'milestone' => 'nullable|string|min:3|max:56',
                     'title' => 'nullable|max:100',
                     'metric' => 'nullable|max:2048',
+                    'start_date' => 'sometimes|date',
+                    'due_date' => 'sometimes|date',
                     'status' => 'nullable|in:to-do,in-progress,in-review,rework,completed',
                     'priority_level' => 'nullable|in:low,medium,high,urgent',
                 ];

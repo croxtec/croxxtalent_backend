@@ -110,6 +110,7 @@ class Project extends Model
                     'department_role' => $team->employee->department_role_id,
                     'photo_url' => $team->employee->photo_url,
                     'code' => $team->employee->code,
+                    'department' => $team->employee->department,
                 ];
             }),
             'members' => $this->teamMembers()->get()->map(function ($team) {
@@ -120,6 +121,7 @@ class Project extends Model
                     'department_role' => $team->employee->department_role_id,
                     'photo_url' => $team->employee->photo_url,
                     'code' => $team->employee->code,
+                    'department' => $team->employee->department,
                 ];
             })
         ];
