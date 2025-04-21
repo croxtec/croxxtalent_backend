@@ -15,6 +15,8 @@ class ProjectGoal extends Model
         'milestone_id',
         'employer_user_id',
         // 'code',
+        'code',
+
         'title',
         'metric',
         'start_date',

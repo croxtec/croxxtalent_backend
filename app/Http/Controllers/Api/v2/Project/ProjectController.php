@@ -372,7 +372,7 @@ class ProjectController extends Controller
         }
 
         // Load fresh project data with team relationships
-        $refreshedProject = Project::with(['team.employee', 'team.department'])
+        $refreshedProject = Project::with(['team.employee','department'])
             ->findOrFail($project->id);
 
         return response()->json([
@@ -411,11 +411,13 @@ class ProjectController extends Controller
             ], 404);
         }
 
+        $refreshedProject = Project::with(['team.employee','department'])
+                    ->findOrFail($project->id);
+
         return response()->json([
             'status' => true,
             'message' => "Team member removed successfully",
-            'data' => Project::with(['team.employee', 'team.department'])
-                ->findOrFail($project->id)
+            'data' => $refreshedProject
         ], 200);
     }
 
