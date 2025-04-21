@@ -14,11 +14,13 @@ class ProjectGoal extends Model
         'project_id',
         'milestone_id',
         'employer_user_id',
+        // 'code',
         'code',
 
         'title',
         'metric',
-        'end_date', //due_date
+        'start_date',
+        'due_date', //due_date
         'priority_level',
         'status',
         'rating',

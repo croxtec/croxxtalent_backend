@@ -340,13 +340,13 @@ class AuthController extends Controller
         // $user->save();
         $this->companyPerformanceService->refreshCompetenciesPerformance($user);
         $this->companyPerformanceService->refreshEmployeesPerformance($user);
+
         // save audit trail log
         $old_values = [];
         $new_values = [];
         Audit::log($user->id, 'login', $old_values, $new_values, User::class, $user->id);
 
         $responseData = $this->tokenData($token);
-        // $responseData['realtime_token'] = $user->token;
         $responseData['user'] = $user;
 
         // send response

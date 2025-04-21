@@ -57,11 +57,11 @@ class ProjectRequest extends FormRequest
             case 'PUT':
             case 'PATCH':
                 return [
-                    'title' => 'sometimes|required|max:100',
-                    'description' => 'sometimes|required|max:550',
-                    'start_date' => 'sometimes|required|date',
-                    'end_date' => 'sometimes|required|date',
-                    'category' => 'sometimes|required|string',
+                    'title' => 'sometimes|max:100',
+                    'description' => 'sometimes|max:550',
+                    'start_date' => 'sometimes|date',
+                    'end_date' => 'sometimes|date',
+                    'category' => 'sometimes|string',
                     'priority_level' => 'sometimes|nullable|in:low,medium,high,urgent',
                 ];
             case 'DELETE':
