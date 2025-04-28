@@ -38,6 +38,14 @@ class ProjectGoalController extends Controller
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
         $project = Project::where('code', $code)->first();
 
+        if($user_type == 'talent'){
+            $validation_result = validateProjectAccess($user, $project);
+
+            if ($validation_result !== true) {
+                return $validation_result;
+            }
+        }
+
         $project_goals = ProjectGoal::where('project_id', $project->id)
             ->when($user_type == 'employer',function($query) use ($user){
                 $query->where('employer_user_id', $user->id);
@@ -90,9 +98,18 @@ class ProjectGoalController extends Controller
     public function store(TaskGoalRequest $request)
     {
         $user = $request->user();
+
         $validatedData = $request->validated();
 
         $validatedData['employer_user_id'] = $user->id;
+
+        // if($user->type == 'talent'){
+        //     $validation_result = validateProjectAccess($user, $project);
+
+        //     if ($validation_result !== true) {
+        //         return $validation_result;
+        //     }
+        // }
 
         // Milestone handling
         if (!empty($validatedData['milestone'])) {
@@ -176,6 +193,8 @@ class ProjectGoalController extends Controller
     public function addCompetency($goalId, Request $request)
     {
         $user = $request->user();
+
+
         $data = $request->validate([
             'competency_ids' => 'required|array',
             'competency_ids.*' => 'integer|exists:department_mappings,id',

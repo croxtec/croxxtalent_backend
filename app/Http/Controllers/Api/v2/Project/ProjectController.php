@@ -248,17 +248,12 @@ class ProjectController extends Controller
         ->firstOrFail();
 
         if($user_type == 'talent'){
-            $isAssigned = ProjectTeam::where('employee_id', $employee->id)
-                ->where('project_id', $project->id)->first();
+            $validation_result = validateProjectAccess($user, $project);
 
-            if(!$isAssigned){
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Unautourized Access'
-                ], 403);
+            if ($validation_result !== true) {
+                return $validation_result;
             }
         }
-
 
         $project->team_structure = $project->getTeamStructure();
         $project->task_statistics = $project->getTaskStatistics();
@@ -287,14 +282,10 @@ class ProjectController extends Controller
                 ->firstOrFail();
 
         if($user_type == 'talent'){
-            $isAssigned = ProjectTeam::where('employee_id', $employee->id)
-                ->where('project_id', $project->id)->first();
+            $validation_result = validateProjectAccess($user, $project);
 
-            if(!$isAssigned){
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Unautourized Access'
-                ], 403);
+            if ($validation_result !== true) {
+                return $validation_result;
             }
         }
 
@@ -318,18 +309,21 @@ class ProjectController extends Controller
     public function addTeam(Request $request, $id)
     {
         $user = $request->user();
+        // Permision check
+        if (!($project = validateEmployerProjectOwnership($user, $id)) instanceof \App\Models\Project\Project) return $project;
 
         $validatedData = $request->validate([
             'team_members.*' => 'integer|exists:employees,id',
             'team_leads.*' => 'nullable|integer|exists:employees,id',
         ]);
 
-        $project = Project::findOrFail($id);
+        // $project = Project::findOrFail($id);
         $employeeInstances = [];
 
         // Add team members if provided
         if (isset($validatedData['team_members']) && !empty($validatedData['team_members'])) {
             $employees = $validatedData['team_members'];
+
             foreach ($employees as $employee) {
                 // Check if employee is already a member to avoid duplicates
                 $exists = ProjectTeam::where('project_id', $project->id)
@@ -391,12 +385,16 @@ class ProjectController extends Controller
      */
     public function removeTeam(Request $request, $id)
     {
+        // Permision check
+        $user = $request->user();
+        if (!($project = validateEmployerProjectOwnership($user, $id)) instanceof \App\Models\Project\Project) return $project;
+
         $validatedData = $request->validate([
             'employee_id' => 'required|integer|exists:employees,id',
             'is_team_lead' => 'required|boolean',
         ]);
 
-        $project = Project::findOrFail($id);
+        // $project = Project::findOrFail($id);
 
         // Find and delete the team member
         $deleted = ProjectTeam::where('project_id', $project->id)
@@ -432,15 +430,19 @@ class ProjectController extends Controller
      */
     public function update(ProjectRequest $request, $id)
     {
+         // Permision check
+        $user = $request->user();
+        if (!($project = validateEmployerProjectOwnership($user, $id)) instanceof \App\Models\Project\Project) return $project;
+
         $validatedData = $request->validated();
-        $project = Project::findOrFail($id);
+        // $project = Project::findOrFail($id);
 
         $project->update($validatedData);
 
         return response()->json([
             'status' => true,
             'message' => "Project updated successfully.",
-            'data' => Project::find($project->id)
+            'data' => $project->fresh()
         ], 200);
     }
 
@@ -450,9 +452,12 @@ class ProjectController extends Controller
      * @param  string  $id
      * @return \Illuminate\Http\Response
      */
-    public function archive($id)
+    public function archive(Request $request, $id)
     {
-        $project = Project::findOrFail($id);
+        $user = $request->user();
+        if (!($project = validateEmployerProjectOwnership($user, $id)) instanceof \App\Models\Project\Project) return $project;
+
+        // $project = Project::findOrFail($id);
         // $this->authorize('delete', [Project::class, $project]);
 
         $project->archived_at = now();
@@ -461,7 +466,7 @@ class ProjectController extends Controller
         return response()->json([
             'status' => true,
             'message' => "Project archived successfully.",
-            'data' => Project::find($project->id)
+            'data' => $project->fresh()
         ], 200);
     }
 
@@ -472,9 +477,12 @@ class ProjectController extends Controller
      * @param  string  $id
      * @return \Illuminate\Http\Response
      */
-    public function unarchive($id)
+    public function unarchive(Request $request, $id)
     {
-        $project = Project::findOrFail($id);
+        $user = $request->user();
+        if (!($project = validateEmployerProjectOwnership($user, $id)) instanceof \App\Models\Project\Project) return $project;
+
+        // $project = Project::findOrFail($id);
 
         // $this->authorize('delete', [Project::class, $project]);
 
@@ -484,7 +492,7 @@ class ProjectController extends Controller
         return response()->json([
             'status' => true,
             'message' => "Project unarchived successfully.",
-            'data' => Project::find($project->id)
+            'data' => $project->fresh()
         ], 200);
     }
 

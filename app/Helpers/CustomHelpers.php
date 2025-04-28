@@ -180,3 +180,79 @@ if (!function_exists('validateEmployeeAccess')) {
         ], 400);
     }
 }
+
+
+if (!function_exists('validateProjectAccess')) {
+
+    /**
+     * Validates if the user has access to a project.
+     *
+     * @param \App\Models\User $user
+     * @param \App\Models\Project\Project $project
+     * @return \Illuminate\Http\JsonResponse|null
+     */
+    function validateProjectAccess($user, $project)
+    {
+        if ($user->user_type === 'talent') {
+            $employee = \App\Models\Employee::where('user_id', $user->id)
+                ->where('id', $user->default_company_id)
+                ->first();
+
+            if (!$employee) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unauthorized Access: Employee not found or mismatched company'
+                ], 403);
+            }
+
+            $isAssigned = \App\Models\Project\ProjectTeam::where('employee_id', $employee->id)
+                ->where('project_id', $project->id)
+                ->exists();
+
+            if (!$isAssigned) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unauthorized Access: You are not assigned to this project'
+                ], 403);
+            }
+        }
+
+        // Authorized
+        return null;
+    }
+}
+
+
+if (!function_exists('validateEmployerProjectOwnership')) {
+    /**
+     * Validates that the user is an employer and owns the project.
+     *
+     * @param \App\Models\User $user
+     * @param string $projectCode
+     * @return \App\Models\Project\Project|\Illuminate\Http\JsonResponse
+     */
+    function validateEmployerProjectOwnership($user, string $projectCode)
+    {
+        // Reject if user is not employer
+        if ($user->type !== 'employer') {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized Access: Only employers can perform this action.',
+            ], 403);
+        }
+
+        // Ensure project belongs to this employer
+        $project = \App\Models\Project\Project::where('code', $projectCode)
+            ->where('employer_user_id', $user->id)
+            ->first();
+
+        if (!$project) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized Access: Project not found or not owned by you.',
+            ], 403);
+        }
+
+        return $project;
+    }
+}
