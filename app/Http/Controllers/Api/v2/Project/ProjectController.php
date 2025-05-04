@@ -249,6 +249,7 @@ class ProjectController extends Controller
 
         if($user_type == 'talent'){
             $validation_result = validateProjectAccess($user, $project);
+            info(['Validation Result', $validation_result]);
 
             if ($validation_result !== true) {
                 return $validation_result;
