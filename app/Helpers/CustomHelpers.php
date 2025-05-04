@@ -218,7 +218,7 @@ if (!function_exists('validateProjectAccess')) {
         }
 
         // Authorized
-        return null;
+        return true;
     }
 }
 

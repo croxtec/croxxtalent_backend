@@ -17,6 +17,24 @@ use Illuminate\Support\Facades\DB;
 
 class ProjectGoalController extends Controller
 {
+
+    public function __construct()
+    {
+        // Apply basic project access middleware to all methods
+        $this->middleware('project.access');
+
+        // Apply team lead requirement to management operations
+        $this->middleware('project.access:lead')->only([
+            'store',
+            'update',
+            'archive',
+            'unarchive',
+            'addCompetency',
+            'removeCompetency',
+            'assignEmployee',
+            'removeEmployee'
+        ]);
+    }
     /**
      * Display a listing of the resource.
      *
@@ -38,13 +56,13 @@ class ProjectGoalController extends Controller
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
         $project = Project::where('code', $code)->first();
 
-        if($user_type == 'talent'){
-            $validation_result = validateProjectAccess($user, $project);
+        // if($user_type == 'talent'){
+        //     $validation_result = validateProjectAccess($user, $project);
 
-            if ($validation_result !== true) {
-                return $validation_result;
-            }
-        }
+        //     if ($validation_result !== true) {
+        //         return $validation_result;
+        //     }
+        // }
 
         $project_goals = ProjectGoal::where('project_id', $project->id)
             ->when($user_type == 'employer',function($query) use ($user){
@@ -103,7 +121,9 @@ class ProjectGoalController extends Controller
 
         $validatedData['employer_user_id'] = $user->id;
 
-        // if($user->type == 'talent'){
+        // $project = Project::where('id',  $validatedData['project_id'])->first();
+
+        // if($user->user_type === 'talent'){
         //     $validation_result = validateProjectAccess($user, $project);
 
         //     if ($validation_result !== true) {
@@ -194,6 +214,16 @@ class ProjectGoalController extends Controller
     {
         $user = $request->user();
 
+        // $goal = ProjectGoal::where('id', $goalId)->first();
+        // $project = $goal->project;
+
+        // if($user->user_type === 'talent'){
+        //     $validation_result = validateProjectAccess($user, $project);
+
+        //     if ($validation_result !== true) {
+        //         return $validation_result;
+        //     }
+        // }
 
         $data = $request->validate([
             'competency_ids' => 'required|array',
@@ -230,6 +260,18 @@ class ProjectGoalController extends Controller
     public function assignEmployee($goalId, Request $request)
     {
         $user = $request->user();
+
+        // $goal = ProjectGoal::where('id', $goalId)->first();
+        // $project = $goal->project;
+
+        // if($user->user_type === 'talent'){
+        //     $validation_result = validateProjectAccess($user, $project);
+
+        //     if ($validation_result !== true) {
+        //         return $validation_result;
+        //     }
+        // }
+
         $data = $request->validate([
             'employee_ids' => 'required|array',
             'employee_ids.*' => 'integer|exists:employees,id',
@@ -278,6 +320,15 @@ class ProjectGoalController extends Controller
             ->with(['assigned.employee', 'comments.employee'])
             ->firstOrFail();
 
+        $project = $goal->project;
+
+        // if($user->user_type === 'talent'){
+        //     $validation_result = validateProjectAccess($user, $project);
+
+        //     if ($validation_result !== true) {
+        //         return $validation_result;
+        //     }
+        // }
         // Transform assigned employees
         $goal->assigned_employees = $goal->assigned->pluck('employee');
         // EmployeeSummaryResource::collection(
@@ -316,11 +367,14 @@ class ProjectGoalController extends Controller
             $user = $request->user();
             $projectGoal = ProjectGoal::findOrFail($id);
 
-            // if ($projectGoal->employer_user_id !== $request->user()->id) {
-            //     return response()->json([
-            //         'status' => false,
-            //         'message' => 'Unauthorized to update this goal',
-            //     ], 403);
+            $project = $projectGoal->project;
+
+            // if($user->user_type === 'talent'){
+            //     $validation_result = validateProjectAccess($user, $project);
+
+            //     if ($validation_result !== true) {
+            //         return $validation_result;
+            //     }
             // }
 
             $validatedData = $request->validated();
@@ -371,6 +425,18 @@ class ProjectGoalController extends Controller
     public function removeCompetency($goalId, $competencyId)
     {
         $user = auth()->user();
+
+        // $goal = ProjectGoal::where('id', $goalId)->first();
+        // $project = $goal->project;
+
+        // if($user->user_type === 'talent'){
+        //     $validation_result = validateProjectAccess($user, $project);
+
+        //     if ($validation_result !== true) {
+        //         return $validation_result;
+        //     }
+        // }
+
         $competency = GoalCompetency::where('goal_id', $goalId)
             ->where('competency_id', $competencyId)
             ->first();
@@ -396,6 +462,18 @@ class ProjectGoalController extends Controller
     public function removeEmployee($goalId, $employeeId)
     {
         $user = auth()->user();
+
+        // $goal = ProjectGoal::where('id', $goalId)->first();
+        // $project = $goal->project;
+
+        // if($user->user_type === 'talent'){
+        //     $validation_result = validateProjectAccess($user, $project);
+
+        //     if ($validation_result !== true) {
+        //         return $validation_result;
+        //     }
+        // }
+
         $assignment = AssignedEmployee::where('goal_id', $goalId)
             ->where('employee_id', $employeeId)
             ->first();
@@ -422,6 +500,16 @@ class ProjectGoalController extends Controller
         $user = auth()->user();
         $projectGoal = ProjectGoal::findOrFail($id);
         // $this->authorize('delete', [Project::class, $project]);
+
+        $project = $projectGoal->project;
+
+        // if($user->user_type === 'talent'){
+        //     $validation_result = validateProjectAccess($user, $project);
+
+        //     if ($validation_result !== true) {
+        //         return $validation_result;
+        //     }
+        // }
 
         $projectGoal->archived_at = now();
         $projectGoal->save();
@@ -454,6 +542,16 @@ class ProjectGoalController extends Controller
         $projectGoal = ProjectGoal::findOrFail($id);
 
         // $this->authorize('delete', [Project::class, $project]);
+
+        // $project = $projectGoal->project;
+
+        // if($user->user_type === 'talent'){
+        //     $validation_result = validateProjectAccess($user, $project);
+
+        //     if ($validation_result !== true) {
+        //         return $validation_result;
+        //     }
+        // }
 
         $projectGoal->archived_at = null;
         $projectGoal->save();
