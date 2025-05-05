@@ -11,6 +11,7 @@ use App\Services\DepartmentPerformanceService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Helpers\ProjectNotificationHelper;
 
 class ProjectController extends Controller
 {
@@ -134,9 +135,10 @@ class ProjectController extends Controller
             // $validatedData['user_id'] = $user->id;
             // Create Project
             $project = Project::create($validatedData);
-            // Create assigned employees
-            $employeeInstances = [];
+           // Create assigned employees
+            $memberInstances = [];
             $leadInstances = [];
+
             //
             $employees = $validatedData['team_members'];
             foreach ($employees as $employee) {
@@ -146,19 +148,22 @@ class ProjectController extends Controller
                     'is_team_lead' => false
                 ]);
 
-                $employeeInstances[] = $assignedMember;
+                $memberInstances[] = $assignedMember;
             }
             //
             $leads = $validatedData['team_leads'];
             foreach ($leads as $employee) {
-                $assignedMember = ProjectTeam::create([
+                $assignedLead = ProjectTeam::create([
                     'project_id' => $project->id,
                     'employee_id' => $employee,
                     'is_team_lead' => true
                 ]);
 
-                $employeeInstances[] = $assignedMember;
+                $leadInstances[] = $assignedLead;
             }
+
+            // Send notifications to members and leads
+            ProjectNotificationHelper::notifyAssignedUsers($memberInstances, $leadInstances, $project);
 
             // Commit the transaction
             DB::commit();
