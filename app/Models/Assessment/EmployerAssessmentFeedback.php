@@ -38,7 +38,7 @@ class EmployerAssessmentFeedback extends Model
 
     public function assessment()
     {
-        return $this->belongsTo(CroxxAssessment::class, 'assessment_id')
+        return $this->belongsTo('App\Models\Assessment\CroxxAssessment', 'assessment_id')
                     ->selelct(['id','name','type','description','code']);
     }
 
