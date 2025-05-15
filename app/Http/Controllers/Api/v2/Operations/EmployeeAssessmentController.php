@@ -42,25 +42,38 @@ class EmployeeAssessmentController extends Controller
             }
         }
 
-        $assessments = CroxxAssessment::withCount('questions')
-                        ->with('competencies')
-                        ->join('assigned_employees', 'croxx_assessments.id', '=', 'assigned_employees.assessment_id')
+        // First, get distinct assessment IDs to prevent duplication
+        $assessmentIds = DB::table('assigned_employees')
+                        ->join('croxx_assessments', 'croxx_assessments.id', '=', 'assigned_employees.assessment_id')
                         ->where('croxx_assessments.employer_id', $employee?->employer_id)
                         ->when($show == 'personal', function($query) use ($employee){
                             $query->where('assigned_employees.employee_id', $employee?->id)
-                                    ->where('assigned_employees.is_supervisor', 0);
+                                ->where('assigned_employees.is_supervisor', 0);
                         })
                         ->when($show == 'supervisor', function($query) use ($employee){
                             $query->where('assigned_employees.employee_id', $employee?->id)
-                                    ->where('assigned_employees.is_supervisor', 1);
-                            })
-                        ->select('croxx_assessments.*', 'assigned_employees.is_supervisor')
+                                ->where('assigned_employees.is_supervisor', 1);
+                        })
+                        ->distinct()
+                        ->pluck('croxx_assessments.id');
+
+        // Now fetch the actual assessment data using those IDs
+        $assessments = CroxxAssessment::withCount('questions')
+                        ->with('competencies')
+                        ->whereIn('id', $assessmentIds)
                         ->latest()
                         ->paginate($per_page);
 
-
         foreach ($assessments as $assessment) {
-            // FUTURE: Extract to calculateAssessmentMetrics() method
+            // Add assignment type info (is_supervisor flag)
+            $assignmentInfo = DB::table('assigned_employees')
+                                ->where('assessment_id', $assessment->id)
+                                ->where('employee_id', $employee->id)
+                                ->first();
+
+            $assessment->is_supervisor = $assignmentInfo ? $assignmentInfo->is_supervisor : 0;
+
+            // Rest of the assessment enrichment
             $total_duration_seconds = $assessment->questions->sum('duration');
             $assessment->total_questions = $assessment->questions->count() ?? 1;
 
@@ -70,7 +83,6 @@ class EmployeeAssessmentController extends Controller
             ])->count();
 
             $assessment->percentage = ($total_answered / ($assessment->total_questions ?? 1)) * 100;
-            // Convert the total duration in minutes to hours, minutes, and seconds
             $minutes = floor($total_duration_seconds / 60);
             $seconds = $total_duration_seconds % 60;
 
@@ -79,7 +91,6 @@ class EmployeeAssessmentController extends Controller
 
             unset($assessment->questions);
 
-            // FUTURE: Extract to enrichWithPeerReviewData() method
             if($assessment->category === 'peer_review') {
                 // Get all peer review data with a single query and build collections
                 $peerReviews = PeerReview::where('assessment_id', $assessment->id)
@@ -109,7 +120,6 @@ class EmployeeAssessmentController extends Controller
                                                     ->toArray();
             }
 
-            // FUTURE: Extract to checkFeedbackStatus() method
             $feedback = EmployerAssessmentFeedback::where([
                 'assessment_id' => $assessment->id,
                 'employee_id' => $employee?->id,
@@ -121,9 +131,9 @@ class EmployeeAssessmentController extends Controller
             $assessment->is_submited = !is_null($feedback);
         }
 
-        return response()->json([
-                'status' => true,
-                'message' => "",
+    return response()->json([
+            'status' => true,
+            'message' => "",
             'data' => $assessments
         ], 200);
     }
