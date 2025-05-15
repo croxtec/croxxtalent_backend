@@ -2,14 +2,14 @@
 
 namespace App\Services;
 
+use App\Helpers\AssessmentNotificationHelper;
 use App\Http\Requests\ExperienceAssessmentRequest;
 use App\Models\Assessment\AssignedEmployee;
 use App\Models\Assessment\CompetencyQuestion;
 use App\Models\Assessment\CroxxAssessment;
 use App\Models\Assessment\PeerReview;
-use App\Models\Report\PerformanceReport;
-use App\Models\Employee;
-use App\Models\Department;
+
+
 use App\Models\Supervisor;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -38,6 +38,9 @@ class AssessmentService
 
             // Create questions
             $this->createAssessmentQuestions($assessment, $validatedData['questions']);
+            // Arrays to track assigned users for notifications
+            $assignedReviewees = [];
+            $assignedReviewers = [];
 
             // Handle employee assignments based on assessment category
             if ($validatedData['category'] === 'peer_review') {
@@ -45,6 +48,8 @@ class AssessmentService
             } else {
                 $this->handleStandardAssignments($assessment, $validatedData);
             }
+
+            AssessmentNotificationHelper::notifyAssignedUsers($assignedReviewees, $assignedReviewers, $assessment);
 
             DB::commit();
 
@@ -93,7 +98,7 @@ class AssessmentService
             $reviewers = $entry['reviewers'];
 
             // Create assigned record for reviewee
-            AssignedEmployee::create([
+            $assignedReviewees[] = AssignedEmployee::create([
                 'assessment_id' => $assessment->id,
                 'employee_id' => $employeeId,
                 'is_reviewer' => false,
@@ -110,7 +115,7 @@ class AssessmentService
                 ]);
 
                 // Also mark reviewer as assigned
-                AssignedEmployee::create([
+                $assignedReviewers[] = AssignedEmployee::create([
                     'assessment_id' => $assessment->id,
                     'employee_id' => $reviewerId,
                     'is_reviewer' => true,
@@ -128,7 +133,7 @@ class AssessmentService
         // Assign employees
         if (isset($data['employees'])) {
             foreach ($data['employees'] as $empId) {
-                AssignedEmployee::create([
+                $assignedReviewees[] = AssignedEmployee::create([
                     'assessment_id' => $assessment->id,
                     'employee_id' => $empId,
                     'is_supervisor' => false,
@@ -139,7 +144,7 @@ class AssessmentService
         // Assign supervisors for company assessments
         if ($data['type'] === 'company' && isset($data['supervisors'])) {
             foreach ($data['supervisors'] as $supId) {
-                AssignedEmployee::create([
+                $assignedReviewers[] = AssignedEmployee::create([
                     'assessment_id' => $assessment->id,
                     'employee_id' => $supId,
                     'is_supervisor' => true,
@@ -149,7 +154,7 @@ class AssessmentService
 
         // Assign supervisor for supervisor-type assessments
         if ($data['type'] === 'supervisor') {
-            AssignedEmployee::create([
+            $assignedReviewers[] =  AssignedEmployee::create([
                 'assessment_id' => $assessment->id,
                 'employee_id' => $data['supervisor_id'],
                 'is_supervisor' => true,

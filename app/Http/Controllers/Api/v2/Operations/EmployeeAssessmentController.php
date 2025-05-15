@@ -34,7 +34,7 @@ class EmployeeAssessmentController extends Controller
         $employee = Employee::where('code', $code)->firstOrFail();
 
         if($user->type == 'talent'){
-           $validation_result = validateEmployeeAccess($user, $employee);
+        $validation_result = validateEmployeeAccess($user, $employee);
 
             // If validation fails, return the response
             if ($validation_result !== true) {
@@ -53,11 +53,6 @@ class EmployeeAssessmentController extends Controller
                         ->when($show == 'supervisor', function($query) use ($employee){
                             $query->where('assigned_employees.employee_id', $employee?->id)
                                     ->where('assigned_employees.is_supervisor', 1);
-                                    // ->selectRaw('croxx_assessments.*, assigned_employees.is_supervisor,
-                                    //     (SELECT COUNT(*)
-                                    //     FROM assigned_employees ae
-                                    //     WHERE ae.assessment_id = croxx_assessments.id
-                                    //     AND ae.is_supervisor = 0) AS total_non_supervisors');
                             })
                         ->select('croxx_assessments.*', 'assigned_employees.is_supervisor')
                         ->latest()
@@ -65,6 +60,7 @@ class EmployeeAssessmentController extends Controller
 
 
         foreach ($assessments as $assessment) {
+            // FUTURE: Extract to calculateAssessmentMetrics() method
             $total_duration_seconds = $assessment->questions->sum('duration');
             $assessment->total_questions = $assessment->questions->count() ?? 1;
 
@@ -83,83 +79,53 @@ class EmployeeAssessmentController extends Controller
 
             unset($assessment->questions);
 
+            // FUTURE: Extract to enrichWithPeerReviewData() method
             if($assessment->category === 'peer_review') {
-                // Self assessment (I am reviewing myself)
-                $self_assessment = PeerReview::where('assessment_id', $assessment->id)
-                                            ->where('employee_id', $employee->id)
-                                            ->where('reviewer_id', $employee->id)
-                                            ->first();
+                // Get all peer review data with a single query and build collections
+                $peerReviews = PeerReview::where('assessment_id', $assessment->id)
+                                        ->where(function($query) use ($employee) {
+                                            $query->where('employee_id', $employee->id)
+                                                ->orWhere('reviewer_id', $employee->id);
+                                        })
+                                        ->with(['employee:id,name,job_code_id,department_role_id,photo_url,code',
+                                                'reviewer:id,name,job_code_id,department_role_id,photo_url,code'])
+                                        ->get();
 
-                $assessment->self_assessment = $self_assessment;
+                // Self assessment (I am reviewing myself)
+                $assessment->self_assessment = $peerReviews->where('employee_id', $employee->id)
+                                                        ->where('reviewer_id', $employee->id)
+                                                        ->first();
 
                 // People who are reviewing me (I am being reviewed by) - excluding self
-                $reviewers = PeerReview::where('assessment_id', $assessment->id)
-                                    ->where('employee_id', $employee->id)
-                                    ->where('reviewer_id', '!=', $employee->id)
-                                    ->with('reviewer:id,name,job_code_id,department_role_id,photo_url,code')
-                                    ->get()
-                                    ->pluck('reviewer')
-                                    ->toArray();
+                $assessment->reviewers = $peerReviews->where('employee_id', $employee->id)
+                                                    ->where('reviewer_id', '!=', $employee->id)
+                                                    ->pluck('reviewer')
+                                                    ->toArray();
 
                 // People I am reviewing (I am reviewer for) - excluding self
-                $reviewees = PeerReview::where('assessment_id', $assessment->id)
-                                    ->where('reviewer_id', $employee->id)
-                                    ->where('employee_id', '!=', $employee->id)
-                                    ->with('employee:id,name,job_code_id,department_role_id,photo_url,code')
-                                    ->get()
-                                    ->pluck('employee')
-                                    ->toArray();
-
-                $assessment->reviewers = $reviewers;
-                $assessment->reviewees = $reviewees;
+                $assessment->reviewees = $peerReviews->where('reviewer_id', $employee->id)
+                                                    ->where('employee_id', '!=', $employee->id)
+                                                    ->pluck('employee')
+                                                    ->toArray();
             }
 
-            $isSubmitted = EmployerAssessmentFeedback::where([
-                'assessment_id' => $assessment->id,
-                'employee_id' => $employee?->id,
-                'employer_user_id' => $assessment?->employer_id,
-                'is_published' => true
-            ])->exists();
-
-            $isFeedbacked = EmployerAssessmentFeedback::where([
+            // FUTURE: Extract to checkFeedbackStatus() method
+            $feedback = EmployerAssessmentFeedback::where([
                 'assessment_id' => $assessment->id,
                 'employee_id' => $employee?->id,
                 'employer_user_id' => $assessment?->employer_id,
                 'is_published' => true
             ])->first();
 
-            $assessment->is_feedback = $isFeedbacked?->supervisor_id ? true : false;
-            $assessment->is_submited = $isSubmitted;
+            $assessment->is_feedback = $feedback?->supervisor_id ? true : false;
+            $assessment->is_submited = !is_null($feedback);
         }
 
-       return response()->json([
-            'status' => true,
-            'message' => "",
+        return response()->json([
+                'status' => true,
+                'message' => "",
             'data' => $assessments
         ], 200);
-    }
-
-    private function validateEmployee($user, $employee){
-        // Get The current employee information
-        $current_company = Employee::where('id', $user->default_company_id)
-                    ->where('user_id', $user->id)->with('supervisor')->first();
-
-        if($current_company?->id === $employee?->id){
-            return true;
-        }
-        if($current_company?->supervisor) {
-            $supervisor =  $current_company->supervisor;
-            // info([$supervisor, $employee]);
-            return true;
-            if($supervisor->type == 'role' && $employee?->department_role_id === $supervisor->department_role_id){
-                return true;
-            }
-            if($supervisor->type == 'department' && $employee?->job_code_id === $supervisor->department_id){
-                return true;
-            }
-            return false;
-        }
-        return false;
     }
 
     public function feedbacks(Request $request, $code)
@@ -180,11 +146,12 @@ class EmployeeAssessmentController extends Controller
 
         if ($show == "supervisor") {
             $feedbacks = EmployerAssessmentFeedback::where('supervisor_id', $employee?->id)
-                ->with('employee', 'supervisor')->latest()->paginate($per_page);
+                ->with('employee', 'supervisor', 'assessment')
+                ->latest()->paginate($per_page);
         } else {
             $feedbacks = EmployerAssessmentFeedback::where('employee_id', $employee?->id)
                         ->where('supervisor_id', '!=', 0)
-                        ->with('employee', 'supervisor')
+                        ->with('employee', 'supervisor', 'assessment')
                         ->latest()->paginate($per_page);
         }
 
