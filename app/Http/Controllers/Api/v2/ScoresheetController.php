@@ -294,14 +294,14 @@ class ScoresheetController extends Controller
             $feedback = TalentAssessmentSummary::where([
                 'talent_id' => $user->id,
                 'assessment_id' => $assessment->id
-            ])->first();
+            ])->firstOrFail();
 
         } else {
             $feedback = EmployerAssessmentFeedback::where([
                 'assessment_id' => $assessment->id,
                 'employee_id' => $employee->id,
                 'employer_user_id' => $assessment->employer_id
-            ])->first();
+            ])->firstOrFail();
 
             $resources = CroxxTraining::join('employee_learning_paths', 'croxx_trainings.id', '=', 'employee_learning_paths.training_id')
                             ->where('employee_learning_paths.employee_id', $employee->id)
