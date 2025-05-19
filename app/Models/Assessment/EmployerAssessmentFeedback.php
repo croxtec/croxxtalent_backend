@@ -39,7 +39,7 @@ class EmployerAssessmentFeedback extends Model
     public function assessment()
     {
         return $this->belongsTo('App\Models\Assessment\CroxxAssessment', 'assessment_id', 'id')
-                    ->selelct(['id','name','type','description','code']);
+                    ->select(['id','name','type','description','code']);
     }
 
     public function getEstimatedTimeAttribute()

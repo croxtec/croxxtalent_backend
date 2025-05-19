@@ -227,8 +227,6 @@ class TalentCompanyController extends Controller
         if (count($companies)) {
             $firstCompanyEmployerId = $companies->first()->id;
             $per_page = $request->input('per_page', 4);
-            $defaultCompanyId = $request->input('employer', $firstCompanyEmployerId);
-
             $myinfo = $companies->firstWhere('id', $user->default_company_id);
 
             if(isset($myinfo->supervisor_id)){
@@ -281,6 +279,42 @@ class TalentCompanyController extends Controller
             'message' => 'Supervisor not found'
         ], 404);
     }
+
+    public function teamGapAnalysis(Request $request){
+        try {
+            $user = $request->user();
+            $companies = Employee::where('user_id', $user->id)->get();
+            $perPage = $request->input('per_page', 10);
+
+            $companyInfo =  null;
+
+            if (count($companies)) {
+
+                $companyInfo = $companies->firstWhere('id', $user->default_company_id);
+
+                if(isset($companyInfo->supervisor_id)){
+                    $department = $companyInfo->department->id;
+
+                }else{
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Unautourized Access'
+                    ], 403);
+                }
+            }
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Supervisor not found'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => "Error generating gap analysis: " . $e->getMessage()
+            ], 500);
+        }
+    }
+
 
 
     public function photo(Request $request)

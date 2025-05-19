@@ -156,12 +156,12 @@ class EmployeeAssessmentController extends Controller
 
         if ($show == "supervisor") {
             $feedbacks = EmployerAssessmentFeedback::where('supervisor_id', $employee?->id)
-                ->with('employee', 'supervisor')
+                ->with('employee', 'supervisor', 'assessment')
                 ->latest()->paginate($per_page);
         } else {
             $feedbacks = EmployerAssessmentFeedback::where('employee_id', $employee?->id)
                         ->where('supervisor_id', '!=', 0)
-                        ->with('employee', 'supervisor')
+                        ->with('employee', 'supervisor','assessment')
                         ->latest()->paginate($per_page);
         }
 
