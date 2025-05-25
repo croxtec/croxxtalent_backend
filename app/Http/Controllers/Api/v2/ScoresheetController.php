@@ -325,10 +325,16 @@ class ScoresheetController extends Controller
     public function gradeAssessmentScoreSheet(Request $request, $id)
     {
         $user = $request->user();
-        $assessment = CroxxAssessment::where('id', $id)->where('is_published', 1)->firstOrFail();
+
+        if (is_numeric($id)) {
+            $assessment = CroxxAssessment::where('id', $id)->where('is_published', 1)
+                    ->firstOrFail();
+        }else{
+            $assessment = CroxxAssessment::where('code', $id)->where('is_published', 1)
+                    ->firstOrFail();
+        }
 
         $rules = [
-            // 'assessment_id' => 'required|exists:assesments,id',
             'employee_code' => 'required',
             'question_id' => 'required',
             'score' => 'required|integer|between:0,4',
@@ -341,12 +347,20 @@ class ScoresheetController extends Controller
         $question = CompetencyQuestion::where('assessment_id', $assessment->id)
                              ->where('id', $validatedData['question_id'])->first();
 
-        $feedback = EmployerAssessmentFeedback::where([
-            'assessment_id' => $assessment->id,
-            'employee_id' => $employee->id,
-            'employer_user_id' => $assessment->employer_id,
-            'is_published' => true
-        ])->first();
+        if($assessment->category !== 'peer_review'){
+            $feedback = EmployerAssessmentFeedback::where([
+                'assessment_id' => $assessment->id,
+                'employee_id' => $employee->id,
+                'employer_user_id' => $assessment->employer_id,
+                'is_published' => true
+            ])->first();
+        } else {
+            $feedback = PeerReview::where([
+                'assessment_id' => $assessment->id,
+                'employee_id' => $user->default_company_id,
+                'reviewer_id' => $employee->id,
+            ])->first();
+        }
 
         if($feedback){
             $score = ScoreSheet::firstOrCreate(
@@ -355,25 +369,28 @@ class ScoresheetController extends Controller
                     'employee_id' => $employee->id,
                 ],[
                     'score' => $validatedData['score'],
-                    'assessment_question_id' => $validatedData['question_id'],
+                    'assessment_question_id' => $question?->id,
                     'comment' => $validatedData['comment'] ?? '',
                     'supervisor_id' => $user->default_company_id
                 ]
             );
 
-            $employee_score = ScoreSheet::where([
-               'employee_id' => $employee->id,
-               'assessment_id' =>  $assessment->id
-            ])->sum('score');
+            // Create assessment summary for non peer review assessment
+            if($assessment->category !== 'peer_review') {
+                $employee_score = ScoreSheet::where([
+                   'employee_id' => $employee->id,
+                   'assessment_id' =>  $assessment->id
+                ])->sum('score');
 
-            $total_question =  $assessment->questions->count();
-            $total_score = $total_question * 4;
-            $graded_score = ((int)$employee_score / $total_score) * 100;
+                $total_question =  $assessment->questions->count();
+                $total_score = $total_question * 4;
+                $graded_score = ((int)$employee_score / $total_score) * 100;
 
-            $feedback->total_score = $total_score;
-            $feedback->employee_score = (int)$employee_score;
-            $feedback->graded_score = round($graded_score);
-            $feedback->save();
+                $feedback->total_score = $total_score;
+                $feedback->employee_score = (int)$employee_score;
+                $feedback->graded_score = round($graded_score);
+                $feedback->save();
+            }
 
             return response()->json([
                 'status' => true,
@@ -390,11 +407,66 @@ class ScoresheetController extends Controller
 
     }
 
+    public function publishPeerReviewAssessment(Request $request, $id){
+        $user = $request->user();
+
+        if (is_numeric($id)) {
+            $assessment = CroxxAssessment::where('id', $id)->where('is_published', 1)
+                    ->firstOrFail();
+        }else{
+            $assessment = CroxxAssessment::where('code', $id)->where('is_published', 1)
+                    ->firstOrFail();
+        }
+
+        $rules = [
+            'employee_code' => 'required',
+            // 'reviewer_code' => 'required',
+        ];
+
+        $validatedData = $request->validate($rules);
+        // Employee being reviwed
+        $employee = Employee::where('code', $validatedData['employee_code'])->first();
+
+        $peerReview =  PeerReview::where([
+            'assessment_id' => $assessment->id,
+            'employee_id' => $user->default_company_id,
+            'reviewer_id' => $employee->id,
+        ])->first();
+
+        if($peerReview->status == 'pending'){
+            $peerReview->status = 'completed';
+            $peerReview->completed_at =  now();
+            $peerReview->save();
+
+            // Notify the employee about the feedback
+            // Notification::send($employee->talent, new AssessmentFeedbackNotification($assessment, $employee));
+
+            return response()->json([
+                'status' => true,
+                'message' => "Peer review feedback has been recorded.",
+                'data' => $peerReview
+            ], 200);
+        }else{
+            return response()->json([
+                'status' => false,
+                'message' => "Feedback already submitted.",
+                'data' => ""
+            ], 400);
+        }
+    }
+
     public function publishSupervisorFeedback(Request $request, $id)
     {
         $user = $request->user();
-        $assessment = CroxxAssessment::where('id', $id)->where('is_published', 1)->firstOrFail();
-        // $this->authorize('update', [Assesment::class, $assessment]);
+
+        if (is_numeric($id)) {
+            $assessment = CroxxAssessment::where('id', $id)->where('is_published', 1)
+                    ->firstOrFail();
+        }else{
+            $assessment = CroxxAssessment::where('code', $id)->where('is_published', 1)
+                    ->firstOrFail();
+        }
+
         $rules =[
             'employee_code' => 'required',
             'feedback' => 'required|string|min:10|max:512',

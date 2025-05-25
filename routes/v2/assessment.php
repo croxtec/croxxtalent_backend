@@ -24,6 +24,7 @@ Route::middleware('auth:sanctum')->group( function () {
     Route::get('assessments/{code}/feedback/{talent}', 'Api\v2\ScoresheetController@viewAssessmentFeedback');//->name('assessments.index');
     Route::post('assessments/{id}/supervisor/scoresheet', 'Api\v2\ScoresheetController@gradeAssessmentScoreSheet');//->name('assesments.index');
     Route::patch('assessments/{id}/supervisor/feedback', 'Api\v2\ScoresheetController@publishSupervisorFeedback');//->name('assesments.index');
+    Route::patch('assessments/{id}/peer-review/feedback', 'Api\v2\ScoresheetController@publishPeerReviewAssessment');//->name('assesments.index');
 
     // Assesment Questions
     Route::post('assessments/questions/generate', 'Api\v2\Operations\AssessmentQuestionController@generate');//->name('assessments.index');

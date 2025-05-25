@@ -42,6 +42,45 @@ class ReportAnalysisController extends Controller
             ], 500);
         }
     }
+
+    public function teamGapAnalysis(Request $request){
+        try {
+            $user = $request->user();
+
+            $employee = Employee::where('user_id', $user->id)
+                    ->where('id', $user->default_company_id)
+                    ->firstOrFail();
+
+            if ($user->type !== 'talent' || !$employee->supervisor_id) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unauthorized Access'
+                ], 403);
+            }
+
+
+            $employer = $employee->employer;
+            $departmentId = $employee->department->id;
+            $department = Department::with('technical_skill', 'soft_skill')->find($departmentId);
+
+            $competencyData = $this->getCompetencyData($department);
+            $employeeData = $this->calculateEmployeeGaps($employer, $department, $competencyData);
+
+            return response()->json([
+                'status' => true,
+                'data' => [
+                    'competencies' => $competencyData['names'],
+                    'employeeData' => $employeeData,
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => "Error generating gap analysis: " . $e->getMessage()
+            ], 500);
+        }
+    }
     /**
      * Get gap analysis report
      */

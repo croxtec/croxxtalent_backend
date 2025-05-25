@@ -11,8 +11,8 @@ Route::middleware('auth:sanctum')->name('api.')->group( function () {
         Route::post('company/photo', 'Api\v2\Talent\TalentCompanyController@photo')->name('company.employee.photo');
         Route::get('company/supervisor', 'Api\v2\Talent\TalentCompanyController@supervisor')->name('company.supervisor');
         Route::get('company/employee/{id}', 'Api\v2\Talent\TalentCompanyController@employeeInformation')->name('company.employee');
+
         Route::get('company/team/performance', 'Api\v2\Talent\TalentCompanyController@teamPerformanceProgress')->name('company.performance');
-
-
+        Route::get('company/team/gap', 'Api\v2\Company\ReportAnalysisController@teamGapAnalysis');
     });
 });
