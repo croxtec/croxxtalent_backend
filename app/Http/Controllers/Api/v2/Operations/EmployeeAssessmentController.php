@@ -110,14 +110,21 @@ class EmployeeAssessmentController extends Controller
                 // People who are reviewing me (I am being reviewed by) - excluding self
                 $assessment->reviewers = $peerReviews->where('employee_id', $employee->id)
                                                     ->where('reviewer_id', '!=', $employee->id)
-                                                    ->pluck('reviewer')
-                                                    ->toArray();
-
+                                                    ->map(function ($review) {
+                                                        $reviewer = $review->reviewer;
+                                                        $reviewer->status = $review->status;
+                                                        $reviewer->completed_at = $review->completed_at;
+                                                        return $reviewer;
+                                                    })->values();
                 // People I am reviewing (I am reviewer for) - excluding self
                 $assessment->reviewees = $peerReviews->where('reviewer_id', $employee->id)
                                                     ->where('employee_id', '!=', $employee->id)
-                                                    ->pluck('employee')
-                                                    ->toArray();
+                                                    ->map(function ($review) {
+                                                        $employee = $review->employee;
+                                                        $employee->status = $review->status;
+                                                        $employee->completed_at = $review->completed_at;
+                                                        return $employee;
+                                                    })->values();
             }
 
             $feedback = EmployerAssessmentFeedback::where([
