@@ -530,7 +530,7 @@ class CourseController extends Controller
     public function courses(Request $request)
     {
         $user = $request->user();
-        $per_page = $request->input('per_page', 12);
+        $per_page = $request->input('per_page', 6);
         $search = $request->input('search');
         $current_company = Employee::where('id', $user->default_company_id)
                              ->where('user_id', $user->id)->with('supervisor')->firstOrFail();

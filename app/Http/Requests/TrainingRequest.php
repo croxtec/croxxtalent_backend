@@ -58,6 +58,7 @@ class TrainingRequest extends FormRequest
                     'objective' => 'sometimes|required|max:250',
                     'assessment_level' => 'nullable',
                     'assessment_id' => 'nullable',
+                    'is_published' => 'sometimes|integer',
                     'cover_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
                 ];
             case 'PATCH':
