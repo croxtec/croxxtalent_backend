@@ -148,15 +148,15 @@ class CroxxJobsController extends Controller
     {
         $user = $request->user();
         // $this->authorize('view-any', Campaign::class);
-        $cv = CV::where('user_id', $user->id)->firstorFail();
+        $cv = CV::where('user_id', $user->id)->first();
 
         $per_page = $request->input('per_page', 9);
         $sort_by = $request->input('sort_by', 'created_at');
         $sort_dir = $request->input('sort_dir', 'desc');
         $datatable_draw = $request->input('draw'); // if any
 
-        $search = $cv->job_title;
-        $industry = $cv->industry_id;
+        $search = $cv->job_title ?? null;
+        $industry = $cv->industry_id ?? null;
 
         $campaigns = Campaign::where( function($query) use ($search) {
             $query->where('title', 'LIKE', "%{$search}%");

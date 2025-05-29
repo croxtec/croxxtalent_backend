@@ -233,41 +233,26 @@ class ScoresheetController extends Controller
         ], 200);
     }
 
-    public function assessmentResult(Request $request, $code, $talent) {
+    public function assessmentResult(Request $request, $code, $talent)
+    {
         $user = $request->user();
+        $assessment = $this->resolveAssessment($code);
+        [$talentField, $talentId] = $this->resolveTalentIdentifier($talent, $user);
 
-        if (is_numeric($code)) {
-            $assessment = CroxxAssessment::where('id', $code)->where('is_published', 1)->firstOrFail();
-        } else {
-            $assessment = CroxxAssessment::where('code', $code)->where('is_published', 1)->firstOrFail();
-        }
-
-        if (is_numeric($talent)) {
-            $talentField = 'talent_id';
-            $talent = $user->id;
-        } else {
-            $talentField = 'employee_id';
-            $employee = Employee::where('code', $talent)->first();
-            $talent = $employee->id;
-        }
-
-        $assessment->questions;
-
-        foreach($assessment->questions as $question) {
-            $question->response = TalentAnswer::where([
-                'assessment_question_id' => $question->id,
-                $talentField => $talent,
-                'assessment_id' => $assessment->id
-            ])->first();
-
-            if ($assessment->category != 'competency_evaluation') {
-                $question->result = ScoreSheet::where([
-                    'assessment_question_id' => $question->id,
-                    $talentField => $talent,
+        $assessment->load(['questions' => function ($query) use ($assessment, $talentField, $talentId) {
+            $query->with([
+                'response' => fn($q) => $q->where([
+                    $talentField => $talentId,
                     'assessment_id' => $assessment->id
-                ])->first();
-            }
-        }
+                ]),
+                'result' => fn($q) => $q->when($assessment->category != 'competency_evaluation',
+                    fn($q) => $q->where([
+                        $talentField => $talentId,
+                        'assessment_id' => $assessment->id
+                    ])
+                )
+            ]);
+        }]);
 
         return response()->json([
             'status' => true,
@@ -276,32 +261,42 @@ class ScoresheetController extends Controller
         ], 200);
     }
 
+    private function resolveAssessment($code)
+    {
+        return is_numeric($code)
+            ? CroxxAssessment::where('id', $code)->where('is_published', 1)->firstOrFail()
+            : CroxxAssessment::where('code', $code)->where('is_published', 1)->firstOrFail();
+    }
+
+    private function resolveTalentIdentifier($talent, $user)
+    {
+        if (is_numeric($talent)) {
+            return ['talent_id', $user->id];
+        }
+
+        $employee = Employee::where('code', $talent)->firstOrFail();
+        return ['employee_id', $employee->id];
+    }
+
     public function viewAssessmentFeedback(Request $request, $code, $talent){
         $user = $request->user();
         $employee = Employee::where('code', $talent)->first();
 
-        if (is_numeric($code)) {
-            $assessment = CroxxAssessment::where('id', $code)->where('is_published', 1)
-                    ->firstOrFail();
-        }else{
-            $assessment = CroxxAssessment::where('code', $code)->where('is_published', 1)
-                    ->firstOrFail();
-        }
-
+        $assessment = $this->resolveAssessment($code);
 
         if (is_numeric($talent)) {
 
             $feedback = TalentAssessmentSummary::where([
                 'talent_id' => $user->id,
                 'assessment_id' => $assessment->id
-            ])->firstOrFail();
+            ])->first();
 
         } else {
             $feedback = EmployerAssessmentFeedback::where([
                 'assessment_id' => $assessment->id,
                 'employee_id' => $employee->id,
                 'employer_user_id' => $assessment->employer_id
-            ])->firstOrFail();
+            ])->first();
 
             $resources = CroxxTraining::join('employee_learning_paths', 'croxx_trainings.id', '=', 'employee_learning_paths.training_id')
                             ->where('employee_learning_paths.employee_id', $employee->id)
@@ -326,13 +321,7 @@ class ScoresheetController extends Controller
     {
         $user = $request->user();
 
-        if (is_numeric($id)) {
-            $assessment = CroxxAssessment::where('id', $id)->where('is_published', 1)
-                    ->firstOrFail();
-        }else{
-            $assessment = CroxxAssessment::where('code', $id)->where('is_published', 1)
-                    ->firstOrFail();
-        }
+        $assessment = $this->resolveAssessment($id);
 
         $rules = [
             'employee_code' => 'required',
@@ -410,13 +399,7 @@ class ScoresheetController extends Controller
     public function publishPeerReviewAssessment(Request $request, $id){
         $user = $request->user();
 
-        if (is_numeric($id)) {
-            $assessment = CroxxAssessment::where('id', $id)->where('is_published', 1)
-                    ->firstOrFail();
-        }else{
-            $assessment = CroxxAssessment::where('code', $id)->where('is_published', 1)
-                    ->firstOrFail();
-        }
+        $assessment = $this->resolveAssessment($id);
 
         $rules = [
             'employee_code' => 'required',
@@ -459,13 +442,7 @@ class ScoresheetController extends Controller
     {
         $user = $request->user();
 
-        if (is_numeric($id)) {
-            $assessment = CroxxAssessment::where('id', $id)->where('is_published', 1)
-                    ->firstOrFail();
-        }else{
-            $assessment = CroxxAssessment::where('code', $id)->where('is_published', 1)
-                    ->firstOrFail();
-        }
+        $assessment = $this->resolveAssessment($id);
 
         $rules =[
             'employee_code' => 'required',
@@ -483,7 +460,7 @@ class ScoresheetController extends Controller
             'employee_id' => $employee->id,
         ],[
             'employer_user_id' => $assessment->employer_id
-        ])->firstOrFail();
+        ])->first();
 
 
         if(!$feedback->supervisor_id){

@@ -82,7 +82,6 @@ class EmployeeImport implements ToModel, WithHeadingRow
                     $data['department_role_id'] = $department_role->id;
                 }
 
-
                 $employee = Employee::create($data);
                 // info(['EMployee Created ', $employee]);
 
