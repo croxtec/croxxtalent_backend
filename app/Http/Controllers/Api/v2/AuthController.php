@@ -29,6 +29,7 @@ use App\Mail\PasswordReset;
 use App\Mail\PasswordChanged;
 use App\Models\Employee;
 use App\Models\TrackEmployerOnboarding;
+use App\Notifications\EmployeeInvitationConfirmation;
 use App\Services\RefreshCompanyPerformance;
 
 class AuthController extends Controller
@@ -88,8 +89,8 @@ class AuthController extends Controller
 
         $user = User::where($login_field, $validatedData['login'])
                          ->whereIn('type', ['talent', 'admin'])->first();
-        //|| !Hash::check($validatedData['password'], $user->password)
-        if (!$user ) {
+        //
+        if (!$user || !Hash::check($validatedData['password'], $user->password)) {
             return response()->json([
                 'status' => false,
                 'message' => 'Invalid login credentials.'
@@ -113,13 +114,21 @@ class AuthController extends Controller
         }
 
         //
-        $companies = Employee::where('email', $user->email)->whereNotNull('email_verified_at')
-                    ->whereNull('user_id')->get();
+        $unlinkedEmployees = Employee::where('email', $user->email)
+            ->whereNull('user_id')
+            ->get();
 
-        if ($companies->count()) {
-            foreach ($companies as $company) {
-                $company->update(['user_id' => $user->id, 'status' => 1]);
-            }
+        foreach ($unlinkedEmployees as $employee) {
+            $employee->update([
+                'user_id' => $user->id,
+                'status' => 1,
+                'email_verified_at' => $employee->email_verified_at ?? Carbon::now()
+            ]);
+
+            // optional: notify employer
+            $employee->employer->notify(new EmployeeInvitationConfirmation($employee));
+
+            Audit::log($user->id, 'email_verified_by_login', [], [], User::class, $user->id);
         }
 
         // create token

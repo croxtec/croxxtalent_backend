@@ -9,7 +9,6 @@ class CroxxTraining extends Model
 {
     use HasFactory;
 
-
     protected $fillable = [
         'user_id',
         'employer_id',
@@ -28,7 +27,9 @@ class CroxxTraining extends Model
     ];
 
     protected $appends = [
-        'total_lessons', 'total_participants'
+        'total_lessons',
+        'total_participants',
+        'total_resources',
     ];
 
     public function author(){
@@ -61,10 +62,21 @@ class CroxxTraining extends Model
                     ->select(['id','competency', 'job_title']);
     }
 
+
     public function getTotalLessonsAttribute()
     {
         return $this->hasMany('App\Models\Training\CroxxLesson', 'training_id', 'id')
             ->whereNull('archived_at')->count();
+    }
+
+    public function resources()
+    {
+        return $this->hasMany('App\Models\Training\LessonResource', 'training_id', 'id');
+    }
+
+    public function getTotalResourcesAttribute()
+    {
+        return $this->resources()->count();
     }
 
     public function getTotalParticipantsAttribute()

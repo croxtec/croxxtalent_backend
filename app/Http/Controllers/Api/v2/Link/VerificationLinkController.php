@@ -48,38 +48,42 @@ class VerificationLinkController extends Controller
 
     public function verifyEmployee(Request $request, $token)
     {
-        $verification = Verification::where('action', 'employee')->where('token', $token)->first();
-        $verified = false;
+        $verification = Verification::where('action', 'employee')
+            ->where('token', $token)
+            ->first();
 
-        if ($verification) {
-            $employee = $verification->verifiable()->first();
-            $user = User::whereEmail($employee->email)->first();
-            if ($employee && $user) {
-                $employee->user_id = $user->id;
-                $employee->status = 1;
-                $employee->email_verified_at = Carbon::now();
-                $employee->save();
-                $employee->employer->notify(new EmployeeInvitationConfirmation($employee));
-                // delete token after verification
-                $verification->delete();
-                // save audit trail log
-                $old_values = [];
-                $new_values = [];
-                $verified = true;
-
-                Audit::log($user->id, 'email_verified', $old_values, $new_values, User::class, $user->id);
-            }else{
-                if($employee){
-                    $employee->email_verified_at = Carbon::now();
-                    $employee->save();
-                }
-                return  redirect()->to("https://croxxtalent.com/register?email=$employee->email");
-            }
+        if (!$verification) {
+            return redirect()->to('https://croxxtalent.com/login');
         }
-        return  redirect()->to('https://croxxtalent.com/login');
-        // env('CLIENT_URL', 'admin@croxxtalent.io')
-        // return view('api.links.verifications.verify_employee')
-        //         ->with( compact('verified') );;
+
+        $employee = $verification->verifiable()->first();
+        if (!$employee) {
+            return redirect()->to('https://croxxtalent.com/login');
+        }
+
+        $user = User::whereEmail($employee->email)->first();
+
+        if ($user) {
+            $employee->update([
+                'user_id' => $user->id,
+                'status' => 1,
+                'email_verified_at' => Carbon::now()
+            ]);
+
+            $employee->employer->notify(new EmployeeInvitationConfirmation($employee));
+
+            Audit::log($user->id, 'email_verified', [], [], User::class, $user->id);
+            $verification->delete();
+
+            return redirect()->to('https://croxxtalent.com/login');
+        }
+
+        // Mark verified, let them register later
+        $employee->update([
+            'email_verified_at' => Carbon::now()
+        ]);
+
+        return redirect()->to("https://croxxtalent.com/register?email={$employee->email}");
     }
 
     /**

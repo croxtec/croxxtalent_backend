@@ -24,8 +24,11 @@ class VerificationLinkController extends Controller
     {
         $verification = Verification::where('action', 'register')->where('token', $token)->first();
         $verified = false;
+
         if ($verification) {
+
             $user = $verification->verifiable()->first();
+
             if ($user) {
                 $user->email_verified_at = Carbon::now();
                 $user->save();

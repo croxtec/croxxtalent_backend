@@ -25,8 +25,8 @@ class ProjectGoalController extends Controller
 
         // Apply team lead requirement to management operations
         $this->middleware('project.access:lead')->only([
-            'store',
-            'update',
+            // 'store',
+            // 'update',
             'archive',
             'unarchive',
             'addCompetency',
@@ -65,9 +65,9 @@ class ProjectGoalController extends Controller
         // }
 
         $project_goals = ProjectGoal::where('project_id', $project->id)
-            ->when($user_type == 'employer',function($query) use ($user){
-                $query->where('employer_user_id', $user->id);
-            })
+            // ->when($user_type == 'employer',function($query) use ($user){
+            //     $query->where('employer_user_id', $user->id);
+            // })
             ->when($milestone, function($query) use ($milestone) {
                 if ($milestone !== null && is_numeric($milestone)) {
                     $query->where('milestone_id', $milestone);
