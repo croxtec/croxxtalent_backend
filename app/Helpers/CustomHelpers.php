@@ -5,7 +5,7 @@ use App\Models\User;
 use App\Models\Cv;
 use App\Models\Campaign;
 use App\Models\JobInvitation;
-use App\Models\Project\Project:
+// use App\Models\Project\Project:
 
 if ( ! function_exists('app_url')) {
     function app_url(string $path = '')
@@ -243,12 +243,12 @@ if (!function_exists('validateEmployerProjectOwnership')) {
         }
 
         // Ensure project belongs to this employer
-        if(is_numeric($id)){
-            $project = Project::where('id', $projectCode)
+        if(is_numeric($projectCode)){
+            $project = \App\Models\Project\Project::where('id', $projectCode)
                 ->where('employer_user_id', $user->id)
                 ->first();
         }else{
-            $project = Project::where('code', $projectCode)
+            $project = \App\Models\Project\Project::where('code', $projectCode)
                 ->where('employer_user_id', $user->id)
                 ->first();
         }
