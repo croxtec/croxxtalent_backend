@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\v2\Talent;
 
 use App\Http\Controllers\Controller;
+use App\Models\Assessment\CroxxAssessment;
 use Illuminate\Http\Request;
 use App\Models\Employee;
 use App\Models\Supervisor;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Cloudinary\Cloudinary;
+use Exception;
 
 class TalentCompanyController extends Controller
 {
@@ -166,38 +168,92 @@ class TalentCompanyController extends Controller
                 $employee->talent;
                 $employee->supervisor;
 
-                $technical_skills = array_column($employee->department->technical_skill->toArray(0),'competency');
-                $assessment_distribution = [];
-                $trainings_distribution = [];
+                 // Get technical and soft skills efficiently
+                $department = $employee->department;
+                if (!$department) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => "Employee department not found.",
+                    ], 404);
+                }
+                  // Load skills with error handling
+                $technical_skills = [];
+                $soft_skills = [];
 
-                if(count($technical_skills)){
-                    foreach($technical_skills as $skill){
-                        array_push($assessment_distribution, mt_rand(0, 10));
-                        array_push($trainings_distribution, mt_rand(0, 10));
+                try {
+                    if ($department->technical_skill) {
+                        $technical_skills = array_column($department->technical_skill->toArray(), 'competency');
+                    }
+                    if ($department->soft_skill) {
+                        $soft_skills = array_column($department->soft_skill->toArray(), 'competency');
+                    }
+                } catch (Exception $e) {
+                    // Log error and continue with empty arrays
+                    \Log::warning("Error loading skills for employee {$employee->id}: " . $e->getMessage());
+                }
+
+                // Optimize assessment query
+                $assessment_distribution = [];
+                $skill_ratings = [];
+
+                if (!empty($technical_skills)) {
+                    // Get assessments with single optimized query
+                    $assessments = CroxxAssessment::whereHas('competencies', function ($query) use ($technical_skills) {
+                        $query->whereIn('competency', $technical_skills);
+                    })
+                    ->with([
+                        'competencies:id,assessment_id,competency',
+                        'feedbacks' => function ($query) use ($employee) {
+                            $query->where('is_published', 1)
+                                ->where('employee_id', $employee->id) // Add employee filter if available
+                                ->orderBy('created_at', 'desc')
+                                ->limit(1); // Get only latest feedback
+                        }
+                    ])
+                    ->get();
+
+                    // Create skill score mapping for efficiency
+                    $skillScores = [];
+                    foreach ($assessments as $assessment) {
+                        foreach ($assessment->competencies as $competency) {
+                            if (in_array($competency->competency, $technical_skills)) {
+                                $feedback = $assessment->feedbacks->first();
+                                if ($feedback) {
+                                    $skillScores[$competency->competency] = $feedback->graded_score;
+                                }
+                            }
+                        }
+                    }
+
+                    // Build distributions efficiently
+                    foreach ($technical_skills as $skill) {
+                        $score = $skillScores[$skill] ?? 0;
+                        $assessment_distribution[] = $score;
+
+                        // Create skill ratings for the UI (5-star system)
+                        $skill_ratings[] = [
+                            'skill' => $skill,
+                            'rating' => $this->convertScoreToStars($score),
+                            'score' => $score
+                        ];
                     }
                 }
 
+                // Initialize trainings distribution
+                $trainings_distribution = array_fill(0, count($technical_skills), 0);
+
                 $employee->technical_distribution = [
                     'categories' => $technical_skills,
-                    'assessment_distribution' =>  $assessment_distribution,
-                    'trainings_distribution' =>  $trainings_distribution,
+                    'assessment_distribution' => $assessment_distribution,
+                    'trainings_distribution' => $trainings_distribution,
                 ];
 
-                $employee->proficiency = [
-                    'total' =>  '90%',
-                    'assessment' => [
-                        'taken' => $employee->completedAssessment()->count(),
-                        'performance' => '0%'
-                    ],
-                    'goals' => [
-                        'taken' => $employee->goalsCompleted()->count(),
-                        'performance' => '0%'
-                    ],
-                    'trainings' => [
-                        'taken' => $employee->learningPaths()->count(),
-                        'performance' => '0%'
-                    ],
-                ];
+                // Add skill ratings for the UI
+                $employee->skill_ratings = $skill_ratings;
+
+                // Optimize proficiency calculations with single queries
+                $proficiencyData = $this->calculateProficiencyMetrics($employee);
+                $employee->proficiency = $proficiencyData;
 
                 return response()->json([
                     'status' => true,
@@ -216,6 +272,65 @@ class TalentCompanyController extends Controller
             'status' => false,
             'message' => 'Supervisor not found'
         ], 404);
+    }
+
+      /**
+     * Calculate proficiency metrics efficiently
+     */
+    private function calculateProficiencyMetrics($employee)
+    {
+        // Get all metrics in parallel queries
+        $goalsData = $employee->goalsCompleted()
+            ->selectRaw('COUNT(*) as total, SUM(CASE WHEN status = "done" THEN 1 ELSE 0 END) as completed')
+            ->first();
+
+        $feedbackData = $employee->completedAssessment()
+            ->selectRaw('COUNT(*) as count, AVG(graded_score) as avg_score')
+            ->first();
+
+        $learningPathsCount = $employee->learningPaths()->count();
+
+        // Calculate performances
+        $totalGoals = $goalsData->total ?? 0;
+        $completedGoals = $goalsData->completed ?? 0;
+        $goalPerformance = $totalGoals > 0 ? ($completedGoals / $totalGoals) * 100 : 0;
+
+        $feedbackCount = $feedbackData->count ?? 0;
+        $feedbackPerformance = $feedbackData->avg_score ?? 0;
+
+        return [
+            'total' => "{$employee->performance}%",
+            'assessment' => [
+                'taken' => $feedbackCount,
+                'performance' => number_format($feedbackPerformance, 1) . "%"
+            ],
+            'goals' => [
+                'taken' => $totalGoals,
+                'performance' => number_format($goalPerformance, 1) . "%"
+            ],
+            'trainings' => [
+                'taken' => $learningPathsCount,
+                'performance' => '0%'
+            ],
+            'projects' => [
+                'taken' => $employee->projectTeam()->count(),
+                'performance' => '0%'
+            ],
+        ];
+    }
+
+    /**
+     * Convert assessment score to 5-star rating
+     */
+    private function convertScoreToStars($score)
+    {
+        // Assuming score is out of 100
+        if ($score >= 90) return 5;
+        if ($score >= 80) return 4;
+        if ($score >= 70) return 3;
+        if ($score >= 60) return 2;
+        if ($score >= 50) return 1;
+        return 0;
     }
 
     public function teamPerformanceProgress(Request $request){
