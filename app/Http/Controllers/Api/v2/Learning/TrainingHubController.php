@@ -203,8 +203,15 @@ class TrainingHubController extends Controller
     public function show(Request $request, $code)
     {
         $user = $request->user();
-        $course = CroxxTraining::where('code', $code)->with('author')->firstOrFail();
-        $course_type = $course->type;
+        $course = CroxxTraining::where('code', $code)
+                    ->with([
+                        'author',
+                        'resources' => function($query) {
+                            $query->orderBy('created_at', 'desc');
+                        }
+                    ])
+                    ->firstOrFail();
+
         $course_type = $course->type;
         $company = $request->input('employee', $user?->default_company_id ?? null);
 
@@ -243,13 +250,17 @@ class TrainingHubController extends Controller
     {
         $user = $request->user();
         $course = CroxxTraining::where('code', $code)->firstOrFail();
+        $lesson = Lesson::where('training_id', $course->id)
+                    ->where('alias', $alias)
+                    ->with([
+                        'resources' => function($query) {
+                            $query->orderBy('created_at', 'desc');
+                        }
+                    ])
+                    ->firstOrFail();
+
         $course_type = $course->type;
         $company = $request->input('employee', $user?->default_company_id ?? null);
-
-        $lesson = Lesson::where('training_id', $course->id)
-                        ->where('alias',$alias)
-                        ->with('resources')
-                        ->firstOrFail();
 
         if($course_type == 'company'){
             $employee = Employee::where('user_id', $user->id)->where('id',$company)->firstOrFail();
