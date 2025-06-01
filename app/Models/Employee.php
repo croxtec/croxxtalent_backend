@@ -113,7 +113,7 @@ class Employee extends Model
 
     public function projectTeam()
     {
-        return $this->hasMany('App\Models\ProjectTeam', 'employee_id', 'id');
+        return $this->hasMany('App\Models\Project\ProjectTeam', 'employee_id', 'id');
     }
 
     public function feedbackSent()
