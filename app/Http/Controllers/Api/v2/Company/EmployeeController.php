@@ -250,42 +250,40 @@ class EmployeeController extends Controller
             \Log::warning("Error loading skills for employee {$employee->id}: " . $e->getMessage());
         }
 
-        // Optimize assessment query
+        // Fix assessment query using working pattern
         $assessment_distribution = [];
         $skill_ratings = [];
 
         if (!empty($technical_skills)) {
-            // Get assessments with single optimized query
+            // Get assessments using the working pattern from your report page
             $assessments = CroxxAssessment::whereHas('competencies', function ($query) use ($technical_skills) {
                 $query->whereIn('competency', $technical_skills);
-            })
-            ->with([
-                'competencies:id,assessment_id,competency',
+            })->with([
+                'competencies',
                 'feedbacks' => function ($query) use ($employee) {
-                    $query->where('is_published', 1)
-                          ->where('employee_id', $employee->id) // Add employee filter if available
-                          ->orderBy('created_at', 'desc')
-                          ->limit(1); // Get only latest feedback
+                    $query->where('employee_id', $employee->id)
+                        ->where('is_published', 1)
+                        ->orderBy('created_at', 'desc');
                 }
-            ])
-            ->get();
+            ])->get();
 
-            // Create skill score mapping for efficiency
-            $skillScores = [];
-            foreach ($assessments as $assessment) {
-                foreach ($assessment->competencies as $competency) {
-                    if (in_array($competency->competency, $technical_skills)) {
-                        $feedback = $assessment->feedbacks->first();
-                        if ($feedback) {
-                            $skillScores[$competency->competency] = $feedback->graded_score;
+            // Map skills to scores using the working logic
+            foreach ($technical_skills as $skill) {
+                $score = 0;
+
+                // Find matching assessment for this skill
+                foreach ($assessments as $assessment) {
+                    foreach ($assessment->competencies as $competency) {
+                        if ($competency->competency === $skill) {
+                            $feedback = $assessment->feedbacks->first();
+                            if ($feedback) {
+                                $score = $feedback->graded_score;
+                                break 2; // Break both loops once score is found
+                            }
                         }
                     }
                 }
-            }
 
-            // Build distributions efficiently
-            foreach ($technical_skills as $skill) {
-                $score = $skillScores[$skill] ?? 0;
                 $assessment_distribution[] = $score;
 
                 // Create skill ratings for the UI (5-star system)
@@ -321,8 +319,8 @@ class EmployeeController extends Controller
     }
 
     /**
-     * Calculate proficiency metrics efficiently
-     */
+    * Calculate proficiency metrics efficiently
+    */
     private function calculateProficiencyMetrics($employee)
     {
         // Get all metrics in parallel queries
