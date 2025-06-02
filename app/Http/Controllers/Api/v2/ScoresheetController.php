@@ -299,8 +299,8 @@ class ScoresheetController extends Controller
             ])->first();
 
             $resources = CroxxTraining::join('employee_learning_paths', 'croxx_trainings.id', '=', 'employee_learning_paths.training_id')
-                            ->where('employee_learning_paths.employee_id', $employee->id)
-                            ->where('employee_learning_paths.assessment_feedback_id', $feedback->id)
+                            ->where('employee_learning_paths.employee_id', $employee?->id)
+                            ->where('employee_learning_paths.assessment_feedback_id', $feedback?->id)
                             // ->with(['learning' => function ($query) use ($employee) {
                             //     $query->where('employee_learning_paths.employee_id', $employee->id);
                             // }])
