@@ -4,8 +4,7 @@ namespace App\Http\Controllers\Api\v2;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\AssesmentTalentAnswer as TalentAnswer;
-use App\Models\AssesmentScoreSheet as ScoreSheet;
+
 use Illuminate\Support\Facades\Notification;
 
 use App\Models\Employee;
@@ -307,7 +306,9 @@ class ScoresheetController extends Controller
                             ->select('croxx_trainings.*')
                             ->get();
 
-           $feedback->resources = $resources;
+            if ($feedback) {
+                $feedback->resources = $resources;
+            }
         }
 
         return response()->json([
