@@ -86,10 +86,11 @@ class CampaignController extends Controller
         $validatedData['code'] = $user->id.md5(time());
 
         $skill_ids = $validatedData['skill_ids'];
-        $course_of_study_ids = $validatedData['course_of_study_ids'];
-        $language_ids = $validatedData['language_ids'];
+        $course_of_study_ids = $validatedData['course_of_study_ids'] ?? [];
+        $language_ids = $validatedData['language_ids'] ?? [];
+
         unset($validatedData['skill_ids'], $validatedData['course_of_study_ids'], $validatedData['language_ids']);
-        // return $validatedData;
+        // return $validatedDpata;
         $campaign = Campaign::create($validatedData);
         if ($campaign) {
             // save records to pivot table
@@ -211,13 +212,13 @@ class CampaignController extends Controller
             $campaign->is_published = true;
             $campaign->save();
             // Send Push notification
-            $notification = new Notification();
-            $notification->user_id = $campaign->user_id;
-            $notification->action = "/campaigns";
-            $notification->title = 'Campaign Published';
-            $notification->message = " Your campaign <b>$campaign->title</b> has been published.";
-            $notification->save();
-            event(new NewNotification($notification->user_id,$notification));
+            // $notification = new Notification();
+            // $notification->user_id = $campaign->user_id;
+            // $notification->action = "/campaigns";
+            // $notification->title = 'Campaign Published';
+            // $notification->message = " Your campaign <b>$campaign->title</b> has been published.";
+            // $notification->save();
+            // event(new NewNotification($notification->user_id,$notification));
             // send email notification
             if ($campaign->user->email) {
                 if (config('mail.queue_send')) {
