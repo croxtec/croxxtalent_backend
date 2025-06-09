@@ -86,10 +86,11 @@ class CampaignController extends Controller
         $validatedData['code'] = $user->id.md5(time());
 
         $skill_ids = $validatedData['skill_ids'];
-        $course_of_study_ids = $validatedData['course_of_study_ids'];
-        $language_ids = $validatedData['language_ids'];
+        $course_of_study_ids = $validatedData['course_of_study_ids'] ?? [];
+        $language_ids = $validatedData['language_ids'] ?? [];
+
         unset($validatedData['skill_ids'], $validatedData['course_of_study_ids'], $validatedData['language_ids']);
-        // return $validatedData;
+        // return $validatedDpata;
         $campaign = Campaign::create($validatedData);
         if ($campaign) {
             // save records to pivot table
