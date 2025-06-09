@@ -212,13 +212,13 @@ class CampaignController extends Controller
             $campaign->is_published = true;
             $campaign->save();
             // Send Push notification
-            $notification = new Notification();
-            $notification->user_id = $campaign->user_id;
-            $notification->action = "/campaigns";
-            $notification->title = 'Campaign Published';
-            $notification->message = " Your campaign <b>$campaign->title</b> has been published.";
-            $notification->save();
-            event(new NewNotification($notification->user_id,$notification));
+            // $notification = new Notification();
+            // $notification->user_id = $campaign->user_id;
+            // $notification->action = "/campaigns";
+            // $notification->title = 'Campaign Published';
+            // $notification->message = " Your campaign <b>$campaign->title</b> has been published.";
+            // $notification->save();
+            // event(new NewNotification($notification->user_id,$notification));
             // send email notification
             if ($campaign->user->email) {
                 if (config('mail.queue_send')) {
