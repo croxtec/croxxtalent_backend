@@ -10,16 +10,22 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use App\Http\Requests\CvRequest;
 use App\Http\Requests\CvPhotoRequest;
+use App\Jobs\GenerateCompetenciesJob;
 use Illuminate\Support\Facades\Validator;
 
 use App\Models\User;
 use App\Models\Cv;
 use App\Models\Audit;
+use App\Models\Competency\CompetencySetup;
 use Cloudinary\Cloudinary;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class TalentCVController extends Controller
 {
     protected $cloudinary;
+    protected $openAIService;
 
     public function __construct(Cloudinary $cloudinary)
     {
@@ -99,21 +105,62 @@ class TalentCVController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
+    // public function storeInformation(CvRequest $request)
+    // {
+    //     // Authorization was declared in the Form Request
+    //     $user = $request->user();
+    //     $cv = CV::where('user_id', $user->id)->firstorFail();
+    //     // Retrieve the validated input data...
+    //     $validatedData = $request->validated();
+    //     // $user = User::findOrFail($validatedData['user_id']);
+    //     $cv->update($request->all());
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => "CV profile saved successfully.",
+    //         'data' => Cv::find($cv->id)
+    //     ], 200);
+    // }
+
     public function storeInformation(CvRequest $request)
     {
-        // Authorization was declared in the Form Request
-        $user = $request->user();
-        $cv = CV::where('user_id', $user->id)->firstorFail();
-        // Retrieve the validated input data...
-        $validatedData = $request->validated();
-        // $user = User::findOrFail($validatedData['user_id']);
-        $cv->update($request->all());
-        return response()->json([
-            'status' => true,
-            'message' => "CV profile saved successfully.",
-            'data' => Cv::find($cv->id)
-        ], 200);
+        try {
+            // Authorization was declared in the Form Request
+            $user = $request->user();
+            $cv = CV::where('user_id', $user->id)->firstOrFail();
+
+            // Get the previous job title for comparison
+            $previousJobTitle = $cv->job_title;
+
+            // Retrieve the validated input data
+            $validatedData = $request->validated();
+            $cv->update($request->all());
+
+            // Get the updated CV with fresh data
+            $updatedCv = CV::find($cv->id);
+            $newJobTitle = $updatedCv->job_title;
+
+            // Smart competency generation logic
+            $competencyStatus = $this->handleCompetencyGeneration($newJobTitle, $previousJobTitle, $validatedData);
+
+            return response()->json([
+                'status' => true,
+                'message' => "CV profile saved successfully.",
+                'data' => $updatedCv,
+                'competency_status' => $competencyStatus
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error('CV Update Error: ' . $e->getMessage());
+
+            return response()->json([
+                'status' => false,
+                'message' => "Failed to update CV profile.",
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
+
 
 
     public function storeContact(Request $request)
@@ -274,4 +321,173 @@ class TalentCVController extends Controller
             'data' => Cv::find($cv->id)
         ], 200);
     }
+
+
+    private function handleCompetencyGeneration($newJobTitle, $previousJobTitle, $validatedData)
+    {
+        // Skip if job title is empty or invalid
+        if (empty($newJobTitle) || strlen(trim($newJobTitle)) < 3) {
+            return [
+                'action' => 'skipped',
+                'reason' => 'Invalid or empty job title'
+            ];
+        }
+
+        // Clean and normalize job title
+        $cleanJobTitle = $this->normalizeJobTitle($newJobTitle);
+
+        // Skip if job title hasn't changed
+        if ($cleanJobTitle === $this->normalizeJobTitle($previousJobTitle)) {
+            return [
+                'action' => 'skipped',
+                'reason' => 'Job title unchanged'
+            ];
+        }
+
+        // Check if competencies already exist and are complete
+        $existingCount = CompetencySetup::where('job_title', $cleanJobTitle)->count();
+
+        if ($existingCount >= 8) {
+            return [
+                'action' => 'exists',
+                'reason' => 'Competencies already complete',
+                'count' => $existingCount
+            ];
+        }
+
+        // Rate limiting check (prevent spam)
+        $rateLimitKey = "competency_gen_" . auth()->id();
+        if (Cache::has($rateLimitKey)) {
+            return [
+                'action' => 'rate_limited',
+                'reason' => 'Please wait before updating job title again',
+                'retry_after' => Cache::get($rateLimitKey . '_expires_at')
+            ];
+        }
+
+        // Validate job title quality
+        if (!$this->isValidJobTitle($cleanJobTitle)) {
+            return [
+                'action' => 'skipped',
+                'reason' => 'Job title appears to be invalid'
+            ];
+        }
+
+        // Set rate limit (5 minutes)
+        $expiresAt = now()->addMinutes(5);
+        Cache::put($rateLimitKey, true, $expiresAt);
+        Cache::put($rateLimitKey . '_expires_at', $expiresAt->format('Y-m-d H:i:s'), $expiresAt);
+
+        // Generate competencies asynchronously
+        return $this->generateCompetenciesAsync($cleanJobTitle, $validatedData);
+    }
+
+    /**
+     * Generate competencies asynchronously using queue
+     */
+    private function generateCompetenciesAsync($jobTitle, $validatedData)
+    {
+        try {
+            // Dispatch job to queue with a small delay to avoid API rate limits
+            GenerateCompetenciesJob::dispatch(
+                $jobTitle,
+                $validatedData['industry_id'] ?? 1,
+                auth()->id()
+            )->delay(now()->addSeconds(30));
+
+            // Log the generation request
+            Log::info("Competency generation queued", [
+                'job_title' => $jobTitle,
+                'user_id' => auth()->id(),
+                'industry_id' => $validatedData['industry_id'] ?? 1
+            ]);
+
+            return [
+                'action' => 'queued',
+                'job_title' => $jobTitle,
+                'message' => 'Competencies are being generated for your new job title',
+                'estimated_time' => '1-2 minutes'
+            ];
+
+        } catch (\Exception $e) {
+            Log::error("Failed to queue competency generation", [
+                'job_title' => $jobTitle,
+                'user_id' => auth()->id(),
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'action' => 'failed',
+                'reason' => 'Failed to start competency generation',
+                'job_title' => $jobTitle
+            ];
+        }
+    }
+
+    /**
+     * Normalize job title for consistency
+     */
+    private function normalizeJobTitle($jobTitle)
+    {
+        if (empty($jobTitle)) {
+            return '';
+        }
+
+        // Clean up the job title
+        $cleaned = trim($jobTitle);
+        $cleaned = preg_replace('/\s+/', ' ', $cleaned); // Multiple spaces to single space
+        $cleaned = ucwords(strtolower($cleaned)); // Proper case
+
+        return $cleaned;
+    }
+
+    /**
+     * Validate if job title is worth generating competencies for
+     */
+    private function isValidJobTitle($jobTitle)
+    {
+        if (empty($jobTitle)) {
+            return false;
+        }
+
+        // Skip common test/invalid patterns
+        $invalidPatterns = [
+            '/^test/i',
+            '/^demo/i',
+            '/^sample/i',
+            '/^example/i',
+            '/^temp/i',
+            '/^\d+$/',      // Only numbers
+            '/^[a-z]$/i',   // Single letter
+            '/asdf/i',
+            '/qwerty/i',
+            '/^xxx/i',
+            '/^yyy/i',
+            '/^zzz/i'
+        ];
+
+        foreach ($invalidPatterns as $pattern) {
+            if (preg_match($pattern, $jobTitle)) {
+                return false;
+            }
+        }
+
+        // Must have at least 3 characters and contain letters
+        if (strlen($jobTitle) < 3 || !preg_match('/[a-zA-Z]/', $jobTitle)) {
+            return false;
+        }
+
+        // Should contain meaningful words (not just random characters)
+        $words = explode(' ', $jobTitle);
+        $validWords = 0;
+
+        foreach ($words as $word) {
+            if (strlen($word) >= 2 && preg_match('/[a-zA-Z]/', $word)) {
+                $validWords++;
+            }
+        }
+
+        return $validWords > 0;
+    }
+
 }

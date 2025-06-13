@@ -313,7 +313,7 @@ class CvController extends Controller
         $relatedRecordsCount = 1;
 
         if ($relatedRecordsCount <= 0) {
-            $user->delete();
+            // $user->delete();
             return response()->json([
                 'status' => true,
                 'message' => "CV deleted successfully.",

@@ -71,112 +71,275 @@ class CareerController extends Controller
         return response()->json($response, 200);
     }
 
+
+    /**
+     * Review function - showcases all inputted job titles with their competency statistics
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
     public function review(Request $request)
     {
-        $cvJobTitles = CV::select('job_title')->distinct()->pluck('job_title');
-        $competencyJobTitles = CompetencySetup::select('job_title')->distinct()->pluck('job_title');
+        try {
+            // Get all unique job titles from both CV and CompetencySetup tables
+            $cvJobTitles = CV::select('job_title')
+                ->whereNotNull('job_title')
+                ->where('job_title', '!=', '')
+                ->distinct()
+                ->pluck('job_title');
 
-        // Combine and get unique job titles
-        $allJobTitles = $cvJobTitles->concat($competencyJobTitles)->unique();
+            $competencyJobTitles = CompetencySetup::select('job_title')
+                ->whereNotNull('job_title')
+                ->where('job_title', '!=', '')
+                ->distinct()
+                ->pluck('job_title');
 
-        $competencies = CompetencySetup::select('job_title', 'competency')
-            ->selectRaw('COUNT(*) as total')
-            ->whereIn('job_title', $allJobTitles)
-            ->groupBy('job_title', 'competency')
-            ->get();
+            // Combine and get unique job titles
+            $allJobTitles = $cvJobTitles->concat($competencyJobTitles)->unique()->values();
 
-        // Organize the data
-        $data = $allJobTitles->mapWithKeys(function ($jobTitle) use ($competencies) {
-            $jobCompetencies = $competencies->where('job_title', $jobTitle);
-            return [
-                $jobTitle => [
+            if ($allJobTitles->isEmpty()) {
+                return response()->json([
+                    'status' => true,
+                    'message' => "No job titles found in the system",
+                    'data' => []
+                ], 200);
+            }
+
+            // Get competency statistics for each job title
+            $competencyStats = CompetencySetup::select('job_title', 'competency', 'industry_id')
+                ->selectRaw('COUNT(*) as frequency')
+                ->selectRaw('AVG(match_percentage) as avg_match_percentage')
+                ->selectRaw('AVG(benchmark) as avg_benchmark')
+                ->whereIn('job_title', $allJobTitles)
+                ->groupBy('job_title', 'competency', 'industry_id')
+                ->get();
+
+            // Get CV count for each job title
+            $cvCounts = CV::select('job_title')
+                ->selectRaw('COUNT(*) as cv_count')
+                ->whereIn('job_title', $allJobTitles)
+                ->groupBy('job_title')
+                ->pluck('cv_count', 'job_title');
+
+            // Organize the data by job title
+            $data = $allJobTitles->map(function ($jobTitle) use ($competencyStats, $cvCounts) {
+                $jobCompetencies = $competencyStats->where('job_title', $jobTitle);
+
+                return [
+                    'job_title' => $jobTitle,
+                    'cv_count' => $cvCounts->get($jobTitle, 0),
                     'competencies' => $jobCompetencies->map(function ($item) {
-                        return $a[] = [
+                        return [
                             'name' => $item->competency,
-                            'total' => $item->total
+                            'frequency' => $item->frequency,
+                            'avg_match_percentage' => round($item->avg_match_percentage, 2),
+                            'avg_benchmark' => round($item->avg_benchmark, 2),
+                            'industry_id' => $item->industry_id
                         ];
-                    }),
-                    'total_competencies' => $jobCompetencies->sum('total')
-                ]
-            ];
-        });
+                    })->values(),
+                    'total_competencies' => $jobCompetencies->count(),
+                    'total_competency_entries' => $jobCompetencies->sum('frequency'),
+                    'competency_coverage' => $jobCompetencies->count() >= 8 ? 'Complete' : 'Incomplete',
+                    'needs_generation' => $jobCompetencies->count() < 8
+                ];
+            })->sortBy('job_title')->values();
 
-        return response()->json([
-            'status' => true,
-            'message' => "",
-            'data' => $data
-        ], 200);
+            return response()->json([
+                'status' => true,
+                'message' => "Found " . $allJobTitles->count() . " unique job titles",
+                'summary' => [
+                    'total_job_titles' => $allJobTitles->count(),
+                    'job_titles_with_competencies' => $competencyStats->pluck('job_title')->unique()->count(),
+                    'job_titles_needing_generation' => $data->where('needs_generation', true)->count()
+                ],
+                'data' => $data
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => "An error occurred while fetching job titles review",
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store function - processes and generates competencies for a specific job title
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
     {
-        $job_title = "Web Developer";
+        try {
+            // Validate the request
+            $request->validate([
+                'job_title' => 'required|string|max:255',
+                'industry_id' => 'nullable|integer|exists:industries,id',
+                'force_regenerate' => 'nullable|boolean'
+            ]);
 
-        $existingCompetenciesCount = CompetencySetup::where('job_title', $job_title)->count();
+            $jobTitle = trim($request->input('job_title'));
+            $industryId = $request->input('industry_id', 1);
+            $forceRegenerate = $request->input('force_regenerate', false);
 
-        if ($existingCompetenciesCount < 8) {
-            $competencies = $this->openAIService->generateCompetenciesByJobTitle($job_title);
+            // Check existing competencies for this job title
+            $existingCompetencies = CompetencySetup::where('job_title', $jobTitle)->get();
+            $existingCount = $existingCompetencies->count();
 
-            foreach ($competencies as $competency) {
-                CompetencySetup::firstOrCreate([
-                    'industry_id' => $request->input('industry_id') ?? 1,
-                    'job_title' => $job_title,
+            // Determine if we need to generate competencies
+            $shouldGenerate = $existingCount < 8 || $forceRegenerate;
+
+            if (!$shouldGenerate) {
+                return response()->json([
+                    'status' => true,
+                    'message' => "Competencies for '{$jobTitle}' already exist and are complete",
+                    'data' => [
+                        'job_title' => $jobTitle,
+                        'existing_count' => $existingCount,
+                        'competencies' => $existingCompetencies->map(function ($competency) {
+                            return [
+                                'id' => $competency->id,
+                                'competency' => $competency->competency,
+                                'match_percentage' => $competency->match_percentage,
+                                'benchmark' => $competency->benchmark,
+                                'description' => $competency->description,
+                                'industry_id' => $competency->industry_id
+                            ];
+                        })
+                    ],
+                    'generated_new' => false
+                ], 200);
+            }
+
+            // If force regenerate is true, delete existing competencies
+            if ($forceRegenerate && $existingCount > 0) {
+                CompetencySetup::where('job_title', $jobTitle)->delete();
+                $existingCount = 0;
+            }
+
+            // Generate competencies using OpenAI service
+            $competencies = $this->openAIService->generateCompetenciesByJobTitle($jobTitle);
+
+            if (empty($competencies)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => "Failed to generate competencies for '{$jobTitle}'. Please try again.",
+                    'data' => []
+                ], 400);
+            }
+
+            $createdCompetencies = [];
+            $competenciesNeeded = max(0, 8 - $existingCount);
+            $competenciesToProcess = array_slice($competencies, 0, $competenciesNeeded);
+
+            // Store the generated competencies
+            foreach ($competenciesToProcess as $competency) {
+                $createdCompetency = CompetencySetup::firstOrCreate([
+                    'industry_id' => $industryId,
+                    'job_title' => $jobTitle,
                     'competency' => $competency['competency'],
-                ],[
+                ], [
                     'match_percentage' => (int)$competency['match_percentage'],
                     'benchmark' => (int)$competency['benchmark'],
-                    'description' => $competency['description'],
+                    'description' => $competency['description'] ?? '',
                 ]);
+
+                $createdCompetencies[] = $createdCompetency;
             }
+
+            // Get all competencies for this job title (existing + newly created)
+            $allCompetencies = CompetencySetup::where('job_title', $jobTitle)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'status' => true,
+                'message' => "Successfully processed competencies for '{$jobTitle}'",
+                'data' => [
+                    'job_title' => $jobTitle,
+                    'industry_id' => $industryId,
+                    'total_competencies' => $allCompetencies->count(),
+                    'newly_generated' => count($createdCompetencies),
+                    'existing_count' => $existingCount,
+                    'competencies' => $allCompetencies->map(function ($competency) {
+                        return [
+                            'id' => $competency->id,
+                            'competency' => $competency->competency,
+                            'match_percentage' => $competency->match_percentage,
+                            'benchmark' => $competency->benchmark,
+                            'description' => $competency->description,
+                            'industry_id' => $competency->industry_id,
+                            'created_at' => $competency->created_at->format('Y-m-d H:i:s')
+                        ];
+                    })
+                ],
+                'generated_new' => count($createdCompetencies) > 0
+            ], 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => "Validation failed",
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => "An error occurred while processing competencies",
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $allCompetencies = CompetencySetup::where('job_title', $job_title)->get();
-
-        return response()->json([
-            'status' => true,
-            'message' => "Competencies for '{$job_title}'",
-            'data' => $allCompetencies
-        ], 200);
-    }
-
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-
     }
 
     /**
-     * Update the specified resource in storage.
+     * Helper function to batch process multiple job titles
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function batchStore(Request $request)
     {
-        //
-    }
+        try {
+            $request->validate([
+                'job_titles' => 'required|array|min:1',
+                'job_titles.*' => 'required|string|max:255',
+                'industry_id' => 'nullable|integer|exists:industries,id',
+                'force_regenerate' => 'nullable|boolean'
+            ]);
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
+            $jobTitles = $request->input('job_titles');
+            $results = [];
+
+            foreach ($jobTitles as $jobTitle) {
+                $request->merge(['job_title' => $jobTitle]);
+                $response = $this->store($request);
+                $results[] = [
+                    'job_title' => $jobTitle,
+                    'success' => $response->getStatusCode() < 400,
+                    'data' => $response->getData()
+                ];
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => "Batch processing completed",
+                'results' => $results,
+                'summary' => [
+                    'total_processed' => count($results),
+                    'successful' => collect($results)->where('success', true)->count(),
+                    'failed' => collect($results)->where('success', false)->count()
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => "Batch processing failed",
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

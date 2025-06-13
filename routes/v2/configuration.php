@@ -3,12 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('auth:sanctum')->prefix('croxxtalent')->group( function () {
-    // Professional
-    Route::resources([ 'professional' => 'Api\v2\Admin\ProfessionalController' ]);
-    Route::patch('professional/{id}/archive', 'Api\v2\Admin\ProfessionalController@archive')->name('professional.archive');
-    Route::patch('professional/{id}/unarchive', 'Api\v2\Admin\ProfessionalController@unarchive')->name('professional.unarchive');
-});
+
 
 // Configurations
 Route::prefix('settings')->name('api.settings.')->group( function () {
@@ -99,8 +94,10 @@ Route::prefix('settings')->name('api.settings.')->group( function () {
         Route::patch('job-titles/{id}/unarchive', 'Api\v2\Settings\JobTitleController@unarchive')->name('job_titles.unarchive');
         Route::delete('job-titles/{id}', 'Api\v2\Settings\JobTitleController@destroy')->name('job_titles.destroy');
     });
+
     // Career Competenciees
     Route::resources([ 'carrer/competencies' => 'Api\v2\Admin\CareerController' ]);
+    Route::get('carrer/review', 'Api\v2\Admin\CareerController@review')->name('career.review');
 
     // Industries
     Route::get('industries', 'Api\v2\Settings\IndustryController@index')->name('industries.index');
