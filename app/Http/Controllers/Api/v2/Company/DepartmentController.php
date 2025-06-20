@@ -90,6 +90,7 @@ class DepartmentController extends Controller
         $validatedData['job_title'] = strtolower($departmentPrefix . $uniqueCode);
 
         DB::beginTransaction();
+        
         try {
             $department = Department::create($validatedData);
 
