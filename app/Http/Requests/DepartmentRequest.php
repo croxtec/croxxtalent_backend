@@ -24,11 +24,11 @@ class DepartmentRequest extends FormRequest
     public function rules()
     {
         return [
-            'job_code' => 'required|max:30',
-            'description' => 'nullable|max:130',
+            'job_code' => 'required|max:75',
+            'description' => 'nullable|max:175',
             'roles' => 'required|array|min:1',
-            'roles.*.name' => 'required|max:30',
-            'roles.*.description' => 'nullable|max:130',
+            'roles.*.name' => 'required|max:75',
+            'roles.*.description' => 'nullable|max:175',
         ];
     }
 }
