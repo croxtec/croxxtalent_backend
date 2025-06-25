@@ -1,0 +1,27 @@
+/node_modules
+/public/hot
+/public/app
+/public/storage
+/storage/*.key
+/vendor
+/vendor_old
+# .htaccess
+.git
+.gitignore
+.env
+.env.backup
+.env.production
+.phpunit.result.cache
+.DS_Store
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+server.php.zip
+**.sql
+**.zip
+script.lisp
+croxxbackend.zip
+Dockerfile
+/stubs/
+*.gitkeep
