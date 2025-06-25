@@ -27,60 +27,60 @@ Dockerfile
 *.gitkeep
 
 //.env
-APP_NAME=CroxxTalent
-APP_ENV=development
-APP_KEY=base64:lRTG04yF44s1NGwwtufRUd+rXvSNa15fE54cGbRgSH8=
-APP_DEBUG=true
-APP_URL=https://croxxtalent-staging-932ak.ondigitalocean.app
-CLIENT_URL=https://croxxtalent.com
+# APP_NAME=CroxxTalent
+# APP_ENV=development
+# APP_KEY=base64:lRTG04yF44s1NGwwtufRUd+rXvSNa15fE54cGbRgSH8=
+# APP_DEBUG=true
+# APP_URL=https://croxxtalent-staging-932ak.ondigitalocean.app
+# CLIENT_URL=https://croxxtalent.com
 
-DB_CONNECTION=mysql
-DB_HOST=croxxtalent-do-user-12636172-0.b.db.ondigitalocean.com
-DB_PORT=25060
-DB_DATABASE=croxxtalent_staging
-DB_USERNAME=doadmin
-DB_PASSWORD=AVNS_IhNUBiWndmLibW7gjDp
-DB_TABLE_PREFIX=crt_
+# DB_CONNECTION=mysql
+# DB_HOST=croxxtalent-do-user-12636172-0.b.db.ondigitalocean.com
+# DB_PORT=25060
+# DB_DATABASE=croxxtalent_staging
+# DB_USERNAME=doadmin
+# DB_PASSWORD=AVNS_IhNUBiWndmLibW7gjDp
+# DB_TABLE_PREFIX=crt_
 
-MAIL_DRIVER=smtp
-MAIL_HOST=smtp-relay.brevo.com
-MAIL_PORT=587
-MAIL_USERNAME=74a87d001@smtp-brevo.com
-MAIL_PASSWORD=xsmtpsib-b94eb162e6b216f905fc6cb4b9a6da8cf6bf99d76dae6a97e6a3f4439685cc34-skIf5MbA8vcrhWY0
-MAIL_FROM_ADDRESS=support@croxxtalent.com
-MAIL_FROM_NAME=CroxxTalent
-QUEUE_CONNECTION=database
+# MAIL_DRIVER=smtp
+# MAIL_HOST=smtp-relay.brevo.com
+# MAIL_PORT=587
+# MAIL_USERNAME=74a87d001@smtp-brevo.com
+# MAIL_PASSWORD=xsmtpsib-b94eb162e6b216f905fc6cb4b9a6da8cf6bf99d76dae6a97e6a3f4439685cc34-skIf5MbA8vcrhWY0
+# MAIL_FROM_ADDRESS=support@croxxtalent.com
+# MAIL_FROM_NAME=CroxxTalent
+# QUEUE_CONNECTION=database
 
-AWS_ACCESS_KEY_ID=
-AWS_SECRET_ACCESS_KEY=
-AWS_DEFAULT_REGION=us-east-1
-AWS_BUCKET=
-OPENAI_API_KEY=sk-proj-7upKxQAoJg7qVoLC0Pn0T3BlbkFJaJqRvWMIOnf9X9xSOnrv
-PUSHER_APP_ID=croxxtalent_pro
-PUSHER_APP_KEY=croxxtalent_pro
-PUSHER_APP_SECRET=croxxtalent_pro
-PUSHER_APP_CLUSTER=mt1
-SANCTUM_EXPIRATION=14400
-SANCTUM_HIGHEST_EXPIRATION=259492
+# AWS_ACCESS_KEY_ID=
+# AWS_SECRET_ACCESS_KEY=
+# AWS_DEFAULT_REGION=us-east-1
+# AWS_BUCKET=
+# OPENAI_API_KEY=sk-proj-7upKxQAoJg7qVoLC0Pn0T3BlbkFJaJqRvWMIOnf9X9xSOnrv
+# PUSHER_APP_ID=croxxtalent_pro
+# PUSHER_APP_KEY=croxxtalent_pro
+# PUSHER_APP_SECRET=croxxtalent_pro
+# PUSHER_APP_CLUSTER=mt1
+# SANCTUM_EXPIRATION=14400
+# SANCTUM_HIGHEST_EXPIRATION=259492
 
-CLOUDINARY_CLOUD_NAME=dwty1bg7o
-CLOUDINARY_API_KEY=315192691478961
-CLOUDINARY_API_SECRET=7SdHbg3we7729HEwhYzAHSKivHg
-DO_SPACES_KEY=DO00GFY236GU7WTWPYBK
-DO_SPACES_SECRET=kwuaryDHGFMIEffYw9vpkFspTU7OQdz0hGVCr5oaZjE
-DO_SPACES_ENDPOINT=https://croxxtalent-uploads.fra1.digitaloceanspaces.com
-DO_SPACES_REGION=fra1
-DO_SPACES_BUCKET=croxxtalent-uploads
-DO_SPACES_CUSTOM_ENDPOINT=https://croxxtalent-uploads.fra1.digitaloceanspaces.com
-FILESYSTEM_DRIVER=do-spaces
-FILESYSTEM_CLOUD=do-spaces
+# CLOUDINARY_CLOUD_NAME=dwty1bg7o
+# CLOUDINARY_API_KEY=315192691478961
+# CLOUDINARY_API_SECRET=7SdHbg3we7729HEwhYzAHSKivHg
+# DO_SPACES_KEY=DO00GFY236GU7WTWPYBK
+# DO_SPACES_SECRET=kwuaryDHGFMIEffYw9vpkFspTU7OQdz0hGVCr5oaZjE
+# DO_SPACES_ENDPOINT=https://croxxtalent-uploads.fra1.digitaloceanspaces.com
+# DO_SPACES_REGION=fra1
+# DO_SPACES_BUCKET=croxxtalent-uploads
+# DO_SPACES_CUSTOM_ENDPOINT=https://croxxtalent-uploads.fra1.digitaloceanspaces.com
+# FILESYSTEM_DRIVER=do-spaces
+# FILESYSTEM_CLOUD=do-spaces
 
-GOOGLE_CLIENT_ID="242398748305-jpccoc4h69520nk9tq0heucdt2ol7dvb.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET="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"
-GOOGLE_REDIRECT=http://localhost:2600/api/v2/auth/google/callback
-LINKEDIN_CLIENT_ID="77pdaooi5pki4j"
-LINKEDIN_CLIENT_SECRET="XGsxCYHVFsU7UYOt"
-LINKEDIN_REDIRECT_URI="http://localhost:2600/api/v2/auth/linkedin/callback"
-FRONTEND_URL="https://croxxtalent.com"
+# GOOGLE_CLIENT_ID="242398748305-jpccoc4h69520nk9tq0heucdt2ol7dvb.apps.googleusercontent.com"
+# GOOGLE_CLIENT_SECRET="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"
+# GOOGLE_REDIRECT=http://localhost:2600/api/v2/auth/google/callback
+# LINKEDIN_CLIENT_ID="77pdaooi5pki4j"
+# LINKEDIN_CLIENT_SECRET="XGsxCYHVFsU7UYOt"
+# LINKEDIN_REDIRECT_URI="http://localhost:2600/api/v2/auth/linkedin/callback"
+# FRONTEND_URL="https://croxxtalent.com"
 
 
