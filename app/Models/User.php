@@ -79,6 +79,7 @@ class User extends Authenticatable
         'linkedin_token',
 
         'phone',
+        'language',
         'is_active',
         'company_name',
         'company_size',

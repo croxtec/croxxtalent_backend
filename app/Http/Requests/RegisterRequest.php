@@ -40,12 +40,13 @@ class RegisterRequest extends FormRequest
             case 'POST':
                 // info($this);
                 return [
-                    'type' => 'required|in:talent,employer', // optional for admin andaffiliate
+                    'type' => 'required|in:talent,employer', // optional for admin and affiliate
                     'first_name' => 'required|max:30',
                     'last_name' => 'required|max:30',
                     'email' => 'required|max:150|unique:users,email',
                     'password' => 'required|min:6',
                     'referral_code' => 'nullable',
+                    'language' => 'nullable',
                     'long_lived_access_token' => 'nullable|boolean',
                 ];
             case 'PUT':

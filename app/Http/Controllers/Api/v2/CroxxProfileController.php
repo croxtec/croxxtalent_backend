@@ -41,6 +41,7 @@ class CroxxProfileController extends Controller
                 'username' => $username,
                 'is_active' => true
         ])->firstOrFail();
+        
         $profile->makeHidden(['cv', 'password_updated_at']);
 
         $careers = [];
