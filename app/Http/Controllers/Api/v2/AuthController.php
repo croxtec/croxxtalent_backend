@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\v2;
 
 use App\Events\NewNotification;
 use App\Events\NotificationMessage;
+use App\Traits\ApiResponseTrait;
 use App\Events\Notifications;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
@@ -34,8 +35,12 @@ use App\Services\RefreshCompanyPerformance;
 
 class AuthController extends Controller
 {
+    /**
+     * Trait for API response handling.
+     */
+    use ApiResponseTrait;
 
-    // protected $firebaseService;
+    protected $firebaseService;
 
    /**
     * Create a new AuthController instance.
@@ -91,10 +96,7 @@ class AuthController extends Controller
                          ->whereIn('type', ['talent', 'admin'])->first();
         //
         if (!$user || !Hash::check($validatedData['password'], $user->password)) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Invalid login credentials.'
-            ], 401);
+            return $this->unauthorizedResponse('api.errors.invalid_login');
         }
         // Checking If A Password Needs To Be Rehashed
         // if the work factor used by the hasher has changed since the password was hashed
@@ -107,10 +109,8 @@ class AuthController extends Controller
         if ($user->is_active !== true) {
             $user->is_active = true;
             $user->save();
-            return response()->json([
-                'status' => false,
-                'message' => 'Your account is inactive, please contact support admin.'
-            ], 401);
+
+            return $this->unauthorizedResponse('api.errors.inactive_account');
         }
 
         //
@@ -152,11 +152,13 @@ class AuthController extends Controller
 
 
         // send response
-        return response()->json([
-            'status' => true,
-            'message' => 'You have logged in successfully.',
-            'data' => $responseData
-        ], 200);
+        return $this->successResponse($responseData, 'auth.login.success');
+
+        // return response()->json([
+        //     'status' => true,
+        //     'message' => 'You have logged in successfully.',
+        //     'data' => $responseData
+        // ], 200);
     }
 
     /**
@@ -185,19 +187,21 @@ class AuthController extends Controller
                 'phone' => 'required|max:25',
                 'services' => 'required',
             ]);
+
             if($validator->fails()){
                 $status = false;
                 $message = $validator->errors()->toJson();
                 return response()->json(compact('status', 'message') , 400);
             }
+
             $validatedData['is_active'] = true;
             $validatedData['company_name'] = $request->company_name;
             $validatedData['phone'] = $request->phone;
             $validatedData['company_size'] = $request->company_size;
             $validatedData['services'] = $request->services;
         }
-        // Generate Default Username
 
+        // Generate Default Username
         $default_username = isset($validatedData['company_name'])
             ? Str::slug($validatedData['company_name'], '_')
             : Str::slug("{$validatedData['first_name']}_{$validatedData['last_name']}", '_');
@@ -206,23 +210,8 @@ class AuthController extends Controller
         if ($total)  $default_username .= "_{$total}";
 
         $validatedData['username'] = $default_username;
-        // if ($validatedData['type'] == 'affiliate') {
-        //     $validator = Validator::make($request->all(),[
-        //         'company_name' => 'required',
-        //         'company_affiliate' => 'required',
-        //         'phone' => 'required|max:25',
-        //     ]);
-        //     if($validator->fails()){
-        //         $status = false;
-        //         $message = $validator->errors()->toJson();
-        //         return response()->json(compact('status', 'message') , 400);
-        //     }
-        //     $validatedData['referral_code'] = (string) Str::orderedUuid();
-        //     $validatedData['is_active'] = true;
-        //     $validatedData['company_name'] = $request->company_name;
-        //     $validatedData['company_affiliate'] = $request->company_affiliate;
-        //     $validatedData['phone'] = $request->phone;
-        // }
+        $validatedData['referral_code'] = (string) Str::orderedUuid();
+
 
         $user = User::create($validatedData);
 
@@ -266,16 +255,22 @@ class AuthController extends Controller
             $responseData = $this->tokenData($token);
             $responseData['user'] = $user;
 
-            return response()->json([
-                'status' => true,
-                'message' => "\"{$user->name}\" created successfully. Please check your email to confirm your account. If you don't see the email, check your spam folder.",
-                'data' => $responseData
-            ], 201);
+            return $this->successResponse(
+                $responseData, 
+                'api.auth.account_created', // translation key
+                ['name' => $user->name] // replacement parameters
+            );
+
+            // return response()->json([
+            //     'status' => true,
+            //     'message' => "\"{$user->name}\" created successfully. Please check your email to confirm your account. If you don't see the email, check your spam folder.",
+            //     'data' => $responseData
+            // ], 201);
+
         } else {
-            return response()->json([
-                'status' => false,
-                'message' => "Could not complete request.",
-            ], 400);
+
+            return $this->errorResponse('api.errors.request_error', [], 400);
+
         }
     }
 
@@ -307,10 +302,7 @@ class AuthController extends Controller
                         ->first();
         //
         if (!$user || !Hash::check($validatedData['password'], $user->password)) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Invalid login credentials.'
-            ], 401);
+            return $this->unauthorizedResponse('api.errors.invalid_login');
         }
 
         // Checking If A Password Needs To Be Rehashed// $user->saved();
@@ -329,10 +321,9 @@ class AuthController extends Controller
         }
 
         if ($user->is_active !== true) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Your account is inactive, please contact support admin.'
-            ], 401);
+
+            return $this->unauthorizedResponse('api.errors.inactive_account');
+
         }
 
         if (!$user->onboardings) {
@@ -351,20 +342,16 @@ class AuthController extends Controller
         $this->companyPerformanceService->refreshEmployeesPerformance($user);
 
         // save audit trail log
-        $old_values = [];
+        $old_values = []; 
         $new_values = [];
         Audit::log($user->id, 'login', $old_values, $new_values, User::class, $user->id);
 
         $responseData = $this->tokenData($token);
         $responseData['user'] = $user;
-
+     
         // send response
-        return response()->json([
-            'status' => true,
-            'message' => 'You have logged in successfully.',
-            'data' => $responseData
-        ], 200);
-    }
+        return $this->successResponse($responseData, 'auth.login.success');
+    } 
 
    /**
     * Get the authenticated User.
