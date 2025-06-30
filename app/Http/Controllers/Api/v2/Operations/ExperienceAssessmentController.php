@@ -117,20 +117,29 @@ class ExperienceAssessmentController extends Controller
     public function store(ExperienceAssessmentRequest $request)
     {
         try {
+
             $assessment =$this->assessmentService->store($request);
 
-            return response()->json([
-                'status' => true,
-                'message' => "Assessment created successfully.",
-                'data' => $assessment
-            ], 201);
+            return $this->successResponse( $assessment,'services.assessment.created', [], 201);
+
+            // return response()->json([
+            //     'status' => true,
+            //     'message' => "Assessment created successfully.",
+            //     'data' => $assessment
+            // ], 201);
+
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'status' => false,
-                'message' => "Failed to create assessment.",
+
+            return $this->errorResponse('services.assessment.store_error', [
                 'error' => $e->getMessage()
-            ], 500);
+            ]);
+
+            // return response()->json([
+            //     'status' => false,
+            //     'message' => "Failed to create assessment.",
+            //     'error' => $e->getMessage()
+            // ], 500);
         }
     }
 
@@ -424,11 +433,15 @@ class ExperienceAssessmentController extends Controller
             'expected_percentage' => $validatedData['expected_score']
         ]);
 
-        return response()->json([
-            'status' => true,
-            'message' => "Assessment updated successfully",
-            'data' => $assessment
-        ], 200);
+        return $this->successResponse(
+            $assessment->fresh(),
+            'services.assessment.updated'
+        );
+        // return response()->json([
+        //     'status' => true,
+        //     'message' => "Assessment updated successfully",
+        //     'data' => $assessment
+        // ], 200);
 
     }
 
@@ -443,16 +456,28 @@ class ExperienceAssessmentController extends Controller
             $assessment = CroxxAssessment::where('code', $id)->where('employer_id', $user->id)->firstOrFail();
         }
 
-        if($assessment->is_published != true){
+        if ($assessment->is_published != true) {
             $assessment->is_published = true;
             $assessment->save();
+        } else {
+            return $this->successResponse(
+                 $assessment->fresh(),
+                'services.assessment.already_published',
+                ['name' => $assessment->name]
+            );
         }
 
-        return response()->json([
-            'status' => true,
-            'message' => "Assessment \"{$assessment->name}\" publish successfully.",
-            'data' => CroxxAssessment::find($assessment->id)
-        ], 200);
+        return $this->successResponse(
+             $assessment->fresh(),
+            'services.assessment.published',
+            ['name' => $assessment->name]
+        );
+
+        // return response()->json([
+        //     'status' => true,
+        //     'message' => "Assessment \"{$assessment->name}\" publish successfully.",
+        //     'data' => CroxxAssessment::find($assessment->id)
+        // ], 200);
     }
 
     public function archive($id)
@@ -464,11 +489,11 @@ class ExperienceAssessmentController extends Controller
         $assessment->archived_at = now();
         $assessment->save();
 
-        return response()->json([
-            'status' => true,
-            'message' => "Assessment \"{$assessment->name}\" archived successfully.",
-            'data' => CroxxAssessment::find($assessment->id)
-        ], 200);
+        return $this->successResponse(
+            CroxxAssessment::find($assessment->id),
+            'services.assessment.archived',
+            ['name' => $assessment->name]
+        );
     }
 
     /**
@@ -486,11 +511,11 @@ class ExperienceAssessmentController extends Controller
         $assessment->archived_at = null;
         $assessment->save();
 
-        return response()->json([
-            'status' => true,
-            'message' => "Assessment \"{$assessment->name}\" unarchived successfully.",
-            'data' => CroxxAssessment::find($assessment->id)
-        ], 200);
+        return $this->successResponse(
+            CroxxAssessment::find($assessment->id),
+            'services.assessment.uarchived',
+            ['name' => $assessment->name]
+        );
     }
 
     /**
