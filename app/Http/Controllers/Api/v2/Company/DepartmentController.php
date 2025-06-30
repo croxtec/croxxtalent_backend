@@ -107,18 +107,30 @@ class DepartmentController extends Controller
 
             DB::commit();
 
-            return response()->json([
-                'status' => true,
-                'message' => "Department \"{$department->job_code}\" created successfully.",
-                'data' => Department::with('roles')->find($department->id)
-            ], 201);
+            return $this->successResponse(
+                Department::with('roles')->find($department->id), 
+                'company.department.created',
+                [
+                    'title' => $department->job_code
+                ], 201
+            );
+
+            // return response()->json([
+            //     'status' => true,
+            //     'message' => "Department \"{}\" created successfully.",
+            //     'data' => Department::with('roles')->find($department->id)
+            // ], 201);
+
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'status' => false,
-                'message' => "Could not complete request.",
-                'error' => $e->getMessage()
-            ], 500);
+              return $this->errorResponse('api.errors.request_error', [
+                    'error' => $e->getMessage()
+              ]);
+            // return response()->json([
+            //     'status' => false,
+            //     'message' => "Could not complete request.",
+            //     
+            // ], 500);
         }
     }
 
@@ -217,7 +229,7 @@ class DepartmentController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => "Successful.",
+            'message' => "",
             'data' => $department
         ], 200);
 
@@ -255,31 +267,44 @@ class DepartmentController extends Controller
 
             $department->update($validatedData);
 
-            return response()->json([
-                'status' => true,
-                'message' => "Department updated successfully.",
-                'data' => Department::with('roles')->findOrFail($department->id)
-            ], 200);
+            $updatedDept = Department::with('roles')->findOrFail($department->id);
+
+            return $this->successResponse( $updatedDept,'company.department.updated');
+
+            // return response()->json([
+            //     'status' => true,
+            //     'message' => "Department updated successfully.",
+            //     'data' =>
+            // ], 200);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Validation failed.',
-                'errors' => $e->errors()
-            ], 422);
+
+            return $this->validationErrorResponse($errors);
+
+            // return response()->json([
+            //     'status' => false,
+            //     'message' => 'Validation failed.',
+            //     'errors' => $e->errors()
+            // ], 422);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Department not found.'
-            ], 404);
+
+            return $this->notFoundResponse('company.department.not_found');
+
+            // return response()->json([
+            //     'status' => false,
+            //     'message' => 'Department not found.'
+            // ], 404);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'An unexpected error occurred.',
-                'error' => $e->getMessage()
-            ], 500);
+             return $this->errorResponse('api.errors.internal_error', [
+                    'error' => $e->getMessage()
+              ]);
+            // return response()->json([
+            //     'status' => false,
+            //     'message' => 'An unexpected error occurred.',
+            //     'error' => $e->getMessage()
+            // ], 500);
         }
     }
 
@@ -300,11 +325,15 @@ class DepartmentController extends Controller
         $departmet->archived_at = now();
         $departmet->save();
 
-        return response()->json([
-            'status' => true,
-            'message' => "Jobcode \"{$departmet->job_code}\" archived successfully.",
-            'data' => Department::find($departmet->id)
-        ], 200);
+        return $this->successResponse( $department->fresh(),'company.department.archived', [
+            'title' => $departmet->job_code
+        ]);
+
+        // return response()->json([
+        //     'status' => true,
+        //     'message' => "Jobcode \"{$departmet->job_code}\" archived successfully.",
+        //     'data' => Department::find($departmet->id)
+        // ], 200);
     }
 
     /**
@@ -322,13 +351,17 @@ class DepartmentController extends Controller
         $department->archived_at = null;
         $department->save();
 
-        return response()->json([
-            'status' => true,
-            'message' => "Jobcode \"{$department->job_code}\" unarchived successfully.",
-            'data' => Department::find($department->id)
-        ], 200);
-    }
+        return $this->successResponse( $department->fresh(),'company.department.restored', [
+            'title' => $departmet->job_code
+        ]);
 
+        // return response()->json([
+        //     'status' => true,
+        //     'message' => "Jobcode \"{$department->job_code}\" unarchived successfully.",
+        //     'data' => Department::find($department->id)
+        // ], 200);
+    }
+ 
     /**
      * Remove the specified resource from storage.
      *
@@ -346,16 +379,29 @@ class DepartmentController extends Controller
         $relatedRecordsCount = related_records_count(Department::class, $job_code);
 
         if ($relatedRecordsCount <= 0) {
+
             $job_code->delete();
-            return response()->json([
-                'status' => true,
-                'message' => "Jobcode \"{$name}\" deleted successfully.",
-            ], 200);
+
+            return $this->successResponse([],'company.department.deleted', [
+                'title' => $name
+            ]);
+
+            // return response()->json([
+            //     'status' => true,
+            //     'message' => "Jobcode \"{$name}\" deleted successfully.",
+            // ], 200);
+
         } else {
-            return response()->json([
-                'status' => false,
-                'message' => "The \"{$name}\" record cannot be deleted because it is associated with {$relatedRecordsCount} other record(s). You can archive it instead.",
-            ], 400);
+
+            $this->unauthorizedResponse('company.department.cannot_delete', [
+                'title' => $name,
+                'relatedRecordsCount' => $relatedRecordsCount
+            ]);
+
+            // return response()->json([
+            //     'status' => false,
+            //     'message' => "The \"{$name}\" record cannot be deleted because it is associated with {$relatedRecordsCount} other record(s). You can archive it instead.",
+            // ], 400);
         }
     }
 

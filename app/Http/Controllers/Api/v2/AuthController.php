@@ -154,11 +154,6 @@ class AuthController extends Controller
         // send response
         return $this->successResponse($responseData, 'auth.login.success');
 
-        // return response()->json([
-        //     'status' => true,
-        //     'message' => 'You have logged in successfully.',
-        //     'data' => $responseData
-        // ], 200);
     }
 
     /**

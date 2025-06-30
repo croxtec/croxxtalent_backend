@@ -6,6 +6,7 @@ return [
         'created' => 'Resource created successfully',
         'updated' => 'Resource updated successfully',
         'deleted' => 'Resource deleted successfully',
+        'listed' => 'Resources listed successfully',
         'operation_successful' => 'Operation completed successfully',
    ],
    'errors' => [
@@ -19,6 +20,7 @@ return [
        'conflict' => 'There was a conflict with the request. Please check your data and try again.',
        'too_many_requests' => 'You have made too many requests. Please try again later.',
        'service_unavailable' => 'The service is currently unavailable. Please try again later.',
-       'request_error' => 'Could not complete request.'
+       'request_error' => 'Could not complete request.',
+       'internal_error' => 'An internal error occurred. Please try again later.',
    ]
 ];

@@ -104,19 +104,27 @@ class EmployerCompetencyController extends Controller
 
             DB::commit();
 
-            return response()->json([
-                'status'  => true,
-                'data'    => $competencies,
-                'message' => 'Competency Mapping and KPI Setup Generated.'
-            ], 200);
+            return $this->successResponse( $competencies,'company.competency.generated');
+
+            // return response()->json([
+            //     'status'  => true,
+            //     'data'    => $competencies,
+            //     'message' => 'Competency Mapping and KPI Setup Generated.'
+            // ], 200);
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             Log::error('Error generating mapping: ' . $e->getMessage());
-            return response()->json([
-                'status'  => false,
-                'message' => 'Error generating mapping: ' . $e->getMessage()
-            ], 500);
+
+            return $this->errorResponse('company.competency.generation_error', [
+                'error' => $e->getMessage()
+            ]);
+
+            // return response()->json([
+            //     'status'  => false,
+            //     'message' => 'Error generating mapping: ' . $e->getMessage()
+            // ], 500);
         }
     }
 
@@ -167,21 +175,27 @@ class EmployerCompetencyController extends Controller
                 $employer->save();
             }
 
-
             DB::commit();
 
-            return response()->json([
-                'status' => true,
-                'message' => "Competency and KPI mapping stored successfully.",
-            ], 201);
+            return $this->successResponse([],'company.competency.add_competency');
+
+            // return response()->json([
+            //     'status' => true,
+            //     'message' => "Competency and KPI mapping stored successfully.",
+            // ], 201);
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error storing competency mapping: ' . $e->getMessage());
-            return response()->json([
-                'status' => false,
-                'message' => 'Error storing competency mapping'
-            ], 500);
+
+             return $this->errorResponse('company.competency.mapping_error', [
+                'error' => $e->getMessage()
+            ]);
+
+            // return response()->json([
+            //     'status' => false,
+            //     'message' => 'Error storing competency mapping'
+            // ], 500);
         }
     }
 
@@ -255,11 +269,13 @@ class EmployerCompetencyController extends Controller
             'description' => $validatedData['description'] ?? '',
         ]);
 
-        return response()->json([
-            'status' => true,
-            'data' => $department,
-            'message' => "Competency matched.",
-        ], 201);
+         return $this->successResponse([],'company.competency.matched', [], 201);
+
+        // return response()->json([
+        //     'status' => true,
+        //     'data' => $department,
+        //     'message' => "Competency matched.",
+        // ], 201);
 
     }
 
@@ -295,90 +311,33 @@ class EmployerCompetencyController extends Controller
         ];
 
         if (!in_array($faqType, $validFaqTypes)) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Invalid FAQ type provided',
-                'data' => []
-            ], 400);
+            return $this->errorResponse(
+                'company.competency.invalid_faq_type.',
+                [],
+                Response::HTTP_BAD_REQUEST
+            );
+            // return response()->json([
+            //     'status' => false,
+            //     'message' => 'Invalid FAQ type provided',
+            //     'data' => []
+            // ], 400);
         }
 
         $onboarding->{$faqType} = true;
         $onboarding->save();
 
+         return $this->successResponse(
+            ['onboarding' => $onboarding],
+            'company.competency.faq_reviewed',
+        );
 
-        return response()->json([
-            'status' => true,
-            'message' => "FAQ $faqType has been marked as reviewed",
-            'data' => [
-                'onboarding' => $onboarding
-            ]
-        ], 200);
+        // return response()->json([
+        //     'status' => true,
+        //     'message' => "FAQ $faqType has been marked as reviewed",
+        //     'data' => [
+        //         'onboarding' => $onboarding
+        //     ]
+        // ], 200);
     }
 
-
 }
-
-
- // public function index(Request $request)
-    // {
-    //     $user = $request->user();
-
-    //     // $competencies = EmployerCompetencyController::competencies();
-    //     // Separate technical and soft skills
-    //     $technical_skills = array_filter($competencies, function($competency) {
-    //         return $competency['competency_role'] === 'technical_skill';
-    //     });
-
-    //     $soft_skills = array_filter($competencies, function($competency) {
-    //         return $competency['competency_role'] === 'soft_skill';
-    //     });
-
-    //     // Shuffle the arrays to randomize selection
-    //     shuffle($technical_skills);
-    //     shuffle($soft_skills);
-
-    //     // Select 6 technical skills and 4 soft skills
-    //     $technical_skills = array_slice($technical_skills, 0, 5);
-    //     $soft_skills = array_slice($soft_skills, 0, 3);
-
-    //     // Combine selected skills
-    //     // $selected_skills = array_merge($selected_technical_skills, $selected_soft_skills);
-
-    //     // Filter for competencies in the 'operations' department
-    //     // $operations_competencies = array_filter($competencies, function($competency) {
-    //     //     return $competency['department'] === 'operations';
-    //     // });
-
-    //     return response()->json([
-    //         'status' => true,
-    //         'data' => compact('technical_skills','soft_skills'),
-    //         'message' => 'Suggested Competency Mapping.'
-    //     ], 200);
-    // }
-
-    // [
-    //     532,
-    //     533,
-    //     534,
-    //     538,
-    //     539,
-    //     540,
-    //     544,
-    //     545,
-    //     546,
-    //     550,
-    //     551,
-    //     552,
-    //     529,
-    //     530,
-    //     531,
-    //     535,
-    //     536,
-    //     537,
-    //     541,
-    //     542,
-    //     543,
-    //     547,
-    //     548,
-    //     549
-    // ];

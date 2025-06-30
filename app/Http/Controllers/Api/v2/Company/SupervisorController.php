@@ -7,10 +7,11 @@ use Illuminate\Http\Request;
 use App\Models\Supervisor;
 use App\Models\Employee;
 use App\Http\Requests\SupervisorRequest;
-
+use App\Traits\ApiResponseTrait;
 use App\Notifications\SupervisorRemoved;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Notification;
+
 
 class SupervisorController extends Controller
 {
@@ -19,6 +20,8 @@ class SupervisorController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+    use ApiResponseTrait;
+
     public function index(Request $request)
     {
         $employer = $request->user();
@@ -116,11 +119,14 @@ class SupervisorController extends Controller
                                     ->toArray();
 
         if (!empty($existingSupervisors)) {
-            return response()->json([
-                "status" => false,
-                "message" => "Some supervisors already exist.",
-                "existing_supervisors" => $existingSupervisors
-            ], 422);
+            $this->unauthorizedResponse('company.supervisor.already_exists', [
+                 $existingSupervisors
+            ]);
+            // return response()->json([
+            //     "status" => false,
+            //     "message" => "Some supervisors already exist.",
+            //     "existing_supervisors" => $existingSupervisors
+            // ], 422);
         }
 
         // Proceed to add all supervisors since none exists
@@ -140,25 +146,18 @@ class SupervisorController extends Controller
             $addedSupervisors[] = $employee;
         }
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Supervisors added successfully.',
-            'data' => $addedSupervisors
-        ], 201);
+         return $this->successResponse(
+            $addedSupervisors, 
+            'company.supervisor.created',
+            [], 201 //Status
+        );
+        // return response()->json([
+        //     'status' => true,
+        //     'message' => 'Supervisors added successfully.',
+        //     'data' => $addedSupervisors
+        // ], 201);
     }
 
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
 
     /**
      * Remove the specified resource from storage.
@@ -189,11 +188,16 @@ class SupervisorController extends Controller
         $employee->department;
         Notification::send($user, new SupervisorRemoved($employee));
 
-        return response()->json([
-            'status' => true,
-            'message' => "Supervisor removed successfully.",
-            'data' => $employee
-        ], 201);
+        return $this->successResponse(
+            $addedSupervisors, 
+            'company.supervisor.removed',
+            [], 201 //Status
+        );
+        // return response()->json([
+        //     'status' => true,
+        //     'message' => ".",
+        //     'data' => $employee
+        // ], 201);
     }
 
 }

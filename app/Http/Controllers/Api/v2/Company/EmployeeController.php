@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Api\v2\Company;
 
 use App\Http\Controllers\Controller;
@@ -10,6 +9,7 @@ use App\Http\Requests\EmployeeRequest;
 use App\Mail\WelcomeEmployee;
 use App\Models\Assessment\CroxxAssessment;
 use App\Models\User;
+use App\Traits\ApiResponseTrait;
 use App\Models\Verification;
 use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Facades\Excel;
@@ -27,6 +27,8 @@ class EmployeeController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+    use ApiResponseTrait;
+
     public function index(Request $request)
     {
         $employer = $request->user();
@@ -148,23 +150,35 @@ class EmployeeController extends Controller
                     Mail::to($validatedData['email'])->send(new WelcomeEmployee($employee, $employer, $verification));
                 }
 
-                return response()->json([
-                    'status' => true,
-                    'message' => "Employee created successfully.",
-                    'verification' => $verification,
-                    'data' => Employee::find($employee->id)
-                ], 201);
+                 return $this->successResponse(
+                    $employee->fresh, 
+                    'company.employee.created',
+                    [], 201 //Status
+                );
+
+                // return response()->json([
+                //     'status' => true,
+                //     'message' => "Employee created successfully.",
+                //     'verification' => $verification,
+                //     'data' => Employee::find($employee->id)
+                // ], 201);
             } else {
-                return response()->json([
-                    'status' => false,
-                    'message' => "Could not complete request.",
-                ], 400);
+ 
+                return $this->errorResponse('api.errors.request_error', [], 400);
+
+                // return response()->json([
+                //     'status' => false,
+                //     'message' => "",
+                // ], 400);
             }
         } else{
-            return response()->json([
-                "status" => false,
-                "message" => 'Employee already exist'
-            ], 422);
+
+            return $this->validationErrorResponse([],'company.employee.employee_exists');
+            
+            // return response()->json([
+            //     "status" => false,
+            //     "message" => 'Employee already exist'
+            // ], 422);
         }
     }
 
@@ -187,15 +201,21 @@ class EmployeeController extends Controller
                 $employer->save();
             }
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Data imported successfully.'
-            ], 200);
+            return $this->successResponse(
+                $employee->fresh, 
+                'company.employee.created'
+            );
+            // return response()->json([
+            //     'status' => true,
+            //     'message' => 'Data imported successfully.'
+            // ], 200);
         }else{
-            return response()->json([
-                'status' => true,
-                'message' => "Could not upload file, please try again.",
-            ], 400);
+            return $this->errorResponse('company.employee.import_failed', [], 400);
+            
+            // return response()->json([
+            //     'status' => true,
+            //     'message' => "Could not upload file, please try again.",
+            // ], 400);
         }
     }
 
@@ -228,10 +248,9 @@ class EmployeeController extends Controller
         // Get technical and soft skills efficiently
         $department = $employee->department;
         if (!$department) {
-            return response()->json([
-                'status' => false,
-                'message' => "Employee department not found.",
-            ], 404);
+
+            return $this->notFoundResponse('company.employee.department_not_found');
+
         }
 
         // Load skills with error handling
@@ -311,11 +330,8 @@ class EmployeeController extends Controller
         $proficiencyData = $this->calculateProficiencyMetrics($employee);
         $employee->proficiency = $proficiencyData;
 
-        return response()->json([
-            'status' => true,
-            'message' => "Successful.",
-            'data' => $employee
-        ], 200);
+        return $this->successResponse($employee, 'api.success.listed');
+
     }
 
     /**
@@ -397,11 +413,13 @@ class EmployeeController extends Controller
 
         $employee->update($validatedData);
 
-        return response()->json([
-            'status' => true,
-            'message' => "Employee \"{$employee->name}\" updated successfully.",
-            'data' => Employee::find($employee->id)
-        ], 201);
+        return $this->successResponse(
+            $employee->fresh, 
+            'company.employee.updated',
+            [
+                'name' =>  $employee->name,
+            ], 201 //Status
+        );
     }
 
     private const STATUS_LABELS = [
@@ -435,11 +453,14 @@ class EmployeeController extends Controller
         $employee->save();
 
         // Return response
-        return response()->json([
-            'status' => true,
-            'message' => "Employee \"{$employee->name}\" status updated to \"" . self::STATUS_LABELS[$employee->status] . "\" successfully.",
-            'data' => $employee->fresh()
-        ], 200);
+        return $this->successResponse(
+            $employee->fresh, 
+            'company.employee.status_updated',
+            [
+                'name' =>  $employee->name,
+                'status' =>  self::STATUS_LABELS[$employee->status] 
+            ], 201 //Status
+        );
     }
 
     /**
@@ -457,11 +478,13 @@ class EmployeeController extends Controller
         $employee->archived_at = now();
         $employee->save();
 
-        return response()->json([
-            'status' => true,
-            'message' => "Employee \"{$employee->name}\" archived successfully.",
-            'data' => Employee::find($employee->id)
-        ], 200);
+        return $this->successResponse(
+            Employee::find($employee->id),
+            'company.employee.archived',
+            [
+                'name' =>  $employee->name
+            ],
+        );
     }
 
     /**

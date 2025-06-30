@@ -5,7 +5,8 @@ return [
         'retrieved' => "Données récupérées avec succès",
         'created' => "Ressource créée avec succès",
         'updated' => "Ressource mise à jour avec succès",
-        'deleted' => "Ressource supprimée avec succès",
+        'deleted' => "Ressource supprimée avec succès", 
+        'listed' => "Ressource supprimée avec succès",
         'operation_successful' => "Opération terminée avec succès",
     ],
     'errors' => [

@@ -78,7 +78,7 @@ class AssesmentController extends Controller
         $response = collect([
             'status' => true,
             'data' => $competency,
-            'message' => "Successful."
+            'message' => ""
         ]);
         return response()->json($response, 200);
     }
