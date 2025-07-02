@@ -11,11 +11,13 @@ use App\Models\Assessment\CroxxAssessment;
 use App\Models\Assessment\EvaluationQuestion;
 use App\Models\EvaluationQuestionBank as QuestionBank;
 use App\Services\OpenAIService;
+use App\Traits\ApiResponseTrait;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class AssessmentQuestionController extends Controller
 {
 
+    use ApiResponseTrait;
     protected $openAIService;
 
     public function __construct(OpenAIService $openAIService)

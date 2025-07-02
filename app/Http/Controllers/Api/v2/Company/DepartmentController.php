@@ -11,6 +11,7 @@ use App\Models\Employee;
 use App\Models\Supervisor;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Traits\ApiResponseTrait;
 
 class DepartmentController extends Controller
 {
@@ -19,6 +20,8 @@ class DepartmentController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+    use ApiResponseTrait;
+
     public function index(Request $request)
     {
         $company = $request->user();
@@ -393,7 +396,7 @@ class DepartmentController extends Controller
 
         } else {
 
-            $this->unauthorizedResponse('company.department.cannot_delete', [
+            $this->badRequestResponse('company.department.cannot_delete', [
                 'title' => $name,
                 'relatedRecordsCount' => $relatedRecordsCount
             ]);

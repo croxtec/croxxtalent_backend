@@ -56,6 +56,14 @@ trait ApiResponseTrait
         );
     }
 
+     /**
+     * Bad Request response
+     */
+    protected function badRequestResponse(string $messageKey = 'api.errors.not_found', array $messageParams = []): JsonResponse
+    {
+        return $this->errorResponse($messageKey, $messageParams, Response::HTTP_BAD_REQUEST);
+    }
+
     /**
      * Not found response
      */

@@ -40,17 +40,18 @@ class SupervisorRemoved extends Notification
      * @param  mixed  $notifiable
      * @return \Illuminate\Notifications\Messages\MailMessage
      */
-    public function toMail($notifiable)
+     public function toMail($notifiable)
     {
-        $message =  'Hi ' . $this->supervisor->name . ' You have been removed has '. $this->supervisor?->department?->job_code;
-
+        $locale = $notifiable->locale ?? app()->getLocale();
+        
         return (new MailMessage)
-                ->subject('Supervisor Update')
+                ->subject(__('notifications.supervisor.removed.subject', [], $locale))
                 ->view('api.emails.supervisor_removed', [
                     'supervisor' => $this->supervisor,
-                    'message' => $message,
+                    'locale' => $locale,
                 ]);
     }
+
 
     /**
      * Get the array representation of the notification.
@@ -60,9 +61,22 @@ class SupervisorRemoved extends Notification
      */
     public function toArray($notifiable)
     {
+        $locale = $notifiable->locale ?? app()->getLocale();
+        
         return [
-            'message' => 'Hi ' . $this->supervisor->name . ' You have been removed has '. $this->supervisor?->department?->job_code,
+            'message' => __('notifications.supervisor.removed.body', [
+                'name' => $this->supervisor->name,
+                'job_code' => $this->supervisor?->department?->job_code
+            ], $locale),
             'supervisor_id' => $this->supervisor->id,
         ];
     }
+    
+    // public function toArray($notifiable)
+    // {
+    //     return [
+    //         'message' => 'Hi ' . $this->supervisor->name . ' You have been removed has '. $this->supervisor?->department?->job_code,
+    //         'supervisor_id' => $this->supervisor->id,
+    //     ];
+    // }
 }

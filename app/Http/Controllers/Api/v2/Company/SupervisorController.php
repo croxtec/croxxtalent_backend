@@ -151,11 +151,6 @@ class SupervisorController extends Controller
             'company.supervisor.created',
             [], 201 //Status
         );
-        // return response()->json([
-        //     'status' => true,
-        //     'message' => 'Supervisors added successfully.',
-        //     'data' => $addedSupervisors
-        // ], 201);
     }
 
 
@@ -183,21 +178,23 @@ class SupervisorController extends Controller
         $supervisor->archived_at = now();
         $supervisor->save();
 
+          // Get user's preferred language
+        $locale = $employee->talent->locale ?? app()->getLocale();
+
         // Send notifications to the user
         $user = $employee->talent;
         $employee->department;
-        Notification::send($user, new SupervisorRemoved($employee));
+          // Send localized notification
+        Notification::send($employee->talent, 
+            (new SupervisorRemoved($employee))->locale($locale)
+        );
+        // Notification::send($user, new SupervisorRemoved($employee));
 
         return $this->successResponse(
-            $addedSupervisors, 
+            $employee, 
             'company.supervisor.removed',
             [], 201 //Status
         );
-        // return response()->json([
-        //     'status' => true,
-        //     'message' => ".",
-        //     'data' => $employee
-        // ], 201);
     }
 
 }
