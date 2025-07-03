@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Api\v2\Project;
 
 use App\Http\Controllers\Controller;
@@ -422,8 +421,6 @@ class ProjectController extends Controller
             'services.projects.tean_removed'
         );
     }
-
-
 
     /**
      * Update the specified resource in storage.

@@ -30,6 +30,6 @@
     <p>{{ __('emails.update_notification', [], $locale) }}</p>
     <p>{{ __('notifications.supervisor.removed.body', [
         'job_code' => $supervisor?->department?->job_code
-    ], $locale) }}</p>
+    ], $locale) }}</p> 
     <p>{{ __('notifications.supervisor.removed.closing', [], $locale) }}</p>
 @endsection
