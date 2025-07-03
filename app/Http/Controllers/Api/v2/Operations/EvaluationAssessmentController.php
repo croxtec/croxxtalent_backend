@@ -12,9 +12,13 @@ use App\Models\Assessment\CroxxAssessment;
 use App\Models\Assessment\AssignedEmployee;
 use App\Models\Employee;
 use App\Models\Supervisor;
+use App\Traits\ApiResponseTrait;
 
 class EvaluationAssessmentController extends Controller
 {
+
+    use ApiResponseTrait;
+    
     public function store(EvaluationAssessmentRequest $request)
     {
         DB::beginTransaction();
@@ -102,20 +106,23 @@ class EvaluationAssessmentController extends Controller
             // Commit the transaction
             DB::commit();
 
-            return response()->json([
-                'status' => true,
-                'message' => "Assessment created successfully.",
-                'data' => CroxxAssessment::find($assessment->id),
-            ], 201);
+            return $this->successResponse(
+                CroxxAssessment::find($assessment->id),
+                'services.assessment.created',
+                [],
+                201
+            );
 
         } catch (\Exception $e) {
             // Rollback the transaction on error
             DB::rollBack();
 
-            return response()->json([
-                'status' => false,
-                'message' => "Could not complete request. " . $e->getMessage(),
-            ], 400);
+            return $this->errorResponse(
+                'services.assessment.store_error',
+                [],
+                400,
+                $e->getMessage()
+            );
         }
     }
 }

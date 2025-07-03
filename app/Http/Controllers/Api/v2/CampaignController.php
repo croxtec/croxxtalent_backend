@@ -13,9 +13,12 @@ use App\Models\Cv;
 use App\Models\Notification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use App\Traits\ApiResponseTrait;
 
 class CampaignController extends Controller
 {
+    use ApiResponseTrait;
+
     /**
      * Display a listing of the resource.
      *
@@ -98,17 +101,20 @@ class CampaignController extends Controller
             $campaign->courseOfStudies()->attach($course_of_study_ids);
             $campaign->languages()->attach($language_ids);
 
-            return response()->json([
-                'status' => true,
-                'message' => "Campaign created successfully.",
-                'data' => Campaign::find($campaign->id)
-            ], 201);
+             return $this->successResponse(
+                Campaign::find($campaign->id),
+                'services.campaigns.created',
+                [],
+                Response::HTTP_CREATED
+            );
 
-        } else {
-            return response()->json([
-                'status' => false,
-                'message' => "Could not complete request.",
-            ], 400);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse(
+                'services.campaigns.create_error',
+                [],
+                Response::HTTP_BAD_REQUEST
+            );
         }
     }
 
@@ -135,7 +141,7 @@ class CampaignController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => "Successful.",
+            'message' => "",
             'data' => $campaign
         ], 200);
     }
@@ -150,28 +156,35 @@ class CampaignController extends Controller
     public function update(CampaignRequest $request, $id)
     {
         // Authorization is declared in the CampaignRequest
+        try{
+            // Retrieve the validated input data....
+            $validatedData = $request->validated();
+            $campaign = Campaign::findOrFail($id);
+    
+            $skill_ids = $validatedData['skill_ids'];
+            $course_of_study_ids = $validatedData['course_of_study_ids'];
+            $language_ids = $validatedData['language_ids'];
+            unset($validatedData['skill_ids'], $validatedData['course_of_study_ids'], $validatedData['language_ids']);
+    
+            $campaign->update($validatedData);
+    
+            // Update records to pivot table
+            // $campaign->skills()->sync($skill_ids);
+            $campaign->courseOfStudies()->sync($course_of_study_ids);
+            $campaign->languages()->sync($language_ids);
+    
+            return $this->successResponse(
+                Campaign::find($campaign->id),
+                'services.campaigns.updated'
+            );
 
-        // Retrieve the validated input data....
-        $validatedData = $request->validated();
-        $campaign = Campaign::findOrFail($id);
-
-        $skill_ids = $validatedData['skill_ids'];
-        $course_of_study_ids = $validatedData['course_of_study_ids'];
-        $language_ids = $validatedData['language_ids'];
-        unset($validatedData['skill_ids'], $validatedData['course_of_study_ids'], $validatedData['language_ids']);
-
-        $campaign->update($validatedData);
-
-        // Update records to pivot table
-        // $campaign->skills()->sync($skill_ids);
-        $campaign->courseOfStudies()->sync($course_of_study_ids);
-        $campaign->languages()->sync($language_ids);
-
-        return response()->json([
-            'status' => true,
-            'message' => "Campaign updated successfully.",
-            'data' => Campaign::find($campaign->id)
-        ], 200);
+        } catch (\Exception $e) {
+            return $this->errorResponse(
+                'services.campaigns.create_error',
+                [],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
     }
 
     /**
@@ -189,11 +202,10 @@ class CampaignController extends Controller
         $campaign->archived_at = now();
         $campaign->save();
 
-        return response()->json([
-            'status' => true,
-            'message' => "Campaign archived successfully.",
-            'data' => Campaign::find($campaign->id)
-        ], 200);
+        return $this->successResponse(
+            Campaign::find($campaign->id),
+            'services.campaigns.archived'
+        );
     }
 
     /**
@@ -231,11 +243,10 @@ class CampaignController extends Controller
             }
         }
 
-        return response()->json([
-            'status' => true,
-            'message' => "Campaign published successfully.",
-            'data' => Campaign::find($campaign->id)
-        ], 200);
+        return $this->successResponse(
+            Campaign::find($campaign->id),
+            'services.campaigns.published'
+        );
     }
 
     /**
@@ -253,11 +264,10 @@ class CampaignController extends Controller
         $campaign->is_published = false;
         $campaign->save();
 
-        return response()->json([
-            'status' => true,
-            'message' => "Campaign unpublished successfully.",
-            'data' => Campaign::find($campaign->id)
-        ], 200);
+        return $this->successResponse(
+            Campaign::find($campaign->id),
+            'services.campaigns.closed'
+        );
     }
 
 
@@ -276,11 +286,10 @@ class CampaignController extends Controller
         $campaign->archived_at = null;
         $campaign->save();
 
-        return response()->json([
-            'status' => true,
-            'message' => "Campaign unarchived successfully.",
-            'data' => Campaign::find($campaign->id)
-        ], 200);
+        return $this->successResponse(
+            Campaign::find($campaign->id),
+            'services.campaigns.restored'
+        );
     }
 
     /**
@@ -292,25 +301,23 @@ class CampaignController extends Controller
     public function destroy($id)
     {
         $campaign = Campaign::findOrFail($id);
-
         $this->authorize('delete', [Campaign::class, $campaign]);
 
-        $name = $campaign->name;
-        // check if the record is linked to other records
         $relatedRecordsCount = related_records_count(Campaign::class, $campaign);
 
         if ($relatedRecordsCount <= 0) {
             $campaign->delete();
-            return response()->json([
-                'status' => true,
-                'message' => "Campaign deleted successfully.",
-            ], 200);
-        } else {
-            return response()->json([
-                'status' => false,
-                'message' => "The \"{$name}\" record cannot be deleted because it is associated with {$relatedRecordsCount} other record(s). You can archive it instead.",
-            ], 400);
+            return $this->successResponse(
+                null,
+                'services.campaigns.deleted'
+            );
         }
+
+        return $this->errorResponse(
+            'services.campaigns.delete_error',
+            ['name' => $campaign->name, 'count' => $relatedRecordsCount],
+            Response::HTTP_BAD_REQUEST
+        );
     }
 
     /**
@@ -324,31 +331,28 @@ class CampaignController extends Controller
         $ids = $request->input('ids');
         $valid_ids = [];
         $deleted_count = 0;
+
         if (is_array($ids)) {
             foreach ($ids as $id) {
                 $campaign = Campaign::find($id);
-                if ($campaign) {
-                    $this->authorize('delete', [Campaign::class, $campaign]);
+                if ($campaign && $this->authorize('delete', [Campaign::class, $campaign])) {
                     $valid_ids[] = $campaign->id;
                 }
             }
         }
-        $valid_ids = collect($valid_ids);
-        if ($valid_ids->isNotEmpty()) {
-            foreach ($valid_ids as $id) {
-                $campaign = Campaign::find($id);
-                // check if the record is linked to other records
-                $relatedRecordsCount = related_records_count(Campaign::class, $campaign);
-                if ($relatedRecordsCount <= 0) {
-                    $campaign->delete();
-                    $deleted_count++;
-                }
+
+        foreach ($valid_ids as $id) {
+            $campaign = Campaign::find($id);
+            if (related_records_count(Campaign::class, $campaign) <= 0) {
+                $campaign->delete();
+                $deleted_count++;
             }
         }
 
-        return response()->json([
-            'status' => true,
-            'message' => "{$deleted_count} campaigns deleted successfully.",
-        ], 200);
+        return $this->successResponse(
+            null,
+            'services.campaigns.multi_deleted',
+            ['count' => $deleted_count]
+        );
     }
 }

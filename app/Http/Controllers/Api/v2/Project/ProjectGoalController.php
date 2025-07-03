@@ -14,9 +14,12 @@ use App\Models\Project\ProjectGoal;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Traits\ApiResponseTrait;
 
 class ProjectGoalController extends Controller
 {
+
+    use ApiResponseTrait;
 
     public function __construct()
     {
@@ -149,38 +152,33 @@ class ProjectGoalController extends Controller
         GoalActivity::create([
             'goal_id' => $task->id,
             'activity_type' => 'create',
-            'description' => 'Goal created: ' . $task->title,
+            'description' => __('services.activities.goal_created', ['title' => $task->title]),
             'performed_by' => $user->id
         ]);
 
-        // Handle assigned employees using createOrUpdate to avoid duplicates
+        // Handle assigned employees
         if(!empty($validatedData['assigned'])) {
             foreach($validatedData['assigned'] as $employeeId) {
                 AssignedEmployee::updateOrCreate(
-                    [
-                        'goal_id' => $task->id,
-                        'employee_id' => $employeeId,
-                    ],
-                    [
-                        'assigned_at' => now(),
-                    ]
+                    ['goal_id' => $task->id, 'employee_id' => $employeeId],
+                    ['assigned_at' => now()]
                 );
 
-                // Track employee assignment activity
                 GoalActivity::create([
                     'goal_id' => $task->id,
                     'activity_type' => 'employee_assign',
-                    'description' => 'Employee assigned to goal',
+                    'description' => __('services.activities.employee_assigned'),
                     'performed_by' => $user->id
                 ]);
             }
         }
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Task created successfully',
-            'data' => $task->load('assigned.employee', 'milestone'),
-        ], 201);
+        return $this->successResponse(
+            $task->load('assigned.employee', 'milestone'),
+            'services.goals.created',
+            [],
+            Response::HTTP_CREATED
+        );
     }
 
     private function generateTaskCode($projectId, $milestoneId = null)
@@ -232,29 +230,24 @@ class ProjectGoalController extends Controller
 
         foreach ($data['competency_ids'] as $competencyId) {
             GoalCompetency::updateOrCreate(
-                [
-                    'goal_id' => $goalId,
-                    'competency_id' => $competencyId,
-                ],
-                [
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]
+                ['goal_id' => $goalId, 'competency_id' => $competencyId],
+                ['created_at' => now(), 'updated_at' => now()]
             );
-
-            // Track competency addition activity
+        
             GoalActivity::create([
                 'goal_id' => $goalId,
                 'activity_type' => 'add_competency',
-                'description' => 'Competency added to goal',
+                'description' => __('services.activities.competency_added'),
                 'performed_by' => $user->id
             ]);
         }
-
-        return response()->json([
-            'message' => 'Competencies added successfully!',
-            'data' => GoalCompetency::where('goal_id', $goalId)->get(),
-        ], 201);
+        
+        return $this->successResponse(
+            GoalCompetency::where('goal_id', $goalId)->get(),
+            'services.goals.competencies_added',
+            [],
+            Response::HTTP_CREATED
+        );
     }
 
     public function assignEmployee($goalId, Request $request)
@@ -279,30 +272,24 @@ class ProjectGoalController extends Controller
 
         foreach ($data['employee_ids'] as $employeeId) {
             AssignedEmployee::updateOrCreate(
-                [
-                    'goal_id' => $goalId,
-                    'employee_id' => $employeeId,
-                ],
-                [
-                    'assigned_at' => now(),
-                ]
+                ['goal_id' => $goalId, 'employee_id' => $employeeId],
+                ['assigned_at' => now()]
             );
-
-            // Track employee assignment activity
+        
             GoalActivity::create([
                 'goal_id' => $goalId,
                 'activity_type' => 'employee_assign',
-                'description' => 'Employee assigned to goal',
+                'description' => __('services.activities.employee_assigned'),
                 'performed_by' => $user->id
             ]);
         }
-
-        return response()->json([
-            'message' => 'Employees assigned successfully!',
-            'data' => AssignedEmployee::where('goal_id', $goalId)
-                ->with('employee')
-                ->get(),
-        ], 201);
+        
+        return $this->successResponse(
+            AssignedEmployee::where('goal_id', $goalId)->with('employee')->get(),
+            'services.goals.employees_assigned',
+            [],
+            Response::HTTP_CREATED
+        );
     }
     /**
      * Display the specified resource.
@@ -396,29 +383,30 @@ class ProjectGoalController extends Controller
                 GoalActivity::create([
                     'goal_id' => $projectGoal->id,
                     'activity_type' => 'update',
-                    'description' => 'Goal updated: ' . implode(', ', $changedFields) . ' changed',
+                    'description' => __('services.activities.goal_updated', [
+                        'fields' => implode(', ', $changedFields)
+                    ]),
                     'performed_by' => $user->id
                 ]);
             }
-
-            return response()->json([
-                'status' => true,
-                'message' => 'Task updated successfully',
-                'data' => $projectGoal->fresh(),
-            ], 200);
-
+        
+            return $this->successResponse(
+                $projectGoal->fresh(),
+                'services.goals.updated'
+            );
+        
         } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Task not found',
-            ], 404);
+            return $this->errorResponse(
+                'services.goals.not_found',
+                [],
+                Response::HTTP_NOT_FOUND
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Failed to update goal',
-                'error' => config('app.debug') ? $e->getMessage() : null
-            ], 500);
-        }
+            return $this->errorResponse(
+                'services.goals.update_error',
+                ['error' => config('app.debug') ? $e->getMessage() : null],
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
     }
 
     // Remove Competency from a Goal
@@ -451,11 +439,14 @@ class ProjectGoalController extends Controller
         GoalActivity::create([
             'goal_id' => $goalId,
             'activity_type' => 'remove_competency',
-            'description' => 'Competency removed from goal',
+            'description' => __('services.activities.competency_removed'),
             'performed_by' => $user->id
         ]);
-
-        return response()->json(['message' => 'Competency removed successfully.']);
+        
+        return $this->successResponse(
+            null,
+            'services.goals.competency_removed'
+        );
     }
 
     // Remove Assigned Employee from a Goal
@@ -488,11 +479,14 @@ class ProjectGoalController extends Controller
         GoalActivity::create([
             'goal_id' => $goalId,
             'activity_type' => 'employee_remove',
-            'description' => 'Employee removed from goal',
+            'description' => __('services.activities.employee_removed'),
             'performed_by' => $user->id
         ]);
-
-        return response()->json(['message' => 'Employee unassigned successfully.']);
+        
+        return $this->successResponse(
+            null,
+            'services.goals.employee_unassigned'
+        );
     }
 
     public function archive($id)
@@ -518,15 +512,14 @@ class ProjectGoalController extends Controller
         GoalActivity::create([
             'goal_id' => $projectGoal->id,
             'activity_type' => 'archive',
-            'description' => 'Goal archived',
+            'description' => __('services.activities.goal_archived'),
             'performed_by' => $user->id
         ]);
-
-        return response()->json([
-            'status' => true,
-            'message' => "Project archived successfully.",
-            'data' => ProjectGoal::find($projectGoal->id)
-        ], 200);
+        
+        return $this->successResponse(
+            ProjectGoal::find($projectGoal->id),
+            'services.goals.archived'
+        );
     }
 
 
@@ -559,15 +552,14 @@ class ProjectGoalController extends Controller
         // Track unarchiving activity
         GoalActivity::create([
             'goal_id' => $projectGoal->id,
-            'activity_type' => 'unarchive',
-            'description' => 'Goal unarchived',
+            'activity_type' => 'archive',
+            'description' => __('services.activities.goal_restored'),
             'performed_by' => $user->id
         ]);
-
-        return response()->json([
-            'status' => true,
-            'message' => "Project unarchived successfully.",
-            'data' => ProjectGoal::find($projectGoal->id)
-        ], 200);
+        
+        return $this->successResponse(
+            ProjectGoal::find($projectGoal->id),
+            'services.goals.restored'
+        );
     }
 }

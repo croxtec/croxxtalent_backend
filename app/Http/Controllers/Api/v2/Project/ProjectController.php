@@ -12,11 +12,13 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Helpers\ProjectNotificationHelper;
+use App\Traits\ApiResponseTrait;
 
 class ProjectController extends Controller
 {
 
     protected $teamCalculator;
+    use ApiResponseTrait;
 
     public function __construct(DepartmentPerformanceService $teamCalculator)
     {
@@ -89,11 +91,10 @@ class ProjectController extends Controller
          );
 
 
-        return response()->json([
-            'status' => true,
-            'data' => $projects,
-            'message' => "Team structure and projects fetched successfully",
-        ], 200);
+         return $this->successResponse(
+            $projects,
+            'services.projects.fetched'
+        );
     }
 
     public function overview(Request $request){
@@ -106,11 +107,10 @@ class ProjectController extends Controller
 
         $performance = $this->teamCalculator->calculateDepartmentProjectMetrics($employer->id, $startDate, $endDate, 'company');
 
-        $response = collect([
-            'status' => true,
-            'data' => $performance,
-            'message' => "Successful.",
-        ]);
+        return $this->successResponse(
+            $projects,
+            'services.projects.fetched'
+        );
 
         return response()->json($response, 200);
     }
@@ -168,18 +168,19 @@ class ProjectController extends Controller
             // Commit the transaction
             DB::commit();
 
-            return response()->json([
-                'status' => true,
-                'message' => "",
-                'data' => $project,
-            ], 201);
-        }catch (\Exception $e) {
+            return $this->successResponse(
+                $project,
+                'services.projects.created',
+                [],
+                Response::HTTP_CREATED
+            );
+        } catch (\Exception $e) {
             DB::rollBack();
-
-            return response()->json([
-                'status' => false,
-                'message' => "Could not complete request. " . $e->getMessage(),
-            ], 400);
+            return $this->errorResponse(
+                'services.projects.create_error',
+                ['error' => $e->getMessage()],
+                Response::HTTP_BAD_REQUEST
+            );
         }
     }
 
@@ -266,7 +267,7 @@ class ProjectController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => "Project details fetched successfully",
+            'message' => "",
             'data' => $project,
         ], 200);
     }
@@ -300,7 +301,7 @@ class ProjectController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => "Project team fetched successfully",
+            'message' => "",
             'data' => $project,
         ], 200);
     }
@@ -375,11 +376,10 @@ class ProjectController extends Controller
         $refreshedProject = Project::with(['team.employee','department'])
             ->findOrFail($project->id);
 
-        return response()->json([
-            'status' => true,
-            'message' => "Team updated successfully",
-            'data' => $refreshedProject
-        ], 200);
+        return $this->successResponse(
+            $refreshedProject,
+            'services.projects.team_updated'
+        );
     }
 
     /**
@@ -409,20 +409,18 @@ class ProjectController extends Controller
             ->delete();
 
         if (!$deleted) {
-            return response()->json([
-                'status' => false,
-                'message' => "Team member not found",
-            ], 404);
+            return $this->badRequestResponse(
+                'services.projects.team_not_found'
+            );
         }
 
         $refreshedProject = Project::with(['team.employee','department'])
                     ->findOrFail($project->id);
 
-        return response()->json([
-            'status' => true,
-            'message' => "Team member removed successfully",
-            'data' => $refreshedProject
-        ], 200);
+        return $this->successResponse(
+            $projects,
+            'services.projects.tean_removed'
+        );
     }
 
 
@@ -445,11 +443,10 @@ class ProjectController extends Controller
 
         $project->update($validatedData);
 
-        return response()->json([
-            'status' => true,
-            'message' => "Project updated successfully.",
-            'data' => $project->fresh()
-        ], 200);
+        return $this->successResponse(
+            $projects->fresh(),
+            'services.projects.updated'
+        );
     }
 
     /**
@@ -469,11 +466,10 @@ class ProjectController extends Controller
         $project->archived_at = now();
         $project->save();
 
-        return response()->json([
-            'status' => true,
-            'message' => "Project archived successfully.",
-            'data' => $project->fresh()
-        ], 200);
+        return $this->successResponse(
+            $projects->fresh(),
+            'services.projects.archived'
+        );
     }
 
 
@@ -495,11 +491,10 @@ class ProjectController extends Controller
         $project->archived_at = null;
         $project->save();
 
-        return response()->json([
-            'status' => true,
-            'message' => "Project unarchived successfully.",
-            'data' => $project->fresh()
-        ], 200);
+        return $this->successResponse(
+            $projects->fresh(),
+            'services.projects.restored'
+        );
     }
 
 

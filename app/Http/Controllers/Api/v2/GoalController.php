@@ -156,7 +156,7 @@ class GoalController extends Controller
 
         $response = collect([
             'status' => true,
-            'message' => "Successful.",
+            'message' => "",
             'data' => $calendar
         ]);
 

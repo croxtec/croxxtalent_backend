@@ -12,9 +12,11 @@ use App\Models\Training\LessonResource;
 use Cloudinary\Cloudinary;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use App\Traits\ApiResponseTrait;
 
 class LessonController extends Controller
 {
+    use ApiResponseTrait;
     protected $cloudinary;
 
     public function __construct(Cloudinary $cloudinary)
@@ -69,7 +71,7 @@ class LessonController extends Controller
 
         $response = collect([
             'status' => true,
-            'message' => "Successful."
+            'message' => ""
         ])->merge($lessons);
         return response()->json($response, 200);
     }
@@ -95,10 +97,7 @@ class LessonController extends Controller
             ])->exists();
 
             if ($isLesson) {
-                return response()->json([
-                    'status' => false,
-                    'message' => "Lesson already available",
-                ], 400);
+                return $this->badRequestResponse('services.lessons.exists');
             }
 
             DB::beginTransaction(); // Start DB Transaction
@@ -122,11 +121,17 @@ class LessonController extends Controller
 
                     $validatedData['video_url'] = $result['secure_url'];
                 } catch (\Exception $e) {
-                    return response()->json([
-                        'status' => false,
-                        'message' => 'The video failed to upload.',
-                        'errors' => ['video' => ['The video failed to upload.']]
-                    ], 422);
+
+                    return $this->validationErrorResponse(
+                        ['errors' => ['video' => [__('services.lessons.upload_error')]]],
+                        'services.lessons.upload_error'
+                    );
+
+                    // return response()->json([
+                    //     'status' => false,
+                    //     'message' => 'The video failed to upload.',
+                    //     'errors' => ['video' => ['The video failed to upload.']]
+                    // ], 422);
                 }
             }
 
@@ -166,21 +171,23 @@ class LessonController extends Controller
             }
 
             DB::commit(); // Commit transaction
-            $lesson->resources;
-            return response()->json([
-                'status' => true,
-                'message' => "New Lesson added successfully",
-                'data' => $lesson,
-            ], 201);
+            $lesson->load('resources');
+        
+            return $this->successResponse(
+                $lesson,
+                'services.lessons.created',
+                [],
+                Response::HTTP_CREATED
+            );
+
         } catch (\Exception $e) {
             DB::rollBack(); // Rollback on error
             \Log::error('Error creating lesson: ' . $e->getMessage());
 
-            return response()->json([
-                "status" => false,
-                'message' => 'Error creating lesson',
-                'error' => "Failed to upload lesson"
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return $this->errorResponse(
+                'services.lessons.create_error',
+                ['error' => $e->getMessage()]
+            );
         }
     }
 
@@ -245,12 +252,10 @@ class LessonController extends Controller
                 // Update with the newly uploaded file
                 $validatedData['video_url'] = $result['secure_url'];
             } catch (\Exception $e) {
-
-                return response()->json([
-                    'status' => false,
-                    'message' => 'The video failed to upload.',
-                    'errors' => ['video' => ['The video failed to upload.']]
-                ], 422);
+                return $this->validationErrorResponse(
+                    ['errors' => ['video' => [__('services.lessons.upload_error')]]],
+                    'services.lessons.upload_error'
+                );
             }
         }
 
@@ -274,15 +279,13 @@ class LessonController extends Controller
         $lesson = CroxxLesson::findOrFail($id);
 
         // $this->authorize('delete', [CroxxLesson::class, $lesson]);
-
         $lesson->archived_at = now();
         $lesson->save();
 
-        return response()->json([
-            'status' => true,
-            'message' => "Lesson archived successfully.",
-            'data' => CroxxLesson::find($lesson->id)
-        ], 200);
+        return $this->successResponse(
+            $lesson->fresh(),
+            'services.lessons.archived'
+        );
     }
 
     public function unarchive($id)
@@ -293,10 +296,9 @@ class LessonController extends Controller
         $lesson->archived_at = null;
         $lesson->save();
 
-        return response()->json([
-            'status' => true,
-            'message' => "Lesson archived successfully.",
-            'data' => CroxxLesson::find($lesson->id)
-        ], 200);
+        return $this->successResponse(
+            $lesson->fresh(),
+            'services.lessons.restored'
+        );
     }
 }

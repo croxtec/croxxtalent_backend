@@ -13,6 +13,7 @@ use App\Models\EvaluationQuestionBank as QuestionBank;
 use App\Services\OpenAIService;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Response;
 
 class AssessmentQuestionController extends Controller
 {
@@ -71,11 +72,18 @@ class AssessmentQuestionController extends Controller
                             ->get();
         }
 
-        return response()->json([
-            'status' => true,
-            'message' => "Assessment questions generated successfully.",
-            'data' => $questions,
-        ], 201);
+        return $this->successResponse(
+            $questions,
+            'services.questions.generated',
+            [],
+            201
+        ); 
+
+        // return response()->json([
+        //     'status' => true,
+        //     'message' => "Assessment questions generated successfully.",
+        //     'data' => $questions,
+        // ], 201);
     }
 
     /**
@@ -113,17 +121,17 @@ class AssessmentQuestionController extends Controller
                 $questionModel = CompetencyQuestion::find($question->id);
             }
 
-            return response()->json([
-                'status' => true,
-                'message' => "Assessment Question created.",
-                'data' => $questionModel
-            ], 201);
+            return $this->successResponse(
+                $questionModel,
+                'services.questions.created',
+                [],
+                201
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => "Failed to create assessment question.",
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->errorResponse(
+                'services.questions.create_error',
+                ['error' => $e->getMessage()],
+            );
         }
     }
 
@@ -159,23 +167,28 @@ class AssessmentQuestionController extends Controller
             // Update the question
             $question->update($validatedData);
 
-            return response()->json([
-                'status' => true,
-                'message' => "Assessment Question updated.",
-                'data' => $question->fresh()
-            ], 200);
-
+            return $this->successResponse(
+                $question->fresh(),
+                'services.questions.updated'
+            );
         } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'status' => false,
-                'message' => "Assessment question not found.",
-            ], 400);
+            return $this->notFoundResponse(
+                'services.questions.not_found'
+            );
+            // return response()->json([
+            //     'status' => false,
+            //     'message' => "Assessment question not found.",
+            // ], 400);
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => "Failed to update assessment question.",
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->errorResponse(
+                'services.questions.create_error',
+                ['error' => $e->getMessage()],
+            );
+            // return response()->json([
+            //     'status' => false,
+            //     'message' => "Failed to update assessment question.",
+            //     'error' => $e->getMessage()
+            // ], 500);
         }
     }
 
@@ -202,11 +215,10 @@ class AssessmentQuestionController extends Controller
         $question->archived_at = now();
         $question->save();
 
-        return response()->json([
-            'status' => true,
-            'message' => "Question archived.",
-            'data' => $question
-        ], 200);
+        return $this->successResponse(
+            $question,
+            'services.questions.archived'
+        );
     }
 
     /**
@@ -239,11 +251,10 @@ class AssessmentQuestionController extends Controller
         $question->archived_at = null;
         $question->save();
 
-        return response()->json([
-            'status' => true,
-            'message' => "Question unarchived.",
-            'data' => $question
-        ], 200);
+        return $this->successResponse(
+            $question,
+            'services.questions.restored'
+        );
     }
 
     /**
@@ -264,15 +275,17 @@ class AssessmentQuestionController extends Controller
 
         if ($relatedRecordsCount <= 0) {
             $question->delete();
-            return response()->json([
-                'status' => true,
-                'message' => "Assesment \"{$name}\" deleted successfully.",
-            ], 200);
-        } else {
-            return response()->json([
-                'status' => false,
-                'message' => "The \"{$name}\" record cannot be deleted because it is associated with {$relatedRecordsCount} other record(s). You can archive it instead.",
-            ], 400);
+            return $this->successResponse(
+                null,
+                'services.questions.deleted',
+                ['name' => $name]
+            );
         }
+    
+        return $this->errorResponse(
+            'services.questions.delete_error',
+            ['name' => $name, 'count' => $relatedRecordsCount],
+            Response::HTTP_BAD_REQUEST
+        );
     }
 }

@@ -14,9 +14,13 @@ use App\Mail\TalentJobInvitationRejected;
 use App\Models\AppliedJob;
 use App\Models\Campaign;
 use App\Notifications\JobInvitationNotification;
+use App\Traits\ApiResponseTrait;
 
 class CandidateController extends Controller
 {
+
+    use ApiResponseTrait;
+
     /**
      * Display a listing of the resource.
      *
@@ -58,82 +62,70 @@ class CandidateController extends Controller
 
         $response = collect([
             'status' => true,
-            'message' => "Successful."
+            'message' => ""
         ])->merge($jobApplied)->merge(['draw' => $datatable_draw]);
 
         return response()->json($response, 200);
     }
 
-
-
-    public function rateCandidate(Request $request, $id){
-        $user = $request->user();
-        $applied = AppliedJob::findOrFail($id);
-
+    public function rateCandidate(Request $request, $id)
+    {
         $request->validate([
             'rating' => 'required|integer|between:1,2',
         ]);
 
+        $applied = AppliedJob::findOrFail($id);
         $applied->rating = $request->rating;
         $applied->save();
 
-        return response()->json([
-            'status' => true,
-            'message' => "Candidate has been reviewed",
-            'data' => AppliedJob::find($id)
-        ], 201);
+        return $this->successResponse(
+            AppliedJob::find($id),
+            'services.candidates.rated',
+            [],
+            Response::HTTP_CREATED
+        );
     }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
 
     public function invite(JobInvitationRequest $request)
     {
-        // Authorization is declared in the Form Request
-        $employer = $request->user();
-        // Retrieve the validated input data...
-        $validatedData = $request->validated();
+        try {
+            $employer = $request->user();
+            $validatedData = $request->validated();
 
-        $appliedJob = AppliedJob::where('campaign_id', $validatedData['campaign_id'])
-                        ->where('talent_user_id', $validatedData['talent_user_id'])
-                        ->first();
+            $appliedJob = AppliedJob::where('campaign_id', $validatedData['campaign_id'])
+                ->where('talent_user_id', $validatedData['talent_user_id'])
+                ->first();
 
-        $validatedData['employer_user_id'] = $employer->id;
-        $validatedData['talent_cv_id'] = $appliedJob->talent_cv_id;
+            $validatedData['employer_user_id'] = $employer->id;
+            $validatedData['talent_cv_id'] = $appliedJob->talent_cv_id;
 
-        // Avoid Duplicate
-        $jobInvitation = JobInvitation::firstOrCreate($validatedData);
-
-        if ($jobInvitation) {
+            $jobInvitation = JobInvitation::firstOrCreate($validatedData);
 
             if ($appliedJob) {
                 $appliedJob->rating = 3;
                 $appliedJob->save();
             }
 
-            // Send Laravel notification to the talent
             Notification::send($jobInvitation->talentUser, new JobInvitationNotification($jobInvitation));
 
-            return response()->json([
-                'status' => true,
-                'message' => "An invitation has been sent to {$jobInvitation->talentCv->name}.",
-                'data' => JobInvitation::find($jobInvitation->id)
-            ], 201);
-        } else {
-            return response()->json([
-                'status' => false,
-                'message' => "Could not complete request.",
-            ], 400);
+            return $this->successResponse(
+                JobInvitation::find($jobInvitation->id),
+                'services.candidates.invited',
+                ['name' => $jobInvitation->talentCv->name],
+                Response::HTTP_CREATED
+            );
+
+        } catch (\Exception $e) {
+            return $this->errorResponse(
+                'services.candidates.invite_error',
+                [],
+                Response::HTTP_BAD_REQUEST
+            );
         }
     }
 
-    //  Interview Result
-    public function result(Request $request, $id){
-
+    public function result(Request $request, $id)
+    {
         $request->validate([
             'score' => 'required|integer|between:1,5',
         ]);
@@ -142,43 +134,27 @@ class CandidateController extends Controller
         $jobInvitation->score = $request->score;
         $jobInvitation->save();
 
-        if ($jobInvitation) {
-            // send email notification
-            return response()->json([
-                'status' => true,
-                // 'message' => "An invitation has been sent to {$jobInvitation->talentCv->name}.",
-                'data' => JobInvitation::find($id)
-            ], 201);
-        } else {
-            return response()->json([
-                'status' => false,
-                'message' => "Could not complete request.",
-            ], 400);
-        }
+        return $this->successResponse(
+            JobInvitation::find($id),
+            'services.candidates.scored',
+            [],
+            Response::HTTP_CREATED
+        );
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function withdraw($id)
     {
         $jobApplied = AppliedJob::findOrFail($id);
-        // $this->authorize('update', [AppliedJob::class, $jobApplied]);
-
-        $display_name = $jobApplied->talentCv->name;
+        
         if ($jobApplied->status != 2) {
             $jobApplied->status = 2;
             $jobApplied->save();
         }
 
-        return response()->json([
-            'status' => true,
-            'message' => "Job application has been withdraw successfully.",
-            'data' => AppliedJob::find($jobApplied->id)
-        ], 200);
+        return $this->successResponse(
+            AppliedJob::find($jobApplied->id),
+            'services.candidates.withdrawn'
+        );
     }
 
     public function withdrawMultiple(Request $request)

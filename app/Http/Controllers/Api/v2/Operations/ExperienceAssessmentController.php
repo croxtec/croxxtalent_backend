@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\AssessmentPublishedNotification;
+use App\Traits\ApiResponseTrait;
 
 use App\Models\Employee;
 use App\Models\Supervisor;
@@ -22,6 +23,7 @@ use Carbon\Carbon;
 
 class ExperienceAssessmentController extends Controller
 {
+    use ApiResponseTrait;
 
     protected $assessmentService;
 
@@ -292,10 +294,11 @@ class ExperienceAssessmentController extends Controller
                 ->where('assessment_id', $assessment->id)->first();
 
             if(!$isAssigned){
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Unautourized Access'
-                ], 403);
+                return $this->errorResponse(
+                    'api.errors.unauthorized',
+                    [],
+                    403
+                );
             }
         }
 
@@ -311,11 +314,10 @@ class ExperienceAssessmentController extends Controller
         // $assessment->peerReviews;
         $assessment->questions = $questions;
 
-       return response()->json([
-            'status' => true,
-            'message' => "",
-            'data' => $assessment
-        ], 200);
+        return $this->successResponse(
+            $assessment,
+            'services.assessment.retrieved'
+        );
     }
 
 
@@ -333,10 +335,11 @@ class ExperienceAssessmentController extends Controller
 
         // Confirm if employee is assigned
         if($user_type !== 'talent'){
-            return response()->json([
-                'status' => false,
-                'message' => 'Unauthorized Access'
-            ], 403);
+            return $this->errorResponse(
+                'api.errors.unauthorized',
+                [],
+                403
+            );
         }
 
         $employee = Employee::where('user_id', $user->id)
