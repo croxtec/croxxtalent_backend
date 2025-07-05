@@ -119,7 +119,7 @@ class SupervisorController extends Controller
                                     ->toArray();
 
         if (!empty($existingSupervisors)) {
-            $this->unauthorizedResponse('company.supervisor.already_exists', [
+            return $this->unauthorizedResponse('company.supervisor.already_exists', [
                  $existingSupervisors
             ]);
             // return response()->json([
@@ -178,14 +178,15 @@ class SupervisorController extends Controller
         $supervisor->archived_at = now();
         $supervisor->save();
 
-          // Get user's preferred language
-        $locale = $employee->talent->locale ?? app()->getLocale();
-
         // Send notifications to the user
         $user = $employee->talent;
         $employee->department;
+
+          // Get user's preferred language
+        $locale = $user->locale ?? app()->getLocale();
+
           // Send localized notification
-        Notification::send($employee->talent, 
+        Notification::send($user, 
             (new SupervisorRemoved($employee))->locale($locale)
         );
         // Notification::send($user, new SupervisorRemoved($employee));

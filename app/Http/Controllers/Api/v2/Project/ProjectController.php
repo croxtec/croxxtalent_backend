@@ -107,7 +107,7 @@ class ProjectController extends Controller
         $performance = $this->teamCalculator->calculateDepartmentProjectMetrics($employer->id, $startDate, $endDate, 'company');
 
         return $this->successResponse(
-            $projects,
+            $performance,
             'services.projects.fetched'
         );
 

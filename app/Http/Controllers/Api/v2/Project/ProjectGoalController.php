@@ -407,6 +407,7 @@ class ProjectGoalController extends Controller
                 ['error' => config('app.debug') ? $e->getMessage() : null],
                 Response::HTTP_INTERNAL_SERVER_ERROR
             );
+        }
     }
 
     // Remove Competency from a Goal
@@ -430,7 +431,7 @@ class ProjectGoalController extends Controller
             ->first();
 
         if (!$competency) {
-            return response()->json(['message' => 'Competency not found.'], 404);
+            return $this->notFoundResponse('services.goals.competency_not_found');
         }
 
         $competency->delete();
@@ -453,7 +454,7 @@ class ProjectGoalController extends Controller
     public function removeEmployee($goalId, $employeeId)
     {
         $user = auth()->user();
-
+        $goal = ProjectGoal::where('id', $goalId)->first();
         // $goal = ProjectGoal::where('id', $goalId)->first();
         // $project = $goal->project;
 
@@ -470,7 +471,7 @@ class ProjectGoalController extends Controller
             ->first();
 
         if (!$assignment) {
-            return response()->json(['message' => 'Assignment not found.'], 404);
+            return $this->notFoundResponse('services.goals.assignment_not_found');
         }
 
         $assignment->delete();

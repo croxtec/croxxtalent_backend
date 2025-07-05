@@ -80,7 +80,7 @@ return [
         'archived' => 'Project archived successfully',
         'restored' => 'Project restored successfully',
     ],
-
+    
     'goals' => [
         'created' => 'Task created successfully',
         'updated' => 'Task updated successfully',
@@ -92,7 +92,9 @@ return [
         'employee_unassigned' => 'Employee unassigned successfully',
         'archived' => 'Project archived successfully',
         'restored' => 'Project restored successfully',
-    ],
+        'competency_not_found' => 'Competency not found',
+        'assignment_not_found' => 'Assignment not found',
+    ],      
 
     'comments' => [
         'employee_not_found' => 'Employee record not found',
