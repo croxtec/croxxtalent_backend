@@ -99,6 +99,7 @@ class SupervisorController extends Controller
         return response()->json($response, 200);
     }
 
+   
     /**
      * Store a newly created resource in storage.
      *
@@ -108,89 +109,111 @@ class SupervisorController extends Controller
     public function store(SupervisorRequest $request)
     {
         $employer = $request->user();
-
+    
         $validatedData = $request->validated();
         $validatedData['employer_id'] = $employer->id;
-
-        // Check if any of the supervisors already exist
+    
+        // Check if any of the supervisors already exist (excluding archived ones)
         $existingSupervisors = Supervisor::whereIn('supervisor_id', $validatedData['supervisor_ids'])
                                     ->where('employer_id', $employer->id)
+                                    ->whereNull('archived_at') // Only check non-archived supervisors
                                     ->pluck('supervisor_id')
                                     ->toArray();
-
+    
         if (!empty($existingSupervisors)) {
             return $this->unauthorizedResponse('company.supervisor.already_exists', [
                  $existingSupervisors
             ]);
-            // return response()->json([
-            //     "status" => false,
-            //     "message" => "Some supervisors already exist.",
-            //     "existing_supervisors" => $existingSupervisors
-            // ], 422);
         }
-
+    
         // Proceed to add all supervisors since none exists
         $addedSupervisors = [];
-
+    
         foreach ($validatedData['supervisor_ids'] as $supervisorId) {
             $employee = Employee::where('id', $supervisorId)->first();
-
+    
             $supervisorData = $validatedData;
             $supervisorData['supervisor_id'] = $supervisorId;
-
-            $supervisor = Supervisor::create($supervisorData);
-
+    
+            // Check if there's an archived supervisor record to restore
+            $archivedSupervisor = Supervisor::where('supervisor_id', $supervisorId)
+                                          ->where('employer_id', $employer->id)
+                                          ->whereNotNull('archived_at')
+                                          ->first();
+    
+            if ($archivedSupervisor) {
+                // Restore the archived supervisor
+                $archivedSupervisor->archived_at = null;
+                $archivedSupervisor->save();
+                $supervisor = $archivedSupervisor;
+            } else {
+                // Create new supervisor
+                $supervisor = Supervisor::create($supervisorData);
+            }
+    
             $employee->supervisor_id = $supervisor->id;
             $employee->save();
-
+    
             $addedSupervisors[] = $employee;
+    
+            // Send notification to the user about supervisor added
+            $user = $employee->talent;
+            $employee->load('department'); // Ensure department is loaded
+    
+            // Get user's preferred language
+            $locale = $user->locale ?? app()->getLocale();
+    
+            // Send localized notification
+            Notification::send($user, 
+                (new SupervisorAdded($employee))->locale($locale)
+            );
         }
-
+    
          return $this->successResponse(
             $addedSupervisors, 
             'company.supervisor.created',
             [], 201 //Status
         );
     }
-
-
+    
     /**
      * Remove the specified resource from storage.
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-
     public function destroy(Request $request, $id)
     {
         $employer = $request->user();
-
-        // Find the supervisor by ID
-        $supervisor = Supervisor::findOrFail($id);
+    
+        // Find the supervisor by ID (excluding already archived ones)
+        $supervisor = Supervisor::where('id', $id)
+                               ->whereNull('archived_at')
+                               ->firstOrFail();
+        
         $employee = Employee::where('supervisor_id', $supervisor->id)->first();
-
+    
         // Remove Supervisor
         if ($employee) {
             $employee->supervisor_id = null;
             $employee->save();
         }
-
+    
         $supervisor->archived_at = now();
         $supervisor->save();
-
+    
         // Send notifications to the user
         $user = $employee->talent;
-        $employee->department;
-
-          // Get user's preferred language
+        $employee->load('department'); // Ensure department is loaded
+    
+        // Get user's preferred language
         $locale = $user->locale ?? app()->getLocale();
-
-          // Send localized notification
+    
+        // Send localized notification
         Notification::send($user, 
             (new SupervisorRemoved($employee))->locale($locale)
         );
-        // Notification::send($user, new SupervisorRemoved($employee));
-
+    
         return $this->successResponse(
             $employee, 
             'company.supervisor.removed',

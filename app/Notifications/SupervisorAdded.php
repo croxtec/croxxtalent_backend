@@ -6,7 +6,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class SupervisorRemoved extends Notification
+class SupervisorAdded extends Notification
 {
     use Queueable;
 
@@ -44,8 +44,8 @@ class SupervisorRemoved extends Notification
         $locale = $notifiable->locale ?? app()->getLocale();
         
         return (new MailMessage)
-                ->subject(__('notifications.supervisor.removed.subject', [], $locale))
-                ->view('api.emails.supervisor_removed', [
+                ->subject(__('notifications.supervisor.added.subject', [], $locale))
+                ->view('api.emails.supervisor_added', [
                     'supervisor' => $this->supervisor,
                     'locale' => $locale,
                 ]);
@@ -62,7 +62,7 @@ class SupervisorRemoved extends Notification
         $locale = $notifiable->locale ?? app()->getLocale();
         
         return [
-            'message' => __('notifications.supervisor.removed.body', [
+            'message' => __('notifications.supervisor.added.body', [
                 'name' => $this->supervisor->name,
                 'job_code' => $this->supervisor?->department?->job_code
             ], $locale),
