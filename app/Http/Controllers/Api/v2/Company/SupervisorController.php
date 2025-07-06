@@ -9,6 +9,7 @@ use App\Models\Employee;
 use App\Http\Requests\SupervisorRequest;
 use App\Traits\ApiResponseTrait;
 use App\Notifications\SupervisorRemoved;
+use App\Notifications\SupervisorAdded;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Notification;
 
@@ -142,7 +143,6 @@ class SupervisorController extends Controller
                                           ->first();
     
             if ($archivedSupervisor) {
-                // Restore the archived supervisor
                 $archivedSupervisor->archived_at = null;
                 $archivedSupervisor->save();
                 $supervisor = $archivedSupervisor;

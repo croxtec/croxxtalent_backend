@@ -49,13 +49,17 @@ class AssessmentPublishedNotification extends Notification implements ShouldQueu
      */
     public function toMail($notifiable)
     {
-        $messageContent = $this->generateMessageContent();
+        $locale = $notifiable->locale ?? app()->getLocale();
+        
         return (new MailMessage)
-            ->subject('New Assessment Assigned: ' . $this->assessment->title)
+            ->subject(__('notifications.assessment_published.subject', [
+                'assessment_title' => $this->assessment->title
+            ], $locale))
             ->view('api.emails.company.assessment_notifications', [
                 'assessment' => $this->assessment,
-                'messageContent' => $messageContent,
-                'notifiable' => $notifiable,
+                'employee' => $this->employee,
+                'role' => $this->role,
+                'locale' => $locale,
             ]);
     }
 
@@ -67,25 +71,34 @@ class AssessmentPublishedNotification extends Notification implements ShouldQueu
      */
     public function toArray($notifiable)
     {
+        $locale = $notifiable->locale ?? app()->getLocale();
+        
         return [
             'user_id' => $this->employee ? $this->employee->user_id : null,
             'type' => 'ManageAssessment',
             'assessment_code' => $this->assessment->code,
-            'message' => $this->generateMessageContent(),
+            'message' => $this->generateMessageContent($locale),
         ];
     }
 
     /**
      * Generate message content based on the role.
      *
+     * @param string $locale
      * @return string
      */
-    private function generateMessageContent()
+    private function generateMessageContent($locale)
     {
         if ($this->role === 'supervisor') {
-            return "Dear {$this->employee->name}, you have been assigned as a supervisor for the new assessment titled '{$this->assessment->name}' by your company.";
+            return __('notifications.assessment_published.supervisor_message', [
+                'employee_name' => $this->employee->name,
+                'assessment_name' => $this->assessment->name
+            ], $locale);
         }
 
-        return "Dear {$this->employee->name}, you have been assigned a new assessment titled '{$this->assessment->name}' by your company.";
+        return __('notifications.assessment_published.employee_message', [
+            'employee_name' => $this->employee->name,
+            'assessment_name' => $this->assessment->name
+        ], $locale);
     }
 }

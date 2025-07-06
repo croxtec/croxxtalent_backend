@@ -48,13 +48,17 @@ class ProjectAssignedNotification extends Notification
      */
     public function toMail($notifiable)
     {
-        $messageContent = $this->generateMessageContent();
+        $locale = $notifiable->locale ?? app()->getLocale();
+        
         return (new MailMessage)
-            ->subject('New Project Assignment: ' . $this->project->title)
+            ->subject(__('notifications.project_assigned.subject', [
+                'project_title' => $this->project->title
+            ], $locale))
             ->view('api.emails.company.project_assigned_notifications', [
                 'project' => $this->project,
-                'messageContent' => $messageContent,
-                'notifiable' => $notifiable,
+                'employee' => $this->employee,
+                'role' => $this->role,
+                'locale' => $locale,
             ]);
     }
 
@@ -66,25 +70,34 @@ class ProjectAssignedNotification extends Notification
      */
     public function toArray($notifiable)
     {
+        $locale = $notifiable->locale ?? app()->getLocale();
+        
         return [
             'user_id' => $this->employee ? $this->employee?->user_id : null,
             'type' => 'ManageProject',
             'project_code' => $this->project->code,
-            'message' => $this->generateMessageContent(),
+            'message' => $this->generateMessageContent($locale),
         ];
     }
 
     /**
      * Generate message content based on the role.
      *
+     * @param string $locale
      * @return string
      */
-    private function generateMessageContent()
+    private function generateMessageContent($locale)
     {
         if ($this->role === 'lead') {
-            return "Dear {$this->employee?->name}, you have been assigned as a team lead for the new project titled '{$this->project->title}' by your company.";
+            return __('notifications.project_assigned.lead_message', [
+                'employee_name' => $this->employee?->name,
+                'project_title' => $this->project->title
+            ], $locale);
         }
 
-        return "Dear {$this->employee?->name}, you have been assigned to a new project titled '{$this->project->title}' by your company.";
+        return __('notifications.project_assigned.employee_message', [
+            'employee_name' => $this->employee?->name,
+            'project_title' => $this->project->title
+        ], $locale);
     }
 }
