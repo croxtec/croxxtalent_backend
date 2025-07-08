@@ -8,6 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
+
 class EmployeeInvitationConfirmation extends Notification
 {
     use Queueable;
@@ -57,14 +58,13 @@ class EmployeeInvitationConfirmation extends Notification
      */
     public function toArray($notifiable)
     {
-        $message = $this->employee?->name . ' has successfully accepted the employee invitation. They are now officially part of your company. Please proceed with the next steps for onboarding and access provisioning.';
-        // info($message);
         return [
-            'employee_id' => $this->employee ? $this->employee->user_id : null, // Custom user_id
-            'employee_code' => $this->employee ? $this->employee->code : null, // Custom user_id
+            'employee_id' => $this->employee ? $this->employee->user_id : null,
+            'employee_code' => $this->employee ? $this->employee->code : null,
             'type' => 'EmployeeInvitationConfirmation',
-            'message' =>  $message
+            'message' => __('notifications.employee_invitation_confirmation.message', [
+                'employee_name' => $this->employee?->name
+            ])
         ];
     }
-
 }

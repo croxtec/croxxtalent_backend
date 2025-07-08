@@ -72,4 +72,99 @@ return [
         'lead_message' => 'Dear :employee_name, you have been assigned as a team lead for the new project titled ":project_title" by your company.',
         'employee_message' => 'Dear :employee_name, you have been assigned to a new project titled ":project_title" by your company.',
     ],
+
+    'password_reset' => [
+        'subject' => 'Password reset code',
+        'greeting' => 'Hi :name,',
+        'message' => 'We received a request to reset your <a href=":url" target="_blank">:app_name</a> password.',
+        'code_label' => 'Your Password Reset Code is',
+        'validity' => 'This code is valid for 30 minutes or until a next code is generated.',
+    ],
+    'campaign_published' => [
+        'subject' => 'Campaign published',
+        'greeting' => 'Hi :name,',
+        'message' => 'Your campaign <b>":title"</b> has been <b style="color: red;">published</b>.',
+    ],
+    'assessment_feedback' => [
+        'subject' => 'Your Assessment Feedback is Now Available',
+        'greeting' => 'Dear :name,',
+        'message' => 'Your assessment titled <b>":assessment_name"</b> (Code: :code) has been reviewed, and your feedback is now available. This assessment is an important part of your professional development and performance evaluation.',
+        'encouragement' => 'We encourage you to carefully review the feedback provided by your supervisor, which contains valuable insights to help guide your career growth. Please take the time to reflect on the feedback and make improvements where necessary.',
+        'button_text' => 'View Feedback',
+        'database_message' => 'Hello :name, a supervisor has published your assessment feedback.',
+    ],
+    'supervisor_goal' => [
+        'subject' => 'A New Goal Has Been Assigned to You',
+        'greeting' => 'Dear :name,',
+        'message' => 'Your supervisor, <b>:supervisor_name</b>, has assigned a new goal to you: <b>":goal_title"</b>.',
+        'instruction' => 'Please log in to the platform to review the goal and start working towards completing it. This goal is an important part of your performance and growth within the company.',
+        'button_text' => 'View Goal',
+        'database_message' => 'Your supervisor, :supervisor_name, has assigned a new goal to you: ":goal_title".',
+    ],
+    'employee_invitation_confirmation' => [
+        'message' => ':employee_name has successfully accepted the employee invitation. They are now officially part of your company. Please proceed with the next steps for onboarding and access provisioning.',
+    ],
+    'otp' => [
+        'subject' => 'One-Time Password (OTP) for your request',
+        'greeting' => 'Hi :name,',
+        'message' => 'Your One-Time Password (OTP) is',
+        'validity' => 'This OTP is valid for 30 minutes or until a next OTP is generated.',
+    ],
+
+    'welcome_employee' => [
+        'talent_subject' => 'Exciting Opportunities Await You at :company_name',
+        'employee_subject' => 'Welcome to :company_name! We\'re Glad to Have You',
+    ],
+    'welcome_verify_email' => [
+        'subject' => 'Verify your account on :app_name',
+    ],
+    'email_templates' => [
+        'greeting' => 'Hi :name,',
+        'profile_registered' => 'Your profile has been registered with :app_name.',
+        'verify_email_instruction' => 'Simply click the button below to verify your email address.',
+        'verify_button_text' => 'Click here to verify email address',
+        'invitation_title' => 'Invitation to Join :company_name - :app_name',
+        'join_team_title' => 'Join the Team at :company_name',
+        'talent_invitation_message' => 'We are excited to invite you to officially join the :company_name team on our platform. Your profile has been linked to the company\'s employee management system, where you\'ll be able to access important company resources and collaborate with your team.',
+        'talent_verify_instruction' => 'Simply click the button below to verify your email address and complete your onboarding process.',
+        'employee_invitation_message' => 'You\'ve been invited to join :company_name on our platform! By joining, you will gain access to company tools, resources, and be a part of their employee management system.',
+        'employee_verify_instruction' => 'Please click the button below to verify your email address and get started as a member of :company_name.',
+        'verify_email_button' => 'Verify Your Email Address',
+        'notification_title' => 'Notification - :app_name',
+    ],
+  // Job Invitation Messages
+  'job_invitation' => [
+        'accepted_subject' => 'Job invitation accepted by :talent_name',
+        'rejected_subject' => 'Job invitation rejected by :talent_name',
+        'accepted_message' => 'Your job invitation/offer was <b style="color: green;">accepted</b> by <b>:talent_name</b>.',
+        'rejected_message' => 'Your job invitation/offer was <b style="color: red;">rejected</b> by <b>:talent_name</b>.',
+    ],
+
+    // Password Change Messages
+    'password_change' => [
+        'subject' => 'Your password was successfully changed',
+        'notification_message' => 'Your password has been successfully changed for your :app_name account.',
+    ],
+
+    // Profile Change Messages
+    'profile_change' => [
+        'subject' => 'Profile information updated',
+        'notification_message' => 'Changes has been made to your :app_name profile information.',
+    ],
+
+    'complimentary_close' => [
+        'text' => 'Sincerely,',
+        'team' => 'The :app_name Team',
+    ],
+
+    'geo_location' => [
+        'title' => 'When and where this happened:',
+        'date' => 'Date:',
+        'ip' => 'IP:',
+        'browser' => 'Browser:',
+        'os' => 'Operating System:',
+        'location' => 'Approximate Location:',
+        'security_warning' => 'Didn\'t do this?',
+        'security_action' => 'Be sure to reset your password right away.',
+    ],
 ];

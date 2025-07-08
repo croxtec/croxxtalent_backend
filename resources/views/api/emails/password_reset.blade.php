@@ -8,19 +8,22 @@
 @endsection
 
 @section('email_body')
-    Hi {{ $name }},
+    {!! __('notifications.password_reset.greeting', ['name' => $name]) !!}
     <br>
     <p>
-        We received a request to reset your <a href="{{ config('myapp.url') }}" target="_blank">{{ config('myapp.name') }}</a> password.
+        {!! __('notifications.password_reset.message', [
+            'url' => config('myapp.url'),
+            'app_name' => config('myapp.name')
+        ]) !!}
     </p>
     <p>
-        Your Password Reset Code is
+        {{ __('notifications.password_reset.code_label') }}
         <br><br>
         <p style="text-align: center;">
             <b style="font-size: 50px; letter-spacing: 15px;">{{ $verification_token }}</b>
         </p>
         <br>
-        This code is valid for 30 minutes or until a next code is generated.
+        {{ __('notifications.password_reset.validity') }}
     </p>
 @endsection
 

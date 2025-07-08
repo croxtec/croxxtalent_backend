@@ -50,7 +50,7 @@ class ProfileChanged extends Mailable
      */
     public function build()
     {
-        $subject = "Your profile information has been changed";
+        $subject = __('notifications.profile_change.subject');
         $emoji = "=E2=9D=97";// Red Heavy exclamation mark symbol
         //add emoji before the subject
         $subject = "=?UTF-8?Q?" . $emoji . quoted_printable_encode(' ' . $subject) . "?=";

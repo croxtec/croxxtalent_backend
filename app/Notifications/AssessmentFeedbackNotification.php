@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
+
 class AssessmentFeedbackNotification extends Notification implements ShouldQueue
 {
     use Queueable;
@@ -45,16 +46,15 @@ class AssessmentFeedbackNotification extends Notification implements ShouldQueue
      * @return \Illuminate\Notifications\Messages\MailMessage
      */
     public function toMail($notifiable)
-        {
-            return (new MailMessage)
-                ->subject('Your Assessment Feedback is Now Available')
-                ->view('api.emails.company.assessment_feedback_notification', [
-                    'assessment' => $this->assessment,
-                    'employee' => $this->employee,
-                    'actionUrl' => url("/company"),
-                ]);
-        }
-
+    {
+        return (new MailMessage)
+            ->subject(__('notifications.assessment_feedback.subject'))
+            ->view('api.emails.company.assessment_feedback_notification', [
+                'assessment' => $this->assessment,
+                'employee' => $this->employee,
+                'actionUrl' => url("/company"),
+            ]);
+    }
 
     /**
      * Get the array representation of the notification.
@@ -68,7 +68,9 @@ class AssessmentFeedbackNotification extends Notification implements ShouldQueue
             'type' => 'AssessmentFeedback',
             'assessment_id' => $this->assessment->id,
             'assessment_code' => $this->assessment->code,
-            'message' => "Hello {$this->employee->name}, a supervisor has published your assessment feedback.",
+            'message' => __('notifications.assessment_feedback.database_message', [
+                'name' => $this->employee->name
+            ]),
         ];
     }
 }

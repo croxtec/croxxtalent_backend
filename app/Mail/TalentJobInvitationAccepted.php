@@ -32,7 +32,7 @@ class TalentJobInvitationAccepted extends Mailable
      */
     public function build()
     {
-        $subject = "Job invitation accepted by {$this->jobInvitation->talentCv->name}";
+        $subject = __('notifications.job_invitation.accepted_subject', ['talent_name' => $this->jobInvitation->talentCv->name]);
         return $this->subject($subject)
                     ->replyTo( $this->jobInvitation->talentCv->email, $this->jobInvitation->talentCv->name)
                     ->view('api.emails.talent_job_invitation_accepted')

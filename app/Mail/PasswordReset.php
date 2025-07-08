@@ -34,7 +34,7 @@ class PasswordReset extends Mailable
      */
     public function build()
     {
-        return $this->subject('Password reset code')
+        return $this->subject(__('notifications.password_reset.subject'))
                     ->view('api.emails.password_reset')
                     ->text('api.emails.password_reset_plain')
                     ->with([
@@ -44,3 +44,4 @@ class PasswordReset extends Mailable
                     ]);
     }
 }
+

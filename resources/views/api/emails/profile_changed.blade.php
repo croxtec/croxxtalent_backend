@@ -1,17 +1,17 @@
 @extends('api.emails.layouts.master')
 
 @section('email_page_title')
-    Notification - {{ config('myapp.name') }}
+    {{ __('notifications.email_templates.notification_title', ['app_name' => config('myapp.name')]) }}
 @endsection
 
 @section('email_body_title')
 @endsection
 
 @section('email_body')
-    Hi {{ $name }},
+    {{ __('notifications.email_templates.greeting', ['name' => $name]) }}
     <br>
     <p>
-        Changes has been made to your <a href="{{ config('myapp.url') }}" target="_blank">{{ config('myapp.name') }}</a> profile information.
+        {{ __('notifications.profile_change.notification_message', ['app_name' => config('myapp.name')]) }}
     </p>
 @endsection
 

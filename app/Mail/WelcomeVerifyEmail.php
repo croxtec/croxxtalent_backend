@@ -9,6 +9,7 @@ use Illuminate\Queue\SerializesModels;
 use App\Models\User;
 use App\Models\Verification;
 
+
 class WelcomeVerifyEmail extends Mailable
 {
     use Queueable, SerializesModels;
@@ -34,7 +35,9 @@ class WelcomeVerifyEmail extends Mailable
      */
     public function build()
     {
-        $subject = 'Verify your account on ' . config('myapp.name');
+        $subject = __('notifications.welcome_verify_email.subject', [
+            'app_name' => config('myapp.name')
+        ]);
         $emoji = "=E2=9A=A1";// Yellow hazard symbol
         //add emoji before the subject
         $subject = "=?UTF-8?Q?" . $emoji . quoted_printable_encode(' ' . $subject) . "?=";

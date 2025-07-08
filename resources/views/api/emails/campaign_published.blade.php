@@ -8,10 +8,10 @@
 @endsection
 
 @section('email_body')
-    Hi {{ $name }},
+    {!! __('notifications.campaign_published.greeting', ['name' => $name]) !!}
     <br>
     <p>
-        Your campaign <b>"{{ $campaign->title }}"</b> has been <b style="color: red;">published</b>.
+        {!! __('notifications.campaign_published.message', ['title' => $campaign->title]) !!}
     </p>
 @endsection
 

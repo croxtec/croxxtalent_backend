@@ -1,23 +1,23 @@
 @extends('api.emails.layouts.master')
 
 @section('email_page_title')
-    Notification - {{ config('myapp.name') }}
+    {{ __('notifications.email_templates.notification_title', ['app_name' => config('myapp.name')]) }}
 @endsection
 
 @section('email_body_title')
 @endsection
 
 @section('email_body')
-    Hi {{ $name }},
+    {{ __('notifications.email_templates.greeting', ['name' => $name]) }}
     <br>
     <p>
-        Your profile has been registered with <a href="{{ config('myapp.url') }}" target="_blank">{{ config('myapp.name') }}</a>. 
+        {{ __('notifications.email_templates.profile_registered', ['app_name' => config('myapp.name')]) }}
         <br><br>
-        Simply click the button below  to verify your email address.
+        {{ __('notifications.email_templates.verify_email_instruction') }}
     </p>
     <p>
         @include('api.emails.layouts.partials.button_primary', [
-            'button_text' => 'Click here to verify email address',
+            'button_text' => __('notifications.email_templates.verify_button_text'),
             'button_url' => $verification_url
         ])
     </p>

@@ -12,6 +12,7 @@ use Jenssegers\Agent\Agent;
 use App\Models\User;
 use App\Models\Verification;
 
+
 class Otp extends Mailable
 {
     use Queueable, SerializesModels;
@@ -20,7 +21,6 @@ class Otp extends Mailable
     public $verification;
 
     public $clientGeoLocation;
-
 
     /**
      * Create a new message instance.
@@ -54,7 +54,7 @@ class Otp extends Mailable
      */
     public function build()
     {
-        return $this->subject('One-Time Password (OTP) for your request')
+        return $this->subject(__('notifications.otp.subject'))
                     ->view('api.emails.otp')
                     ->text('api.emails.otp_plain')
                     ->with([

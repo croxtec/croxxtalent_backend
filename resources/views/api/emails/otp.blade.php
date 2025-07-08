@@ -8,16 +8,16 @@
 @endsection
 
 @section('email_body')
-    Hi {{ $name }},
+    {{ __('notifications.otp.greeting', ['name' => $name]) }}
     <br>
     <p>
-        Your One-Time Password (OTP) is
+        {{ __('notifications.otp.message') }}
         <br><br>
         <p style="text-align: center;">
             <b style="font-size: 50px; letter-spacing: 15px;">{{ $verification_token }}</b>
         </p>
         <br>
-        This OTP is valid for 30 minutes or until a next OTP is generated.
+        {{ __('notifications.otp.validity') }}
     </p>
 @endsection
 
