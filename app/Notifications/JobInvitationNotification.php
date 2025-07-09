@@ -24,13 +24,13 @@ class JobInvitationNotification extends Notification
         return ['mail', 'database'];
     }
 
-    public function toMail($notifiable)
-    {
-        return  (new TalentJobInvitation($this->jobInvitation))
-                     ->to($notifiable->email);
-    }
+    // public function toMail($notifiable)
+    // {
+    //     return  (new TalentJobInvitation($this->jobInvitation))
+    //                  ->to($notifiable->email);
+    // }
 
-    public function toMailNew($notifiable)
+    public function toMail($notifiable)
     {
         $locale = $notifiable->locale ?? app()->getLocale();
         

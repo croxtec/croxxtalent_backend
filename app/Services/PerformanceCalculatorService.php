@@ -587,98 +587,98 @@ class PerformanceCalculatorService
             'kpi' => [],
             'overall' => []
         ];
-
+    
         // Assessment insights
         if (isset($sections['assessments'])) {
             $assessmentScore = $sections['assessments']['average_score'] ?? 0;
             $completionRate = $sections['assessments']['completion_rate'] ?? 0;
-
+    
             if ($assessmentScore >= 90) {
-                $insights['assessments'][] = "Exceptional assessment scores indicating strong technical knowledge.";
+                $insights['assessments'][] = __("report.assessments.exceptional");
             } elseif ($assessmentScore < 70) {
-                $insights['assessments'][] = "Consider focused skill development to improve assessment scores.";
+                $insights['assessments'][] = __("report.assessments.needs_improvement");
             }
-
+    
             if ($completionRate < 80) {
-                $insights['assessments'][] = "Improve assessment completion rate to better evaluate skills.";
+                $insights['assessments'][] = __("report.assessments.completion_low");
             }
         }
-
+    
         // Peer review insights
         if (isset($sections['peer_reviews'])) {
             $reviewScore = $sections['peer_reviews']['average_score'] ?? 0;
             $trend = $sections['peer_reviews']['trend']['direction'] ?? 'stable';
-
+    
             if ($reviewScore >= 85) {
-                $insights['peer_reviews'][] = "Well-regarded by peers with consistently positive feedback.";
+                $insights['peer_reviews'][] = __("report.peer_reviews.positive");
             } elseif ($reviewScore < 65) {
-                $insights['peer_reviews'][] = "Consider improving collaboration and communication with peers.";
+                $insights['peer_reviews'][] = __("report.peer_reviews.needs_improvement");
             }
-
+    
             if ($trend === 'down') {
-                $insights['peer_reviews'][] = "Declining peer review scores may indicate interpersonal challenges.";
+                $insights['peer_reviews'][] = __("report.peer_reviews.declining");
             }
         }
-
+    
         // Goal insights
         if (isset($sections['goals'])) {
             $completionRate = $sections['goals']['completion_rate'] ?? 0;
             $inProgressCount = $sections['goals']['in_progress'] ?? 0;
-
+    
             if ($completionRate >= 90) {
-                $insights['goals'][] = "Excellent at achieving set goals and objectives.";
+                $insights['goals'][] = __("report.goals.excellent");
             } elseif ($completionRate < 60) {
-                $insights['goals'][] = "Focus on goal completion to improve overall performance.";
+                $insights['goals'][] = __("report.goals.needs_improvement");
             }
-
+    
             if ($inProgressCount > 5) {
-                $insights['goals'][] = "Consider prioritizing current goals before taking on new ones.";
+                $insights['goals'][] = __("report.goals.prioritize");
             }
         }
-
+    
         // Project insights
         if (isset($sections['projects'])) {
             $taskCompletion = $sections['projects']['completion_rate'] ?? 0;
             $onTimeRate = $sections['projects']['on_time_completion_rate'] ?? 0;
-
+    
             if ($onTimeRate >= 90) {
-                $insights['projects'][] = "Consistently delivers project tasks on or ahead of schedule.";
+                $insights['projects'][] = __("report.projects.ontime");
             } elseif ($onTimeRate < 70) {
-                $insights['projects'][] = "Work on time management to improve on-time task delivery.";
+                $insights['projects'][] = __("report.projects.time_management");
             }
-
+    
             if ($taskCompletion < 60) {
-                $insights['projects'][] = "Focus on completing assigned project tasks to improve contribution.";
+                $insights['projects'][] = __("report.projects.completion");
             }
         }
-
+    
         // Competency insights
         if (isset($sections['competencies'])) {
             $competencyScore = $sections['competencies']['average_score'] ?? 0;
             $trend = $sections['competencies']['trend']['direction'] ?? 'stable';
-
+    
             if ($competencyScore >= 85) {
-                $insights['competencies'] = "Demonstrates strong proficiency in key competencies for the role.";
+                $insights['competencies'] = __("report.competencies.strong");
             } elseif ($competencyScore < 65) {
-                $insights['competencies'] = "Targeted development in core competencies could enhance performance.";
+                $insights['competencies'] = __("report.competencies.development_needed");
             }
-
+    
             if ($trend === 'up') {
-                $insights['competencies'] = "Showing positive development in role-specific competencies.";
+                $insights['competencies'] = __("report.competencies.improving");
             }
         }
-
+    
         // Overall performance insights
         if ($overallScore >= 90) {
-            $insights['overall'] = "Outstanding overall performance across all evaluation areas.";
+            $insights['overall'] = __("report.overall.outstanding");
         } elseif ($overallScore >= 80) {
-            $insights['overall'] = "Strong performer with consistent results across multiple areas.";
+            $insights['overall'] = __("report.overall.strong");
         } elseif ($overallScore >= 70) {
-            $insights['overall'] = "Solid performance with opportunities for targeted improvement.";
+            $insights['overall'] = __("report.overall.solid");
         } elseif ($overallScore < 60) {
-            $insights['overall'] = "Performance improvement plan recommended to address key areas.";
+            $insights['overall'] = __("report.overall.needs_plan");
         }
-
+    
         // Check for balanced or unbalanced performance
         $scores = [
             $sections['assessments']['average_score'] ?? 0,
@@ -687,21 +687,21 @@ class PerformanceCalculatorService
             $sections['projects']['completion_rate'] ?? 0,
             $sections['competencies']['average_score'] ?? 0
         ];
-
+    
         $stdDev = $this->calculateStandardDeviation($scores);
-
+    
         if ($stdDev > 20) {
-            $insights[] = "Performance varies significantly across different areas; consider more balanced development.";
+            $insights[] = __("report.balance.unbalanced");
         } elseif ($stdDev < 10 && $overallScore >= 75) {
-            $insights[] = "Shows consistently strong performance across all evaluation categories.";
+            $insights[] = __("report.balance.consistent");
         }
-
+    
         foreach ($insights as $key => $value) {
             if (empty($value)) {
                 unset($insights[$key]);
             }
         }
-
+    
         return $insights;
     }
 
@@ -819,114 +819,3 @@ class PerformanceCalculatorService
 
 
 }
-
-// Waste
-    /**
-     * Calculate department project metrics
-     */
-    // public function calculateDepartmentProjectMetrics($departmentId, $startDate, $endDate)
-    // {
-    //     $employeeIds = Employee::where('job_code_id', $departmentId)->pluck('id');
-
-    //     $projects = Project::whereHas('tasks.assigned', function($query) use ($employeeIds) {
-    //         $query->whereIn('assigned', $employeeIds);
-    //     })
-    //     ->whereBetween('created_at', [$startDate, $endDate])
-    //     ->with(['tasks' => function($query) use ($employeeIds) {
-    //         $query->whereIn('assigned', $employeeIds);
-    //     }])
-    //     ->get();
-
-    //     $tasks = collect($projects->pluck('tasks')->flatten());
-
-    //     $completedCount = $tasks->where('status', 'completed')->count();
-    //     $inProgressCount = $tasks->where('status', 'in_progress')->count();
-    //     $totalCount = $tasks->count();
-
-    //     // Calculate on-time completion rate
-    //     $onTimeRate = $this->calculator->calculateOnTimeCompletionRate($tasks);
-
-    //     // Calculate completion rate per employee
-    //     $employeeCompletionRates = [];
-    //     foreach ($employeeIds as $empId) {
-    //         $empTasks = $tasks->where('assigned', $empId);
-
-    //         if ($empTasks->isNotEmpty()) {
-    //             $empCompleted = $empTasks->where('status', 'completed')->count();
-    //             $empRate = ($empCompleted / $empTasks->count()) * 100;
-    //             $employeeCompletionRates[$empId] = $empRate;
-    //         }
-    //     }
-
-    //     // Calculate department average completion rate
-    //     $avgCompletionRate = count($employeeCompletionRates) > 0 ?
-    //         array_sum($employeeCompletionRates) / count($employeeCompletionRates) : 0;
-
-    //     return [
-    //         'project_count' => $projects->count(),
-    //         'task_count' => $totalCount,
-    //         'completed_tasks' => $completedCount,
-    //         'in_progress_tasks' => $inProgressCount,
-    //         'completion_rate' => $avgCompletionRate,
-    //         'on_time_completion_rate' => $onTimeRate,
-    //         'trend' => $this->calculateDepartmentTrend('projects', $departmentId, $startDate, $endDate),
-    //         'employee_participation_rate' => count($employeeCompletionRates) > 0 ?
-    //             (count($employeeCompletionRates) / count($employeeIds)) * 100 : 0,
-    //         'project_details' => $projects->map(fn($p) => [
-    //             'name' => $p?->title,
-    //             'status' => $p->status,
-    //             'progress' => $p->progress,
-    //             'task_count' => $p->tasks->count()
-    //         ])
-    //     ];
-    // }
-
-    // /**
-    //  * Calculate department competency metrics
-    //  */
-    // public function calculateDepartmentCompetencyMetrics($departmentId, $startDate, $endDate)
-    // {
-    //     $employeeIds = Employee::where('job_code_id', $departmentId)->pluck('id');
-
-    //     $mappings = DepartmentMapping::where('department_id', $departmentId)
-    //         ->get();
-
-    //     $competencySummary = [];
-    //     foreach ($mappings as $mapping) {
-    //         $employeeScores = [];
-
-    //         foreach ($employeeIds as $empId) {
-    //             $kpiAchievement = $this->calculator->calculateEmployeeKPIAchievement(
-    //                 $empId,
-    //                 $mapping,
-    //                 $startDate,
-    //                 $endDate
-    //             );
-
-    //             // Get the achievement rate directly from the single result
-    //             $score = $kpiAchievement['achievement_rate'];
-    //             $employeeScores[] = $score;
-    //         }
-
-    //         $avgScore = count($employeeScores) > 0 ? array_sum($employeeScores) / count($employeeScores) : 0;
-
-    //         // Access competency directly from the mapping based on sample data
-    //         $competencySummary[] = [
-    //             'competency' => $mapping->competency, // Changed from $mapping->competency->name
-    //             'average_score' => $avgScore,
-    //             'kpi_count' => 1, // Each mapping has one KPI according to the sample
-    //             'employee_count' => count($employeeScores),
-    //             'status' => $this->calculator->getCompetencyStatus($avgScore)
-    //         ];
-    //     }
-
-    //     $overallScore = count($competencySummary) > 0 ?
-    //         collect($competencySummary)->avg('average_score') : 0;
-
-    //     return [
-    //         'count' => count($competencySummary),
-    //         'average_score' => $overallScore,
-    //         'trend' => $this->calculateDepartmentTrend('competencies', $departmentId, $startDate, $endDate),
-    //         'details' => $competencySummary
-    //     ];
-    // }

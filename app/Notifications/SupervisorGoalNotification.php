@@ -49,14 +49,17 @@ class SupervisorGoalNotification extends Notification implements ShouldQueue
      */
     public function toMail($notifiable)
     {
+         $locale = $notifiable->locale ?? app()->getLocale();
+
         return (new MailMessage)
-            ->subject(__('notifications.supervisor_goal.subject'))
+            ->subject(__('notifications.supervisor_goal.subject', [], $locale))
             ->view('api.emails.company.supervisor_goal_notification', [
                 'goal' => $this->goal,
                 'supervisor' => $this->supervisor,
                 'employee' => $this->employee,
                 'employee' => $notifiable,
                 'buttonUrl' => url("/company"),
+                'locale' => $locale,
             ]);
     }
 
@@ -68,6 +71,8 @@ class SupervisorGoalNotification extends Notification implements ShouldQueue
      */
     public function toArray($notifiable)
     {
+        $locale = $notifiable->locale ?? app()->getLocale();
+
         return [
             'type' => 'CompanySupervisorGoal',
             'goal_id' => $this->goal->id,
@@ -76,7 +81,7 @@ class SupervisorGoalNotification extends Notification implements ShouldQueue
             'message' => __('notifications.supervisor_goal.database_message', [
                 'supervisor_name' => $this->supervisor->name,
                 'goal_title' => $this->goal->title
-            ]),
+            ],  $locale),
         ];
     }
 }

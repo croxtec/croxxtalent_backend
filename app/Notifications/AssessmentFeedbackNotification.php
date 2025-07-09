@@ -47,12 +47,15 @@ class AssessmentFeedbackNotification extends Notification implements ShouldQueue
      */
     public function toMail($notifiable)
     {
+         $locale = $notifiable->locale ?? app()->getLocale();
+
         return (new MailMessage)
             ->subject(__('notifications.assessment_feedback.subject'))
             ->view('api.emails.company.assessment_feedback_notification', [
                 'assessment' => $this->assessment,
                 'employee' => $this->employee,
                 'actionUrl' => url("/company"),
+                'locale' => $locale,
             ]);
     }
 
@@ -64,13 +67,15 @@ class AssessmentFeedbackNotification extends Notification implements ShouldQueue
      */
     public function toArray($notifiable)
     {
+        $locale = $notifiable->locale ?? app()->getLocale();
+
         return [
             'type' => 'AssessmentFeedback',
             'assessment_id' => $this->assessment->id,
             'assessment_code' => $this->assessment->code,
             'message' => __('notifications.assessment_feedback.database_message', [
                 'name' => $this->employee->name
-            ]),
+            ], $locale),
         ];
     }
 }
