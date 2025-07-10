@@ -10,6 +10,30 @@ return [
         'archived' => 'Assessment ":name" archived successfully',
         'unarchived' => 'Assessment ":name" unarchived successfully',
         'not_found' => 'Assessment not found',
+        'graded' => 'Assessment graded successfully',
+        'grade_error' => 'Failed to grade assessment',
+        'not_submitted' => 'Assessment has not been submitted',
+        'already_graded' => 'Assessment already graded',
+    ],
+
+    'peer_review' => [
+        'published' => 'Peer review feedback has been recorded',
+        'already_published' => 'Feedback already submitted',
+        'publish_error' => 'Failed to publish peer review',
+    ],
+    
+    'supervisor_feedback' => [
+        'published' => 'Assessment scoresheet has been recorded',
+        'already_published' => 'Feedback already submitted',
+        'publish_error' => 'Failed to publish supervisor feedback',
+        'score_messages' => [
+            'exceptional' => 'You aced it! You got :score out of :total points in this assessment, that\'s an impressive :percentage%%! Great job!',
+            'excellent' => 'Well done! You scored :score out of :total, achieving :percentage%%. You\'re doing great!',
+            'good' => 'Good effort! You got :score out of :total points, with a score of :percentage%%. Keep up the progress!',
+            'average' => 'Not bad! You earned :score out of :total points, reaching :percentage%%. A bit more effort will take you further!',
+            'below_average' => 'You scored :score out of :total, which is :percentage%%. There\'s room for improvement, keep practicing!',
+            'poor' => 'You got :score out of :total points, that\'s :percentage%%. Don\'t worry, with more effort you\'ll improve next time!'
+        ]
     ],
 
     'questions' => [
@@ -38,8 +62,25 @@ return [
             'decent_try' => 'A decent try! You got :score out of :total points, making it :percentage%%. Focus on your weak areas to see better results next time.',
             'keep_going' => 'Keep going! You scored :score out of :total points, which is :percentage%%. Practice will help you get there, don\'t give up!',
             'learning_experience' => 'A learning experience! You scored :score out of :total points, making it :percentage%%. Keep working, and you\'ll improve in no time.',
-            'persist' => 'Don\'t worry, you scored :score out of :total points, which is :percentage%%. Stay persistent, and you\'ll get better results with more practice!'
+            'persist' => 'Don\'t worry, you scored :score out of :total points, which is :percentage%%. Stay persistent, and you\'ll get better results with more practice!',
+            // Add more messages as needed
+            'aced' => 'You aced it! You got :score out of :total points in this assessment, that\'s an impressive :percentage%%! Great job!',
+            'well_done' => 'Well done! You scored :score out of :total, achieving :percentage%%. You\'re doing great!',
+            'good_progress' => 'Good effort! You got :score out of :total points, with a score of :percentage%%. Keep up the progress!',
+            'needs_improvement' => 'Not bad! You earned :score out of :total points, reaching :percentage%%. A bit more effort will take you further!',
+            'practice_needed' => 'You scored :score out of :total, which is :percentage%%. There\'s room for improvement, keep practicing!',
+            'keep_trying' => 'You got :score out of :total points, that\'s :percentage%%. Don\'t worry, with more effort you\'ll improve next time!'
         ]
+    ],
+
+    'peer_review' => [
+        'completed' => 'Peer review completed successfully',
+        'pending' => 'Peer review still pending',
+    ],
+
+    'score_sheet' => [
+        'created' => 'Score sheet created successfully',
+        'updated' => 'Score sheet updated successfully',
     ],
     
     'training' => [

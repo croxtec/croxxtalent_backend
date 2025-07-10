@@ -11,6 +11,30 @@ return [
         'archived' => "Évaluation « :name » archivée avec succès",
         'unarchived' => "Évaluation « :name » désarchivée avec succès",
         'not_found' => "Évaluation introuvable",
+        'graded' => 'Évaluation notée avec succès',
+        'grade_error' => 'Échec de la notation de l\'évaluation',
+        'not_submitted' => 'L\'évaluation n\'a pas été soumise',
+        'already_graded' => 'Évaluation déjà notée',
+    ],
+
+    'peer_review' => [
+        'published' => 'Feedback d\'évaluation par les pairs enregistré',
+        'already_published' => 'Feedback déjà soumis',
+        'publish_error' => 'Échec de la publication de l\'évaluation par les pairs',
+    ],
+    
+    'supervisor_feedback' => [
+        'published' => 'Feuille de score d\'évaluation enregistrée',
+        'already_published' => 'Feedback déjà soumis',
+        'publish_error' => 'Échec de la publication du feedback du superviseur',
+        'score_messages' => [
+            'exceptional' => 'Vous avez réussi haut la main ! Vous avez obtenu :score points sur :total dans cette évaluation, soit un impressionnant :percentage%% ! Excellent travail !',
+            'excellent' => 'Bien joué ! Vous avez obtenu :score points sur :total, atteignant :percentage%%. Vous vous en sortez très bien !',
+            'good' => 'Bon effort ! Vous avez obtenu :score points sur :total, avec un score de :percentage%%. Continuez ainsi !',
+            'average' => 'Pas mal ! Vous avez obtenu :score points sur :total, atteignant :percentage%%. Un peu plus d\'effort vous mènera plus loin !',
+            'below_average' => 'Vous avez obtenu :score points sur :total, soit :percentage%%. Il y a place à amélioration, continuez à pratiquer !',
+            'poor' => 'Vous avez obtenu :score points sur :total, soit :percentage%%. Ne vous inquiétez pas, avec plus d\'effort vous vous améliorerez la prochaine fois !'
+        ]
     ],
 
     'questions' => [
