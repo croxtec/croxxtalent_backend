@@ -1,23 +1,23 @@
 @extends('api.emails.layouts.master')
 
 @section('email_page_title')
-    {{ __('notifications.email_templates.notification_title', ['app_name' => config('myapp.name')]) }}
+    {{ __('notifications.email_templates.notification_title', ['app_name' => config('myapp.name')],  $locale) }}
 @endsection
 
 @section('email_body_title')
 @endsection
 
 @section('email_body')
-    {{ __('notifications.email_templates.greeting', ['name' => $name]) }}
+    {{ __('notifications.email_templates.greeting', ['name' => $name], $locale) }}
     <br>
     <p>
-        {{ __('notifications.email_templates.profile_registered', ['app_name' => config('myapp.name')]) }}
+        {{ __('notifications.email_templates.profile_registered', ['app_name' => config('myapp.name')], $locale) }}
         <br><br>
-        {{ __('notifications.email_templates.verify_email_instruction') }}
+        {{ __('notifications.email_templates.verify_email_instruction', [], $locale) }}
     </p>
     <p>
         @include('api.emails.layouts.partials.button_primary', [
-            'button_text' => __('notifications.email_templates.verify_button_text'),
+            'button_text' => __('notifications.email_templates.verify_button_text', [], $locale),
             'button_url' => $verification_url
         ])
     </p>

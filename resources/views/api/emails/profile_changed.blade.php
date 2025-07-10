@@ -8,10 +8,10 @@
 @endsection
 
 @section('email_body')
-    {{ __('notifications.email_templates.greeting', ['name' => $name]) }}
+    {{ __('notifications.email_templates.greeting', ['name' => $name],  $locale) }}
     <br>
     <p>
-        {{ __('notifications.profile_change.notification_message', ['app_name' => config('myapp.name')]) }}
+        {{ __('notifications.profile_change.notification_message', ['app_name' => config('myapp.name')],  $locale) }}
     </p>
 @endsection
 

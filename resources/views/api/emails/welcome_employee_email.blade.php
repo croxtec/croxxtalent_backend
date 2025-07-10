@@ -1,35 +1,35 @@
 @extends('api.emails.layouts.master')
 
 @section('email_page_title')
-    {{ __('notifications.email_templates.invitation_title', ['company_name' => $company_name, 'app_name' => config('myapp.name')]) }}
+    {{ __('notifications.email_templates.invitation_title', ['company_name' => $company_name, 'app_name' => config('myapp.name')], $locale) }}
 @endsection
 
 @section('email_body_title')
-    {{ __('notifications.email_templates.join_team_title', ['company_name' => $company_name]) }}
+    {{ __('notifications.email_templates.join_team_title', ['company_name' => $company_name], $locale) }}
 @endsection
 
 @section('email_body')
-    {{ __('notifications.email_templates.greeting', ['name' => $name]) }}
+    {{ __('notifications.email_templates.greeting', ['name' => $name], $locale) }}
     <br><br>
     @if($is_talent)
         <p>
-            {{ __('notifications.email_templates.talent_invitation_message', ['company_name' => $company_name]) }}
+            {{ __('notifications.email_templates.talent_invitation_message', ['company_name' => $company_name], $locale) }}
         </p>
         <p>
-            {{ __('notifications.email_templates.talent_verify_instruction') }}
+            {{ __('notifications.email_templates.talent_verify_instruction', [], $locale) }}
         </p>
     @else
         <p>
-            {{ __('notifications.email_templates.employee_invitation_message', ['company_name' => $company_name]) }}
+            {{ __('notifications.email_templates.employee_invitation_message', ['company_name' => $company_name], $locale) }}
         </p>
         <p>
-            {{ __('notifications.email_templates.employee_verify_instruction', ['company_name' => $company_name]) }}
+            {{ __('notifications.email_templates.employee_verify_instruction', ['company_name' => $company_name], $locale) }}
         </p>
     @endif
 
     <p>
         @include('api.emails.layouts.partials.button_primary', [
-            'button_text' => __('notifications.email_templates.verify_email_button'),
+            'button_text' => __('notifications.email_templates.verify_email_button',  [], $locale),
             'button_url' =>  $verification_url
         ])
     </p>

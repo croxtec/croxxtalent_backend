@@ -80,6 +80,10 @@ return [
         'updated' => "Projet mis à jour avec succès",
         'archived' => "Projet archivé avec succès",
         'restored' => "Projet restauré avec succès",
+        // Nouvelles traductions de jalons
+        'milestone_updated' => 'Jalon mis à jour avec succès',
+        'milestone_not_found' => 'Jalon introuvable',
+        'milestone_update_error' => 'Échec de la mise à jour du jalon',
     ],
 
     'goals' => [

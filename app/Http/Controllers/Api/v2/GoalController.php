@@ -197,39 +197,41 @@ class GoalController extends Controller
         $reminderOffset = $reminderOffsets[$reminder];
         $validatedData['reminder_date'] = $period->copy()->modify($reminderOffset);
 
-        if($validatedData['type'] == 'career'){
-            $validatedData['user_id'] = $user->id;
-            $goal = Goal::create($validatedData);
+         try {
+            if($validatedData['type'] == 'career'){
+                $validatedData['user_id'] = $user->id;
+                $goal = Goal::create($validatedData);
+            }
+
+            if($validatedData['type'] == 'supervisor'){
+                $current_company = Employee::where('id', $user->default_company_id)
+                                ->where('user_id', $user->id)->with('supervisor')->first();
+                $employee = Employee::where('code', $validatedData['employee_code'])->first();
+
+                $validatedData['supervisor_id'] = $current_company->id;
+                $validatedData['employee_id'] = $employee->id;
+                $validatedData['employer_id'] = $current_company->employer_id;
+                $validatedData['user_id'] = $validatedData['supervisor_id'];
+
+                $goal = Goal::create($validatedData);
+
+                if($employee->talent) {
+                    $employee->talent->notify(new SupervisorGoalNotification($goal, $current_company, $employee));
+                }
+            }
+
+            return $this->successResponse(
+                Goal::find($goal->id),
+                'talent.goals.created'
+            );
+
+        } catch (\Exception $e) {
+            return $this->errorResponse(
+                'talent.goals.create_error',
+                ['error' => $e->getMessage()]
+            );
         }
 
-        if($validatedData['type'] == 'supervisor'){
-            // Supervisor selected company
-            $current_company = Employee::where('id', $user->default_company_id)
-                             ->where('user_id', $user->id)->with('supervisor')->first();
-            $employee = Employee::where('code', $validatedData['employee_code'])->first();
-
-            $validatedData['supervisor_id'] = $current_company->id;
-            $validatedData['employee_id'] = $employee->id;
-            $validatedData['employer_id'] = $current_company->employer_id;
-            $validatedData['user_id'] = $validatedData['supervisor_id'];
-
-            $goal = Goal::create($validatedData);
-
-            if($employee->talent) $employee->talent->notify(new SupervisorGoalNotification($goal, $current_company, $employee));
-        }
-
-        if($goal){
-            return response()->json([
-                'status' => true,
-                'message' => "New future goal created successfully.",
-                'data' => Goal::find($goal->id)
-            ], 201);
-        } else {
-            return response()->json([
-                'status' => false,
-                'message' => "Could not complete request.",
-            ], 400);
-        }
     }
 
 
@@ -303,20 +305,32 @@ class GoalController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
+   
     public function update(GoalRequest $request, $id)
     {
-        $employer = $request->user();
-        $validatedData = $request->validated();
-        $goal = Goal::findOrfail($id);
-        if($goal->status === 'pending'){
-            $goal->status = $validatedData['status'];
-            $goal->save();
+        try {
+            $employer = $request->user();
+            $validatedData = $request->validated();
+            $goal = Goal::findOrfail($id);
+
+            if($goal->status === 'pending'){
+                $goal->status = $validatedData['status'];
+                $goal->save();
+            }
+
+            return $this->successResponse(
+                Goal::find($goal->id),
+                'goals.updated'
+            );
+
+        } catch (ModelNotFoundException $e) {
+            return $this->notFoundResponse('talent.goals.not_found');
+        } catch (\Exception $e) {
+            return $this->errorResponse(
+                'talent.goals.update_error',
+                ['error' => $e->getMessage()]
+            );
         }
-        return response()->json([
-            'status' => true,
-            'message' => "Goal updated successfully.",
-            'data' => Goal::find($goal->id)
-        ], 201);
     }
 
     /**

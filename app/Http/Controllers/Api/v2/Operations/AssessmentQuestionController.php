@@ -175,20 +175,11 @@ class AssessmentQuestionController extends Controller
             return $this->notFoundResponse(
                 'services.questions.not_found'
             );
-            // return response()->json([
-            //     'status' => false,
-            //     'message' => "Assessment question not found.",
-            // ], 400);
         } catch (\Exception $e) {
             return $this->errorResponse(
                 'services.questions.create_error',
                 ['error' => $e->getMessage()],
             );
-            // return response()->json([
-            //     'status' => false,
-            //     'message' => "Failed to update assessment question.",
-            //     'error' => $e->getMessage()
-            // ], 500);
         }
     }
 

@@ -120,33 +120,33 @@ class MilestoneController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(MilestoneRequest $request, $id) : JsonResponse
-    {
-        try {
-            $milestone = Milestone::findOrFail($id);
-            $validatedData = $request->validated();
+ public function update(MilestoneRequest $request, $id) : JsonResponse
+{
+    try {
+        $milestone = Milestone::findOrFail($id);
+        $validatedData = $request->validated();
 
-            $milestone->update($validatedData);
+        $milestone->update($validatedData);
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Milestone updated successfully',
-                'data' => $milestone->fresh(),
-            ], 200);
+        return response()->json([
+            'status' => true,
+            'message' => __('services.projects.milestone_updated'),
+            'data' => $milestone->fresh(),
+        ], 200);
 
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Milestone not found',
-            ], 404);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Failed to update goal',
-                'error' => config('app.debug') ? $e->getMessage() : null
-            ], 500);
-        }
+    } catch (ModelNotFoundException $e) {
+        return response()->json([
+            'status' => false,
+            'message' => __('services.projects.milestone_not_found'),
+        ], 404);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => false,
+            'message' => __('services.projects.milestone_update_error'),
+            'error' => config('app.debug') ? $e->getMessage() : null
+        ], 500);
     }
+}
 
     /**
      * Remove the specified resource from storage.

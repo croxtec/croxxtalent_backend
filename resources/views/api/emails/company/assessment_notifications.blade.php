@@ -25,5 +25,5 @@
 @endsection
 
 @section('email_complimentary_close')
-@include('api.emails.layouts.partials.complimentary_close')
+    @include('api.emails.layouts.partials.complimentary_close')
 @endsection

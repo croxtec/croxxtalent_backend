@@ -79,6 +79,10 @@ return [
         'updated' => 'Project updated successfully',
         'archived' => 'Project archived successfully',
         'restored' => 'Project restored successfully',
+         // New milestone translations
+        'milestone_updated' => 'Milestone updated successfully',
+        'milestone_not_found' => 'Milestone not found',
+        'milestone_update_error' => 'Failed to update milestone',
     ],
     
     'goals' => [
@@ -142,4 +146,6 @@ return [
         'scored' => 'Interview scored successfully',
         'withdrawn' => 'Job application has been withdrawn successfully',
     ],
+
+
 ];
