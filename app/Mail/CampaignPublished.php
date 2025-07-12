@@ -33,13 +33,16 @@ class CampaignPublished extends Mailable
      */
     public function build()
     {
-        return $this->subject(__('notifications.campaign_published.subject'))
+        $locale = $notifiable->locale ?? app()->getLocale();
+
+        return $this->subject(__('notifications.campaign_published.subject', [], $locale))
                     ->view('api.emails.campaign_published')
                     ->text('api.emails.campaign_published_plain')
                     ->with([
                         'name' => $this->campaign->user->display_name,
                         'email' => $this->campaign->user->email,
                         'campaign' => $this->campaign,
+                        'locale' => $locale
                     ]);
     }
 }

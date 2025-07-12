@@ -32,7 +32,11 @@ class TalentJobInvitationAccepted extends Mailable
      */
     public function build()
     {
-        $subject = __('notifications.job_invitation.accepted_subject', ['talent_name' => $this->jobInvitation->talentCv->name]);
+        $locale = $notifiable->locale ?? app()->getLocale();
+        $subject = __('notifications.job_invitation.accepted_subject', [
+            'talent_name' => $this->jobInvitation->talentCv->name
+        ], $locale);
+
         return $this->subject($subject)
                     ->replyTo( $this->jobInvitation->talentCv->email, $this->jobInvitation->talentCv->name)
                     ->view('api.emails.talent_job_invitation_accepted')
@@ -41,6 +45,7 @@ class TalentJobInvitationAccepted extends Mailable
                         'name' => $this->jobInvitation->employerUser->display_name,
                         'email' => $this->jobInvitation->employerUser->email,
                         'jobInvitation' => $this->jobInvitation,
+                        'locale' => $locale
                     ]);
     }
 }

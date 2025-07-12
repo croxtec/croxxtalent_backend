@@ -54,6 +54,8 @@ class Otp extends Mailable
      */
     public function build()
     {
+        $locale = $notifiable->locale ?? app()->getLocale();
+
         return $this->subject(__('notifications.otp.subject'))
                     ->view('api.emails.otp')
                     ->text('api.emails.otp_plain')
@@ -61,7 +63,8 @@ class Otp extends Mailable
                         'name' => $this->user->name,
                         'email' => $this->verification->sent_to,
                         'verification_token' => $this->verification->token,
-                        'clientGeoLocation' => $this->clientGeoLocation
+                        'clientGeoLocation' => $this->clientGeoLocation,
+                        'locale' => $locale
                     ]);
     }
 }

@@ -59,7 +59,7 @@ class AssessmentPublishedNotification extends Notification implements ShouldQueu
                 'assessment' => $this->assessment,
                 'employee' => $this->employee,
                 'role' => $this->role,
-                'locale' => $locale,
+                'locale' => $locale
             ]);
     }
 

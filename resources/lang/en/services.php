@@ -152,7 +152,6 @@ return [
         'unauthorized' => 'Unauthorized to perform this action on comment',
     ],
 
-    
     'activities' => [
         'goal_created' => 'Task created: :title',
         'employee_assigned' => 'Employee assigned to task',

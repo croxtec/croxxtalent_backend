@@ -32,7 +32,9 @@ class TalentJobInvitation extends Mailable
     public function build()
     {
         $locale = $this->jobInvitation->talentCv->locale ?? app()->getLocale();
+
         $subject = __('notifications.job_invitation.subject', [], $locale);
+
         return $this->subject($subject)
                     ->view('api.emails.talent_job_invitation')
                     ->text('api.emails.talent_job_invitation_plain')
@@ -40,6 +42,7 @@ class TalentJobInvitation extends Mailable
                         'name' => $this->jobInvitation->talentCv->name,
                         'email' => $this->jobInvitation->talentCv->email,
                         'jobInvitation' => $this->jobInvitation,
+                        'locale' => $locale
                     ]);
     }
     

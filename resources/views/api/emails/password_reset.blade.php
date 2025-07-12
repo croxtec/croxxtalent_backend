@@ -8,7 +8,7 @@
 @endsection
 
 @section('email_body')
-    {!! __('notifications.password_reset.greeting', ['name' => $name], $locale) !!}
+    {!!  __('notifications.password_reset.greeting', ['name' => $name], $locale) !!}
     <br>
     <p>
         {!! __('notifications.password_reset.message', [

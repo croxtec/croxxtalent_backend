@@ -50,6 +50,8 @@ class PasswordChanged extends Mailable
      */
     public function build()
     {
+        $locale = $notifiable->locale ?? app()->getLocale();
+        
         $subject = __('notifications.password_change.subject');
         $emoji = "=E2=9D=97";// Red Heavy exclamation mark symbol
         //add emoji before the subject
@@ -61,7 +63,8 @@ class PasswordChanged extends Mailable
                     ->with([
                         'name' => $this->user->name,
                         'email' => $this->user->email,
-                        'clientGeoLocation' => $this->clientGeoLocation
+                        'clientGeoLocation' => $this->clientGeoLocation,
+                        'locale' => $locale
                     ]);
     } 
 }

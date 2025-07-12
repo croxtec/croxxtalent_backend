@@ -42,12 +42,15 @@ class WelcomeEmployee extends Mailable
      */
     public function build()
     {
+        $locale = $notifiable->locale ?? app()->getLocale();
         $isTalent = $this->employee->talent;
         $emoji = "=E2=9A=A1"; // Yellow hazard symbol
     
         // Get localized subject
         $subjectKey = $isTalent ? 'welcome_employee.talent_subject' : 'welcome_employee.employee_subject';
-        $subject = __("notifications.$subjectKey", ['company_name' => $this->employer->company_name]);
+        $subject = __("notifications.$subjectKey", [
+            'company_name' => $this->employer->company_name
+        ], $locale);
     
         // Add emoji before the subject
         $subject = "=?UTF-8?Q?" . $emoji . quoted_printable_encode(' ' . $subject) . "?=";
@@ -62,6 +65,7 @@ class WelcomeEmployee extends Mailable
                         'email' => $this->employee->email,
                         'verification_token' => $this->verification->token,
                         'verification_url' => route('api.links.verifications.verify_employee', ['token' => $this->verification->token]),
+                        'locale' => $locale,
                     ]);
     }
 }
