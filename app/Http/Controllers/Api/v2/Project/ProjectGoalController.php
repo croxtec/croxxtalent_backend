@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Traits\ApiResponseTrait;
+use Symfony\Component\HttpFoundation\Response;
 
 class ProjectGoalController extends Controller
 {

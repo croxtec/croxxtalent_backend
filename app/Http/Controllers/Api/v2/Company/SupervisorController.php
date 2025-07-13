@@ -160,13 +160,21 @@ class SupervisorController extends Controller
             $user = $employee->talent;
             $employee->load('department'); // Ensure department is loaded
     
-            // Get user's preferred language
-            $locale = $user->locale ?? app()->getLocale();
-    
-            // Send localized notification
-            Notification::send($user, 
-                (new SupervisorAdded($employee))->locale($locale)
-            );
+            if ($user) {
+                // Get user's preferred language
+                $locale = $user->locale ?? app()->getLocale();
+                
+                // Send localized notification
+                Notification::send($user, 
+                    (new SupervisorAdded($employee))->locale($locale)
+                );
+            } else {
+                // Log the issue for debugging
+                \Log::warning('Cannot send supervisor notification: User not found for employee', [
+                    'employee_id' => $employee->id,
+                    'employee_name' => $employee->name ?? 'Unknown'
+                ]);
+            }
         }
     
          return $this->successResponse(
@@ -209,10 +217,12 @@ class SupervisorController extends Controller
         // Get user's preferred language
         $locale = $user->locale ?? app()->getLocale();
     
-        // Send localized notification
-        Notification::send($user, 
-            (new SupervisorRemoved($employee))->locale($locale)
-        );
+        if ($user) {
+            // Send localized notification
+            Notification::send($user, 
+                (new SupervisorRemoved($employee))->locale($locale)
+            );
+        }
     
         return $this->successResponse(
             $employee, 
