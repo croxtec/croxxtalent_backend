@@ -46,7 +46,7 @@ class RegisterRequest extends FormRequest
                     'email' => 'required|max:150|unique:users,email',
                     'password' => 'required|min:6',
                     'referral_code' => 'nullable',
-                    'language' => 'nullable',
+                    'language' => 'nullable|in:en,fr',
                     'long_lived_access_token' => 'nullable|boolean',
                 ];
             case 'PUT':

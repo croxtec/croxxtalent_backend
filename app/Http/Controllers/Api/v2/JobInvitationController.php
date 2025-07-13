@@ -66,41 +66,82 @@ class JobInvitationController extends Controller
      * @param  \App\Models\Http\Requests\JobInvitationRequest  $request
      * @return \Illuminate\Http\Response
      */
+    // public function store(JobInvitationRequest $request)
+    // {
+    //     // Authorization is declared in the Form Request
+
+    //     // Retrieve the validated input data...
+    //     $validatedData = $request->validated();
+    //     $jobInvitation = JobInvitation::firstOrCreate($validatedData);
+    //     if ($jobInvitation) {
+    //         // send email notification
+    //         if ($jobInvitation->talentCv->email) {
+    //             if (config('mail.queue_send')) {
+    //                 Mail::to($jobInvitation->talentCv->email)->queue(new TalentJobInvitation($jobInvitation));
+    //             } else {
+    //                 Mail::to($jobInvitation->talentCv->email)->send(new TalentJobInvitation($jobInvitation));
+    //             }
+    //         }
+    //         // Send Push notification
+    //         $display_name = $jobInvitation->employerUser->display_name;
+    //         // $notification = new Notification();
+    //         // $notification->user_id = $request->talent_user_id;
+    //         // $notification->action = '/my-job';
+    //         // $notification->title = 'Job Invitation';
+    //         // $notification->message = "You have a new job invitation/offer from <b>$display_name</b>.";
+    //         // $notification->save();
+    //         event(new NewNotification($notification->user_id,$notification));
+    //         return response()->json([
+    //             'status' => true,
+    //             'message' => "An invitation has been sent to {$jobInvitation->talentCv->name}.",
+    //             'data' => JobInvitation::find($jobInvitation->id)
+    //         ], 201);
+    //     } else {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => "Could not complete request.",
+    //         ], 400);
+    //     }
+    // }
+
     public function store(JobInvitationRequest $request)
     {
-        // Authorization is declared in the Form Request
+        try {
+            $validatedData = $request->validated();
+            $jobInvitation = JobInvitation::firstOrCreate($validatedData);
 
-        // Retrieve the validated input data...
-        $validatedData = $request->validated();
-        $jobInvitation = JobInvitation::firstOrCreate($validatedData);
-        if ($jobInvitation) {
-            // send email notification
             if ($jobInvitation->talentCv->email) {
                 if (config('mail.queue_send')) {
-                    Mail::to($jobInvitation->talentCv->email)->queue(new TalentJobInvitation($jobInvitation));
+                    Mail::to($jobInvitation->talentCv->email)
+                        ->queue(new TalentJobInvitation($jobInvitation));
                 } else {
-                    Mail::to($jobInvitation->talentCv->email)->send(new TalentJobInvitation($jobInvitation));
+                    Mail::to($jobInvitation->talentCv->email)
+                        ->send(new TalentJobInvitation($jobInvitation));
                 }
             }
-            // Send Push notification
-            $display_name = $jobInvitation->employerUser->display_name;
-            $notification = new Notification();
-            $notification->user_id = $request->talent_user_id;
-            $notification->action = '/my-job';
-            $notification->title = 'Job Invitation';
-            $notification->message = "You have a new job invitation/offer from <b>$display_name</b>.";
-            $notification->save();
-            event(new NewNotification($notification->user_id,$notification));
-            return response()->json([
-                'status' => true,
-                'message' => "An invitation has been sent to {$jobInvitation->talentCv->name}.",
-                'data' => JobInvitation::find($jobInvitation->id)
-            ], 201);
-        } else {
-            return response()->json([
-                'status' => false,
-                'message' => "Could not complete request.",
-            ], 400);
+
+            event(new NewNotification(
+                $jobInvitation->talent_user_id,
+                [
+                    'action' => '/my-job',
+                    'title' => __('talent.job_invitation.notification_title'),
+                    'message' => __('talent.job_invitation.notification_message', [
+                        'name' => $jobInvitation->employerUser->display_name
+                    ])
+                ]
+            ));
+
+            return $this->successResponse(
+                JobInvitation::find($jobInvitation->id),
+                'talent.job_invitation.sent',
+                ['name' => $jobInvitation->talentCv->name]
+            );
+
+        } catch (\Exception $e) {
+            return $this->errorResponse(
+                'talent.job_invitation.create_error',
+                ['error' => $e->getMessage()]
+            );
         }
     }
 
@@ -119,7 +160,7 @@ class JobInvitationController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => "Successful.",
+            'message' => "",
             'data' => $jobInvitation
         ], 200);
     }
@@ -165,42 +206,52 @@ class JobInvitationController extends Controller
      * @param  string  $id
      * @return \Illuminate\Http\Response
      */
-    public function archive($id)
+   public function archive($id)
     {
-        $jobInvitation = JobInvitation::findOrFail($id);
+        try {
+            $jobInvitation = JobInvitation::findOrFail($id);
+            $this->authorize('delete', [JobInvitation::class, $jobInvitation]);
 
-        $this->authorize('delete', [JobInvitation::class, $jobInvitation]);
+            $jobInvitation->archived_at = now();
+            $jobInvitation->save();
 
-        $jobInvitation->archived_at = now();
-        $jobInvitation->save();
+            return $this->successResponse(
+                JobInvitation::find($jobInvitation->id),
+                'talent.job_invitation.archived'
+            );
 
-        return response()->json([
-            'status' => true,
-            'message' => "Job invitation archived successfully.",
-            'data' => JobInvitation::find($jobInvitation->id)
-        ], 200);
+        } catch (ModelNotFoundException $e) {
+            return $this->notFoundResponse('talent.job_invitation.not_found');
+        } catch (\Exception $e) {
+            return $this->errorResponse(
+                'talent.job_invitation.archive_error',
+                ['error' => $e->getMessage()]
+            );
+        }
     }
 
-    /**
-     * Unarchive the specified resource from archived storage.
-     *
-     * @param  string  $id
-     * @return \Illuminate\Http\Response
-     */
     public function unarchive($id)
     {
-        $jobInvitation = JobInvitation::findOrFail($id);
+        try {
+            $jobInvitation = JobInvitation::findOrFail($id);
+            $this->authorize('delete', [JobInvitation::class, $jobInvitation]);
 
-        $this->authorize('delete', [JobInvitation::class, $jobInvitation]);
+            $jobInvitation->archived_at = null;
+            $jobInvitation->save();
 
-        $jobInvitation->archived_at = null;
-        $jobInvitation->save();
+            return $this->successResponse(
+                JobInvitation::find($jobInvitation->id),
+                'talent.job_invitation.unarchived'
+            );
 
-        return response()->json([
-            'status' => true,
-            'message' => "Job invitation unarchived successfully.",
-            'data' => JobInvitation::find($jobInvitation->id)
-        ], 200);
+        } catch (ModelNotFoundException $e) {
+            return $this->notFoundResponse('talent.job_invitation.not_found');
+        } catch (\Exception $e) {
+            return $this->errorResponse(
+                'talent.job_invitation.unarchive_error',
+                ['error' => $e->getMessage()]
+            );
+        }
     }
 
     /**
@@ -209,27 +260,38 @@ class JobInvitationController extends Controller
      * @param  string  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+   public function destroy($id)
     {
-        $jobInvitation = JobInvitation::findOrFail($id);
+        try {
+            $jobInvitation = JobInvitation::findOrFail($id);
+            $this->authorize('delete', [JobInvitation::class, $jobInvitation]);
 
-        $this->authorize('delete', [JobInvitation::class, $jobInvitation]);
+            $relatedRecordsCount = related_records_count(JobInvitation::class, $jobInvitation);
 
-        $name = $jobInvitation->name;
-        // check if the record is linked to other records
-        $relatedRecordsCount = related_records_count(JobInvitation::class, $jobInvitation);
+            if ($relatedRecordsCount <= 0) {
+                $jobInvitation->delete();
+                return $this->successResponse(
+                    null,
+                    'talent.job_invitation.deleted'
+                );
+            } else {
+                return $this->errorResponse(
+                    'talent.job_invitation.delete_restricted',
+                    [
+                        'name' => $jobInvitation->name,
+                        'count' => $relatedRecordsCount
+                    ],
+                    400
+                );
+            }
 
-        if ($relatedRecordsCount <= 0) {
-            $jobInvitation->delete();
-            return response()->json([
-                'status' => true,
-                'message' => "Job invitation deleted successfully.",
-            ], 200);
-        } else {
-            return response()->json([
-                'status' => false,
-                'message' => "The \"{$name}\" record cannot be deleted because it is associated with {$relatedRecordsCount} other record(s). You can archive it instead.",
-            ], 400);
+        } catch (ModelNotFoundException $e) {
+            return $this->notFoundResponse('talent.job_invitation.not_found');
+        } catch (\Exception $e) {
+            return $this->errorResponse(
+                'talent.job_invitation.delete_error',
+                ['error' => $e->getMessage()]
+            );
         }
     }
 

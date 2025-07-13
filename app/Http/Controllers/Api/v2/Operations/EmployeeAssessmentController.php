@@ -16,6 +16,8 @@ use App\Models\Assessment\EmployerAssessmentFeedback;
 use App\Models\Assessment\PeerReview;
 use App\Models\Assessment\TalentAssessmentSummary;
 use Illuminate\Support\Facades\Storage;
+use App\Traits\ApiResponseTrait;
+
 
 class EmployeeAssessmentController extends Controller
 {
@@ -25,6 +27,8 @@ class EmployeeAssessmentController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
+    use ApiResponseTrait;
+
     public function employee(Request $request, $code)
     {
         $user = $request->user();
@@ -215,11 +219,7 @@ class EmployeeAssessmentController extends Controller
             ])->exists();
 
             if ($isPublished) {
-                return response()->json([
-                    'status' => false,
-                    'message' => "Assessment already submitted.",
-                    'data' => ""
-                ], 400);
+                return;
             }
         } else{
             $searchData['talent_id'] = $user->id;
@@ -321,37 +321,34 @@ class EmployeeAssessmentController extends Controller
             $graded_score = ((int)$assessment_score / $total_score ?? 1) * 100;
             $graded_score = (int)$graded_score;
 
+            // Determine which feedback message to use
             if ($graded_score >= 95) {
-                $message = sprintf("Exceptional! You scored %d out of %d points, hitting a fantastic %d%%! You're a master in this area!",
-                    $assessment_score, $total_score, $graded_score);
+                $messageKey = 'services.feedbacks.score_messages.exceptional';
             } elseif ($graded_score >= 85) {
-                $message = sprintf("Fantastic! You scored %d out of %d points, achieving an impressive %d%%. Keep pushing, you're almost at the top!",
-                    $assessment_score, $total_score, $graded_score);
+                $messageKey = 'services.feedbacks.score_messages.fantastic';
             } elseif ($graded_score >= 75) {
-                $message = sprintf("Great job! You got %d out of %d points, which is a solid %d%%. You're doing well, keep up the hard work!",
-                    $assessment_score, $total_score, $graded_score);
+                $messageKey = 'services.feedbacks.score_messages.great_job';
             } elseif ($graded_score >= 65) {
-                $message = sprintf("Good effort! You achieved %d out of %d points, making it %d%%. There's potential for more, just keep refining your skills!",
-                    $assessment_score, $total_score, $graded_score);
+                $messageKey = 'services.feedbacks.score_messages.good_effort';
             } elseif ($graded_score >= 55) {
-                $message = sprintf("You're getting there! You earned %d out of %d points, which is %d%%. Keep practicing and you'll see more progress.",
-                    $assessment_score, $total_score, $graded_score);
+                $messageKey = 'services.feedbacks.score_messages.getting_there';
             } elseif ($graded_score >= 45) {
-                $message = sprintf("A decent try! You got %d out of %d points, making it %d%%. Focus on your weak areas to see better results next time.",
-                    $assessment_score, $total_score, $graded_score);
+                $messageKey = 'services.feedbacks.score_messages.decent_try';
             } elseif ($graded_score >= 35) {
-                $message = sprintf("Keep going! You scored %d out of %d points, which is %d%%. Practice will help you get there, don't give up!",
-                    $assessment_score, $total_score, $graded_score);
+                $messageKey = 'services.feedbacks.score_messages.keep_going';
             } elseif ($graded_score >= 25) {
-                $message = sprintf("A learning experience! You scored %d out of %d points, making it %d%%. Keep working, and you'll improve in no time.",
-                    $assessment_score, $total_score, $graded_score);
+                $messageKey = 'services.feedbacks.score_messages.learning_experience';
             } else {
-                $message = sprintf("Don't worry, you scored %d out of %d points, which is %d%%. Stay persistent, and you'll get better results with more practice!",
-                    $assessment_score, $total_score, $graded_score);
+                $messageKey = 'services.feedbacks.score_messages.persist';
             }
 
-            $feedback->summary = $message;
+            $feedback->summary = __($messageKey, [
+                'score' => $assessment_score,
+                'total' => $total_score,
+                'percentage' => $graded_score
+            ]);
             $feedback->total_score = $total_score;
+
             if($assessment->type == 'company' || $assessment->type == 'supervisor'){
                 $feedback->employee_score = $assessment_score;
             }else{
@@ -360,23 +357,18 @@ class EmployeeAssessmentController extends Controller
             $feedback->graded_score = round($graded_score);
         }
 
-        if(!$feedback->is_published){
+       if(!$feedback->is_published){
             $feedback->time_taken = $request->time_taken;
             $feedback->is_published = true;
             $feedback->save();
-        }else{
-            return response()->json([
-                'status' => false,
-                'message' => "Assessment already submited.",
-                'data' => ""
-            ], 400);
+        } else {
+            return $this->badRequestResponse('services.feedbacks.already_submitted');
         }
 
-        return response()->json([
-            'status' => true,
-            'message' => "Assessment submitted.",
-            'data' =>$feedback
-        ], 200);
+        return $this->successResponse(
+            $feedback,
+            'services.feedbacks.submitted'
+        );
     }
 
 }

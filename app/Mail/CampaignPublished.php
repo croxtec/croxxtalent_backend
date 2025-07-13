@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -13,7 +14,7 @@ class CampaignPublished extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $cvReference;
+    public $campaign;
 
     /**
      * Create a new message instance.
@@ -32,14 +33,16 @@ class CampaignPublished extends Mailable
      */
     public function build()
     {
-        $subject = "Campaign published";
-        return $this->subject($subject)
+        $locale = $notifiable->locale ?? app()->getLocale();
+
+        return $this->subject(__('notifications.campaign_published.subject', [], $locale))
                     ->view('api.emails.campaign_published')
                     ->text('api.emails.campaign_published_plain')
                     ->with([
                         'name' => $this->campaign->user->display_name,
                         'email' => $this->campaign->user->email,
                         'campaign' => $this->campaign,
+                        'locale' => $locale
                     ]);
     }
 }

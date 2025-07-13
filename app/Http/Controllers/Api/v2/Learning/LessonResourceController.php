@@ -10,10 +10,13 @@ use Cloudinary\Cloudinary;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Traits\ApiResponseTrait;
+use Illuminate\Http\Response;
 
 class LessonResourceController extends Controller
 {
 
+    use ApiResponseTrait;
     protected $cloudinary;
 
     public function __construct(Cloudinary $cloudinary)
@@ -73,23 +76,21 @@ class LessonResourceController extends Controller
 
             DB::commit();
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Lesson resources uploaded successfully',
-                'data' => $resources
-            ], Response::HTTP_CREATED);
-
+            return $this->successResponse(
+                $resources,
+                'services.resources.uploaded',
+                [],
+                Response::HTTP_CREATED
+            );
+    
         } catch (\Exception $e) {
             DB::rollBack();
-
-            // Log the error
             \Log::error('Error uploading lesson resources: ' . $e->getMessage());
-
-            return response()->json([
-                "status" => false,
-                'message' => 'Error uploading lesson resources',
-                'error' =>"Fail to upload lesson resources"
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+    
+            return $this->errorResponse(
+                'services.resources.upload_error',
+                ['error' => $e->getMessage()]
+            );
         }
     }
 
@@ -113,17 +114,19 @@ class LessonResourceController extends Controller
             // Delete from database
             $lessonResource->delete();
 
-            return response()->json([
-                'message' => 'Resource deleted successfully'
-            ], Response::HTTP_OK);
-
+            return $this->successResponse(
+                null,
+                'services.resources.deleted'
+            );
+    
         } catch (\Exception $e) {
             \Log::error('Error deleting lesson resource: ' . $e->getMessage());
-
-            return response()->json([
-                'message' => 'Error deleting resource',
-                'error' => $e->getMessage()
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+    
+            return $this->errorResponse(
+                'services.resources.delete_error',
+                ['error' => $e->getMessage()],
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
         }
     }
 

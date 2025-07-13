@@ -13,7 +13,9 @@ return [
     |
     */
 
-    'previous' => '&laquo; Previous',
+      'previous' => '&laquo; Previous',
     'next' => 'Next &raquo;',
+    'showing' => 'Showing :from to :to of :total results',
+    'no_results' => 'No results found',
 
 ];

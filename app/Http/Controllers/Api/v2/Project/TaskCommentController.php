@@ -11,38 +11,37 @@ use App\Models\Project\ProjectTeam;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
+use App\Traits\ApiResponseTrait;
+use Illuminate\Http\Response;
+
 class TaskCommentController extends Controller
 {
+    use ApiResponseTrait;
+
     /**
      * Constructor with middleware registration
      */
     public function __construct()
     {
-        // Apply basic project access middleware to all methods
-        // Any team member can comment (no team lead requirement)
         $this->middleware('project.access');
     }
 
     /**
      * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
     {
         $user = $request->user();
-
-        // Get the employee record for the current user
         $employee = Employee::where('user_id', $user->id)
             ->where('id', $user->default_company_id)
             ->first();
 
         if (!$employee) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Employee record not found'
-            ], 404);
+            return $this->errorResponse(
+                'services.comments.employee_not_found',
+                [],
+                Response::HTTP_NOT_FOUND
+            );
         }
 
         $validatedData = $request->validate([
@@ -50,48 +49,41 @@ class TaskCommentController extends Controller
             'goal_id' => 'required|exists:project_goals,id'
         ]);
 
-        // Use the actual employee ID
         $validatedData['employee_id'] = $employee->id;
-
         $comment = GoalComment::create($validatedData);
 
-        // Track comment creation activity
         GoalActivity::create([
             'goal_id' => $validatedData['goal_id'],
             'activity_type' => 'comment_add',
-            'description' => 'Comment added to goal',
+            'description' => __('services.activities.comment_added'),
             'performed_by' => $user->id
         ]);
 
-        return response()->json([
-            'status' => true,
-            'message' => "Comment added successfully",
-            'data' => $comment,
-        ], 201);
+        return $this->successResponse(
+            $comment,
+            'services.comments.added',
+            [],
+            Response::HTTP_CREATED
+        );
     }
 
     /**
      * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $id)
     {
         try {
             $user = $request->user();
-
-            // Get employee and project information
             $employee = Employee::where('user_id', $user->id)
                 ->where('id', $user->default_company_id)
                 ->first();
 
             if (!$employee) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Employee record not found'
-                ], 404);
+                return $this->errorResponse(
+                    'services.comments.employee_not_found',
+                    [],
+                    Response::HTTP_NOT_FOUND
+                );
             }
 
             $validatedData = $request->validate([
@@ -99,119 +91,110 @@ class TaskCommentController extends Controller
             ]);
 
             $comment = GoalComment::findOrFail($id);
-
-            // Get the goal to determine the project
             $goal = ProjectGoal::findOrFail($comment->goal_id);
 
-            // Check if the comment belongs to this employee or if they're a team lead
             $projectTeam = ProjectTeam::where('employee_id', $employee->id)
                 ->where('project_id', $goal->project_id)
                 ->first();
 
             if ($comment->employee_id !== $employee->id && (!$projectTeam || !$projectTeam->is_team_lead)) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Unauthorized to update this comment',
-                ], 403);
+                return $this->errorResponse(
+                    'services.comments.unauthorized',
+                    [],
+                    Response::HTTP_FORBIDDEN
+                );
             }
 
             $comment->update($validatedData);
 
-            // Track comment update activity
             GoalActivity::create([
                 'goal_id' => $comment->goal_id,
                 'activity_type' => 'comment_update',
-                'description' => 'Comment updated',
+                'description' => __('services.activities.comment_updated'),
                 'performed_by' => $user->id
             ]);
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Comment updated successfully',
-                'data' => $comment->fresh(),
-            ], 200);
+            return $this->successResponse(
+                $comment->fresh(),
+                'services.comments.updated'
+            );
 
         } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Comment not found',
-            ], 404);
+            return $this->errorResponse(
+                'services.comments.not_found',
+                [],
+                Response::HTTP_NOT_FOUND
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Failed to update comment',
-                'error' => config('app.debug') ? $e->getMessage() : null
-            ], 500);
+            return $this->errorResponse(
+                'services.comments.update_error',
+                ['error' => config('app.debug') ? $e->getMessage() : null],
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
         }
     }
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
      */
     public function destroy(Request $request, $id)
     {
         try {
             $user = $request->user();
-
-            // Get employee information
             $employee = Employee::where('user_id', $user->id)
                 ->where('id', $user->default_company_id)
                 ->first();
 
             if (!$employee) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Employee record not found'
-                ], 404);
+                return $this->errorResponse(
+                    'services.comments.employee_not_found',
+                    [],
+                    Response::HTTP_NOT_FOUND
+                );
             }
 
             $comment = GoalComment::findOrFail($id);
-
-            // Get the goal to determine the project
             $goal = ProjectGoal::findOrFail($comment->goal_id);
 
-            // Check if the comment belongs to this employee or if they're a team lead
             $projectTeam = ProjectTeam::where('employee_id', $employee->id)
                 ->where('project_id', $goal->project_id)
                 ->first();
 
             if ($comment->employee_id !== $employee->id && (!$projectTeam || !$projectTeam->is_team_lead)) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Unauthorized to delete this comment',
-                ], 403);
+                return $this->errorResponse(
+                    'services.comments.unauthorized',
+                    [],
+                    Response::HTTP_FORBIDDEN
+                );
             }
 
             $goalId = $comment->goal_id;
             $comment->delete();
 
-            // Track comment deletion activity
             GoalActivity::create([
                 'goal_id' => $goalId,
                 'activity_type' => 'comment_delete',
-                'description' => 'Comment deleted from goal',
+                'description' => __('services.activities.comment_deleted'),
                 'performed_by' => $user->id
             ]);
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Comment deleted successfully',
-            ], 200);
+            return $this->successResponse(
+                null,
+                'services.comments.deleted'
+            );
 
         } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Comment not found',
-            ], 404);
+            return $this->errorResponse(
+                'services.comments.not_found',
+                [],
+                Response::HTTP_NOT_FOUND
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Failed to delete comment',
-                'error' => config('app.debug') ? $e->getMessage() : null
-            ], 500);
+            return $this->errorResponse(
+                'services.comments.delete_error',
+                ['error' => config('app.debug') ? $e->getMessage() : null],
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
         }
     }
 }

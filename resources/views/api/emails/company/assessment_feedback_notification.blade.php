@@ -6,15 +6,18 @@
 
 @section('email_body')
     <p>
-        Dear {{ $employee->name }},
+        {!! __('notifications.assessment_feedback.greeting', ['name' => $employee->name]) !!}
         <br><br>
-        Your assessment titled **"{{ $assessment->name }}"** (Code: {{ $assessment->code }}) has been reviewed, and your feedback is now available. This assessment is an important part of your professional development and performance evaluation.
+        {!! __('notifications.assessment_feedback.message', [
+            'assessment_name' => $assessment->name,
+            'code' => $assessment->code
+        ]) !!}
         <br><br>
-        We encourage you to carefully review the feedback provided by your supervisor, which contains valuable insights to help guide your career growth. Please take the time to reflect on the feedback and make improvements where necessary.
+        {{ __('notifications.assessment_feedback.encouragement') }}
     </p>
     <p>
         @include('api.emails.layouts.partials.button_primary', [
-            'button_text' => 'View Feedback',
+            'button_text' => __('notifications.assessment_feedback.button_text'),
             'button_url' => config('myapp.employee_url')
         ])
     </p>

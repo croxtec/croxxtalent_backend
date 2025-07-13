@@ -5,69 +5,84 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class LocalizationMiddleware
-{
+{ 
     /**
      * Handle an incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
-     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
     public function handle(Request $request, Closure $next)
     {
-        $locale = $this->getLocale($request);
+        $locale = $this->determineLocale($request);
         
-        // Validate locale
-        if (!in_array($locale, config('app.available_locales'))) {
-            $locale = config('app.fallback_locale');
+        if ($this->isValidLocale($locale)) {
+            App::setLocale($locale);
+            // Log for debugging
+            Log::info('Locale set to: ' . $locale);
+        } else {
+            // Log invalid locale attempts
+            Log::warning('Invalid locale attempted: ' . $locale);
         }
-        
-        App::setLocale($locale);
-        Session::put('locale', $locale);
-        
+
         return $next($request);
     }
-    
+
     /**
-     * Get locale from various sources in order of priority
+     * Determine the locale from various sources
      */
-    private function getLocale(Request $request): string
+    private function determineLocale(Request $request): string
     {
-        // 1. URL parameter (?lang=es)
-        if ($request->has('lang')) {
+        // Priority order:
+        // 1. URL parameter (highest priority for testing)
+        if ($request->has('lang') && $this->isValidLocale($request->get('lang'))) {
             return $request->get('lang');
         }
-        
-        // 2. Authorization header for API (Accept-Language)
+
+        // 2. Authenticated user's language preference
+        if (Auth::check() && Auth::user()->language && $this->isValidLocale(Auth::user()->language)) {
+            return Auth::user()->language;
+        }
+
+        // 3. Request header (for API calls)
         if ($request->hasHeader('Accept-Language')) {
-            $acceptLanguage = $request->header('Accept-Language');
-            $locale = substr($acceptLanguage, 0, 2);
-            if (in_array($locale, config('app.available_locales'))) {
+            $locale = $this->parseAcceptLanguageHeader($request->header('Accept-Language'));
+            if ($locale && $this->isValidLocale($locale)) {
+                return $locale;
+            }
+        }
+
+        // 4. Default fallback
+        return config('app.locale', 'en');
+    }
+
+    /**
+     * Parse Accept-Language header properly
+     */
+    private function parseAcceptLanguageHeader(string $header): ?string
+    {
+        // Handle headers like "fr-FR,fr;q=0.9,en;q=0.8"
+        $languages = explode(',', $header);
+        
+        foreach ($languages as $language) {
+            $locale = trim(explode(';', $language)[0]);
+            $locale = substr($locale, 0, 2); // Get first 2 characters
+            
+            if ($this->isValidLocale($locale)) {
                 return $locale;
             }
         }
         
-        // 3. User preference (if authenticated) - prioritize user's saved language
-        if (auth()->check() && auth()->user()->language) {
-            return auth()->user()->language;
-        }
-        
-        // 4. Session
-        if (Session::has('locale')) {
-            return Session::get('locale');
-        }
-        
-        // 5. Browser detection
-        if ($request->hasHeader('Accept-Language')) {
-            $browserLang = substr($request->server('HTTP_ACCEPT_LANGUAGE'), 0, 2);
-            if (in_array($browserLang, config('app.available_locales'))) {
-                return $browserLang;
-            }
-        }
-        
-        return config('app.fallback_locale');
+        return null;
+    }
+
+    /**
+     * Check if the locale is supported
+     */
+    private function isValidLocale(string $locale): bool
+    {
+        $supportedLocales = config('app.supported_locales', ['en', 'fr']);
+        return in_array($locale, $supportedLocales);
     }
 }

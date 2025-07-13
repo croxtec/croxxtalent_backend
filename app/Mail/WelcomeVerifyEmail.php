@@ -9,6 +9,7 @@ use Illuminate\Queue\SerializesModels;
 use App\Models\User;
 use App\Models\Verification;
 
+
 class WelcomeVerifyEmail extends Mailable
 {
     use Queueable, SerializesModels;
@@ -34,7 +35,12 @@ class WelcomeVerifyEmail extends Mailable
      */
     public function build()
     {
-        $subject = 'Verify your account on ' . config('myapp.name');
+        $locale = $notifiable->locale ?? app()->getLocale();
+
+        $subject = __('notifications.welcome_verify_email.subject', [
+            'app_name' => config('myapp.name')
+        ], $locale);
+
         $emoji = "=E2=9A=A1";// Yellow hazard symbol
         //add emoji before the subject
         $subject = "=?UTF-8?Q?" . $emoji . quoted_printable_encode(' ' . $subject) . "?=";
@@ -43,6 +49,7 @@ class WelcomeVerifyEmail extends Mailable
                     ->view('api.emails.welcome_verify_email')
                     ->text('api.emails.welcome_verify_email_plain')
                     ->with([
+                        'locale' => $locale,
                         'name' => $this->user->name,
                         'email' => $this->verification->sent_to,
                         'verification_token' => $this->verification->token,

@@ -23,7 +23,6 @@ class WelcomeEmployee extends Mailable
     public $tries = 3;  // Number of retry attempts
     public $backoff = 10;  // Delay between retries (in seconds)
 
-
     /**
      * Create a new message instance.
      *
@@ -36,27 +35,26 @@ class WelcomeEmployee extends Mailable
         $this->verification = $verification;
     }
 
-       /**
+    /**
      * Build the message.
      *
      * @return $this
      */
     public function build()
     {
+        $locale = $notifiable->locale ?? app()->getLocale();
         $isTalent = $this->employee->talent;
-        $subject = 'Welcome To ' . $this->employer->company_name;
         $emoji = "=E2=9A=A1"; // Yellow hazard symbol
-
-        // Customize the subject based on employee type
-        if ($isTalent) {
-            $subject = "Exciting Opportunities Await You at " . $this->employer->company_name;
-        } else {
-            $subject = "Welcome to " . $this->employer->company_name . "! We're Glad to Have You";
-        }
-
+    
+        // Get localized subject
+        $subjectKey = $isTalent ? 'welcome_employee.talent_subject' : 'welcome_employee.employee_subject';
+        $subject = __("notifications.$subjectKey", [
+            'company_name' => $this->employer->company_name
+        ], $locale);
+    
         // Add emoji before the subject
         $subject = "=?UTF-8?Q?" . $emoji . quoted_printable_encode(' ' . $subject) . "?=";
-
+    
         return $this->subject($subject)
                     ->view('api.emails.welcome_employee_email')
                     ->text('api.emails.welcome_employee_email_plain')
@@ -67,6 +65,8 @@ class WelcomeEmployee extends Mailable
                         'email' => $this->employee->email,
                         'verification_token' => $this->verification->token,
                         'verification_url' => route('api.links.verifications.verify_employee', ['token' => $this->verification->token]),
+                        'locale' => $locale,
                     ]);
     }
 }
+
