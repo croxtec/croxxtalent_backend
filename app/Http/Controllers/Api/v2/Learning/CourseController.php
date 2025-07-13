@@ -15,6 +15,7 @@ use App\Services\OpenAIService;
 use App\Models\Training\CroxxLesson;
 use Carbon\Carbon;
 use App\Traits\ApiResponseTrait;
+use Illuminate\Http\Response;
 
 class CourseController extends Controller
 {

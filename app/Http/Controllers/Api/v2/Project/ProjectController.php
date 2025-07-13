@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Helpers\ProjectNotificationHelper;
 use App\Traits\ApiResponseTrait;
-use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Http\Response;
 
 class ProjectController extends Controller
 {

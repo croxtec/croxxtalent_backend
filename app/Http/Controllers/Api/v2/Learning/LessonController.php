@@ -13,6 +13,7 @@ use Cloudinary\Cloudinary;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use App\Traits\ApiResponseTrait;
+use Illuminate\Http\Response;
 
 class LessonController extends Controller
 {

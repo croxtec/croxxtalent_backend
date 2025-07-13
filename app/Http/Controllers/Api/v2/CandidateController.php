@@ -15,6 +15,7 @@ use App\Models\AppliedJob;
 use App\Models\Campaign;
 use App\Notifications\JobInvitationNotification;
 use App\Traits\ApiResponseTrait;
+use Illuminate\Http\Response;
 
 class CandidateController extends Controller
 {

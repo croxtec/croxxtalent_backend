@@ -11,6 +11,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Traits\ApiResponseTrait;
+use Illuminate\Http\Response;
 
 class LessonResourceController extends Controller
 {

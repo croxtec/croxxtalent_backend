@@ -19,6 +19,7 @@ use App\Models\TrackEmployerOnboarding;
 use App\Services\OpenAIService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Response;
 
 class EmployerCompetencyController extends Controller
 {
