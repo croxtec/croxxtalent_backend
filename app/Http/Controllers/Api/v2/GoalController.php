@@ -193,6 +193,7 @@ class GoalController extends Controller
         $period = Carbon::createFromFormat('Y-m-d H:i', $validatedData['period']);
         $reminder = $validatedData['reminder'];
         $reminderOffset = $reminderOffsets[$reminder];
+        $validatedData['status'] = 'pending';
         $validatedData['reminder_date'] = $period->copy()->modify($reminderOffset);
 
          try {
@@ -285,7 +286,7 @@ class GoalController extends Controller
         $goals = Goal::where('employee_id', $employee->id)
                         ->where('employer_id', $employee->employer_id)
                         ->with(['supervisor'])
-                        ->get();
+                        ->latest()->get();
 
 
         return response()->json([
@@ -317,12 +318,11 @@ class GoalController extends Controller
             }
 
             // Verify the user is the employee assigned to this goal
-            $employee = Employee::where('user_id', $user->id)->first();
+            $employee = Employee::where('id', $user->default_company_id)->first();
             if (!$employee || $goal->employee_id !== $employee->id) {
                 return $this->errorResponse('unauthorized', [], 403);
             }
-
-            // Can only submit if status is pending
+            
             if ($goal->status !== 'pending') {
                 return $this->errorResponse('goal.already_submitted', [], 400);
             }
@@ -368,7 +368,7 @@ class GoalController extends Controller
             $goal = Goal::findOrFail($id);
 
             // Verify the user is the supervisor
-            $supervisor = Employee::where('user_id', $user->id)->first();
+            $supervisor = Employee::where('id', $user->default_company_id)->first();
             if (!$supervisor || $goal->supervisor_id !== $supervisor->id) {
                 return $this->errorResponse('unauthorized', [], 403);
             }
@@ -524,7 +524,7 @@ class GoalController extends Controller
     public function pendingEmployeeGoals(Request $request)
     {
         $user = $request->user();
-        $employee = Employee::where('user_id', $user->id)->first();
+        $employee = Employee::where('id', $user->default_company_id)->first();
 
         if (!$employee) {
             return $this->errorResponse('employee.not_found', [], 404);
@@ -547,7 +547,7 @@ class GoalController extends Controller
     public function pendingSupervisorReview(Request $request)
     {
         $user = $request->user();
-        $supervisor = Employee::where('user_id', $user->id)->first();
+        $supervisor = Employee::where('id', $user->default_company_id)->first();
 
         if (!$supervisor) {
             return $this->errorResponse('supervisor.not_found', [], 404);

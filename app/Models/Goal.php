@@ -42,12 +42,14 @@ class Goal extends Model
     // Add relationships
     public function employee()
     {
-        return $this->belongsTo(Employee::class, 'employee_id');
+        return $this->belongsTo(Employee::class, 'employee_id')
+            ->select(['id','name', 'job_code_id', 'department_role_id', 'photo_url', 'code']);
     }
 
     public function supervisor()
     {
-        return $this->belongsTo(Employee::class, 'supervisor_id');
+        return $this->belongsTo(Employee::class, 'supervisor_id')
+            ->select(['id','name', 'job_code_id', 'department_role_id', 'photo_url', 'code']);
     }
 
     // Scopes for different status queries
