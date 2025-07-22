@@ -30,7 +30,7 @@ return [
         'not_found' => 'Goal not found',
         'create_error' => 'Could not create goal',
         'update_error' => 'Could not update goal',
-
+        'invalid_update_method' => 'Company goals must use the submit/review workflow'
     ],
 
     'job_invitation' => [

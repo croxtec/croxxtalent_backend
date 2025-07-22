@@ -181,4 +181,41 @@ return [
         'security_warning' => 'Didn\'t do this?',
         'security_action' => 'Be sure to reset your password right away.',
     ],
+
+    'employee_goal_submission' => [
+        'subject' => 'Goal Submitted for Review',
+        'email_title' => 'Goal Submission Review',
+        'greeting' => 'Hello :name,',
+        'message' => ':employee_name has submitted a goal for your review.<br><strong>Goal:</strong> :goal_title<br><strong>Employee Assessment:</strong> :status',
+        'employee_comment' => 'Employee Comment',
+        'instruction' => 'Please review and provide your feedback on this goal submission.',
+        'button_text' => 'Review Goal',
+        'database_message' => ':employee_name submitted ":goal_title" for review (marked as :status)',
+    ],
+    
+    'supervisor_goal_review' => [
+        'subject' => 'Goal Review Completed',
+        'email_title' => 'Goal Review Result',
+        'greeting' => 'Hello :name,',
+        'message' => 'Your supervisor :supervisor_name has reviewed your goal submission for ":goal_title".',
+        'your_assessment' => 'Your Assessment',
+        'supervisor_decision' => 'Supervisor Decision',
+        'supervisor_comment' => 'Supervisor Feedback',
+        'instruction' => 'You can view the complete goal details and feedback using the button below.',
+        'button_text' => 'View Goal Details',
+        'database_message' => ':supervisor_name :action your goal ":goal_title"',
+        'actions' => [
+            'approved' => 'approved',
+            'modified' => 'reviewed and modified'
+        ]
+    ],
+    
+    'supervisor_goal' => [
+        'subject' => 'New Goal Assignment',
+        'greeting' => 'Hello :name,',
+        'message' => 'Your supervisor :supervisor_name has assigned you a new goal:<br><strong>:goal_title</strong>',
+        'instruction' => 'Please review your new goal and start working towards achieving it.',
+        'button_text' => 'View Goal',
+        'database_message' => ':supervisor_name assigned you a new goal: :goal_title',
+    ],
 ];

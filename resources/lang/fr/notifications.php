@@ -180,4 +180,41 @@ return [
         'security_warning' => 'Vous n\'êtes pas à l\'origine de cette action ?',
         'security_action' => 'Nous vous recommandons de réinitialiser immédiatement votre mot de passe.',
     ],
+
+    'employee_goal_submission' => [
+        'subject' => 'Objectif soumis pour examen',
+        'email_title' => 'Examen de soumission d\'objectif',
+        'greeting' => 'Bonjour :name,',
+        'message' => ':employee_name a soumis un objectif pour votre examen.<br><strong>Objectif:</strong> :goal_title<br><strong>Évaluation de l\'employé:</strong> :status',
+        'employee_comment' => 'Commentaire de l\'employé',
+        'instruction' => 'Veuillez examiner et fournir vos commentaires sur cette soumission d\'objectif.',
+        'button_text' => 'Examiner l\'objectif',
+        'database_message' => ':employee_name a soumis ":goal_title" pour examen (marqué comme :status)',
+    ],
+    
+    'supervisor_goal_review' => [
+        'subject' => 'Examen d\'objectif terminé',
+        'email_title' => 'Résultat de l\'examen d\'objectif',
+        'greeting' => 'Bonjour :name,',
+        'message' => 'Votre superviseur :supervisor_name a examiné votre soumission d\'objectif pour ":goal_title".',
+        'your_assessment' => 'Votre évaluation',
+        'supervisor_decision' => 'Décision du superviseur',
+        'supervisor_comment' => 'Commentaires du superviseur',
+        'instruction' => 'Vous pouvez consulter les détails complets de l\'objectif et les commentaires en utilisant le bouton ci-dessous.',
+        'button_text' => 'Voir les détails de l\'objectif',
+        'database_message' => ':supervisor_name a :action votre objectif ":goal_title"',
+        'actions' => [
+            'approved' => 'approuvé',
+            'modified' => 'examiné et modifié'
+        ]
+    ],
+    
+    'supervisor_goal' => [
+        'subject' => 'Nouvelle attribution d\'objectif',
+        'greeting' => 'Bonjour :name,',
+        'message' => 'Votre superviseur :supervisor_name vous a attribué un nouvel objectif:<br><strong>:goal_title</strong>',
+        'instruction' => 'Veuillez examiner votre nouvel objectif et commencer à travailler pour l\'atteindre.',
+        'button_text' => 'Voir l\'objectif',
+        'database_message' => ':supervisor_name vous a attribué un nouvel objectif: :goal_title',
+    ],
 ];
