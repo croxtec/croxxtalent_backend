@@ -19,12 +19,12 @@ Route::middleware('auth:sanctum')->group( function () {
     Route::patch('assessments/{id}/talent/publish', 'Api\v2\Operations\EmployeeAssessmentController@publishTalentAnswers');//->name('assessments.index')
 
     // Manage Assesment
-    Route::get('assessments/{id}/assigned/employees', 'Api\v2\ScoresheetController@employeeList');//->name('assessments.index');
-    Route::get('assessments/{code}/result/{talent}', 'Api\v2\ScoresheetController@assessmentResult');//->name('assessments.index');
-    Route::get('assessments/{code}/feedback/{talent}', 'Api\v2\ScoresheetController@viewAssessmentFeedback');//->name('assessments.index');
-    Route::post('assessments/{id}/supervisor/scoresheet', 'Api\v2\ScoresheetController@gradeAssessmentScoreSheet');//->name('assesments.index');
-    Route::patch('assessments/{id}/supervisor/feedback', 'Api\v2\ScoresheetController@publishSupervisorFeedback');//->name('assesments.index');
-    Route::patch('assessments/{id}/peer-review/feedback', 'Api\v2\ScoresheetController@publishPeerReviewAssessment');//->name('assesments.index');
+    Route::get('assessments/{id}/assigned/employees', 'Api\v2\Operations\ScoresheetController@employeeList');//->name('assessments.index');
+    Route::get('assessments/{code}/result/{talent}', 'Api\v2\Operations\ScoresheetController@assessmentResult');//->name('assessments.index');
+    Route::get('assessments/{code}/feedback/{talent}', 'Api\v2\Operations\ScoresheetController@viewAssessmentFeedback');//->name('assessments.index');
+    Route::post('assessments/{id}/supervisor/scoresheet', 'Api\v2\Operations\ScoresheetController@gradeAssessmentScoreSheet');//->name('assesments.index');
+    Route::post('assessments/{id}/supervisor/feedback', 'Api\v2\Operations\ScoresheetController@publishSupervisorFeedback');//->name('assesments.index');
+    Route::post('assessments/{id}/peer-review/feedback', 'Api\v2\Operations\ScoresheetController@publishPeerReviewAssessment');//->name('assesments.index');
 
     // Assesment Questions
     Route::post('assessments/questions/generate', 'Api\v2\Operations\AssessmentQuestionController@generate');//->name('assessments.index');

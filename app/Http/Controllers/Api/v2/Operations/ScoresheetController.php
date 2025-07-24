@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v2;
+namespace App\Http\Controllers\Api\v2\Operations;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -19,9 +19,18 @@ use App\Models\Assessment\PeerReview;
 use App\Notifications\AssessmentFeedbackNotification;
 use App\Models\Assessment\TalentAssessmentSummary;
 use App\Models\Training\CroxxTraining;
+use App\Services\MediaService;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+
 
 class ScoresheetController extends Controller
 {
+    public function __construct(MediaService $mediaService)
+    {
+        $this->mediaService = $mediaService;
+    }
+
     public function employeeList(Request $request, $id) {
         $user = $request->user();
 
@@ -240,10 +249,14 @@ class ScoresheetController extends Controller
 
         $assessment->load(['questions' => function ($query) use ($assessment, $talentField, $talentId) {
             $query->with([
+                
                 'response' => fn($q) => $q->where([
                     $talentField => $talentId,
                     'assessment_id' => $assessment->id
-                ]),
+                ])->with(['media' => function ($q) {
+                    $q->select('id', 'file_url','file_name', 'file_size', 'file_type', 'mediable_type', 'mediable_id');
+                }]),
+
                 'result' => fn($q) => $q->when($assessment->category != 'competency_evaluation',
                     fn($q) => $q->where([
                         $talentField => $talentId,
@@ -295,7 +308,11 @@ class ScoresheetController extends Controller
                 'assessment_id' => $assessment->id,
                 'employee_id' => $employee->id,
                 'employer_user_id' => $assessment->employer_id
-            ])->first();
+            ])
+            ->with(['media' => function ($q) {
+                $q->select('id', 'file_url','file_name', 'file_size', 'file_type', 'mediable_type', 'mediable_id');
+            }])
+            ->first();
 
             $resources = CroxxTraining::join('employee_learning_paths', 'croxx_trainings.id', '=', 'employee_learning_paths.training_id')
                             ->where('employee_learning_paths.employee_id', $employee?->id)
@@ -447,12 +464,16 @@ class ScoresheetController extends Controller
         $user = $request->user();
         $assessment = $this->resolveAssessment($id);
 
+
         $validator = Validator::make($request->all(), [
             'employee_code' => 'required',
             'feedback' => 'required|string|min:10|max:512',
             'goal_id' => 'nullable|exists:goals,id',
             'learning_path' => 'nullable|array',
-            'learning_path.*' => 'nullable|integer'
+            'learning_path.*' => 'nullable|integer',
+              // Add media validation rules
+            'files.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,gif|max:10240', // 10MB max per file
+            'media_descriptions.*' => 'nullable|string|max:255', // Optional descriptions for each file
         ]);
 
         if ($validator->fails()) {
@@ -460,7 +481,9 @@ class ScoresheetController extends Controller
         }
 
         try {
+
             $employee = Employee::where('code', $request->employee_code)->firstOrFail();
+
             $feedback = EmployerAssessmentFeedback::where([
                 'assessment_id' => $assessment->id,
                 'employee_id' => $employee->id,
@@ -468,6 +491,7 @@ class ScoresheetController extends Controller
             ])->firstOrFail();
 
             if(!$feedback->supervisor_id) {
+
                 if($request->learning_path) {
                     foreach ($request->learning_path as $path) {
                         EmployeeLearningPath::firstOrCreate([
@@ -486,13 +510,19 @@ class ScoresheetController extends Controller
                     'percentage' => $feedback->graded_score
                 ]);
 
+                 // Update feedback record
                 $feedback->summary = $message;
                 $feedback->supervisor_id = $user->default_company_id;
                 $feedback->supervisor_feedback = $request->feedback;
                 $feedback->goal_id = $request->goal_id;
                 $feedback->save();
 
-                Notification::send($employee->talent, new AssessmentFeedbackNotification($assessment, $employee));
+                // Handle media uploads for supervisor feedback
+                $uploadedMedia = $this->handleSupervisorFeedbackMedia($request, $feedback, $user, $employee, $assessment);
+
+                // Send notification
+                // Notification::send($employee->talent, new AssessmentFeedbackNotification($assessment, $employee));
+
 
                 return $this->successResponse(
                     $feedback,
@@ -505,6 +535,11 @@ class ScoresheetController extends Controller
         } catch (ModelNotFoundException $e) {
             return $this->notFoundResponse('services.assessment.not_found');
         } catch (\Exception $e) {
+            \Log::error('Failed to publish supervisor feedback', [
+                'assessment_id' => $assessment->id,
+                'employee_code' => $request->employee_code,
+                'error' => $e->getMessage()
+            ]);
             return $this->errorResponse(
                 'services.supervisor_feedback.publish_error',
                 ['error' => $e->getMessage()]
@@ -520,5 +555,64 @@ class ScoresheetController extends Controller
         if ($percentage >= 45) return 'average';
         if ($percentage >= 30) return 'below_average';
         return 'poor';
+    }
+
+    protected function handleSupervisorFeedbackMedia($request, $feedback, $user, $employee, $assessment)
+    {
+        $uploadedMedia = collect();
+
+        // if (!$request->hasFile('files')) {
+        //     return $uploadedMedia;
+        // }
+
+        if (!$request->hasFile('files.*')) {
+            return $uploadedMedia;
+        }
+
+        $files = $request->file('files');
+        $descriptions = $request->input('media_descriptions', []);
+        
+        // Prepare upload options
+        $uploadOptions = [
+            'user_id' => $user->id,
+            'employer_id' => $assessment->employer_id,
+            'employee_id' => $employee->id,
+        ];
+
+        $collection = "supervisor_feedback_{$assessment->id}";
+
+        try {
+            // Handle multiple files with descriptions
+            foreach ($files as $index => $file) {
+                $description = $descriptions[$index] ?? null;
+                
+                // Add description to metadata if provided
+                $fileUploadOptions = $uploadOptions;
+                if ($description) {
+                    $fileUploadOptions['metadata'] = ['description' => $description];
+                }
+
+                $media = $feedback->addMedia($file, $collection, $fileUploadOptions);
+                $uploadedMedia->push($media);
+
+                Log::info('Supervisor feedback media uploaded', [
+                    'feedback_id' => $feedback->id,
+                    'assessment_id' => $assessment->id,
+                    'file_name' => $file->getClientOriginalName(),
+                    'supervisor_id' => $user->id,
+                    'employee_id' => $employee->id,
+                    'description' => $description
+                ]);
+            }
+
+        } catch (Exception $e) {
+            Log::error('Failed to upload supervisor feedback media', [
+                'feedback_id' => $feedback->id,
+                'assessment_id' => $assessment->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        return $uploadedMedia;
     }
 }

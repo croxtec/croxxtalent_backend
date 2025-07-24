@@ -322,7 +322,7 @@ class GoalController extends Controller
             if (!$employee || $goal->employee_id !== $employee->id) {
                 return $this->errorResponse('unauthorized', [], 403);
             }
-            
+
             if ($goal->status !== 'pending') {
                 return $this->errorResponse('goal.already_submitted', [], 400);
             }
@@ -360,7 +360,7 @@ class GoalController extends Controller
         $request->validate([
             'supervisor_status' => 'required|in:done,missed',
             'supervisor_comment' => 'nullable|string|max:1000',
-            'action' => 'required|in:approve,reject', // approve employee assessment or override
+            // 'action' => 'required|in:approve,reject', // approve employee assessment or override
         ]);
 
         try {

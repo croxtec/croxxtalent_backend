@@ -8,8 +8,8 @@ use Illuminate\Http\Request;
 use App\Models\Employee;
 use App\Models\Supervisor;
 use App\Models\Goal;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use Cloudinary\Cloudinary;
 use Exception;
@@ -161,7 +161,6 @@ class TalentCompanyController extends Controller
                 } else {
                     $employee = Employee::where('code', $id)->where('employer_id', $myinfo->employer_id)->first();
                 }
-
 
                 $employee->department;
                 $employee->department_role;
