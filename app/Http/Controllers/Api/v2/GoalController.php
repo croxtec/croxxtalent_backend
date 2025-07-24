@@ -273,6 +273,8 @@ class GoalController extends Controller
     public function employee(Request $request, $code)
     {
         $user = $request->user();
+         $show = $request->input('show', "personal");
+        $per_page = $request->input('per_page', 12);
 
         $employee = Employee::where('code', $code)->firstOrFail();
 
@@ -286,7 +288,8 @@ class GoalController extends Controller
         $goals = Goal::where('employee_id', $employee->id)
                         ->where('employer_id', $employee->employer_id)
                         ->with(['supervisor'])
-                        ->latest()->get();
+                        ->latest()
+                         ->paginate($per_page);
 
 
         return response()->json([

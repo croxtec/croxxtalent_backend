@@ -19,6 +19,10 @@ Route::middleware('auth:sanctum')->group( function () {
     Route::post('goals/{id}/supervisor-review', 'Api\v2\GoalController@supervisorReview');
     // Route::get('goals/pending-supervisor-review', [GoalController::class, 'pendingSupervisorReview']);
     
+    //Media uploads endpoints
+    Route::get('documents/company', 'Api\v2\MediaController@getCompanyDocuments');
+    Route::get('documents/employee/{code}', 'Api\v2\MediaController@getEmployeeDocuments');
+
 
     Route::resources([
         'goals' => 'Api\v2\GoalController',

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\v2;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\MediaService;
+use App\Models\Media;
+use App\Models\Employee;
 
 class MediaController extends Controller
 {
@@ -52,23 +54,47 @@ class MediaController extends Controller
         ]);
     }
 
-    public function getCompanyDocuments($employerId)
+    public function getCompanyDocuments(Request $request)
     {
-        $media = Media::forCompany($employerId)
-            ->with(['user', 'mediable'])
-            ->latest()
-            ->paginate(20);
+        $user = $request->user();
+        $per_page = $request->input('per_page', 10);
 
-        return response()->json($media);
+        $media = Media::forCompany($user->id)
+            ->forUser($user->id)
+            ->with([ 'mediable'])
+            ->latest()
+            ->paginate($per_page);
+
+          return response()->json([
+            'status' => true,
+            'message' => "",
+            'data' => $media
+        ], 200);
     }
 
-    public function getEmployeeDocuments($employeeId)
+    public function getEmployeeDocuments(Request $request, $code)
     {
-        $media = Media::forEmployee($employeeId)
-            ->with(['user', 'mediable'])
-            ->latest()
-            ->paginate(20);
+        $user = $request->user();
+        // $show = $request->input('show', "personal");
+        $per_page = $request->input('per_page', 10);
 
-        return response()->json($media);
+        $employee = Employee::where('code', $code)->firstOrFail();
+
+         if($user->type == 'talent'){
+           $validation_result = validateEmployeeAccess($user, $employee);
+            if ($validation_result !== true) {
+                return $validation_result;
+            }
+        }
+
+        $media = Media::forEmployee($employee->id)->forCompany($employee->employer_id)
+                    ->with(['mediable'])->latest()
+                    ->paginate($per_page);
+
+        return response()->json([
+            'status' => true,
+            'message' => "",
+            'data' => $media
+        ], 200);
     }
 }

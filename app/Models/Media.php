@@ -54,6 +54,12 @@ class Media extends Model
     }
 
     // Scopes for easy filtering
+    
+    public function scopeForUser($query, $userId)
+    {
+        return $query->where('user_id', $userId);
+    }
+
     public function scopeForCompany($query, $employerId)
     {
         return $query->where('employer_id', $employerId);
