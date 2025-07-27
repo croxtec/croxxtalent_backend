@@ -156,39 +156,67 @@ class CampaignController extends Controller
      * @param  string  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(CampaignRequest $request, $id)
+   public function update(CampaignRequest $request, $id)
     {
-        // Authorization is declared in the CampaignRequest
-        try{
-            // Retrieve the validated input data....
+        try {
             $validatedData = $request->validated();
             $campaign = Campaign::findOrFail($id);
-    
-            $skill_ids = $validatedData['skill_ids'];
-            $course_of_study_ids = $validatedData['course_of_study_ids'];
-            $language_ids = $validatedData['language_ids'];
-            unset($validatedData['skill_ids'], $validatedData['course_of_study_ids'], $validatedData['language_ids']);
-    
+            
+            // Check if campaign is published
+            $isPublished = $campaign->status === 'published' || 
+                        $campaign->is_published === true ||
+                        $campaign->published_at !== null;
+            
+            // Extract relationship data if present (only for draft campaigns)
+            $skill_ids = $validatedData['skill_ids'] ?? null;
+            $course_of_study_ids = $validatedData['course_of_study_ids'] ?? null;
+            $language_ids = $validatedData['language_ids'] ?? null;
+            
+            // Remove relationship fields from main update data
+            unset(
+                $validatedData['skill_ids'], 
+                $validatedData['course_of_study_ids'], 
+                $validatedData['language_ids']
+            );
+
+            // Update main campaign data
             $campaign->update($validatedData);
-    
-            // Update records to pivot table
-            // $campaign->skills()->sync($skill_ids);
-            $campaign->courseOfStudies()->sync($course_of_study_ids);
-            $campaign->languages()->sync($language_ids);
-    
+
+            // Update relationships only if not published (relationships are restricted)
+            if (!$isPublished) {
+                if ($skill_ids !== null) {
+                    $campaign->skills()->sync($skill_ids);
+                }
+                if ($course_of_study_ids !== null) {
+                    $campaign->courseOfStudies()->sync($course_of_study_ids);
+                }
+                if ($language_ids !== null) {
+                    $campaign->languages()->sync($language_ids);
+                }
+            }
+
+            // Log the update for audit trail
+            // $this->logCampaignUpdate($campaign, $request->all(), $isPublished);
+
             return $this->successResponse(
-                Campaign::find($campaign->id),
+                Campaign::with(['skills', 'courseOfStudies', 'languages'])->find($campaign->id),
                 'services.campaigns.updated'
             );
 
         } catch (\Exception $e) {
+            \Log::error('Campaign update failed: ' . $e->getMessage(), [
+                'campaign_id' => $id,
+                'data' => $request->all(),
+            ]);
+            
             return $this->errorResponse(
-                'services.campaigns.create_error',
+                'services.campaigns.update_error',
                 [],
                 Response::HTTP_BAD_REQUEST
             );
         }
     }
+
 
     /**
      * Archive the specified resource from active list.
@@ -203,7 +231,7 @@ class CampaignController extends Controller
         $this->authorize('delete', [Campaign::class, $campaign]);
 
         $campaign->archived_at = now();
-        $campaign->save();
+        $campaign->save(); 
 
         return $this->successResponse(
             Campaign::find($campaign->id),
@@ -225,6 +253,7 @@ class CampaignController extends Controller
 
         if ($campaign->is_published != true) {
             $campaign->is_published = true;
+            $campaign->published_at = now();
             $campaign->save();
             
             // Send Push notification
@@ -265,6 +294,7 @@ class CampaignController extends Controller
         $this->authorize('update', [Campaign::class, $campaign]);
 
         $campaign->is_published = false;
+        $campaign->archived_at = null;
         $campaign->save();
 
         return $this->successResponse(
