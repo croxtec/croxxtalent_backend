@@ -51,7 +51,9 @@ class CampaignController extends Controller
                 }
             }
         })
-        ->where('user_id', $user->id) //Add if user is an employer
+        ->when($user->type == 'employer', function ($query) use ($user) {
+            $query->where('user_id', $user->id);
+        })
         ->when($request->start_date && $request->end_date, function ($query) use ($request) {
             $startDate = Carbon::parse($request->start_date);
             $endDate = Carbon::parse($request->end_date);
