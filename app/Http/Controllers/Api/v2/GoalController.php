@@ -164,7 +164,6 @@ class GoalController extends Controller
 
     }
 
-
     /**
      * Store a newly created resource in storage.
      *
@@ -192,9 +191,9 @@ class GoalController extends Controller
         ];
 
         $period = Carbon::createFromFormat('Y-m-d H:i', $validatedData['period']);
-
         $reminder = $validatedData['reminder'];
         $reminderOffset = $reminderOffsets[$reminder];
+        $validatedData['status'] = 'pending';
         $validatedData['reminder_date'] = $period->copy()->modify($reminderOffset);
 
          try {
@@ -204,8 +203,10 @@ class GoalController extends Controller
             }
 
             if($validatedData['type'] == 'supervisor'){
+                // Set the current company and employee based on the supervisor_code and employee_code
                 $current_company = Employee::where('id', $user->default_company_id)
                                 ->where('user_id', $user->id)->with('supervisor')->first();
+            
                 $employee = Employee::where('code', $validatedData['employee_code'])->first();
 
                 $validatedData['supervisor_id'] = $current_company->id;
@@ -231,7 +232,6 @@ class GoalController extends Controller
                 ['error' => $e->getMessage()]
             );
         }
-
     }
 
 
@@ -273,13 +273,13 @@ class GoalController extends Controller
     public function employee(Request $request, $code)
     {
         $user = $request->user();
+         $show = $request->input('show', "personal");
+        $per_page = $request->input('per_page', 12);
 
         $employee = Employee::where('code', $code)->firstOrFail();
 
         if($user->type == 'talent'){
            $validation_result = validateEmployeeAccess($user, $employee);
-
-             // If validation fails, return the response
             if ($validation_result !== true) {
                 return $validation_result;
             }
@@ -287,7 +287,9 @@ class GoalController extends Controller
 
         $goals = Goal::where('employee_id', $employee->id)
                         ->where('employer_id', $employee->employer_id)
-                        ->get();
+                        ->with(['supervisor'])
+                        ->latest()
+                         ->paginate($per_page);
 
 
         return response()->json([
@@ -297,25 +299,156 @@ class GoalController extends Controller
         ], 200);
     }
 
+     // Employee self-assessment - Only for company/supervisor goals
+    public function employeeSubmit(Request $request, $id)
+    {
+        $request->validate([
+            'employee_status' => 'required|in:done,missed',
+            'employee_comment' => 'nullable|string|max:1000',
+        ]);
+
+        try {
+            $user = $request->user();
+            $goal = Goal::findOrFail($id);
+
+            // Only allow employee submit for supervisor/company goals
+            if($goal->type === 'career') {
+                return $this->errorResponse(
+                    'goal.invalid_submit_method',
+                    ['message' => 'Career goals should use the update method'],
+                    400
+                );
+            }
+
+            // Verify the user is the employee assigned to this goal
+            $employee = Employee::where('id', $user->default_company_id)->first();
+            if (!$employee || $goal->employee_id !== $employee->id) {
+                return $this->errorResponse('unauthorized', [], 403);
+            }
+
+            if ($goal->status !== 'pending') {
+                return $this->errorResponse('goal.already_submitted', [], 400);
+            }
+
+            $goal->update([
+                'employee_status' => $request->employee_status,
+                'employee_comment' => $request->employee_comment,
+                'status' => 'employee_submitted',
+                'employee_submitted_at' => now(),
+            ]);
+
+            // Notify supervisor
+            if ($goal->supervisor && $goal->supervisor->talent) {
+                $goal->supervisor->talent->notify(new EmployeeGoalSubmissionNotification($goal, $employee));
+            }
+
+            return $this->successResponse(
+                Goal::find($goal->id),
+                'goal.employee_submitted'
+            );
+
+        } catch (ModelNotFoundException $e) {
+            return $this->notFoundResponse('goal.not_found');
+        } catch (\Exception $e) {
+            return $this->errorResponse(
+                'goal.submission_error',
+                ['error' => $e->getMessage()]
+            );
+        }
+    }
+
+    // Updated supervisor review method
+    public function supervisorReview(Request $request, $id)
+    {
+        $request->validate([
+            'supervisor_status' => 'required|in:done,missed',
+            'supervisor_comment' => 'nullable|string|max:1000',
+            // 'action' => 'required|in:approve,reject', // approve employee assessment or override
+        ]);
+
+        try {
+            $user = $request->user();
+            $goal = Goal::findOrFail($id);
+
+            // Verify the user is the supervisor
+            $supervisor = Employee::where('id', $user->default_company_id)->first();
+            if (!$supervisor || $goal->supervisor_id !== $supervisor->id) {
+                return $this->errorResponse('unauthorized', [], 403);
+            }
+
+            // Can only review if employee has submitted
+            if ($goal->status !== 'employee_submitted') {
+                return $this->errorResponse('goal.not_ready_for_review', [], 400);
+            }
+
+            $finalStatus = $request->supervisor_status;
+            
+            $goal->update([
+                'supervisor_status' => $request->supervisor_status,
+                'supervisor_comment' => $request->supervisor_comment,
+                'status' => $finalStatus,
+                'supervisor_reviewed_at' => now(),
+            ]);
+
+            // Notify employee of supervisor's decision
+            if ($goal->employee && $goal->employee->talent) {
+                $goal->employee->talent->notify(new SupervisorReviewNotification($goal, $supervisor));
+            }
+
+            return $this->successResponse(
+                Goal::find($goal->id),
+                'goal.supervisor_reviewed'
+            );
+
+        } catch (ModelNotFoundException $e) {
+            return $this->notFoundResponse('goal.not_found');
+        } catch (\Exception $e) {
+            return $this->errorResponse(
+                'goal.review_error',
+                ['error' => $e->getMessage()]
+            );
+        }
+    }
 
     /**
-     * Update the specified resource in storage.
+     * Update :  Only for career goals (personal goals)
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-   
+    
     public function update(GoalRequest $request, $id)
     {
         try {
-            $employer = $request->user();
+            $user = $request->user();
             $validatedData = $request->validated();
             $goal = Goal::findOrfail($id);
 
+            // Only allow direct updates for career goals
+            if($goal->type !== 'career') {
+                return $this->errorResponse(
+                    'talent.goals.invalid_update_method',
+                    ['message' => 'Company goals must use the submit/review workflow'],
+                    400
+                );
+            }
+
+            // Verify user owns this career goal
+            if($goal->user_id !== $user->id) {
+                return $this->errorResponse('unauthorized', [], 403);
+            }
+
+            // Only update if status is pending
             if($goal->status === 'pending'){
                 $goal->status = $validatedData['status'];
                 $goal->save();
+            } else {
+                return $this->errorResponse(
+                    'goal.already_completed',
+                    ['message' => 'Goal has already been marked as completed'],
+                    400
+                );
             }
 
             return $this->successResponse(
@@ -332,6 +465,8 @@ class GoalController extends Controller
             );
         }
     }
+
+
 
     /**
      * Archive the specified resource from active list.
@@ -386,5 +521,50 @@ class GoalController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+      // New method to get goals pending employee submission
+    public function pendingEmployeeGoals(Request $request)
+    {
+        $user = $request->user();
+        $employee = Employee::where('id', $user->default_company_id)->first();
+
+        if (!$employee) {
+            return $this->errorResponse('employee.not_found', [], 404);
+        }
+
+        $goals = Goal::where('employee_id', $employee->id)
+                    ->where('status', 'pending')
+                    ->where('period', '<=', now()) // Only show goals that are due
+                    ->with(['supervisor'])
+                    ->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => "",
+            'data' => $goals
+        ], 200);
+    }
+
+    // New method to get goals pending supervisor review
+    public function pendingSupervisorReview(Request $request)
+    {
+        $user = $request->user();
+        $supervisor = Employee::where('id', $user->default_company_id)->first();
+
+        if (!$supervisor) {
+            return $this->errorResponse('supervisor.not_found', [], 404);
+        }
+
+        $goals = Goal::where('supervisor_id', $supervisor->id)
+                    ->where('status', 'employee_submitted')
+                    ->with(['employee'])
+                    ->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => "",
+            'data' => $goals
+        ], 200);
     }
 }

@@ -78,6 +78,27 @@ class Campaign extends Model
         'user_name', 'user_display_name',
     ];
 
+    // protected $appends = [
+    //     'photo_url', 'currency_symbol'
+    // ];
+
+    /**
+     * Heavy appends - only load when specifically needed
+     */
+    protected $heavyAppends = [
+        'industry_name', 'job_title_name', 'minimum_degree_name', 'country_name', 'state_name',
+        'department_name', 'user_name', 'user_display_name', 'total_applications'
+    ];
+
+    /**
+     * Relationship appends - load separately when needed
+     */
+    protected $relationshipAppends = [
+        'skill_ids', 'skills', 'course_of_study_ids', 'course_of_studies',
+        'language_ids', 'languages'
+    ];
+
+
     public function getPhotoUrlAttribute()
     {
         return $this->photo ? cloud_asset($this->photo) : null;
@@ -121,6 +142,45 @@ class Campaign extends Model
         return $this->user_id ? $this->user->display_name : null;
     }
 
+
+    /**
+     * Scope for basic campaign data (public view)
+     */
+    public function scopeForPublicView($query)
+    {
+        return $query->select([
+            'id', 'code', 'title', 'job_title', 'summary', 'description',
+            'experience_level', 'work_site', 'work_type', 'city', 'expire_at',
+            'currency_code', 'min_salary', 'max_salary', 'number_of_positions',
+            'years_of_experience', 'is_confidential_salary', 'photo',
+            'industry_id', 'department_id', 'minimum_degree_id', 'country_code', 'state_id', 'user_id'
+        ]);
+    }
+
+    /**
+     * Scope for employer dashboard view
+     */
+    public function scopeForEmployerDashboard($query)
+    {
+        return $query->select([
+            'id', 'code', 'title', 'expire_at', 'created_at', 'is_published'
+           ])->withCount('applications');
+    }
+
+     public function loadHeavyAppends()
+    {
+        $this->appends = array_merge($this->appends, $this->heavyAppends);
+        return $this;
+    }
+
+    /**
+     * Load relationship appends when needed
+     */
+    public function loadRelationshipAppends()
+    {
+        $this->appends = array_merge($this->appends, $this->relationshipAppends);
+        return $this;
+    }
 
     // Industry relationships
 
@@ -310,6 +370,22 @@ class Campaign extends Model
     public function getTotalApplicationsAttribute()
     {
         return $this->applications()->count();
+    }
+
+     /**
+     * Method to get applications summary without loading full data
+     */
+    public function getApplicationsSummary()
+    {
+        return $this->applications()
+            ->selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN rating = 0 THEN 1 ELSE 0 END) as applied,
+                SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as qualified,
+                SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as unqualified,
+                SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) as invited
+            ')
+            ->first();
     }
 
 }

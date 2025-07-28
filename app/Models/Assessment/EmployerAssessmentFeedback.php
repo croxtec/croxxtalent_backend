@@ -4,18 +4,19 @@ namespace App\Models\Assessment;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasMedia;
 
 class EmployerAssessmentFeedback extends Model
 {
-    use HasFactory;
+    use HasFactory, HasMedia;
 
     protected $fillable = [
-          'assessment_id',
-          'employee_id',
-          'employer_user_id',
-          'supervisor_id',
-          'time_taken',
-          'graded_score'
+        'assessment_id',
+        'employee_id',
+        'employer_user_id',
+        'supervisor_id',
+        'time_taken',
+        'graded_score'
     ];
 
     protected $hidden = [
@@ -23,6 +24,8 @@ class EmployerAssessmentFeedback extends Model
     ];
 
     protected $appends = ['estimated_time'];
+
+    
 
     public function employee(){
         return $this->belongsTo('App\Models\Employee', 'employee_id', 'id')
@@ -40,6 +43,11 @@ class EmployerAssessmentFeedback extends Model
     {
         return $this->belongsTo('App\Models\Assessment\CroxxAssessment', 'assessment_id', 'id')
                     ->select(['id','name','type','description','code']);
+    }
+
+    public function goal()
+    {
+        return $this->belongsTo(Goal::class, 'goal_id');
     }
 
     public function getEstimatedTimeAttribute()

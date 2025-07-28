@@ -20,4 +20,8 @@ class AssesmentScoreSheet extends Model
         'comment',
         'attachment'
     ];
+
+    
+
+
 }

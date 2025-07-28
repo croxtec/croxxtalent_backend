@@ -19,7 +19,7 @@ use Illuminate\Http\Response;
 
 class CourseController extends Controller
 {
-    use ApiResponseTrait;
+    // use ApiResponseTrait;
 
     protected $cloudinary;
     protected $openAIService;

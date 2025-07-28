@@ -64,13 +64,13 @@ class GoalRequest extends FormRequest
                 return [
                     'type' => 'required|in:career,supervisor',
                     'title' => 'required|max:50',
-                    'supervisor_code' => [
-                     Rule::requiredIf(function () {
-                            return in_array(request()->input('type'), ['supervisor']);
-                        }),
-                        'nullable',
-                        'exists:employees,code'
-                    ],
+                    // 'supervisor_code' => [
+                    //  Rule::requiredIf(function () {
+                    //         return in_array(request()->input('type'), ['supervisor']);
+                    //     }),
+                    //     'nullable',
+                    //     'exists:employees,code'
+                    // ],
                     'employee_code' => [
                         Rule::requiredIf(function () {
                             return in_array(request()->input('type'), ['supervisor']);

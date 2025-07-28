@@ -11,12 +11,11 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Traits\ApiResponseTrait;
-use Illuminate\Http\Response;
 
 class LessonResourceController extends Controller
 {
 
-    use ApiResponseTrait;
+    // use ApiResponseTrait;
     protected $cloudinary;
 
     public function __construct(Cloudinary $cloudinary)
@@ -70,7 +69,7 @@ class LessonResourceController extends Controller
                     'file_size' => $file->getSize(),
                     'file_url' => $uploadResult['secure_url']
                 ]);
-                info(['Lesson Created', $resource]);
+                // info(['Lesson Created', $resource]);
                 $resources[] = $resource;
             }
 

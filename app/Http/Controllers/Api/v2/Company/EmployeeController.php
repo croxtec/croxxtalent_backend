@@ -27,7 +27,7 @@ class EmployeeController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    use ApiResponseTrait;
+    // // use ApiResponseTrait;
 
     public function index(Request $request)
     {
