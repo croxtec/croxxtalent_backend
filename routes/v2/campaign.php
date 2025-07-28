@@ -16,6 +16,11 @@ Route::middleware('auth:sanctum')->group( function () {
     // Route::post('campaigns', 'Api\v2\CampaignController@store')->name('campaigns.store');
     // Route::put('campaigns/{id}', 'Api\v2\CampaignController@update')->name('campaigns.update');
     // Route::delete('campaigns/{id}', 'Api\v2\CampaignController@destroy')->name('campaigns.destroy');
+
+    Route::get('campaigns/{id}/candidates', 'Api\v2\CampaignController@candidates')->name('campaigns.candidates');
+    Route::get('campaigns/{id}/summary', 'Api\v2\CampaignController@summary')->name('campaigns.summary');
+    Route::get('campaigns/{id}/candidatesPaginated', 'Api\v2\CampaignController@candidatesPaginated')->name('campaigns.candidatesPaginated');
+
     Route::resources([
         'campaigns' => 'Api\v2\CampaignController',
     ]);

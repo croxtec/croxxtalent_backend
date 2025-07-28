@@ -4394,6 +4394,12 @@ class StateSeeder extends Seeder
 			[ 'country_code' => 'YT','name' => 'Pamanzi (Petite-Terre)','latitude' => '0.0000000','longitude' => '0.0000000','altitude' => '0.0' ]
 		];
 
+
+		$newEntry = [
+			[ 'country_code' => 'CI','name' => 'Abidjan','latitude' => '5.345317','longitude' => '-4.024429','altitude' => '0.0' ],
+			[ 'country_code' => 'CI','name' => 'Yamoussoukro','latitude' => '6.827623','longitude' => '-5.289343','altitude' => '0.0' ],
+		];
+
 		foreach ($data as $row) {
 			State::firstOrCreate(
 				['country_code' => $row['country_code'], 'name' => $row['name']], 
