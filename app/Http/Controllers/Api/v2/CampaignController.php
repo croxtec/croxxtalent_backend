@@ -17,7 +17,6 @@ use App\Traits\ApiResponseTrait;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
-
 class CampaignController extends Controller
 {
     // use ApiResponseTrait;
