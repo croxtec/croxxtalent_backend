@@ -225,23 +225,26 @@ class CroxxJobsController extends Controller
         try {
             $campaign = Campaign::where('id',$request->campaign_id)
                         ->where('is_published', 1)->firstOrFail();
+            
+            Log::info("Applying for campaign: {$campaign->title} by user: {$user->email}");
+            Log::info("Request data: ", $request->all());
 
             $appliedJob = AppliedJob::firstOrCreate($request->all());
 
-            $notification = new Notification();
-            $notification->id = Str::uuid();
-            $notification->type = 'CampaignApplication';
-            $notification->notifiable_id = $campaign->user_id;
-            $notification->notifiable_type = 'App\Models\User';
-            $notification->data = json_encode([
-                'action' => "/campaign/applications/{$request->campaign_id}",
-                'title' => __('talent.notifications.campaign_application_title'),
-                'message' => __('talent.notifications.campaign_application_message', [
-                    'title' => $campaign->title
-                ])
-            ]);
-            $notification->category = 'primary';
-            $notification->save();
+            // $notification = new Notification();
+            // $notification->id = Str::uuid();
+            // $notification->type = 'CampaignApplication';
+            // $notification->notifiable_id = $campaign->user_id;
+            // $notification->notifiable_type = 'App\Models\User';
+            // $notification->data = json_encode([
+            //     'action' => "/campaign/applications/{$request->campaign_id}",
+            //     'title' => __('talent.notifications.campaign_application_title'),
+            //     'message' => __('talent.notifications.campaign_application_message', [
+            //         'title' => $campaign->title
+            //     ])
+            // ]);
+            // $notification->category = 'primary';
+            // $notification->save();
 
             return $this->successResponse(
                 AppliedJob::find($appliedJob->id),
