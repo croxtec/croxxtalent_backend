@@ -34,13 +34,17 @@ class PasswordReset extends Mailable
      */
     public function build()
     {
-        return $this->subject('Password reset code')
+        $locale = $notifiable->locale ?? app()->getLocale();
+
+        return $this->subject(__('notifications.password_reset.subject', [], $locale))
                     ->view('api.emails.password_reset')
                     ->text('api.emails.password_reset_plain')
                     ->with([
                         'name' => $this->user->name,
                         'email' => $this->verification->sent_to,
                         'verification_token' => $this->verification->token,
+                        'locale' => $locale
                     ]);
     }
 }
+

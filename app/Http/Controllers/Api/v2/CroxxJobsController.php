@@ -176,7 +176,7 @@ class CroxxJobsController extends Controller
         // info(count($campaigns));
         $response = collect([
             'status' => true,
-            'message' => "Successful."
+            'message' => ""
         ])
         ->merge($campaigns)->merge(['draw' => $datatable_draw]);
 
@@ -205,7 +205,7 @@ class CroxxJobsController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function apply(Request $request)
+   public function apply(Request $request)
     {
         $user = $request->user();
         $cv = CV::where('user_id', $user->id)->firstorFail();
@@ -215,49 +215,49 @@ class CroxxJobsController extends Controller
         ]);
 
         if($validator->fails()){
-            $status = false;
-            $message = $validator->errors()->toJson();
-            return response()->json(compact('status', 'message') , 400);
+            return $this->validationErrorResponse($validator->errors());
         }
 
         $request['talent_user_id'] = $user->id;
         $request['talent_cv_id'] = $cv->id;
         $request['rating'] = 0;
 
-        $campaign = Campaign::where('id',$request->campaign_id)
-                     ->where('is_published', 1)->firstOrFail();
+        try {
+            $campaign = Campaign::where('id',$request->campaign_id)
+                        ->where('is_published', 1)->firstOrFail();
+            
+            Log::info("Applying for campaign: {$campaign->title} by user: {$user->email}");
+            Log::info("Request data: ", $request->all());
 
-        $appliedJob = AppliedJob::firstOrCreate($request->all());
+            $appliedJob = AppliedJob::firstOrCreate($request->all());
 
-        if ($appliedJob) {
-            $notification = new Notification();
-            $notification->id = Str::uuid();
+            // $notification = new Notification();
+            // $notification->id = Str::uuid();
+            // $notification->type = 'CampaignApplication';
+            // $notification->notifiable_id = $campaign->user_id;
+            // $notification->notifiable_type = 'App\Models\User';
+            // $notification->data = json_encode([
+            //     'action' => "/campaign/applications/{$request->campaign_id}",
+            //     'title' => __('talent.notifications.campaign_application_title'),
+            //     'message' => __('talent.notifications.campaign_application_message', [
+            //         'title' => $campaign->title
+            //     ])
+            // ]);
+            // $notification->category = 'primary';
+            // $notification->save();
 
-            $notification->type = 'CampaignApplication';
+            return $this->successResponse(
+                AppliedJob::find($appliedJob->id),
+                'talent.application.submitted'
+            );
 
-            $notification->notifiable_id = $campaign->user_id;
-            $notification->notifiable_type = 'App\Models\User';
-
-            // Set the data as a JSON object
-            $notification->data = json_encode([
-                'action' => "/campaign/applications/{$request->campaign_id}",
-                'title' => 'Campaign Application',
-                'message' => "A talent has just applied for {$campaign->title} campaign."
-            ]);
-
-            $notification->category = 'primary';
-            $notification->save();
-            // event(new NewNotification($notification->user_id,$notification));
-            return response()->json([
-                'status' => true,
-                'message' => "Your Job Application has been submitted.",
-                'data' => AppliedJob::find($appliedJob->id)
-            ], 201);
-        } else {
-            return response()->json([
-                'status' => false,
-                'message' => "Could not complete request.",
-            ], 400);
+        } catch (ModelNotFoundException $e) {
+            return $this->notFoundResponse('talent.campaign.not_found');
+        } catch (\Exception $e) {
+            return $this->errorResponse(
+                'talent.application.error',
+                ['error' => $e->getMessage()]
+            );
         }
     }
 
@@ -271,30 +271,30 @@ class CroxxJobsController extends Controller
         ]);
 
         if($validator->fails()){
-            $status = false;
-            $message = $validator->errors()->toJson();
-            return response()->json(compact('status', 'message') , 400);
+            return $this->validationErrorResponse($validator->errors());
         }
 
-        $campaign = Campaign::where('id',$request->campaign_id)
-        ->where('is_published', 1)->firstOrFail();
+        try {
+            $campaign = Campaign::where('id',$request->campaign_id)
+                ->where('is_published', 1)->firstOrFail();
 
-        $request['talent_user_id'] = $user->id;
-        $request['talent_cv_id'] = $cv->id;
+            $request['talent_user_id'] = $user->id;
+            $request['talent_cv_id'] = $cv->id;
 
-        $saved = SavedJob::firstOrCreate($request->all());
+            $saved = SavedJob::firstOrCreate($request->all());
 
-        if ($saved) {
-            return response()->json([
-                'status' => true,
-                'message' => "Campaign has been saved successfuly.",
-                'data' => SavedJob::find($saved->id)
-            ], 201);
-        } else {
-            return response()->json([
-                'status' => false,
-                'message' => "Could not complete request.",
-            ], 400);
+            return $this->successResponse(
+                SavedJob::find($saved->id),
+                'talent.saved.success'
+            );
+
+        } catch (ModelNotFoundException $e) {
+            return $this->notFoundResponse('talent.campaign.not_found');
+        } catch (\Exception $e) {
+            return $this->errorResponse(
+                'talent.saved.error',
+                ['error' => $e->getMessage()]
+            );
         }
     }
 

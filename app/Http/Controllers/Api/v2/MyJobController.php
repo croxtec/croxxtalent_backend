@@ -108,7 +108,7 @@ class MyJobController extends Controller
 
         $response = collect([
             'status' => true,
-            'message' => "Successful."
+            'message' => "."
         ])->merge($jobApplied)->merge(['draw' => $datatable_draw]);
         return response()->json($response, 200);
     }

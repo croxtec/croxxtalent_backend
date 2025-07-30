@@ -1,23 +1,23 @@
 @extends('api.emails.layouts.master')
 
 @section('email_page_title')
-    Notification - {{ config('myapp.name') }}
+    {{ __('notifications.otp.page_title', [], $locale) }}  - {{ config('myapp.name') }}
 @endsection
 
 @section('email_body_title')
 @endsection
 
 @section('email_body')
-    Hi {{ $name }},
+    {{ __('notifications.otp.greeting', ['name' => $name], $locale) }}
     <br>
     <p>
-        Your One-Time Password (OTP) is
+        {{ __('notifications.otp.message', [], $locale) }}
         <br><br>
         <p style="text-align: center;">
             <b style="font-size: 50px; letter-spacing: 15px;">{{ $verification_token }}</b>
         </p>
         <br>
-        This OTP is valid for 30 minutes or until a next OTP is generated.
+        {{ __('notifications.otp.validity', [], $locale) }}
     </p>
 @endsection
 

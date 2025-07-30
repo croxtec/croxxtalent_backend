@@ -47,7 +47,7 @@ class EmployeeRequest extends FormRequest
                 return [
                     'name' => 'required|max:100',
                     'email' => 'required|max:100',
-                    'phone' => 'required|max:100',
+                    'phone' => 'nullable|max:100',
                     'level' => 'required|in:beginner,intermediate,advance,expert',
                     'job_code_id' => [
                         Rule::requiredIf(function () {

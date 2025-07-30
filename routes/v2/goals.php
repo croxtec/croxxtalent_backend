@@ -11,6 +11,19 @@ Route::middleware('auth:sanctum')->group( function () {
     Route::patch('goals/{id}/archive', 'Api\v2\GoalController@archive')->name('goals.archive');
     Route::patch('goals/{id}/unarchive', 'Api\v2\GoalController@unarchive')->name('goals.unarchive');
 
+    // New employee self-assessment routes
+    Route::post('goals/{id}/employee-submit','Api\v2\GoalController@employeeSubmit');
+    // Route::get('goals/pending-employee', [GoalController::class, 'pendingEmployeeGoals']);
+    
+    // New supervisor review routes 
+    Route::post('goals/{id}/supervisor-review', 'Api\v2\GoalController@supervisorReview');
+    // Route::get('goals/pending-supervisor-review', [GoalController::class, 'pendingSupervisorReview']);
+    
+    //Media uploads endpoints
+    Route::get('documents/company', 'Api\v2\MediaController@getCompanyDocuments');
+    Route::get('documents/employee/{code}', 'Api\v2\MediaController@getEmployeeDocuments');
+
+
     Route::resources([
         'goals' => 'Api\v2\GoalController',
     ]);

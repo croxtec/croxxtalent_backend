@@ -14,9 +14,13 @@ use Illuminate\Support\Str;
 use App\Services\OpenAIService;
 use App\Models\Training\CroxxLesson;
 use Carbon\Carbon;
+use App\Traits\ApiResponseTrait;
+use Illuminate\Http\Response;
 
 class CourseController extends Controller
 {
+    // use ApiResponseTrait;
+
     protected $cloudinary;
     protected $openAIService;
 
@@ -208,12 +212,12 @@ class CourseController extends Controller
             ]);
         }
 
-        return response()->json([
-            'status' => true,
-            'message' => "Employees has been adeded to this training.",
-            'data' => null
-        ], 200);
-
+        return $this->successResponse(
+            null,
+            'services.training.participants_added',
+            [],
+            200
+        );
     }
 
     /**
@@ -278,11 +282,12 @@ class CourseController extends Controller
 
         // info('Selected lessons count: ' . $selectedLessons->count());
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Lessons successfully retrieved.',
-            'data' => $selectedLessons,
-        ], 200);
+        return $this->successResponse(
+            $selectedLessons,
+            'services.training.lessons_retrieved',
+            [],
+            200
+        );
     }
 
     public function cloneSuggestionRequest(Request $request, $id){
@@ -316,10 +321,12 @@ class CourseController extends Controller
             }
         }
 
-        return response()->json([
-            'status' => true,
-            'message' => "Lesson cloned successfully.",
-        ], 201);
+        return $this->successResponse(
+            null,
+            'services.training.lesson_cloned',
+            [],
+            201
+        );
     }
 
     /**
@@ -343,11 +350,12 @@ class CourseController extends Controller
 
         $training->update($validatedData);
 
-        return response()->json([
-            'status' => true,
-            'message' => "Training updated successfully.",
-            'data' => CroxxTraining::find($training->id)
-        ], 200);
+        return $this->successResponse(
+            CroxxTraining::find($training->id),
+            'services.training.updated',
+            [],
+            200
+        );
     }
 
     /**
@@ -364,11 +372,12 @@ class CourseController extends Controller
         $training->archived_at = now();
         $training->save();
 
-        return response()->json([
-            'status' => true,
-            'message' => "Training archived successfully.",
-            'data' => CroxxTraining::find($training->id)
-        ], 200);
+        return $this->successResponse(
+            CroxxTraining::find($training->id),
+            'services.training.archived',
+            [],
+            200
+        );
     }
 
 
@@ -387,11 +396,12 @@ class CourseController extends Controller
         $training->archived_at = null;
         $training->save();
 
-        return response()->json([
-            'status' => true,
-            'message' => "Training unarchived successfully.",
-            'data' => CroxxTraining::find($training->id)
-        ], 200);
+        return $this->successResponse(
+            CroxxTraining::find($training->id),
+            'services.training.unarchived',
+            [],
+            200
+        );
     }
 
 

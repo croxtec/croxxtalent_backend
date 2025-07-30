@@ -79,10 +79,10 @@ class CompanyReportController extends Controller
             'task_completed' => $currentMonthGoalsCompleted,
             'differences' => $differences,
             'summary' => $differences > 0
-                ? "Improved by $differences tasks this month."
+                ? __("report.competency_summary.improved", ['difference' => $differences])
                 : ($differences < 0
-                    ? "Completed " . abs($differences) . " fewer tasks than last month."
-                    : "Performance is consistent with last month."),
+                    ? __("report.competency_summary.declined", ['difference' => abs($differences)])
+                    : __("report.competency_summary.consistent")),
         ];
 
         $data = compact(

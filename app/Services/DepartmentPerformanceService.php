@@ -816,7 +816,7 @@ class DepartmentPerformanceService
             ->where('year', $year)
             ->orderBy('month')
             ->get();
-
+    
         if ($historicalRecords->isEmpty()) {
             return [
                 'monthly_scores' => [],
@@ -824,54 +824,48 @@ class DepartmentPerformanceService
                 'trend' => 'stable'
             ];
         }
-
+    
         // Format data for chart consumption
         $monthlyScores = [
             'labels' => [],
             'datasets' => [
                 [
-                    'label' => 'Overall Score',
+                    'label' => __('report.department.historical.labels.overall_score'),
                     'data' => []
                 ],
                 [
-                    'label' => 'Assessment Score',
+                    'label' => __('report.department.historical.labels.assessment_score'),
                     'data' => []
                 ],
                 [
-                    'label' => 'Peer Review Score',
+                    'label' => __('report.department.historical.labels.peer_review_score'),
                     'data' => []
                 ]
             ]
         ];
-
-        // Map month numbers to names for better readability
-        $monthNames = [
-            1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'May', 6 => 'Jun',
-            7 => 'Jul', 8 => 'Aug', 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dec'
-        ];
-
+    
         // Populate the datasets
         foreach ($historicalRecords as $record) {
-            $monthlyScores['labels'][] = $monthNames[$record->month];
+            $monthlyScores['labels'][] = __("report.department.historical.months.".$record->month);
             $monthlyScores['datasets'][0]['data'][] = round($record->overall_score, 1);
             $monthlyScores['datasets'][1]['data'][] = round($record->assessment_score, 1);
             $monthlyScores['datasets'][2]['data'][] = round($record->peer_review_score, 1);
         }
-
+    
         // Calculate additional metrics
         $averageScore = round($historicalRecords->avg('overall_score'), 1);
-
+    
         // Calculate trend
         $firstHalf = $historicalRecords->filter(fn($r) => $r->month <= 6)->avg('overall_score') ?? 0;
         $secondHalf = $historicalRecords->filter(fn($r) => $r->month > 6)->avg('overall_score') ?? 0;
-
+    
         $trend = 'stable';
         if ($secondHalf > $firstHalf + 5) {
             $trend = 'improving';
         } elseif ($firstHalf > $secondHalf + 5) {
             $trend = 'declining';
         }
-
+    
         // Include raw data for any custom processing
         $rawData = $historicalRecords->map(function($record) {
             return [
@@ -882,15 +876,14 @@ class DepartmentPerformanceService
                 'goal_completion_rate' => $record->goal_completion_rate,
                 'project_completion_rate' => $record->project_completion_rate,
                 'kpi_overall_achievement' => $record->kpi_overall_achievement,
-                // Add any other metrics you'd like to include
             ];
         });
-
+    
         return [
             'monthly_scores' => $monthlyScores,
             'raw_data' => $rawData,
             'average_score' => $averageScore,
-            'trend' => $trend
+            'trend' => __("report.department.historical.trends.".$trend)
         ];
     }
 
@@ -909,15 +902,15 @@ class DepartmentPerformanceService
         $monthNames = [
             1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'May', 6 => 'Jun',
             7 => 'Jul', 8 => 'Aug', 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dec'
-        ];
+        ]; 
 
         $formattedData = [];
 
         $categories = [
-            'overall_score' => 'Overall',
-            'assessment_score' => 'Assessment',
-            'peer_review_score' => 'Peer Review',
-            'kpi_overall_achievement' => 'KPI Achievement'
+            'overall_score' => __('report.historical.labels.overall_score'),
+            'assessment_score' => __('report.historical.labels.assessment_score'),
+            'peer_review_score' => __('report.historical.labels.peer_review_score'),
+            'kpi_overall_achievement' => __('report.historical.labels.kpi_overall_achievement')
         ];
 
         // Process each record

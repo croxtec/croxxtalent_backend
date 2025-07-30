@@ -16,9 +16,20 @@ use App\Models\Assessment\EmployerAssessmentFeedback;
 use App\Models\Assessment\PeerReview;
 use App\Models\Assessment\TalentAssessmentSummary;
 use Illuminate\Support\Facades\Storage;
+use App\Traits\ApiResponseTrait;
+use App\Services\MediaService;
+use Illuminate\Support\Facades\Log;
 
 class EmployeeAssessmentController extends Controller
 {
+
+    protected $mediaService;
+
+    public function __construct(MediaService $mediaService)
+    {
+        $this->mediaService = $mediaService;
+    }
+
      /**
      * Display the Employee resource.
      *
@@ -138,7 +149,7 @@ class EmployeeAssessmentController extends Controller
             $assessment->is_submited = !is_null($feedback);
         }
 
-    return response()->json([
+        return response()->json([
             'status' => true,
             'message' => "",
             'data' => $assessments
@@ -185,10 +196,10 @@ class EmployeeAssessmentController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
+    
     public function storeTalentAnswer(Request $request)
     {
         $user = $request->user();
-
 
         $rules = [
             'assessment_id' => 'required',
@@ -202,10 +213,14 @@ class EmployeeAssessmentController extends Controller
         $searchData['assessment_question_id'] = $searchData['question_id'];
         unset($searchData['question_id']);
 
+        $employee = null;
+        $employerId = null;
+
         if($assessment->type == 'company' || $assessment->type == 'supervisor'){
             $employee = Employee::where('id', $user->default_company_id)
                      ->where('user_id', $user->id)->first();
             $searchData['employee_id'] = $employee?->id;
+            $employerId = $employee?->employer_id ?? $assessment->employer_id;
 
             $isPublished = EmployerAssessmentFeedback::where([
                 'assessment_id' => $assessment->id,
@@ -214,12 +229,11 @@ class EmployeeAssessmentController extends Controller
                 'is_published' => true
             ])->exists();
 
-            if ($isPublished) {
+             if ($isPublished) {
                 return response()->json([
                     'status' => false,
-                    'message' => "Assessment already submitted.",
-                    'data' => ""
-                ], 400);
+                    'message' => 'Assessment feedback has already been published'
+                ], 422);
             }
         } else{
             $searchData['talent_id'] = $user->id;
@@ -241,29 +255,24 @@ class EmployeeAssessmentController extends Controller
 
         $answer = TalentAnswer::firstOrCreate($searchData);
 
+        // Handle non-evaluation assessments (with file uploads)
         if($assessment->category != 'competency_evaluation') {
             $request->validate([
-                'answer' => 'required|min:10|max:250'
-             ]);
+                'answer' => 'required|min:10|max:250',
+                'files.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,gif|max:10240', // 10MB max per file
+                'file' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,gif|max:10240', // Support both single and multiple files
+            ]);
 
             $answer->comment = $request->answer;
 
-            if ($request->hasFile('file') && $request->file('file')->isValid()) {
-                $extension = $request->file('file')->extension();
-                $filename = $user->id . '-' . time() . '-' . Str::random(32);
-                $filename = "{$filename}.$extension";
-                $year = date('Y');
-                $month = date('m');
-                $rel_upload_path    = "assesment/{$year}/{$month}";
-                if ( config('app.env') == 'local')  $rel_upload_path = "local/{$rel_upload_path}"; // dir for dev environment test uploads
-
-                // do upload
-                $uploaded_file_path = $request->file('file')->storeAs($rel_upload_path, $filename);
-                Storage::setVisibility($uploaded_file_path, 'public'); //set file visibility to  "public"
-
-                // Update with the newly update file
-                $answer->upload = $request->comment;
-            }
+            // Handle file uploads using the new Media system
+            $uploadedMedia = $this->handleFileUploads($request, $answer, $user, $employee, $employerId, $assessment);
+            
+            // If there were uploads, update the legacy fields for backward compatibility
+            // if (!empty($uploadedMedia)) {
+            //     $answer->upload = $request->input('comment', 'Assessment response with attachments');
+            //     $answer->document = $uploadedMedia->first()->file_url ?? null; // Store first file URL for legacy support
+            // }
         }
 
         if($assessment->category == 'competency_evaluation'){
@@ -321,37 +330,34 @@ class EmployeeAssessmentController extends Controller
             $graded_score = ((int)$assessment_score / $total_score ?? 1) * 100;
             $graded_score = (int)$graded_score;
 
+            // Determine which feedback message to use
             if ($graded_score >= 95) {
-                $message = sprintf("Exceptional! You scored %d out of %d points, hitting a fantastic %d%%! You're a master in this area!",
-                    $assessment_score, $total_score, $graded_score);
+                $messageKey = 'services.feedbacks.score_messages.exceptional';
             } elseif ($graded_score >= 85) {
-                $message = sprintf("Fantastic! You scored %d out of %d points, achieving an impressive %d%%. Keep pushing, you're almost at the top!",
-                    $assessment_score, $total_score, $graded_score);
+                $messageKey = 'services.feedbacks.score_messages.fantastic';
             } elseif ($graded_score >= 75) {
-                $message = sprintf("Great job! You got %d out of %d points, which is a solid %d%%. You're doing well, keep up the hard work!",
-                    $assessment_score, $total_score, $graded_score);
+                $messageKey = 'services.feedbacks.score_messages.great_job';
             } elseif ($graded_score >= 65) {
-                $message = sprintf("Good effort! You achieved %d out of %d points, making it %d%%. There's potential for more, just keep refining your skills!",
-                    $assessment_score, $total_score, $graded_score);
+                $messageKey = 'services.feedbacks.score_messages.good_effort';
             } elseif ($graded_score >= 55) {
-                $message = sprintf("You're getting there! You earned %d out of %d points, which is %d%%. Keep practicing and you'll see more progress.",
-                    $assessment_score, $total_score, $graded_score);
+                $messageKey = 'services.feedbacks.score_messages.getting_there';
             } elseif ($graded_score >= 45) {
-                $message = sprintf("A decent try! You got %d out of %d points, making it %d%%. Focus on your weak areas to see better results next time.",
-                    $assessment_score, $total_score, $graded_score);
+                $messageKey = 'services.feedbacks.score_messages.decent_try';
             } elseif ($graded_score >= 35) {
-                $message = sprintf("Keep going! You scored %d out of %d points, which is %d%%. Practice will help you get there, don't give up!",
-                    $assessment_score, $total_score, $graded_score);
+                $messageKey = 'services.feedbacks.score_messages.keep_going';
             } elseif ($graded_score >= 25) {
-                $message = sprintf("A learning experience! You scored %d out of %d points, making it %d%%. Keep working, and you'll improve in no time.",
-                    $assessment_score, $total_score, $graded_score);
+                $messageKey = 'services.feedbacks.score_messages.learning_experience';
             } else {
-                $message = sprintf("Don't worry, you scored %d out of %d points, which is %d%%. Stay persistent, and you'll get better results with more practice!",
-                    $assessment_score, $total_score, $graded_score);
+                $messageKey = 'services.feedbacks.score_messages.persist';
             }
 
-            $feedback->summary = $message;
+            $feedback->summary = __($messageKey, [
+                'score' => $assessment_score,
+                'total' => $total_score,
+                'percentage' => $graded_score
+            ]);
             $feedback->total_score = $total_score;
+
             if($assessment->type == 'company' || $assessment->type == 'supervisor'){
                 $feedback->employee_score = $assessment_score;
             }else{
@@ -360,23 +366,81 @@ class EmployeeAssessmentController extends Controller
             $feedback->graded_score = round($graded_score);
         }
 
-        if(!$feedback->is_published){
+       if(!$feedback->is_published){
             $feedback->time_taken = $request->time_taken;
             $feedback->is_published = true;
             $feedback->save();
-        }else{
-            return response()->json([
-                'status' => false,
-                'message' => "Assessment already submited.",
-                'data' => ""
-            ], 400);
+        } else {
+            return $this->badRequestResponse('services.feedbacks.already_submitted');
         }
 
-        return response()->json([
-            'status' => true,
-            'message' => "Assessment submitted.",
-            'data' =>$feedback
-        ], 200);
+        return $this->successResponse(
+            $feedback,
+            'services.feedbacks.submitted'
+        );
+    }
+
+     /**
+     * Handle file uploads for assessment answers
+     */
+    protected function handleFileUploads($request, $answer, $user, $employee, $employerId, $assessment)
+    {
+        $uploadedMedia = collect();
+
+        // Prepare upload options
+        $uploadOptions = [
+            'user_id' => $user->id,
+            'employer_id' => $employerId,
+            'employee_id' => $employee?->id,
+        ];
+
+        // Handle multiple files upload (new approach)
+        if ($request->hasFile('files')) {
+            $files = $request->file('files');
+            $collection = "assessment_response_{$assessment->id}";
+            
+            try {
+                $media = $answer->addMultipleMedia($files, $collection, $uploadOptions);
+                $uploadedMedia = $uploadedMedia->merge($media);
+                
+                Log::info('Multiple assessment files uploaded', [
+                    'answer_id' => $answer->id,
+                    'assessment_id' => $assessment->id,
+                    'file_count' => count($files),
+                    'user_id' => $user->id
+                ]);
+            } catch (Exception $e) {
+                Log::error('Failed to upload multiple assessment files', [
+                    'answer_id' => $answer->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        // Handle single file upload (backward compatibility)
+        if ($request->hasFile('file') && $request->file('file')->isValid()) {
+            $file = $request->file('file');
+            $collection = "assessment_response_{$assessment->id}";
+            
+            try {
+                $media = $answer->addMedia($file, $collection, $uploadOptions);
+                $uploadedMedia->push($media);
+                
+                Log::info('Single assessment file uploaded', [
+                    'answer_id' => $answer->id,
+                    'assessment_id' => $assessment->id,
+                    'file_name' => $file->getClientOriginalName(),
+                    'user_id' => $user->id
+                ]);
+            } catch (Exception $e) {
+                Log::error('Failed to upload single assessment file', [
+                    'answer_id' => $answer->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        return $uploadedMedia;
     }
 
 }

@@ -50,9 +50,10 @@ class UserRequest extends FormRequest
             case 'PUT':
             case 'PATCH':
                 return [
+                    // 'email' => 'required|email|max:150|unique:users,email,' . $this->id,
                     'first_name' => 'required|max:30',
                     'last_name' => 'required|max:30',
-                    // 'email' => 'required|email|max:150|unique:users,email,' . $this->id,
+                    'language' => 'required|max:20',
                     'phone' => 'required|max:25',
                     'username' => 'sometimes|max:50|unique:users,username',
                     'company_name' => 'nullable|max:100',

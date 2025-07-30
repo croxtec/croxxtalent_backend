@@ -6,15 +6,18 @@
 
 @section('email_body')
     <p>
-        Dear {{ $employee->name }},
+        {!! __('notifications.supervisor_goal.greeting', ['name' => $employee->name]) !!}
         <br><br>
-        Your supervisor, **{{ $supervisor->name }}**, has assigned a new goal to you: **"{{ $goal->title }}"**.
+        {!! __('notifications.supervisor_goal.message', [
+            'supervisor_name' => $supervisor->name,
+            'goal_title' => $goal->title
+        ]) !!}
         <br><br>
-        Please log in to the platform to review the goal and start working towards completing it. This goal is an important part of your performance and growth within the company.
+        {{ __('notifications.supervisor_goal.instruction') }}
     </p>
     <p>
         @include('api.emails.layouts.partials.button_primary', [
-            'button_text' => 'View Goal',
+            'button_text' => __('notifications.supervisor_goal.button_text'),
             'button_url' => $buttonUrl
         ])
     </p>

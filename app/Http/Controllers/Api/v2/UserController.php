@@ -23,6 +23,8 @@ use App\Mail\WelcomeVerifyEmail;
 use App\Mail\VerifyEditEmail;
 use App\Models\Notification;
 use App\Http\Resources\NotificationResource;
+use Illuminate\Http\Response;
+
 
 class UserController extends Controller
 {

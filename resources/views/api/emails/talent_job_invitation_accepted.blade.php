@@ -1,17 +1,17 @@
 @extends('api.emails.layouts.master')
 
 @section('email_page_title')
-    Notification - {{ config('myapp.name') }}
+    {{ __('notifications.email_templates.notification_title', ['app_name' => config('myapp.name')]) }} - {{ __('notifications.assessment_published.page_title', [], $locale) }}
 @endsection
 
 @section('email_body_title')
 @endsection
 
 @section('email_body')
-    Hi {{ $name }},
+    {{ __('notifications.email_templates.greeting', ['name' => $name], $locale) }}
     <br>
     <p>
-        Your job invitation/offer was <b style="color: green;">accepted</b> by <b>{{ $jobInvitation->talentCv->name }}</b>.
+        {!! __('notifications.job_invitation.accepted_message', ['talent_name' => $jobInvitation->talentCv->name], $locale) !!}
     </p>
 @endsection
 

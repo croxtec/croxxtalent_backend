@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v2;
+namespace App\Http\Controllers\Api\v2\Operations;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -19,9 +19,18 @@ use App\Models\Assessment\PeerReview;
 use App\Notifications\AssessmentFeedbackNotification;
 use App\Models\Assessment\TalentAssessmentSummary;
 use App\Models\Training\CroxxTraining;
+use App\Services\MediaService;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+
 
 class ScoresheetController extends Controller
 {
+    public function __construct(MediaService $mediaService)
+    {
+        $this->mediaService = $mediaService;
+    }
+
     public function employeeList(Request $request, $id) {
         $user = $request->user();
 
@@ -147,7 +156,7 @@ class ScoresheetController extends Controller
 
             return response()->json([
                 'status' => true,
-                'message' => "Successful.",
+                'message' => "",
                 'data' => [
                     'summaries' => $summaries,
                     'assessment' => $assessment,
@@ -227,7 +236,7 @@ class ScoresheetController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => "Successful.",
+            'message' => "",
             'data' => compact('summaries','assessment')
         ], 200);
     }
@@ -240,10 +249,14 @@ class ScoresheetController extends Controller
 
         $assessment->load(['questions' => function ($query) use ($assessment, $talentField, $talentId) {
             $query->with([
+                
                 'response' => fn($q) => $q->where([
                     $talentField => $talentId,
                     'assessment_id' => $assessment->id
-                ]),
+                ])->with(['media' => function ($q) {
+                    $q->select('id', 'file_url','file_name', 'file_size', 'file_type', 'mediable_type', 'mediable_id');
+                }]),
+
                 'result' => fn($q) => $q->when($assessment->category != 'competency_evaluation',
                     fn($q) => $q->where([
                         $talentField => $talentId,
@@ -295,7 +308,11 @@ class ScoresheetController extends Controller
                 'assessment_id' => $assessment->id,
                 'employee_id' => $employee->id,
                 'employer_user_id' => $assessment->employer_id
-            ])->first();
+            ])
+            ->with(['media' => function ($q) {
+                $q->select('id', 'file_url','file_name', 'file_size', 'file_type', 'mediable_type', 'mediable_id');
+            }])
+            ->first();
 
             $resources = CroxxTraining::join('employee_learning_paths', 'croxx_trainings.id', '=', 'employee_learning_paths.training_id')
                             ->where('employee_learning_paths.employee_id', $employee?->id)
@@ -318,61 +335,61 @@ class ScoresheetController extends Controller
         ], 200);
     }
 
-    public function gradeAssessmentScoreSheet(Request $request, $id)
+   public function gradeAssessmentScoreSheet(Request $request, $id)
     {
         $user = $request->user();
-
         $assessment = $this->resolveAssessment($id);
 
-        $rules = [
+        $validator = Validator::make($request->all(), [
             'employee_code' => 'required',
             'question_id' => 'required',
             'score' => 'required|integer|between:0,4',
             'comment' => 'nullable|max:256'
-        ];
+        ]);
 
-        $validatedData = $request->validate($rules);
-
-        $employee = Employee::where('code', $validatedData['employee_code'])->first();
-        $question = CompetencyQuestion::where('assessment_id', $assessment->id)
-                             ->where('id', $validatedData['question_id'])->first();
-
-        if($assessment->category !== 'peer_review'){
-            $feedback = EmployerAssessmentFeedback::where([
-                'assessment_id' => $assessment->id,
-                'employee_id' => $employee->id,
-                'employer_user_id' => $assessment->employer_id,
-                'is_published' => true
-            ])->first();
-        } else {
-            $feedback = PeerReview::where([
-                'assessment_id' => $assessment->id,
-                'employee_id' => $user->default_company_id,
-                'reviewer_id' => $employee->id,
-            ])->first();
+        if ($validator->fails()) {
+            return $this->validationErrorResponse($validator->errors());
         }
 
-        if($feedback){
+        try {
+            $employee = Employee::where('code', $request->employee_code)->firstOrFail();
+            $question = CompetencyQuestion::where('assessment_id', $assessment->id)
+                            ->where('id', $request->question_id)->firstOrFail();
+
+            if($assessment->category !== 'peer_review') {
+                $feedback = EmployerAssessmentFeedback::where([
+                    'assessment_id' => $assessment->id,
+                    'employee_id' => $employee->id,
+                    'employer_user_id' => $assessment->employer_id,
+                    'is_published' => true
+                ])->firstOrFail();
+            } else {
+                $feedback = PeerReview::where([
+                    'assessment_id' => $assessment->id,
+                    'employee_id' => $user->default_company_id,
+                    'reviewer_id' => $employee->id,
+                ])->firstOrFail();
+            }
+
             $score = ScoreSheet::firstOrCreate(
                 [
                     'assessment_id' => $assessment->id,
                     'employee_id' => $employee->id,
                 ],[
-                    'score' => $validatedData['score'],
-                    'assessment_question_id' => $question?->id,
-                    'comment' => $validatedData['comment'] ?? '',
+                    'score' => $request->score,
+                    'assessment_question_id' => $question->id,
+                    'comment' => $request->comment ?? '',
                     'supervisor_id' => $user->default_company_id
                 ]
             );
 
-            // Create assessment summary for non peer review assessment
             if($assessment->category !== 'peer_review') {
                 $employee_score = ScoreSheet::where([
-                   'employee_id' => $employee->id,
-                   'assessment_id' =>  $assessment->id
+                'employee_id' => $employee->id,
+                'assessment_id' => $assessment->id
                 ])->sum('score');
 
-                $total_question =  $assessment->questions->count();
+                $total_question = $assessment->questions->count();
                 $total_score = $total_question * 4;
                 $graded_score = ((int)$employee_score / $total_score) * 100;
 
@@ -382,144 +399,220 @@ class ScoresheetController extends Controller
                 $feedback->save();
             }
 
-            return response()->json([
-                'status' => true,
-                'data' => $feedback,
-                'message' => ""
-            ], 201);
-        }else{
-            return response()->json([
-                'status' => false,
-                'message' => "Assessment has not been submited.",
-                'data' => ""
-            ], 400);
-        }
+            return $this->successResponse(
+                $feedback,
+                'services.assessment.graded'
+            );
 
+        } catch (ModelNotFoundException $e) {
+            return $this->notFoundResponse('services.assessment.not_found');
+        } catch (\Exception $e) {
+            return $this->errorResponse(
+                'services.assessment.grade_error',
+                ['error' => $e->getMessage()]
+            );
+        }
     }
 
-    public function publishPeerReviewAssessment(Request $request, $id){
+    public function publishPeerReviewAssessment(Request $request, $id)
+    {
         $user = $request->user();
-
         $assessment = $this->resolveAssessment($id);
 
-        $rules = [
+        $validator = Validator::make($request->all(), [
             'employee_code' => 'required',
-            // 'reviewer_code' => 'required',
-        ];
+        ]);
 
-        $validatedData = $request->validate($rules);
-        // Employee being reviwed
-        $employee = Employee::where('code', $validatedData['employee_code'])->first();
+        if ($validator->fails()) {
+            return $this->validationErrorResponse($validator->errors());
+        }
 
-        $peerReview =  PeerReview::where([
-            'assessment_id' => $assessment->id,
-            'employee_id' => $user->default_company_id,
-            'reviewer_id' => $employee->id,
-        ])->first();
+        try {
+            $employee = Employee::where('code', $request->employee_code)->firstOrFail();
+            $peerReview = PeerReview::where([
+                'assessment_id' => $assessment->id,
+                'employee_id' => $user->default_company_id,
+                'reviewer_id' => $employee->id,
+            ])->firstOrFail();
 
-        if($peerReview->status == 'pending'){
-            $peerReview->status = 'completed';
-            $peerReview->completed_at =  now();
-            $peerReview->save();
+            if($peerReview->status == 'pending') {
+                $peerReview->status = 'completed';
+                $peerReview->completed_at = now();
+                $peerReview->save();
 
-            // Notify the employee about the feedback
-            // Notification::send($employee->talent, new AssessmentFeedbackNotification($assessment, $employee));
+                // Notification::send($employee->talent, new AssessmentFeedbackNotification($assessment, $employee));
+                return $this->successResponse(
+                    $peerReview,
+                    'services.peer_review.published'
+                );
+            }
 
-            return response()->json([
-                'status' => true,
-                'message' => "Peer review feedback has been recorded.",
-                'data' => $peerReview
-            ], 200);
-        }else{
-            return response()->json([
-                'status' => false,
-                'message' => "Feedback already submitted.",
-                'data' => ""
-            ], 400);
+            return $this->badRequestResponse('services.peer_review.already_published');
+
+        } catch (ModelNotFoundException $e) {
+            return $this->notFoundResponse('services.assessment.not_found');
+        } catch (\Exception $e) {
+            return $this->errorResponse(
+                'services.peer_review.publish_error',
+                ['error' => $e->getMessage()]
+            );
         }
     }
 
     public function publishSupervisorFeedback(Request $request, $id)
     {
         $user = $request->user();
-
         $assessment = $this->resolveAssessment($id);
 
-        $rules =[
+
+        $validator = Validator::make($request->all(), [
             'employee_code' => 'required',
             'feedback' => 'required|string|min:10|max:512',
             'goal_id' => 'nullable|exists:goals,id',
             'learning_path' => 'nullable|array',
-            'learning_path.*' => 'nullable|integer'
-        ];
+            'learning_path.*' => 'nullable|integer',
+              // Add media validation rules
+            'files.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,gif|max:10240', // 10MB max per file
+            'media_descriptions.*' => 'nullable|string|max:255', // Optional descriptions for each file
+        ]);
 
-        $validatedData = $request->validate($rules);
-        $employee = Employee::where('code', $validatedData['employee_code'])->first();
-
-        $feedback = EmployerAssessmentFeedback::where([
-            'assessment_id' => $assessment->id,
-            'employee_id' => $employee->id,
-        ],[
-            'employer_user_id' => $assessment->employer_id
-        ])->first();
-
-
-        if(!$feedback->supervisor_id){
-            $paths = $validatedData['learning_path'];
-
-            if(isset($paths)){
-                foreach ($paths as $path) {
-                    EmployeeLearningPath::firstOrCreate([
-                        'assessment_feedback_id' => $feedback->id,
-                        'employee_id' => $employee->id,
-                        'employer_user_id' => $assessment->employer_id,
-                        'training_id' => $path
-                    ]);
-                }
-            }
-
-            if ($feedback->graded_score >= 90) {
-                $message = sprintf("You aced it! You got %d out of %d points in this assessment, that's an impressive %d%%! Great job!",
-                    $feedback->employee_score, $feedback->total_score, $feedback->graded_score);
-            } elseif ($feedback->graded_score >= 75) {
-                $message = sprintf("Well done! You scored %d out of %d, achieving %d%%. You're doing great!",
-                    $feedback->employee_score, $feedback->total_score, $feedback->graded_score);
-            } elseif ($feedback->graded_score >= 60) {
-                $message = sprintf("Good effort! You got %d out of %d points, with a score of %d%%. Keep up the progress!",
-                    $feedback->employee_score, $feedback->total_score, $feedback->graded_score);
-            } elseif ($feedback->graded_score >= 45) {
-                $message = sprintf("Not bad! You earned %d out of %d points, reaching %d%%. A bit more effort will take you further!",
-                    $feedback->employee_score, $feedback->total_score, $feedback->graded_score);
-            } elseif ($feedback->graded_score >= 30) {
-                $message = sprintf("You scored %d out of %d, which is %d%%. There's room for improvement, keep practicing!",
-                    $feedback->employee_score, $feedback->total_score, $feedback->graded_score);
-            } else {
-                $message = sprintf("You got %d out of %d points, that's %d%%. Don't worry, with more effort you'll improve next time!",
-                    $feedback->employee_score, $feedback->total_score, $feedback->graded_score);
-            }
-
-            $feedback->summary = $message;
-            $feedback->supervisor_id = $user->default_company_id;
-            $feedback->supervisor_feedback = $validatedData['feedback'];
-            $feedback->goal_id = $validatedData['goal_id'] ?? null;
-            $feedback->save();
-
-            $user = $employee->talent;
-            // $user->notify(new AssessmentFeedbackNotification($assessment, $employee));
-            Notification::send($user, new AssessmentFeedbackNotification($assessment, $employee));
-
-            return response()->json([
-                'status' => true,
-                'message' => "Assesment Scoresheet  has been recorded for this talent.",
-                'data' => $feedback
-            ], 200);
-        }else{
-            return response()->json([
-                'status' => false,
-                'message' => "Feedback already submited.",
-                'data' => ""
-            ], 400);
+        if ($validator->fails()) {
+            return $this->validationErrorResponse($validator->errors());
         }
 
+        try {
+
+            $employee = Employee::where('code', $request->employee_code)->firstOrFail();
+
+            $feedback = EmployerAssessmentFeedback::where([
+                'assessment_id' => $assessment->id,
+                'employee_id' => $employee->id,
+                'employer_user_id' => $assessment->employer_id
+            ])->firstOrFail();
+
+            if(!$feedback->supervisor_id) {
+
+                if($request->learning_path) {
+                    foreach ($request->learning_path as $path) {
+                        EmployeeLearningPath::firstOrCreate([
+                            'assessment_feedback_id' => $feedback->id,
+                            'employee_id' => $employee->id,
+                            'employer_user_id' => $assessment->employer_id,
+                            'training_id' => $path
+                        ]);
+                    }
+                }
+
+                $scoreMessageKey = $this->getScoreMessageKey($feedback->graded_score);
+                $message = __("services.supervisor_feedback.score_messages.$scoreMessageKey", [
+                    'score' => $feedback->employee_score,
+                    'total' => $feedback->total_score,
+                    'percentage' => $feedback->graded_score
+                ]);
+
+                 // Update feedback record
+                $feedback->summary = $message;
+                $feedback->supervisor_id = $user->default_company_id;
+                $feedback->supervisor_feedback = $request->feedback;
+                $feedback->goal_id = $request->goal_id;
+                $feedback->save();
+
+                // Handle media uploads for supervisor feedback
+                $uploadedMedia = $this->handleSupervisorFeedbackMedia($request, $feedback, $user, $employee, $assessment);
+
+                // Send notification
+                // Notification::send($employee->talent, new AssessmentFeedbackNotification($assessment, $employee));
+
+
+                return $this->successResponse(
+                    $feedback,
+                    'services.supervisor_feedback.published'
+                );
+            }
+
+            return $this->badRequestResponse('services.supervisor_feedback.already_published');
+
+        } catch (ModelNotFoundException $e) {
+            return $this->notFoundResponse('services.assessment.not_found');
+        } catch (\Exception $e) {
+            \Log::error('Failed to publish supervisor feedback', [
+                'assessment_id' => $assessment->id,
+                'employee_code' => $request->employee_code,
+                'error' => $e->getMessage()
+            ]);
+            return $this->errorResponse(
+                'services.supervisor_feedback.publish_error',
+                ['error' => $e->getMessage()]
+            );
+        }
+    }
+
+    protected function getScoreMessageKey($percentage)
+    {
+        if ($percentage >= 90) return 'exceptional';
+        if ($percentage >= 75) return 'excellent';
+        if ($percentage >= 60) return 'good';
+        if ($percentage >= 45) return 'average';
+        if ($percentage >= 30) return 'below_average';
+        return 'poor';
+    }
+
+    protected function handleSupervisorFeedbackMedia($request, $feedback, $user, $employee, $assessment)
+    {
+        $uploadedMedia = collect();
+
+        // if (!$request->hasFile('files')) {
+        //     return $uploadedMedia;
+        // }
+
+        if (!$request->hasFile('files.*')) {
+            return $uploadedMedia;
+        }
+
+        $files = $request->file('files');
+        $descriptions = $request->input('media_descriptions', []);
+        
+        // Prepare upload options
+        $uploadOptions = [
+            'user_id' => $user->id,
+            'employer_id' => $assessment->employer_id,
+            'employee_id' => $employee->id,
+        ];
+
+        $collection = "supervisor_feedback_{$assessment->id}";
+
+        try {
+            // Handle multiple files with descriptions
+            foreach ($files as $index => $file) {
+                $description = $descriptions[$index] ?? null;
+                
+                // Add description to metadata if provided
+                $fileUploadOptions = $uploadOptions;
+                if ($description) {
+                    $fileUploadOptions['metadata'] = ['description' => $description];
+                }
+
+                $media = $feedback->addMedia($file, $collection, $fileUploadOptions);
+                $uploadedMedia->push($media);
+
+                Log::info('Supervisor feedback media uploaded', [
+                    'feedback_id' => $feedback->id,
+                    'assessment_id' => $assessment->id,
+                    'file_name' => $file->getClientOriginalName(),
+                    'supervisor_id' => $user->id,
+                    'employee_id' => $employee->id,
+                    'description' => $description
+                ]);
+            }
+
+        } catch (Exception $e) {
+            Log::error('Failed to upload supervisor feedback media', [
+                'feedback_id' => $feedback->id,
+                'assessment_id' => $assessment->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        return $uploadedMedia;
     }
 }

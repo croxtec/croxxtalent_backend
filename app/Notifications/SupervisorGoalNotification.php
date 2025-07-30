@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
+
 class SupervisorGoalNotification extends Notification implements ShouldQueue
 {
     use Queueable;
@@ -48,14 +49,17 @@ class SupervisorGoalNotification extends Notification implements ShouldQueue
      */
     public function toMail($notifiable)
     {
+         $locale = $notifiable->locale ?? app()->getLocale();
+
         return (new MailMessage)
-            ->subject('A New Goal Has Been Assigned to You')
+            ->subject(__('notifications.supervisor_goal.subject', [], $locale))
             ->view('api.emails.company.supervisor_goal_notification', [
                 'goal' => $this->goal,
                 'supervisor' => $this->supervisor,
                 'employee' => $this->employee,
                 'employee' => $notifiable,
                 'buttonUrl' => url("/company"),
+                'locale' => $locale,
             ]);
     }
 
@@ -67,12 +71,17 @@ class SupervisorGoalNotification extends Notification implements ShouldQueue
      */
     public function toArray($notifiable)
     {
+        $locale = $notifiable->locale ?? app()->getLocale();
+
         return [
             'type' => 'CompanySupervisorGoal',
             'goal_id' => $this->goal->id,
             'goal_title' => $this->goal->title,
             'supervisor' => $this->supervisor->name,
-            'message' => "Your supervisor, {$this->supervisor->name}, has assigned a new goal to you: \"{$this->goal->title}\".",
+            'message' => __('notifications.supervisor_goal.database_message', [
+                'supervisor_name' => $this->supervisor->name,
+                'goal_title' => $this->goal->title
+            ],  $locale),
         ];
     }
 }

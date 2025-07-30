@@ -27,21 +27,31 @@ class GoalReminderNotification extends Notification implements ShouldQueue
 
     public function toMail($notifiable)
     {
+        $locale = $notifiable->locale ?? app()->getLocale();
+        
         return (new MailMessage)
-            ->subject('Reminder: Your Goal "' . $this->goal->title . '" Needs Attention')
+            ->subject(__('notifications.goal_reminder.subject', [
+                'goal_title' => $this->goal->title
+            ], $locale))
             ->view('api.emails.goal_reminder', [
                 'goal' => $this->goal,
-                'name' => $this->name
+                'name' => $this->name,
+                'locale' => $locale,
             ]);
     }
 
     public function toArray($notifiable)
     {
+        $locale = $notifiable->locale ?? app()->getLocale();
+        
         return [
             'goal_title' => $this->goal->title,
             'goal_description' => $this->goal->description,
             'reminder_time' => $this->goal->reminder_date,
-            'message' => "Hi {$this->name}, this is a reminder about your goal '{$this->goal->title}'. Please review your progress and take necessary actions to meet the goal before the deadline.",
+            'message' => __('notifications.goal_reminder.database_message', [
+                'name' => $this->name,
+                'goal_title' => $this->goal->title
+            ], $locale),
         ];
     }
 }

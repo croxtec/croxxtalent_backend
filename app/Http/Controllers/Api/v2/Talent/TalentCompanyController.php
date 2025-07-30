@@ -8,8 +8,8 @@ use Illuminate\Http\Request;
 use App\Models\Employee;
 use App\Models\Supervisor;
 use App\Models\Goal;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use Cloudinary\Cloudinary;
 use Exception;
@@ -33,8 +33,8 @@ class TalentCompanyController extends Controller
             // Get the first company's employer_id as the default
             $firstCompanyEmployerId = $companies->first()->id;
 
-            if($request->input('employer')) {
-                $user->default_company_id = $request->input('employer');
+           if ($request->filled('employer') && is_numeric($request->input('employer')) && intval($request->input('employer')) > 0) {
+                $user->default_company_id = intval($request->input('employer'));
                 $user->save();
             }
 
@@ -161,7 +161,6 @@ class TalentCompanyController extends Controller
                 } else {
                     $employee = Employee::where('code', $id)->where('employer_id', $myinfo->employer_id)->first();
                 }
-
 
                 $employee->department;
                 $employee->department_role;
