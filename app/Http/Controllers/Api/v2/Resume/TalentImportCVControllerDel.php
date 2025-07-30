@@ -13,12 +13,116 @@ use PhpOffice\PhpWord\IOFactory;
 use App\Helpers\CVParser;
 use App\Models\CvCertification;
 use App\Models\CvEducation;
+use App\Models\CVFileUpload;
 use App\Models\CvWorkExperience;
 use App\Services\CvImportParser;
+use App\Services\MediaService;
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 class TalentImprtCVController extends Controller
 {
+
+    protected $mediaService;
+
+    public function __construct(MediaService $mediaService)
+    {
+        $this->mediaService = $mediaService;
+    }
+
+     /**
+     * Upload CV file
+     */
+    public function uploadCV(Request $request)
+    {
+        $user = $request->user();
+
+        $request->validate([
+            'cv' => 'required|file|mimes:pdf,doc,docx|max:5120', // 5MB max
+            'cv_id' => 'nullable|exists:cvs,id',
+            'set_as_primary' => 'boolean'
+        ]);
+
+        try {
+            $file = $request->file('cv');
+
+            // Get or create CV record
+            $cv = null;
+            if ($request->has('cv_id')) {
+                $cv = Cv::where('id', $request->cv_id)
+                        ->where('user_id', $user->id)
+                        ->firstOrFail();
+            } else {
+                // Create a basic CV record if none exists
+                $cv = Cv::firstOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'first_name' => $user->first_name ?? '',
+                        'last_name' => $user->last_name ?? '',
+                        'email' => $user->email,
+                        'phone' => $user->phone ?? '',
+                        'is_active' => true
+                    ]
+                );
+            }
+
+            // Upload using the media system
+            $uploadOptions = [
+                'user_id' => $user->id,
+                'employer_id' => null, // Not employer related
+                'employee_id' => null,
+            ];
+
+            $media = $cv->addMedia($file, 'cv_document', $uploadOptions);
+
+            // Create CV file upload record
+            $cvUpload = CVFileUpload::create([
+                'user_id' => $user->id,
+                'cv_id' => $cv->id,
+                'file_name' => $media->file_name,
+                'original_name' => $media->original_name,
+                'file_size' => $media->file_size,
+                'file_url' => $media->file_url,
+                'file_type' => $media->file_type,
+                'is_primary' => $request->boolean('set_as_primary', true),
+                'uploaded_at' => now()
+            ]);
+
+            // Set as primary if requested or if it's the first CV
+            if ($request->boolean('set_as_primary', true) || !CVFileUpload::where('user_id', $user->id)->where('is_primary', true)->exists()) {
+                $cvUpload->setPrimary();
+            }
+
+            Log::info('CV uploaded successfully', [
+                'user_id' => $user->id,
+                'cv_id' => $cv->id,
+                'file_name' => $media->original_name,
+                'file_size' => $media->file_size
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'CV uploaded successfully',
+                'data' => [
+                    'upload' => $cvUpload,
+                    'media' => $media
+                ]
+            ], 201);
+
+        } catch (Exception $e) {
+            Log::error('CV upload failed', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'file_name' => $request->file('cv')?->getClientOriginalName()
+            ]);
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to upload CV. Please try again.',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
 
     /**
      * Store a newly created resource in storage
@@ -36,108 +140,46 @@ class TalentImprtCVController extends Controller
             'cv' => 'required|file|mimes:pdf,docx|max:4088',
         ]);
 
-        $file = $request->file('cv');
-        $extension = strtolower($file->getClientOriginalExtension());
-        $content = '';
+        try {
+            $file = $request->file('cv');
+            $extension = strtolower($file->getClientOriginalExtension());
+            $content = '';
 
-        $content = $this->extractContent($file, $extension);
+            $uploadResponse = $this->uploadCV($request);
+            if (!$uploadResponse->getData()->status) {
+                return $uploadResponse;
+            }
 
-        // Extract sections from the content
-        // $sections = CVParser::extractSections($content);
-        $resume = CVParser::extractResumeSections($content);
+            $content = $this->extractContent($file, $extension);
 
-        $cv = CV::where('user_id', $user->id)->firstorFail();
+            // Extract sections from the content
+            // $sections = CVParser::extractSections($content);
+            // $resume = CVParser::extractResumeSections($content);
 
-        $resumeData = CvImportParser::extractResumeSections($content);
+            $cv = CV::where('user_id', $user->id)->firstorFail();
 
-        return response()->json([
-            'status' => true,
-            'message' => "Resume imported successfully. Kindly review the imported CV.",
-            'data' => compact('resume', 'resumeData')
-        ], 200);
+            $resumeData = CvImportParser::extractResumeSections($content);
 
-        // if (!$resumeData) {
-        //     throw new Exception('Unable to parse CV content');
-        // }
+            return response()->json([
+                'status' => true,
+                'message' => "Resume imported successfully. Kindly review the imported CV.",
+                'data' => compact('resume', 'resumeData')
+            ], 200);
+        } catch (Exception $e) {
+            Log::error('Resume import failed', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
 
-        // if($resume){
-        //     $location = is_array($resume['country']) && array_reverse($resume['country']);
-        //     $country = isset($location[0]) ? $location[0] : '';
-        //     $city = isset($location[1]) ? $location[1] : '';
-        //     $country_code = Country::where('name',$country)->first();
-
-        //     $personal = [
-        //         'job_title' => $resume['job_title'],
-        //         'career_summary' => $resume['summary'],
-        //         'country_code' => $country_code?->code,
-        //         'city' => $city,
-        //         'address' =>  is_array($resume['country']) ? implode($resume['country']) : ''
-        //     ];
-        //     $cv->update($personal);
-
-        //     if( is_array($resume['languages']) ){
-        //         $languageObjects = collect($resume['languages'])->map(function ($language) {
-        //             return (object) ['name' => trim($language)];
-        //         });
-        //         // info($languageObjects);
-        //         foreach($languageObjects as $language){
-        //             $system_lang = App\Models\Language::where('name', $language)->first();
-        //             $cvLanguage = CvLanguage::updateOrCreate(
-        //                 [
-        //                     'cv_id' =>  $cv->id,
-        //                     'language_id' => $system_lang?->id
-        //                 ]);
-
-        //         }
-        //     }
-
-        //     $work_history_fields = [
-        //         'job_title' => '',
-        //         'employer' => '',
-        //         'city' => '',
-        //         'country_code' => '',
-        //         'start_date' => '',
-        //         'end_date' => '',
-        //         'is_current' => '',
-        //         'description' => ''
-        //     ];
-
-        //     CvWorkExperience::updateOrCreate($work_history_fields);
-
-
-        //     $education_fields = [
-        //         'school' => '',
-        //         'course_of_study_id' => '',
-        //         'degree_id' => '',
-        //         'city' => '',
-        //         'country_code' => '',
-        //         'start_date' => '',
-        //         'end_date' => '',
-        //         'is_current' => '',
-        //         'description' => '',
-        //     ];
-
-        //     CvEducation::updateOrCreate($education_fields);
-
-        //     $certification_fields = [
-        //         'institution' => '',
-        //         'certification_course_id' => '',
-        //         'start_date' => '',
-        //     ];
-
-        //     CvCertification::updateOrCreate($certification_fields);
-
-        //     $skills_fields = [
-        //         'competency',
-        //         'level',
-        //     ];
-
-        //     TalentCompetency::updateOrCreate($skills_fields);
-
-        // }
-
-
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to import resume'
+            ], 500);
+        }
     }
+
+
+
 
     protected function extractContent($file, $path): string
     {

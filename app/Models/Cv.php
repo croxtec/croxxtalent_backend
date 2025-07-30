@@ -9,12 +9,13 @@ use Carbon\Carbon;
 
 use App\Models\SkillTertiary;
 use App\Models\SkillSecondary;
+use App\Traits\HasMedia;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class Cv extends Model
 {
-    use HasFactory;
+    use HasFactory, HasMedia;
 
     /**
      * The table associated with the model.
@@ -48,7 +49,9 @@ class Cv extends Model
         'city',
         'postal_code',
         'state_id',
-        'country_code'
+        'country_code',
+        'cv_file_url',
+        'is_active'
     ];
 
     /**
@@ -384,4 +387,35 @@ class Cv extends Model
     {
         return $this->hasMany('App\Models\CvReference', 'cv_id', 'id');
     }
+
+     // Helper methods for CV file management
+     public function getCvFile()
+     {
+         return $this->getFirstMedia('cv_document');
+     }
+
+     public function hasCvFile()
+     {
+         return $this->getMedia('cv_document')->isNotEmpty();
+     }
+
+     public function getCvUrl()
+     {
+         $cvFile = $this->getCvFile();
+         return $cvFile ? $cvFile->file_url : null;
+     }
+
+     public function updateCvFile($file)
+     {
+         // Remove old CV file
+         $this->clearMediaCollection('cv_document');
+
+         // Add new CV file
+         $media = $this->addMedia($file, 'cv_document');
+
+         // Update the cv_file_url for quick access
+         $this->update(['cv_file_url' => $media->file_url]);
+
+         return $media;
+     }
 }
