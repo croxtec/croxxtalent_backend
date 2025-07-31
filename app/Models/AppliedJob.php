@@ -14,6 +14,7 @@ class AppliedJob extends Model
         'campaign_id',
         'talent_user_id',
         'talent_cv_id',
+        'cv_upload_id',
         'status',
         'rating'
     ];
@@ -73,6 +74,13 @@ class AppliedJob extends Model
     {
         return $this->hasOne(JobInvitation::class, 'talent_user_id', 'talent_user_id')
                     ->where('campaign_id', $this->campaign_id);
+    }
+
+
+    // New relationship with CVFileUpload model
+    public function cvUpload()
+    {
+        return $this->belongsTo(CVFileUpload::class, 'cv_upload_id');
     }
 
     // Combined accessors to avoid duplication

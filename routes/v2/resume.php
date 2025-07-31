@@ -12,7 +12,12 @@ Route::middleware('auth:sanctum')->name('api.')->group( function () {
     Route::prefix('talent')->name('talent')->group( function () {
         Route::get('resume', 'Api\v2\Resume\TalentCVController@index')->name('resume.index');
         Route::post('resume', 'Api\v2\Resume\TalentCVController@storeInformation')->name('resume.store');
-        Route::post('resume/import', 'Api\v2\Resume\TalentImprtCVController@importResume')->name('resume.import');
+        Route::get('resume/files', 'Api\v2\Resume\TalentImportCVController@getCVFiles');
+        Route::post('resume/import', 'Api\v2\Resume\TalentImportCVController@importResume')->name('resume.import');
+        Route::post('resume/upload', 'Api\v2\Resume\TalentImportCVController@uploadCV')->name('resume.upload');
+        Route::put('/resume/{uploadId}/primary', 'Api\v2\Resume\TalentImportCVController@setPrimaryCv');
+        Route::delete('/resumes/{uploadId}', 'Api\v2\Resume\TalentImportCVController@deleteCVFile');
+        Route::get('/resumes/{uploadId}/download', 'Api\v2\Resume\TalentImportCVController@downloadCV');
 
         Route::post('resume/contact', 'Api\v2\Resume\TalentCVController@storeContact')->name('resume.contact');
         Route::post('resume/photo', 'Api\v2\Resume\TalentCVController@photo')->name('resume.update_photo');

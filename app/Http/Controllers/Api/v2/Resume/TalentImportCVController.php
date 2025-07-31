@@ -17,15 +17,117 @@ use App\Models\Competency\CompetencySetup;
 use App\Models\Competency\TalentCompetency;
 use App\Models\CvCertification;
 use App\Models\CvEducation;
+use App\Models\CVFileUpload;
 use App\Models\CvLanguage;
 use App\Models\CvWorkExperience;
 use App\Models\Language;
 use App\Services\CvImportParser;
 use Exception;
-use Illuminate\Support\Facades\Storage;
+use App\Services\MediaService;
+use Illuminate\Support\Facades\Log;
 
-class TalentImprtCVController extends Controller
+class TalentImportCVController extends Controller
 {
+    protected $mediaService;
+
+    public function __construct(MediaService $mediaService)
+    {
+        $this->mediaService = $mediaService;
+    }
+
+     /**
+     * Upload CV file
+     */
+    public function uploadCV(Request $request)
+    {
+        $user = $request->user();
+
+        $request->validate([
+            'cv' => 'required|file|mimes:pdf,doc,docx|max:5120', // 5MB max
+            'cv_id' => 'nullable|exists:cvs,id',
+            'set_as_primary' => 'boolean'
+        ]);
+
+        try {
+            $file = $request->file('cv');
+
+            // Get or create CV record
+            $cv = null;
+            if ($request->has('cv_id')) {
+                $cv = Cv::where('id', $request->cv_id)
+                        ->where('user_id', $user->id)
+                        ->firstOrFail();
+            } else {
+                // Create a basic CV record if none exists
+                $cv = Cv::firstOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'first_name' => $user->first_name ?? '',
+                        'last_name' => $user->last_name ?? '',
+                        'email' => $user->email,
+                        'phone' => $user->phone ?? '',
+                        'is_active' => true
+                    ]
+                );
+            }
+
+            // Upload using the media system
+            $uploadOptions = [
+                'user_id' => $user->id,
+                'employer_id' => null, // Not employer related
+                'employee_id' => null,
+            ];
+
+            $media = $cv->addMedia($file, 'cv_document', $uploadOptions);
+
+            // Create CV file upload record
+            $cvUpload = CVFileUpload::create([
+                'user_id' => $user->id,
+                'cv_id' => $cv->id,
+                'file_name' => $media->file_name,
+                'original_name' => $media->original_name,
+                'file_size' => $media->file_size,
+                'file_url' => $media->file_url,
+                'file_type' => $media->file_type,
+                'is_primary' => $request->boolean('set_as_primary', true),
+                'uploaded_at' => now()
+            ]);
+
+            // Set as primary if requested or if it's the first CV
+            if ($request->boolean('set_as_primary', true) || !CVFileUpload::where('user_id', $user->id)->where('is_primary', true)->exists()) {
+                $cvUpload->setPrimary();
+            }
+
+            Log::info('CV uploaded successfully', [
+                'user_id' => $user->id,
+                'cv_id' => $cv->id,
+                'file_name' => $media->original_name,
+                'file_size' => $media->file_size
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'CV uploaded successfully',
+                'data' => [
+                    'upload' => $cvUpload,
+                    'media' => $media
+                ]
+            ], 201);
+
+        } catch (Exception $e) {
+            Log::error('CV upload failed', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'file_name' => $request->file('cv')?->getClientOriginalName()
+            ]);
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to upload CV. Please try again.',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
 
     /**
      * Store a newly created resource in storage
@@ -35,13 +137,15 @@ class TalentImprtCVController extends Controller
      */
     public function importResume(Request $request)
     {
-        try{
-            $user = $request->user();
-            $cv = CV::where('user_id', $user->id)->firstorFail();
-            // Validate the uploaded file
-            $request->validate([
-                'cv' => 'required|file|mimes:pdf,docx|max:2048',
-            ]);
+        // Authorization was declared in the Form Request
+        $user = $request->user();
+        $cv = CV::where('user_id', $user->id)->firstorFail();
+        // Validate the uploaded file
+        $request->validate([
+            'cv' => 'required|file|mimes:pdf,docx|max:4088',
+        ]);
+
+        try {
 
             $file = $request->file('cv');
             $path = $file->getPathname();
@@ -82,6 +186,119 @@ class TalentImprtCVController extends Controller
             ], 422);
         }
 
+    }
+
+        /**
+     * Get user's CV files
+     */
+    public function getCVFiles(Request $request)
+    {
+        $user = $request->user();
+
+        $cvUploads = CVFileUpload::where('user_id', $user->id)
+            ->orderBy('is_primary', 'desc')
+            ->orderBy('uploaded_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => $cvUploads
+        ]);
+    }
+
+    /**
+     * Set primary CV
+     */
+    public function setPrimaryCv(Request $request, $uploadId)
+    {
+        $user = $request->user();
+
+        $cvUpload = CVFileUpload::where('id', $uploadId)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        $cvUpload->setPrimary();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Primary CV updated successfully',
+            'data' => $cvUpload->fresh()
+        ]);
+    }
+
+    /**
+     * Delete CV file
+     */
+    public function deleteCVFile(Request $request, $uploadId)
+    {
+        $user = $request->user();
+
+        $cvUpload = CVFileUpload::where('id', $uploadId)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        // Don't allow deletion if it's the only CV
+        $totalCvs = CVFileUpload::where('user_id', $user->id)->count();
+        if ($totalCvs <= 1) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Cannot delete your only CV file'
+            ], 422);
+        }
+
+        try {
+            // Delete media files
+            $cv = $cvUpload->cv;
+            if ($cv) {
+                $cv->clearMediaCollection('cv_document');
+            }
+
+            // If this was primary, set another CV as primary
+            if ($cvUpload->is_primary) {
+                $nextCv = CVFileUpload::where('user_id', $user->id)
+                    ->where('id', '!=', $uploadId)
+                    ->orderBy('uploaded_at', 'desc')
+                    ->first();
+
+                if ($nextCv) {
+                    $nextCv->setPrimary();
+                }
+            }
+
+            $cvUpload->delete();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'CV file deleted successfully'
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('CV deletion failed', [
+                'upload_id' => $uploadId,
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to delete CV file'
+            ], 500);
+        }
+    }
+
+    /**
+     * Download CV file
+     */
+    public function downloadCV($uploadId)
+    {
+        $user = auth()->user();
+
+        $cvUpload = CVFileUpload::where('id', $uploadId)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        // Redirect to the Cloudinary URL for download
+        return redirect($cvUpload->file_url . '?dl=1');
     }
 
     protected function extractContent($file, $path): string
