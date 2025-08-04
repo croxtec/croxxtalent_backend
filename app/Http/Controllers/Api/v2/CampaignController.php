@@ -43,7 +43,7 @@ class CampaignController extends Controller
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
         $published = $published == 'yes' ? true : ($published == 'no' ? false : null);
  
-        $campaigns = Campaign::where( function ($query) use ($archived) {
+        $campaigns = Campaign::where( function ($query) use ($archived, $published) {
             if ($archived !== null ) {
                 if ($archived === true ) {
                     $query->whereNotNull('archived_at');
@@ -58,7 +58,7 @@ class CampaignController extends Controller
                     $query->where('is_published', false);
                 }
             }
-        })
+        }) 
         ->when($user->type == 'employer', function ($query) use ($user) {
             $query->where('user_id', $user->id);
         })
