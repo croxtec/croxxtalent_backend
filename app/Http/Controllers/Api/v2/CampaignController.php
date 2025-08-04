@@ -37,16 +37,25 @@ class CampaignController extends Controller
         $sort_dir = $request->input('sort_dir', 'desc');
         $search = $request->input('search');
         $archived = $request->input('archived');
+        $published = $request->input('published');
         $datatable_draw = $request->input('draw'); // if any
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
-
+        $published = $published == 'yes' ? true : ($published == 'no' ? false : null);
+ 
         $campaigns = Campaign::where( function ($query) use ($archived) {
             if ($archived !== null ) {
                 if ($archived === true ) {
                     $query->whereNotNull('archived_at');
                 } else {
                     $query->whereNull('archived_at');
+                }
+            }
+            if ($published !== null) {
+                if ($published === true) {
+                    $query->where('is_published', true);
+                } else {    
+                    $query->where('is_published', false);
                 }
             }
         })

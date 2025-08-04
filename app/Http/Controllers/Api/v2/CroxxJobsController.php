@@ -15,7 +15,6 @@ use App\Models\AppliedJob;
 use App\Models\SavedJob;
 use App\Models\JobInvitation;
 use App\Models\Notification;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -213,7 +212,7 @@ class CroxxJobsController extends Controller
 
         $validator = Validator::make($request->all(),[
             'campaign_id' => 'required|exists:campaigns,id',
-            'cv_upload_id' => 'nullable|exists:cv_file_uploads,id',
+            'cv_upload_id' => 'required|exists:cv_file_uploads,id',
         ]);
 
         if($validator->fails()){
@@ -222,13 +221,12 @@ class CroxxJobsController extends Controller
 
         $request['talent_user_id'] = $user->id;
         $request['talent_cv_id'] = $cv->id;
-        // $request['cv_upload_id'] = $cv->id;
         $request['rating'] = 0;
 
         try {
             $campaign = Campaign::where('id',$request->campaign_id)
                         ->where('is_published', 1)->firstOrFail();
-
+            
             Log::info("Applying for campaign: {$campaign->title} by user: {$user->email}");
             Log::info("Request data: ", $request->all());
 
