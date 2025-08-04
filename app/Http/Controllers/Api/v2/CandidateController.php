@@ -20,7 +20,7 @@ use Illuminate\Http\Response;
 class CandidateController extends Controller
 {
 
-    use ApiResponseTrait;
+    // use ApiResponseTrait;
 
     /**
      * Display a listing of the resource.
@@ -43,7 +43,11 @@ class CandidateController extends Controller
         $archived = $archived === 'yes' ? true : ($archived === 'no' ? false : null);
 
         // Query with relationships
-        $jobApplied = AppliedJob::where($campaign_field, $id)
+        $jobApplied = AppliedJob::with([
+                'talentUser', 'cvUpload',
+                'talentInvitation'
+            ])
+            ->where($campaign_field, $id)
             ->where(function ($query) use ($archived) {
                 if ($archived !== null) {
                     $archived ? $query->whereNotNull('archived_at') : $query->whereNull('archived_at');
