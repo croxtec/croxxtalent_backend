@@ -144,28 +144,14 @@ class CampaignController extends Controller
             $campaign = Campaign::where('code', $id)->firstOrFail();
         }
         
-        $include = request()->input('include', ''); // e.g., 'applications,skills,languages'
-
-        // $this->authorize('view', [Campaign::class, $campaign]);
+        $this->authorize('view', [Campaign::class, $campaign]);
         
-         if ($include === 'all') {
-            return response()->json([
-                'status' => true,
-                'message' => "",
-                'data' => $campaign->load([
-                    'skills',
-                    'languages',
-                    'course_of_studies'
-                ])
-            ], 200);
-        }
         // Only load essential campaign data without applications
         $campaignData = $campaign->only([
             'id', 'code', 'title', 'job_title', 'summary', 'description',
             'experience_level', 'work_site', 'work_type', 'city', 'expire_at',
             'currency_code', 'min_salary', 'max_salary', 'number_of_positions',
-            'years_of_experience', 'is_confidential_salary', 'is_published', 
-            'published_at', 'status',
+            'years_of_experience', 'is_confidential_salary', 'is_published', 'published_at', 'status'
         ]) + [
             // Include computed attributes that are lightweight
             'industry_name' => $campaign->industry_name,
