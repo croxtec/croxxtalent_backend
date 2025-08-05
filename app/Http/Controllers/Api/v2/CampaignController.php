@@ -146,15 +146,16 @@ class CampaignController extends Controller
         
         $include = request()->input('include', ''); // e.g., 'applications,skills,languages'
 
-        $this->authorize('view', [Campaign::class, $campaign]);
+        // $this->authorize('view', [Campaign::class, $campaign]);
         
          if ($include === 'all') {
-            // Return everything with all relationships
             return response()->json([
                 'status' => true,
-                'message' => "Full campaign details retrieved successfully",
+                'message' => "",
                 'data' => $campaign->load([
-                    'skills', 'courseOfStudies', 'languages', 
+                    'skills',
+                    'languages',
+                    'course_of_studies'
                 ])
             ], 200);
         }
