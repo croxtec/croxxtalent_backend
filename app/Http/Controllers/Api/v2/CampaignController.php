@@ -151,7 +151,8 @@ class CampaignController extends Controller
             'id', 'code', 'title', 'job_title', 'summary', 'description',
             'experience_level', 'work_site', 'work_type', 'city', 'expire_at',
             'currency_code', 'min_salary', 'max_salary', 'number_of_positions',
-            'years_of_experience', 'is_confidential_salary'
+            'years_of_experience', 'is_confidential_salary', 'is_published', 
+            'published_at', 'status',
         ]) + [
             // Include computed attributes that are lightweight
             'industry_name' => $campaign->industry_name,
