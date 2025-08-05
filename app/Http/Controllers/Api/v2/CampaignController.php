@@ -144,8 +144,20 @@ class CampaignController extends Controller
             $campaign = Campaign::where('code', $id)->firstOrFail();
         }
         
+        $include = request()->input('include', ''); // e.g., 'applications,skills,languages'
+
         $this->authorize('view', [Campaign::class, $campaign]);
         
+         if ($include === 'all') {
+            // Return everything with all relationships
+            return response()->json([
+                'status' => true,
+                'message' => "Full campaign details retrieved successfully",
+                'data' => $campaign->load([
+                    'skills', 'courseOfStudies', 'languages', 
+                ])
+            ], 200);
+        }
         // Only load essential campaign data without applications
         $campaignData = $campaign->only([
             'id', 'code', 'title', 'job_title', 'summary', 'description',
