@@ -153,7 +153,7 @@ class CampaignController extends Controller
             $campaign->load([
                 'skills',
                 'languages',
-                'course_of_studies'
+                'courseOfStudies'
             ]);
 
             return response()->json([
