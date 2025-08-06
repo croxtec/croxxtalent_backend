@@ -42,7 +42,7 @@ class CampaignController extends Controller
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
         $published = $published == 'yes' ? true : ($published == 'no' ? false : null);
- 
+
         $campaigns = Campaign::where( function ($query) use ($archived, $published) {
             if ($archived !== null ) {
                 if ($archived === true ) {
@@ -54,11 +54,11 @@ class CampaignController extends Controller
             if ($published !== null) {
                 if ($published === true) {
                     $query->where('is_published', true);
-                } else {    
+                } else {
                     $query->where('is_published', false);
                 }
             }
-        }) 
+        })
         ->when($user->type == 'employer', function ($query) use ($user) {
             $query->where('user_id', $user->id);
         })
@@ -95,10 +95,10 @@ class CampaignController extends Controller
     {
         $user = $request->user();
         $validatedData = $request->validated();
-        
+
         try {
             DB::beginTransaction();
-            
+
             $validatedData['user_id'] = $user->id;
             $validatedData['code'] = $user->id . md5(time());
 
@@ -136,22 +136,40 @@ class CampaignController extends Controller
      * Show campaign details (lightweight for job seekers/public view)
      * Only includes essential campaign information
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
         if (is_numeric($id)) {
             $campaign = Campaign::findOrFail($id);
         } else {
             $campaign = Campaign::where('code', $id)->firstOrFail();
         }
-        
+
         $this->authorize('view', [Campaign::class, $campaign]);
-        
+
+            // Check query param
+        $include = $request->input('include');
+
+        if ($include === 'all') {
+            $campaign->load([
+                'skills',
+                'languages',
+                'course_of_studies'
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => "Campaign details retrieved successfully",
+                'data' => $campaign
+            ], 200);
+        }
+
+
         // Only load essential campaign data without applications
         $campaignData = $campaign->only([
             'id', 'code', 'title', 'job_title', 'summary', 'description',
             'experience_level', 'work_site', 'work_type', 'city', 'expire_at',
             'currency_code', 'min_salary', 'max_salary', 'number_of_positions',
-            'years_of_experience', 'is_confidential_salary'
+            'years_of_experience', 'is_confidential_salary', 'is_published', 'published_at', 'status'
         ]) + [
             // Include computed attributes that are lightweight
             'industry_name' => $campaign->industry_name,
@@ -187,10 +205,10 @@ class CampaignController extends Controller
         } else {
             $campaign = Campaign::where('code', $id)->firstOrFail();
         }
-        
+
         // Ensure only campaign owner/employer can view candidates
         $this->authorize('viewCandidates', [Campaign::class, $campaign]);
-        
+
         // Load applications with related data efficiently
         $applications = $campaign->applications()
             ->with([
@@ -199,7 +217,7 @@ class CampaignController extends Controller
                 'talentInvitation:id,talent_user_id,campaign_id,status,created_at'
             ])
             ->select([
-                'id', 'campaign_id', 'talent_user_id', 'talent_cv_id', 
+                'id', 'campaign_id', 'talent_user_id', 'talent_cv_id',
                 'rating', 'status', 'created_at', 'updated_at'
             ])
             ->orderBy('created_at', 'desc')
@@ -256,9 +274,9 @@ class CampaignController extends Controller
         } else {
             $campaign = Campaign::where('code', $id)->firstOrFail();
         }
-        
+
         $this->authorize('view', [Campaign::class, $campaign]);
-        
+
         // Get application statistics without loading full data
         $applicationStats = $campaign->applications()
             ->selectRaw('
@@ -296,22 +314,22 @@ class CampaignController extends Controller
         } else {
             $campaign = Campaign::where('code', $id)->firstOrFail();
         }
-        
+
         $this->authorize('viewCandidates', [Campaign::class, $campaign]);
-        
+
         $perPage = $request->get('per_page', 15);
         $status = $request->get('status'); // Filter by status if needed
-        
+
         $query = $campaign->applications()
             ->with([
                 'talentUser:id,name,email,display_name',
                 'talentCv:id,talent_user_id,file_path,created_at'
             ])
             ->select([
-                'id', 'campaign_id', 'talent_user_id', 'talent_cv_id', 
+                'id', 'campaign_id', 'talent_user_id', 'talent_cv_id',
                 'rating', 'created_at'
             ]);
-        
+
         if ($status !== null) {
             $statusMap = [
                 'applied' => 0,
@@ -323,16 +341,16 @@ class CampaignController extends Controller
                 $query->where('rating', $statusMap[$status]);
             }
         }
-        
+
         $applications = $query->orderBy('created_at', 'desc')->paginate($perPage);
-        
+
         return response()->json([
             'status' => true,
             'message' => "Campaign candidates retrieved successfully",
             'data' => $applications
         ], 200);
     }
-   
+
 
     /**
      * Update the specified resource in storage.
@@ -346,21 +364,21 @@ class CampaignController extends Controller
         try {
             $validatedData = $request->validated();
             $campaign = Campaign::findOrFail($id);
-            
+
             // Check if campaign is published
-            $isPublished = $campaign->status === 'published' || 
+            $isPublished = $campaign->status === 'published' ||
                         $campaign->is_published === true ||
                         $campaign->published_at !== null;
-            
+
             // Extract relationship data if present (only for draft campaigns)
             $skill_ids = $validatedData['skill_ids'] ?? null;
             $course_of_study_ids = $validatedData['course_of_study_ids'] ?? null;
             $language_ids = $validatedData['language_ids'] ?? null;
-            
+
             // Remove relationship fields from main update data
             unset(
-                $validatedData['skill_ids'], 
-                $validatedData['course_of_study_ids'], 
+                $validatedData['skill_ids'],
+                $validatedData['course_of_study_ids'],
                 $validatedData['language_ids']
             );
 
@@ -393,7 +411,7 @@ class CampaignController extends Controller
                 'campaign_id' => $id,
                 'data' => $request->all(),
             ]);
-            
+
             return $this->errorResponse(
                 'services.campaigns.update_error',
                 [],
@@ -416,7 +434,7 @@ class CampaignController extends Controller
         $this->authorize('delete', [Campaign::class, $campaign]);
 
         $campaign->archived_at = now();
-        $campaign->save(); 
+        $campaign->save();
 
         return $this->successResponse(
             Campaign::find($campaign->id),
@@ -440,7 +458,7 @@ class CampaignController extends Controller
             $campaign->is_published = true;
             $campaign->published_at = now();
             $campaign->save();
-            
+
             // Send Push notification
             // $notification = new Notification();
             // $notification->user_id = $campaign->user_id;
