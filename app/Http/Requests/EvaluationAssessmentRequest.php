@@ -15,7 +15,7 @@ class EvaluationAssessmentRequest extends FormRequest
     {
         switch($this->method()) {
             case 'GET':
-                return false;
+                return true;
             case 'POST':
                 return true;
                 //$this->user()->can('create', Assesment::class);
@@ -25,7 +25,7 @@ class EvaluationAssessmentRequest extends FormRequest
                 // $assessment = Assessment::findOrFail(1);
                 // return $this->user()->can('update', [Assessment::class, $assessment]);
             case 'DELETE':
-                return false;
+                return true;
             default:break;
         }
     }
@@ -56,6 +56,8 @@ class EvaluationAssessmentRequest extends FormRequest
                     'questions' => 'required|array',
                     'questions.*.type' => 'required|in:boolean,multi_choice',
                     'questions.*.question' => 'required|min:10',
+                   'questions.*.image' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:5120',
+                    // 'questions.*.base64_images.*' => 'nullable|string',
                     'questions.*.option1' => 'required|max:150',
                     'questions.*.option2' => 'required|max:150',
                     'questions.*.option3' => 'nullable|max:150',

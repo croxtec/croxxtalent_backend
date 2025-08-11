@@ -15,6 +15,7 @@ class CroxxAssessment extends Model
         'code',
         'type',   //company,supervisor,company_training,vetting,training,competency_match
         'category', // competency_evaluation, peer_review, experience
+        'delivery_type', //quiz,classroom,on_the_job,assessment,experience,exam,external
         'is_published',
 
         'name',
@@ -24,7 +25,6 @@ class CroxxAssessment extends Model
         'department_role_id',
         'level',
         'validity_period',
-        'delivery_type',
         'expected_percentage',
         'is_published'
     ];

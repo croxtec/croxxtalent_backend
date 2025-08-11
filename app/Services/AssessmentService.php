@@ -15,6 +15,13 @@ use Carbon\Carbon;
 
 class AssessmentService
 {
+    protected $mediaService;
+
+    public function __construct(MediaService $mediaService)
+    {
+        $this->mediaService = $mediaService;
+    }
+
     public function store(ExperienceAssessmentRequest $request)
     {
         DB::beginTransaction();
@@ -35,8 +42,9 @@ class AssessmentService
             $assessment = CroxxAssessment::create($validatedData);
             $assessment->competencies()->attach($competency_ids);
 
-            // Create questions
-            $this->createAssessmentQuestions($assessment, $validatedData['questions']);
+            // Create questions with document handling
+            $this->createAssessmentQuestions($assessment, $validatedData['questions'], $request, $user);
+            
             // Arrays to track assigned users for notifications
             $assignedReviewees = [];
             $assignedReviewers = [];
@@ -52,7 +60,7 @@ class AssessmentService
 
             DB::commit();
 
-            return CroxxAssessment::with(['competencies', 'questions'])->find($assessment->id);
+            return CroxxAssessment::with(['competencies', 'questions.media'])->find($assessment->id);
 
         } catch (\Exception $e) {
            throw $e;
@@ -77,14 +85,54 @@ class AssessmentService
         }
     }
 
-    private function createAssessmentQuestions($assessment, array $questions)
+    private function createAssessmentQuestions($assessment, array $questions, $request, $user)
     {
-        foreach ($questions as $question) {
-            CompetencyQuestion::create([
+        foreach ($questions as $index => $questionData) {
+            $question = CompetencyQuestion::create([
                 'assessment_id' => $assessment->id,
-                'question' => $question['question'],
-                'description' => $question['description'] ?? null,
+                'question' => $questionData['question'],
+                'description' => $questionData['description'] ?? null,
             ]);
+
+            $this->handleQuestionDocument($request, $question, $index, $user, $assessment->employer_id);
+        }
+    }
+
+    /**
+     * Handle single document upload for a specific question
+     */
+    private function handleQuestionDocument($request, $questionModel, $questionIndex, $user, $employerId)
+    {
+        // Handle single document upload
+        if ($request->hasFile("questions.{$questionIndex}.document")) {
+            $document = $request->file("questions.{$questionIndex}.document");
+            
+            $uploadOptions = [
+                'user_id' => $user->id,
+                'employer_id' => $employerId,
+                'employee_id' => null,
+            ];
+
+            $collection = 'question_documents';
+
+            try {
+                $uploadedMedia = $questionModel->addMedia($document, $collection, $uploadOptions);
+                
+                Log::info('Question document uploaded', [
+                    'question_id' => $questionModel->id,
+                    'assessment_id' => $questionModel->assessment_id,
+                    'document_name' => $document->getClientOriginalName(),
+                    'user_id' => $user->id
+                ]);
+
+                return $uploadedMedia;
+            } catch (Exception $e) {
+                Log::error('Failed to upload question document', [
+                    'question_id' => $questionModel->id,
+                    'error' => $e->getMessage()
+                ]);
+                throw $e;
+            }
         }
     }
 
@@ -160,31 +208,4 @@ class AssessmentService
             ]);
         }
     }
-
-    // private function setAssessmentOwnership(array &$data, $user)
-    // {
-    //     $ownershipMap = [
-    //         'company' => [
-    //             'user_id' => $user->id,
-    //             'employer_id' => $user->id
-    //         ],
-    //         'supervisor' => function($data) {
-    //             $supervisor = Supervisor::where('supervisor_id', $data['supervisor_id'])->firstOrFail();
-    //             return [
-    //                 'employer_id' => $supervisor->employer_id,
-    //                 'user_id' => $data['supervisor_id']
-    //             ];
-    //         }
-    //     ];
-
-    //     $ownership = $ownershipMap[$data['type']] ?? ['user_id' => $user->id];
-
-    //     if (is_callable($ownership)) {
-    //         $ownership = $ownership($data);
-    //     }
-
-    //     foreach ($ownership as $key => $value) {
-    //         $data[$key] = $value;
-    //     }
-    // }
 }

@@ -5,12 +5,14 @@ namespace App\Models\Assessment;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+use App\Traits\HasMedia;
 use App\Models\AssesmentTalentAnswer as TalentAnswer;
 use App\Models\AssesmentScoreSheet as ScoreSheet;
 
+
 class EvaluationQuestion extends Model
 {
-    use HasFactory;
+    use HasFactory, HasMedia;
 
     protected $fillable = [
         'assessment_id',
@@ -32,4 +34,10 @@ class EvaluationQuestion extends Model
     {
         return $this->hasOne(ScoreSheet::class, 'assessment_question_id');
     }
+
+     // Get only question images
+     public function questionImages()
+     {
+         return $this->media()->where('collection_name', 'question_images');
+     }
 }
