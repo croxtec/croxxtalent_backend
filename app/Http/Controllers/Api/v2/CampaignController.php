@@ -212,7 +212,7 @@ class CampaignController extends Controller
         // Load applications with related data efficiently
         $applications = $campaign->applications()
             ->with([
-                'talentUser:id,name,email,phone,display_name',
+                'talentUser:id,name,email,phone,username,display_name',
                 'talentCv:id,talent_user_id,file_path,created_at',
                 'talentInvitation:id,talent_user_id,campaign_id,status,created_at'
             ])

@@ -119,15 +119,14 @@ class CroxxJobsController extends Controller
     public function show(Request $request, $id)
     {
         $user = Auth::guard('api')->user();
-
         if (is_numeric($id)) {
             $campaign = Campaign::whereId($id)->where('is_published', 1)
-             ->whereNull('archived_at')->firstOrFail();
+            ->whereNull('archived_at')->firstOrFail();
         } else {
             $campaign = Campaign::where('code', $id)->where('is_published', 1)
-             ->whereNull('archived_at')->firstOrFail();
+            ->whereNull('archived_at')->firstOrFail();
         }
-
+        
         $job = $campaign->only([
             'id', 'code', 'title', 'job_title', 'summary', 'description',
             'experience_level', 'work_site', 'work_type', 'city', 'expire_at',
@@ -149,19 +148,17 @@ class CroxxJobsController extends Controller
             'languages' => $campaign->languages,
             'course_of_studies' => $campaign->course_of_studies,
         ];
-
+        
+        // Convert array to object so you can use -> notation
+        $job = (object) $job;
+        
         if ($user) {
             $appliedJobs = AppliedJob::where('talent_user_id', $user->id)->pluck('campaign_id')->toArray();
             $savedJobs = SavedJob::where('talent_user_id', $user->id)->pluck('campaign_id')->toArray();
             $job->is_applied = in_array($job->id, $appliedJobs);
             $job->is_saved = in_array($job->id, $savedJobs);
         }
-        // if ($user) {
-        //     $job->is_applied = $job->appliedJobs()->where('talent_user_id', $user->id)->exists();
-        //     $job->is_saved = $job->savedJobs()->where('talent_user_id', $user->id)->exists();
-        // }
-
-
+        
         return response()->json([
             'status' => true,
             'message' => '',
