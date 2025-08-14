@@ -80,6 +80,7 @@ class CroxxJobsController extends Controller
             });
         })
         ->where('is_published', 1)
+         ->whereNull('archived_at')
         ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0) {
@@ -120,10 +121,34 @@ class CroxxJobsController extends Controller
         $user = Auth::guard('api')->user();
 
         if (is_numeric($id)) {
-            $job = Campaign::whereId($id)->where('is_published', 1)->firstOrFail();
+            $campaign = Campaign::whereId($id)->where('is_published', 1)
+             ->whereNull('archived_at')->firstOrFail();
         } else {
-            $job = Campaign::where('code', $id)->where('is_published', 1)->firstOrFail();
+            $campaign = Campaign::where('code', $id)->where('is_published', 1)
+             ->whereNull('archived_at')->firstOrFail();
         }
+
+        $job = $campaign->only([
+            'id', 'code', 'title', 'job_title', 'summary', 'description',
+            'experience_level', 'work_site', 'work_type', 'city', 'expire_at',
+            'currency_code', 'min_salary', 'max_salary', 'number_of_positions',
+            'years_of_experience', 'is_confidential_salary', 'is_published', 'published_at', 'status'
+        ]) + [
+            // Include computed attributes that are lightweight
+            'industry_name' => $campaign->industry_name,
+            'department_name' => $campaign->department_name,
+            'minimum_degree_name' => $campaign->minimum_degree_name,
+            'country_name' => $campaign->country_name,
+            'state_name' => $campaign->state_name,
+            'currency_symbol' => $campaign->currency_symbol,
+            'photo_url' => $campaign->photo_url,
+            'user_display_name' => $campaign->user_display_name,
+            'total_applications' => $campaign->total_applications,
+            // Include related data that's typically needed
+            'skills' => $campaign->skills,
+            'languages' => $campaign->languages,
+            'course_of_studies' => $campaign->course_of_studies,
+        ];
 
         if ($user) {
             $appliedJobs = AppliedJob::where('talent_user_id', $user->id)->pluck('campaign_id')->toArray();
@@ -139,7 +164,7 @@ class CroxxJobsController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => $user,
+            'message' => '',
             'data' => $job
         ], 200);
     }
@@ -164,6 +189,7 @@ class CroxxJobsController extends Controller
             $query->where('industry_id', $industry);
         })
         ->where('is_published', 1)
+         ->whereNull('archived_at')
         ->orderBy($sort_by, $sort_dir);
 
         if ($per_page === 'all' || $per_page <= 0 ) {
@@ -225,7 +251,8 @@ class CroxxJobsController extends Controller
 
         try {
             $campaign = Campaign::where('id',$request->campaign_id)
-                        ->where('is_published', 1)->firstOrFail();
+                        ->where('is_published', 1)
+                         ->whereNull('archived_at')->firstOrFail();
             
             Log::info("Applying for campaign: {$campaign->title} by user: {$user->email}");
             Log::info("Request data: ", $request->all());
@@ -277,7 +304,8 @@ class CroxxJobsController extends Controller
 
         try {
             $campaign = Campaign::where('id',$request->campaign_id)
-                ->where('is_published', 1)->firstOrFail();
+                ->where('is_published', 1)
+                 ->whereNull('archived_at')->firstOrFail();
 
             $request['talent_user_id'] = $user->id;
             $request['talent_cv_id'] = $cv->id;

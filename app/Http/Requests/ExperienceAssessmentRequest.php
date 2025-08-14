@@ -45,7 +45,7 @@ class ExperienceAssessmentRequest extends FormRequest
                     'category'        => 'required|in:peer_review,experience',
                     'level'           => 'required|in:beginner,intermediate,advance,expert',
                     'name'            => 'required|max:100',
-                    'description'     => 'nullable|max:400',
+                    'description'     => 'nullable|max:512',
                     'validity_period' => 'nullable|date',
                     'expected_score'  => 'required|integer',
                     'delivery_type'   => 'nullable|in:quiz,classroom,on_the_job,assessment,experience,exam,external',
@@ -54,7 +54,8 @@ class ExperienceAssessmentRequest extends FormRequest
                     'competency_ids.*'         => 'required|integer|exists:department_mappings,id',
                     'questions'                => 'required|array',
                     'questions.*.question'     => 'required|min:10',
-                    'questions.*.desctiption'  => 'nullable',
+                    'questions.*.document' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,txt,jpg,jpeg,png|max:10240', // 10MB max
+                    'questions.*.desctiption'  => 'nullable|max:712',
 
                     // For company/supervisor (non-peer_review), we still expect employees:required_if:type,company,supervisor|
                     'employees'     => 'required_if:category,experience|array',
@@ -86,101 +87,5 @@ class ExperienceAssessmentRequest extends FormRequest
                 break;
         }
     }
-
-
-    // public function stoldore(ExperienceAssessmentRequest $request)
-    // {
-    //      // Start a transaction
-    //      DB::beginTransaction();
-
-    //      try {
-    //          $user = $request->user();
-    //          $validatedData = $request->validated();
-    //          $validatedData['code'] = $user->id . md5(time());
-    //          $competency_ids = $validatedData['competency_ids'];
-    //          unset($validatedData['competency_ids']);
-
-    //          if ($validatedData['type'] == 'company') {
-    //              $validatedData['user_id'] = $user->id;
-    //              $validatedData['employer_id'] = $user->id;
-    //          }
-
-    //          if ($validatedData['type'] == 'supervisor') {
-    //              $employee = Supervisor::where('supervisor_id', $validatedData['supervisor_id'])->firstOrFail();
-    //              $validatedData['employer_id'] = $employee->employer_id;
-    //              $validatedData['user_id'] = $validatedData['supervisor_id'];
-    //          }
-
-    //         // Create assessment
-    //         $assessment = CroxxAssessment::create($validatedData);
-    //         $assessment->competencies()->attach($competency_ids);
-
-    //         // Create questions
-    //         $questions = $validatedData['questions'];
-    //         foreach ($questions as $question) {
-    //             $question['assessment_id'] = $assessment->id;
-    //             CompetencyQuestion::create($question);
-    //         }
-
-    //         // Create assigned employees
-    //         $employeeInstances = [];
-    //         $supervisorInstances = [];
-
-    //         if ($validatedData['type'] == 'supervisor' || $validatedData['type'] == 'company') {
-    //             $employees = $validatedData['employees'];
-    //             foreach ($employees as $employee) {
-    //                 $assignedEmployee = AssignedEmployee::create([
-    //                     'assessment_id' => $assessment->id,
-    //                     'employee_id' => $employee,
-    //                     'is_supervisor' => false
-    //                 ]);
-    //                 $employeeInstances[] = $assignedEmployee;
-    //             }
-
-    //             if ($validatedData['type'] == 'company') {
-    //                 // Create assigned supervisors
-    //                 $supervisors = $validatedData['supervisors'];
-    //                 foreach ($supervisors as $supervisor) {
-    //                     $assignedEmployee = AssignedEmployee::create([
-    //                         'assessment_id' => $assessment->id,
-    //                         'employee_id' => $supervisor,
-    //                         'is_supervisor' => true
-    //                     ]);
-    //                     $supervisorInstances[] = $assignedEmployee;
-    //                 }
-    //             }
-    //         }
-
-    //         if ($validatedData['type'] == 'supervisor') {
-    //             $assignedEmployee = AssignedEmployee::create([
-    //                 'assessment_id' => $assessment->id,
-    //                 'employee_id' => $validatedData['supervisor_id'],
-    //                 'is_supervisor' => true
-    //             ]);
-    //             $employeeInstances[] = $assignedEmployee;
-    //         }
-
-    //         // Send Notification
-    //         AssessmentNotificationHelper::notifyAssignedUsers($employeeInstances, $supervisorInstances, $assessment);
-
-    //         // Commit the transaction
-    //         DB::commit();
-
-    //          return response()->json([
-    //              'status' => true,
-    //              'message' => "Assessment created successfully.",
-    //              'data' => CroxxAssessment::find($assessment->id),
-    //          ], 201);
-
-    //      } catch (\Exception $e) {
-    //          // Rollback the transaction on error
-    //          DB::rollBack();
-
-    //          return response()->json([
-    //              'status' => false,
-    //              'message' => "Could not complete request. " . $e->getMessage(),
-    //          ], 400);
-    //      }
-    // }
 
 }

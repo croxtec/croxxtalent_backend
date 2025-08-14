@@ -304,14 +304,18 @@ class ExperienceAssessmentController extends Controller
 
         if ($assessment->category == 'competency_evaluation') {
            $questions = EvaluationQuestion::where('assessment_id', $assessment->id)
-                    ->whereNull('archived_at')->get();
+                    ->whereNull('archived_at')
+                    ->with('questionImages')
+                    ->get();
         } else {
             $questions = CompetencyQuestion::where('assessment_id', $assessment->id)
-                    ->whereNull('archived_at')->get();
+                    ->whereNull('archived_at')
+                    ->with('questionDocument')
+                    ->get();
         }
 
-        $assessment->competencies;
         // $assessment->peerReviews;
+        $assessment->competencies;
         $assessment->questions = $questions;
 
         return $this->successResponse(

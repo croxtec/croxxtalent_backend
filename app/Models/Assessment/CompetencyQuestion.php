@@ -4,12 +4,14 @@ namespace App\Models\Assessment;
 
 use App\Models\AssesmentTalentAnswer as TalentAnswer;
 use App\Models\AssesmentScoreSheet as ScoreSheet;
+
+use App\Traits\HasMedia;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class CompetencyQuestion extends Model
 {
-    use HasFactory;
+    use HasFactory, HasMedia;
 
     protected $fillable = [
         'assessment_id',
@@ -27,5 +29,11 @@ class CompetencyQuestion extends Model
     public function result()
     {
         return $this->hasOne(ScoreSheet::class, 'assessment_question_id');
+    }
+
+    // Get only question documents
+    public function questionDocument()
+    {
+        return $this->media()->where('collection_name', 'question_documents');
     }
 }
