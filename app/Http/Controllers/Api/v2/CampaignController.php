@@ -363,6 +363,7 @@ class CampaignController extends Controller
     {
         try {
             $validatedData = $request->validated();
+            info(['Campaign update request data: ', $validatedData]);
             $campaign = Campaign::findOrFail($id);
 
             // Check if campaign is published
