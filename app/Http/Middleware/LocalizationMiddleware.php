@@ -19,8 +19,6 @@ class LocalizationMiddleware
         
         if ($this->isValidLocale($locale)) {
             App::setLocale($locale);
-            // Log for debugging
-            Log::info('Locale set to: ' . $locale);
         } else {
             // Log invalid locale attempts
             Log::warning('Invalid locale attempted: ' . $locale);
