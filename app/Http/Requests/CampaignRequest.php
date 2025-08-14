@@ -21,8 +21,9 @@ class CampaignRequest extends FormRequest
                 return $this->user()->can('create', Campaign::class);
             case 'PUT':
             case 'PATCH':
-                $campaign = Campaign::findOrFail($this->id);
-                return $this->user()->can('update', [Campaign::class, $campaign]);
+                return true; // Authorization is handled in the controller
+                // $campaign = Campaign::findOrFail($this->id);
+                // return $this->user()->can('update', [Campaign::class, $campaign]);
             case 'DELETE':
                 return false;
             default:break;

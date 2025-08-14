@@ -90,15 +90,15 @@ Route::middleware('auth:sanctum')->name('api.')->group( function () {
     });
 
     // CVs
-    Route::get('cvs', 'Api\v2\CvController@index')->name('cvs.index');
-    Route::get('cvs/{id}', 'Api\v2\CvController@show')->name('cvs.show');
-    // Route::put('cvs/{id}', 'Api\v2\CvController@update')->name('cvs.update');
-    // Route::post('cvs', 'Api\v2\CvController@store')->name('cvs.store');
-    // Route::post('cvs/{id}/photo', 'Api\v2\CvController@photo')->name('cvs.update_photo');
-    // Route::patch('cvs/{id}/publish', 'Api\v2\CvController@publish')->name('cvs.publish');
-    // Route::patch('cvs/{id}/unpublish', 'Api\v2\CvController@unpublish')->name('cvs.unpublish');
-    Route::delete('cvs/{id}', 'Api\v2\CvController@destroy')->name('cvs.destroy');
-    Route::post('cvs/delete-multiple', 'Api\v2\CvController@destroyMultiple')->name('cvs.destroy_multiple');
+    Route::get('cvs', 'Api\v2\Resume\CvController@index')->name('cvs.index');
+    Route::get('cvs/{id}', 'Api\v2\Resume\CvController@show')->name('cvs.show');
+    // Route::put('cvs/{id}', 'Api\v2\Resume\CvController@update')->name('cvs.update');
+    // Route::post('cvs', 'Api\v2\Resume\CvController@store')->name('cvs.store');
+    // Route::post('cvs/{id}/photo', 'Api\v2\Resume\CvController@photo')->name('cvs.update_photo');
+    // Route::patch('cvs/{id}/publish', 'Api\v2\Resume\CvController@publish')->name('cvs.publish');
+    // Route::patch('cvs/{id}/unpublish', 'Api\v2\Resume\CvController@unpublish')->name('cvs.unpublish');
+    Route::delete('cvs/{id}', 'Api\v2\Resume\CvController@destroy')->name('cvs.destroy');
+    Route::post('cvs/delete-multiple', 'Api\v2\Resume\CvController@destroyMultiple')->name('cvs.destroy_multiple');
 
 });
 

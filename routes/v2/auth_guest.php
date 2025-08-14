@@ -15,14 +15,14 @@ Route::prefix('links')->middleware('web')->name('api.links.')->group( function (
         Route::get('/verify-edit-email/{token}', 'Api\v2\Link\VerificationLinkController@verifyEditEmail')->name('verify_edit_email');
     });
 
-    Route::get('cvs/{id}/{employer}/generate', 'Api\v2\CvController@generate_employer')->name('cvs.generate.employer');
-    Route::get('cvs/{id}/{employer}/download', 'Api\v2\CvController@generate_employer')->name('cvs.download.employer');
+    Route::get('cvs/{id}/{employer}/generate', 'Api\v2\Resume\CvController@generate_employer')->name('cvs.generate.employer');
+    Route::get('cvs/{id}/{employer}/download', 'Api\v2\Resume\CvController@generate_employer')->name('cvs.download.employer');
 
     // Signed Routes
     Route::middleware('signed')->group( function () {
         // CVs
-        Route::get('cvs/{id}/generate', 'Api\v2\CvController@generate')->name('cvs.generate');
-        Route::get('cvs/{id}/download', 'Api\v2\CvController@generate')->name('cvs.download');
+        Route::get('cvs/{id}/generate', 'Api\v2\Resume\CvController@generate')->name('cvs.generate');
+        Route::get('cvs/{id}/download', 'Api\v2\Resume\CvController@generate')->name('cvs.download');
 
         Route::get('cvs/{id}/import-linkedin', 'Api\v2\Link\CvLinkController@importLinkedIn')->name('cvs.import_linkedin');
         Route::get('cvs/import-linkedin-callback', 'Api\v2\Link\CvLinkController@importLinkedIn')->name('cvs.import_linkedin_callback');

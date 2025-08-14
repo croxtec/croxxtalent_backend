@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\v2;
+namespace App\Http\Controllers\Api\v2\Resume;
 
 use App\Events\NewNotification;
 use App\Http\Controllers\Controller;
