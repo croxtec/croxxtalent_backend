@@ -48,7 +48,7 @@ class EvaluationAssessmentRequest extends FormRequest
                     'name' => 'required|max:100',
                     'description' => 'nullable|max:400',
                     'expected_percentage' => 'required|integer',
-                    'is_published' => 'required|boolean',
+                    'is_published' => 'required',
                     'validity_period' => 'nullable|date',
                     'delivery_type' => 'nullable|in:quiz,classroom,on_the_job,assessment,experience,exam,external',
 
@@ -56,7 +56,7 @@ class EvaluationAssessmentRequest extends FormRequest
                     'questions' => 'required|array',
                     'questions.*.type' => 'required|in:boolean,multi_choice',
                     'questions.*.question' => 'required|min:10',
-                   'questions.*.image' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:5120',
+                    'questions.*.image' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:5120',
                     // 'questions.*.base64_images.*' => 'nullable|string',
                     'questions.*.option1' => 'required|max:150',
                     'questions.*.option2' => 'required|max:150',

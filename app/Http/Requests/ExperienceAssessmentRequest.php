@@ -49,13 +49,14 @@ class ExperienceAssessmentRequest extends FormRequest
                     'validity_period' => 'nullable|date',
                     'expected_score'  => 'required|integer',
                     'delivery_type'   => 'nullable|in:quiz,classroom,on_the_job,assessment,experience,exam,external',
-                    'is_published'    => 'required|boolean',
+                    'is_published'    => 'required',
 
                     'competency_ids.*'         => 'required|integer|exists:department_mappings,id',
                     'questions'                => 'required|array',
+                    'questions.*.type'         => 'nullable',
                     'questions.*.question'     => 'required|min:10',
                     'questions.*.document' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,txt,jpg,jpeg,png|max:10240', // 10MB max
-                    'questions.*.desctiption'  => 'nullable|max:712',
+                    'questions.*.desctiption'  => 'nullable|max:1024',
 
                     // For company/supervisor (non-peer_review), we still expect employees:required_if:type,company,supervisor|
                     'employees'     => 'required_if:category,experience|array',
