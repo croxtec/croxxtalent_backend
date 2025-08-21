@@ -63,6 +63,12 @@ class AssessmentService
             return CroxxAssessment::with(['competencies', 'questions.media'])->find($assessment->id);
 
         } catch (\Exception $e) {
+            DB::rollBack();
+            // Log the error or handle it as needed
+            \Log::error('Failed to store assessment', [
+                'error' => $e->getMessage(),
+                'data' => $validatedData
+            ]);
            throw $e;
         }
     }
