@@ -47,6 +47,7 @@ return [
         'restored' => 'Question restored',
         'deleted' => 'Assessment ":name" deleted successfully',
         'delete_error' => 'The ":name" record cannot be deleted because it is associated with :count other record(s). You can archive it instead.',
+        'retrieved' => 'Assessment retrieved',
     ],
     
     'feedbacks' => [
