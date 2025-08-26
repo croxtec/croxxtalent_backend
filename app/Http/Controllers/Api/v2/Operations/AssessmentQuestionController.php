@@ -38,6 +38,8 @@ class AssessmentQuestionController extends Controller
      */
     public function generate(Request $request)
     {
+        $user = $request->user();
+
         $rules = [
             'title' => 'required|string',
             'competencies' => 'required|array',
@@ -51,7 +53,7 @@ class AssessmentQuestionController extends Controller
 
         $questions = QuestionBank::whereIn('competency_name', $validatedData['competencies'])
                             ->where('level', $validatedData['level'])
-                            ->where('language',  $validatedData['language'])
+                            ->where('language',  $validatedData['language'] ?? $user->language )
                             ->limit($validatedData['total_question'])
                             ->get();
 
@@ -61,7 +63,7 @@ class AssessmentQuestionController extends Controller
                 $validatedData['competencies'],
                 $validatedData['level'],
                 $validatedData['total_question'],
-                $validatedData['language']
+                $validatedData['language'] ?? $user->language 
             );
 
             // info($generatedQuestions);
