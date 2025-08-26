@@ -71,6 +71,7 @@ class AssessmentQuestionController extends Controller
             foreach ($generatedQuestions as $question) {
                 if (isset($question['competency_name']) && isset($question['question']) && isset($question['option1'])
                     && isset($question['option2']) && isset($question['answer'])) {
+                    $question['language'] = $validatedData['language'] ?? $user->language;
                     QuestionBank::create($question);
                 }
             }
@@ -78,7 +79,7 @@ class AssessmentQuestionController extends Controller
             // Refresh the questions after adding the newly generated ones
             $questions = QuestionBank::whereIn('competency_name', $validatedData['competencies'])
                             ->where('level', $validatedData['level'])
-                            ->where('language',  $validatedData['language'])
+                            ->where('language',  $validatedData['language']  ?? $user->language )
                             ->limit($validatedData['total_question'])
                             ->get();
         }
