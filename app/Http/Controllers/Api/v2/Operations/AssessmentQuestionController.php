@@ -58,7 +58,7 @@ class AssessmentQuestionController extends Controller
                             ->get();
 
         if ($questions->count() < $validatedData['total_question']) {
-            $generatedQuestions = $this->croxxAI->generateAssessmentQuestion(
+            $generatedQuestions = $this->croxxAI->generateAssessmentQuestions(
                 $validatedData['title'],
                 $validatedData['competencies'],
                 $validatedData['level'],
