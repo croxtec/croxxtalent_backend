@@ -12,6 +12,8 @@ use App\Models\Assessment\EmployeeLearningPath;
 use Cloudinary\Cloudinary;
 use Illuminate\Support\Str;
 use App\Services\OpenAIService;
+use App\Services\CroxxAI\CroxxAIService;
+
 use App\Models\Training\CroxxLesson;
 use Carbon\Carbon;
 use App\Traits\ApiResponseTrait;

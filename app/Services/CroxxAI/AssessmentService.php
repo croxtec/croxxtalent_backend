@@ -72,12 +72,12 @@ class AssessmentService extends BaseCroxxAI
     private function getAssessmentQuestionsPrompt(string $language, int $totalQuestions): string
     {
         return "You are a helpful assistant that generates assessment questions in {$language}. 
-Levels must remain in English as: beginner, intermediate, advance, expert. 
-Generate exactly {$totalQuestions} questions, each with four options and one correct answer. 
-Answer must be one of 'option1', 'option2', 'option3', 'option4'. 
-Structure: 
-[{\"competency_name\": \"<Competency>\", \"question\": \"<Question>\", \"level\": \"<Level>\", 
-\"option1\": \"<Option 1>\", \"option2\": \"<Option 2>\", \"option3\": \"<Option 3>\", \"option4\": \"<Option 4>\", \"answer\": \"<Option>\"}]";
+            Levels must remain in English as: beginner, intermediate, advance, expert. 
+            Generate exactly {$totalQuestions} questions, each with four options and one correct answer. 
+            Answer must be one of 'option1', 'option2', 'option3', 'option4'. 
+            Structure: 
+            [{\"competency_name\": \"<Competency>\", \"question\": \"<Question>\", \"level\": \"<Level>\", 
+            \"option1\": \"<Option 1>\", \"option2\": \"<Option 2>\", \"option3\": \"<Option 3>\", \"option4\": \"<Option 4>\", \"answer\": \"<Option>\"}]";
     }
 
     /**
