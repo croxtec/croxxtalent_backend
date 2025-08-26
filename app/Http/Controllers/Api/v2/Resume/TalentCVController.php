@@ -25,7 +25,6 @@ use Illuminate\Support\Facades\Log;
 class TalentCVController extends Controller
 {
     protected $cloudinary;
-    protected $openAIService;
 
     public function __construct(Cloudinary $cloudinary)
     {
@@ -141,7 +140,7 @@ class TalentCVController extends Controller
             $newJobTitle = $updatedCv->job_title;
 
             // Smart competency generation logic
-            $competencyStatus = $this->handleCompetencyGeneration($newJobTitle, $previousJobTitle, $validatedData);
+            $competencyStatus = $this->handleCompetencyGeneration($user, $newJobTitle, $previousJobTitle, $validatedData);
 
             return response()->json([
                 'status' => true,
@@ -323,7 +322,7 @@ class TalentCVController extends Controller
     }
 
 
-    private function handleCompetencyGeneration($newJobTitle, $previousJobTitle, $validatedData)
+    private function handleCompetencyGeneration($user,$newJobTitle, $previousJobTitle, $validatedData)
     {
         // Skip if job title is empty or invalid
         if (empty($newJobTitle) || strlen(trim($newJobTitle)) < 3) {
@@ -345,7 +344,7 @@ class TalentCVController extends Controller
         }
 
         // Check if competencies already exist and are complete
-        $existingCount = CompetencySetup::where('job_title', $cleanJobTitle)->count();
+        $existingCount = CompetencySetup::where('job_title', $cleanJobTitle)->where('language', $user->language)->count();
 
         if ($existingCount >= 8) {
             return [
@@ -379,20 +378,21 @@ class TalentCVController extends Controller
         Cache::put($rateLimitKey . '_expires_at', $expiresAt->format('Y-m-d H:i:s'), $expiresAt);
 
         // Generate competencies asynchronously
-        return $this->generateCompetenciesAsync($cleanJobTitle, $validatedData);
+        return $this->generateCompetenciesAsync($user, $cleanJobTitle, $validatedData);
     }
 
     /**
      * Generate competencies asynchronously using queue
      */
-    private function generateCompetenciesAsync($jobTitle, $validatedData)
+    private function generateCompetenciesAsync($user, $jobTitle, $validatedData)
     {
         try {
             // Dispatch job to queue with a small delay to avoid API rate limits
             GenerateCompetenciesJob::dispatch(
                 $jobTitle,
                 $validatedData['industry_id'] ?? 1,
-                auth()->id()
+                auth()->id(),
+                $user->language
             )->delay(now()->addSeconds(30));
 
             // Log the generation request

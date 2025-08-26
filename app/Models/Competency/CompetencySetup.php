@@ -13,6 +13,7 @@ class CompetencySetup extends Model
         'industry_id',
         'job_title',
         'competency',
+        'language',
         'match_percentage',
         'benchmark',
         'description'

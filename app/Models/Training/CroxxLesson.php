@@ -17,6 +17,7 @@ class CroxxLesson extends Model
         'description',
         'video_url',
         'resources',
+        'language',
         'keyword'
     ];
 

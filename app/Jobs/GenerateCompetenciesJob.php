@@ -12,6 +12,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use App\Services\CroxxAI\CroxxAIService;
 
 class GenerateCompetenciesJob implements ShouldQueue
 {
@@ -20,23 +21,25 @@ class GenerateCompetenciesJob implements ShouldQueue
     public $jobTitle;
     public $industryId;
     public $userId;
+    public $language;
     public $tries = 3;
     public $timeout = 120;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($jobTitle, $industryId, $userId)
+    public function __construct($jobTitle, $industryId, $userId, $language = 'en')
     {
         $this->jobTitle = $jobTitle;
         $this->industryId = $industryId;
         $this->userId = $userId;
+        $this->language = $language;
     }
 
     /**
      * Execute the job.
      */
-    public function handle(OpenAIService $openAIService)
+    public function handle(OpenAIService $openAIService, CroxxAIService $croxxAI )
     {
         try {
             Log::info("Starting competency generation", [
@@ -46,7 +49,8 @@ class GenerateCompetenciesJob implements ShouldQueue
             ]);
 
             // Check if competencies still need to be generated
-            $existingCount = CompetencySetup::where('job_title', $this->jobTitle)->count();
+            $existingCount = CompetencySetup::where('job_title', $this->jobTitle)
+                                ->where('language', $this->language)->count();
 
             if ($existingCount >= 8) {
                 Log::info("Competencies already exist, skipping generation", [
@@ -57,7 +61,7 @@ class GenerateCompetenciesJob implements ShouldQueue
             }
 
             // Generate competencies using OpenAI
-            $competencies = $openAIService->generateCompetenciesByJobTitle($this->jobTitle);
+            $competencies = $croxxAI->generateCompetenciesByJobTitle($this->jobTitle,  $this->language);
 
             if (empty($competencies)) {
                 throw new \Exception('No competencies returned from OpenAI service');
@@ -68,9 +72,10 @@ class GenerateCompetenciesJob implements ShouldQueue
             $competenciesToProcess = array_slice($competencies, 0, $competenciesNeeded);
 
             // Store the competencies
-            foreach ($competenciesToProcess as $competency) {
+            foreach ($competencies as $competency) {
                 $created = CompetencySetup::firstOrCreate([
                     'industry_id' => $this->industryId,
+                    'language' => $this->language,
                     'job_title' => $this->jobTitle,
                     'competency' => $competency['competency'],
                 ], [

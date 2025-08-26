@@ -23,6 +23,7 @@ class CroxxTraining extends Model
         'career_id',
         'assessment_level',
         'assessment_id',
+        'language',
         'is_published'
     ];
 

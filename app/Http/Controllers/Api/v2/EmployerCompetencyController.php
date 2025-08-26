@@ -17,26 +17,30 @@ use App\Models\CompetencyKpiSetup;
 use App\Models\DepartmentKpiSetup;
 use App\Models\TrackEmployerOnboarding;
 use App\Services\OpenAIService;
+use App\Services\CroxxAI\CroxxAIService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Response;
 
 class EmployerCompetencyController extends Controller
 {
+    protected $croxxAI;
     protected $openAIService;
 
-    public function __construct(OpenAIService $openAIService)
+    public function __construct( CroxxAIService $croxxAI )
     {
-        $this->openAIService = $openAIService;
+        $this->croxxAI = $croxxAI;
+        // $this->openAIService = $openAIService;OpenAIService $openAIService,
     }
 
-    public function index(Request $request)
+   public function index(Request $request)
     {
         try {
             DB::beginTransaction();
 
             $user = $request->user();
             $job_code = $request->input('department');
+            $language = $user->language ?? 'en'; // default to English
 
             // Fetch department record for the current employer
             $department = Department::where('employer_id', $user->id)
@@ -45,73 +49,67 @@ class EmployerCompetencyController extends Controller
 
             $job_title = trim($department->job_code);
 
-            // Check if competencies are already stored for this department
-            $storedCompetencies = DepartmentSetup::where('department', $job_title)
-                ->get()
-                ->groupBy('department_role');
+            $storedCompetencies = DepartmentSetup::where('department', $job_title)->where('language', $language)
+                                        ->get()->groupBy('department_role');
 
             if ($storedCompetencies->count()) {
                 $competencies = $storedCompetencies;
             } else {
-                // Generate department template (includes KPI data, goals, and competency mapping)
-                $templateData = $this->openAIService->generateDepartmentTemplate($job_title);
+                
+                $templateData = $this->croxxAI->generateCompetencyMapping($job_title, $language);
 
-                // Update or create the DepartmentKpiSetup record
-                DepartmentKpiSetup::updateOrCreate(
-                    ['department' => $job_title],
-                    [
-                        'department_goals'         => isset($templateData['department_goals']) ? json_encode($templateData['department_goals']) : null,
-                        'recommended_assessments'  => isset($templateData['recommended_assessments']) ? json_encode($templateData['recommended_assessments']) : null,
-                        'recommended_trainings'    => isset($templateData['recommended_trainings']) ? json_encode($templateData['recommended_trainings']) : null,
-                    ]
-                );
+                return response()->json([
+                    'status' => true,
+                    'data' => $templateData,
+                    'message' => "Competency mapping generated.",
+                ], 200);
+               
+                foreach ($templateData as $mapping) {
+                    $level = strtolower($mapping['level'] ?? 'beginner'); // enforce lowercase
 
-                if (isset($templateData['competency_mapping'])) {
-                    // Process technical skills
-                    if (isset($templateData['competency_mapping']['technical_skills'])) {
-                        foreach ($templateData['competency_mapping']['technical_skills'] as $skill) {
+                    // Technical skills
+                    if (!empty($mapping['technical_skills']) && is_array($mapping['technical_skills'])) {
+                        foreach ($mapping['technical_skills'] as $skill) {
                             DepartmentSetup::create([
                                 'department'      => $job_title,
                                 'competency'      => $skill['competency'],
-                                'level'           => strtolower($skill['level']),
+                                'level'           => $level,
                                 'department_role' => 'technical_skill',
                                 'description'     => $skill['description'],
-                                'target_score' => $skill['target_score'],
+                                'target_score'    => $skill['target_score'] ?? 0,
+                                'language'        => $language,
                                 'generated_id'    => $user->id,
                             ]);
                         }
                     }
-                    // Process soft skills
-                    if (isset($templateData['competency_mapping']['soft_skills'])) {
-                        foreach ($templateData['competency_mapping']['soft_skills'] as $skill) {
+
+                    // Soft skills
+                    if (!empty($mapping['soft_skills']) && is_array($mapping['soft_skills'])) {
+                        foreach ($mapping['soft_skills'] as $skill) {
                             DepartmentSetup::create([
                                 'department'      => $job_title,
                                 'competency'      => $skill['competency'],
-                                'level'           => strtolower($skill['level']),
+                                'level'           => $level,
                                 'department_role' => 'soft_skill',
-                                'target_score' => $skill['target_score'],
                                 'description'     => $skill['description'],
+                                'target_score'    => $skill['target_score'] ?? 0,
+                                'language'        => $language,
                                 'generated_id'    => $user->id,
                             ]);
                         }
                     }
                 }
 
-                // Retrieve the newly stored competencies
+                // ✅ Retrieve the newly stored competencies filtered by language
                 $competencies = DepartmentSetup::where('department', $job_title)
+                    ->where('language', $language)
                     ->get()
                     ->groupBy('department_role');
             }
 
             DB::commit();
 
-            return $this->successResponse( $competencies,'company.competency.generated');
-
-            // return response()->json([
-            //     'status'  => true,
-            //     'data'    => $competencies,
-            //     'message' => 'Competency Mapping and KPI Setup Generated.'
-            // ], 200);
+            return $this->successResponse($competencies, 'company.competency.generated');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -121,11 +119,6 @@ class EmployerCompetencyController extends Controller
             return $this->errorResponse('company.competency.generation_error', [
                 'error' => $e->getMessage()
             ]);
-
-            // return response()->json([
-            //     'status'  => false,
-            //     'message' => 'Error generating mapping: ' . $e->getMessage()
-            // ], 500);
         }
     }
 

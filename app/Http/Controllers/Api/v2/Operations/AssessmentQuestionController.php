@@ -11,20 +11,25 @@ use App\Models\Assessment\CroxxAssessment;
 use App\Models\Assessment\EvaluationQuestion;
 use App\Models\EvaluationQuestionBank as QuestionBank;
 use App\Services\OpenAIService;
+use App\Services\CroxxAI\CroxxAIService;
 // use App\Traits\ApiResponseTrait;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Response;
+
 
 class AssessmentQuestionController extends Controller
 {
 
     // use ApiResponseTrait;
+    protected $croxxAI;
     protected $openAIService;
 
-    public function __construct(OpenAIService $openAIService)
+    public function __construct( CroxxAIService $croxxAI )
     {
-        $this->openAIService = $openAIService;
+        $this->croxxAI = $croxxAI;
+        // $this->openAIService = $openAIService;OpenAIService $openAIService,
     }
+
 
     /**
      * Display a listing of the resource.
@@ -39,21 +44,24 @@ class AssessmentQuestionController extends Controller
             'competencies.*' => 'string',
             'level' => 'required|max:50|in:beginner,intermediate,advance,expert',
             'total_question' => 'required|integer|between:1,10',
+            'language' => 'nullable|in:en,fr'
         ];
 
         $validatedData = $request->validate($rules);
 
         $questions = QuestionBank::whereIn('competency_name', $validatedData['competencies'])
                             ->where('level', $validatedData['level'])
+                            ->where('language',  $validatedData['language'])
                             ->limit($validatedData['total_question'])
                             ->get();
 
         if ($questions->count() < $validatedData['total_question']) {
-            $generatedQuestions = $this->openAIService->generateAssessmentQuestion(
+            $generatedQuestions = $this->croxxAI->generateAssessmentQuestion(
                 $validatedData['title'],
                 $validatedData['competencies'],
                 $validatedData['level'],
-                $validatedData['total_question']
+                $validatedData['total_question'],
+                $validatedData['language']
             );
 
             // info($generatedQuestions);
@@ -68,6 +76,7 @@ class AssessmentQuestionController extends Controller
             // Refresh the questions after adding the newly generated ones
             $questions = QuestionBank::whereIn('competency_name', $validatedData['competencies'])
                             ->where('level', $validatedData['level'])
+                            ->where('language',  $validatedData['language'])
                             ->limit($validatedData['total_question'])
                             ->get();
         }

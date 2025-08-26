@@ -22,12 +22,13 @@ class CourseController extends Controller
     // use ApiResponseTrait;
 
     protected $cloudinary;
-    protected $openAIService;
+    protected $croxxAI;
 
-    public function __construct(Cloudinary $cloudinary, OpenAIService $openAIService)
+    public function __construct(Cloudinary $cloudinary, CroxxAIService $croxxAI )
     {
         $this->cloudinary = $cloudinary;
-        $this->openAIService = $openAIService;
+        $this->croxxAI = $croxxAI;
+        // $this->openAIService = $openAIService;
     }
 
     /**
@@ -240,15 +241,15 @@ class CourseController extends Controller
         ];
 
         $lessons = LessonSetup::where('department', $course['department'])
-            // ->where('alias', Str::slug($course['title']))
             ->where('level', $course['level'])
+            ->where('language',$training->language)
             ->inRandomOrder()
             ->limit(9)
             ->get();
 
         // If less than 10 lessons exist, generate more lessons using OpenAI
         if ($lessons->count() < 10) {
-            $generatedLessons = $this->openAIService->curateCourseLessons($course);
+            $generatedLessons = $this->croxxAI->curateCourseLessons($course, $training->language);
 
             // info('Generated lessons: ', $generatedLessons);
 
@@ -261,7 +262,8 @@ class CourseController extends Controller
                         'title' => $lesson['title'],
                         'description' => $lesson['content'],
                         'keywords' => json_encode($lesson['keywords']),  // Convert keywords array to JSON
-                        'generated_id' => $user->id
+                        'generated_id' => $user->id,
+                        'language' => $$training->language
                     ]);
                 } catch (\Exception $e) {
                     // \Log::error('Error saving generated lesson: ' . $e->getMessage());

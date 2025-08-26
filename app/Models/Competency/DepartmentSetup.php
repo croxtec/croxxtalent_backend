@@ -12,6 +12,7 @@ class DepartmentSetup extends Model
     protected $fillable = [
         'department',
         'competency',
+        'language',
         'level',
         'target_score',
         'department_role',

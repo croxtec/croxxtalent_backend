@@ -7,14 +7,17 @@ use Illuminate\Http\Request;
 use App\Models\Competency\CompetencySetup;
 use App\Models\CV;
 use App\Services\OpenAIService;
+use App\Services\CroxxAI\CroxxAIService;
 
 class CareerController extends Controller
 {
+    protected $croxxAI;
     protected $openAIService;
 
-    public function __construct(OpenAIService $openAIService)
+    public function __construct( CroxxAIService $croxxAI )
     {
-        $this->openAIService = $openAIService;
+        $this->croxxAI = $croxxAI;
+        // $this->openAIService = $openAIService;OpenAIService $openAIService,
     }
 
     /**
@@ -185,7 +188,8 @@ class CareerController extends Controller
             $forceRegenerate = $request->input('force_regenerate', false);
 
             // Check existing competencies for this job title
-            $existingCompetencies = CompetencySetup::where('job_title', $jobTitle)->get();
+            $existingCompetencies = CompetencySetup::where('job_title', $jobTitle)
+                                        ->where('language', $user->language)->get();
             $existingCount = $existingCompetencies->count();
 
             // Determine if we need to generate competencies
@@ -220,7 +224,8 @@ class CareerController extends Controller
             }
 
             // Generate competencies using OpenAI service
-            $competencies = $this->openAIService->generateCompetenciesByJobTitle($jobTitle);
+            // $competencies = $this->openAIService->generateCompetenciesByJobTitle($jobTitle);
+            $competencies = $this->croxxAI->generateCompetenciesByJobTitle( $jobTitle, $user->language );
 
             if (empty($competencies)) {
                 return response()->json([
@@ -235,11 +240,12 @@ class CareerController extends Controller
             $competenciesToProcess = array_slice($competencies, 0, $competenciesNeeded);
 
             // Store the generated competencies
-            foreach ($competenciesToProcess as $competency) {
+            foreach ($competencies as $competency) {
                 $createdCompetency = CompetencySetup::firstOrCreate([
                     'industry_id' => $industryId,
                     'job_title' => $jobTitle,
                     'competency' => $competency['competency'],
+                    'language' => $user->language
                 ], [
                     'match_percentage' => (int)$competency['match_percentage'],
                     'benchmark' => (int)$competency['benchmark'],

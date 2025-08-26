@@ -12,6 +12,7 @@ class EvaluationQuestionBank extends Model
     protected $fillable = [
         'industry_id',
         'level',
+        'language',
         'competency_name',
         'question',
         'option1',
