@@ -34,6 +34,7 @@ class CompetencyQuestion extends Model
     // Get only question documents
     public function questionDocument()
     {
-        return $this->media()->where('collection_name', 'question_documents');
+        return $this->media()->where('collection_name', 'question_documents')
+            ->select('id', 'file_url','file_name', 'file_size', 'file_type', 'mediable_type', 'mediable_id');
     }
 }

@@ -55,12 +55,14 @@ class CroxxAssessment extends Model
 
     public function evaluationQuestions()
     {
-        return $this->hasMany('App\Models\Assessment\EvaluationQuestion', 'assessment_id', 'id')->whereNull('archived_at');
+        return $this->hasMany('App\Models\Assessment\EvaluationQuestion', 'assessment_id', 'id')
+                 ->with('questionImages')->whereNull('archived_at');
     }
 
     public function competencyQuestions()
     {
-        return $this->hasMany('App\Models\Assessment\CompetencyQuestion', 'assessment_id', 'id')->whereNull('archived_at');
+        return $this->hasMany('App\Models\Assessment\CompetencyQuestion', 'assessment_id', 'id')
+                 ->with('questionDocument')->whereNull('archived_at');
     }
 
     public function questions()

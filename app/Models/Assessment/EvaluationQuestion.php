@@ -38,6 +38,7 @@ class EvaluationQuestion extends Model
      // Get only question images
      public function questionImages()
      {
-         return $this->media()->where('collection_name', 'question_images');
+         return $this->media()->where('collection_name', 'question_images')
+            ->select('id', 'file_url','file_name', 'file_size', 'file_type', 'mediable_type', 'mediable_id');
      }
 }

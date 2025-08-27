@@ -241,29 +241,30 @@ class ScoresheetController extends Controller
         ], 200);
     }
 
-    public function assessmentResult(Request $request, $code, $talent)
+   public function assessmentResult(Request $request, $code, $talent)
     {
         $user = $request->user();
         $assessment = $this->resolveAssessment($code);
         [$talentField, $talentId] = $this->resolveTalentIdentifier($talent, $user);
 
-        $assessment->load(['questions' => function ($query) use ($assessment, $talentField, $talentId) {
-            $query->with([
-                'response' => fn($q) => $q->where([
+        // Manually load the questions with their relationships
+        $questions = $assessment->questions()->with([
+            'response' => fn($q) => $q->where([
+                $talentField => $talentId,
+                'assessment_id' => $assessment->id
+            ])->with(['media' => function ($q) {
+                $q->select('id', 'file_url','file_name', 'file_size', 'file_type', 'mediable_type', 'mediable_id');
+            }]),
+            'result' => fn($q) => $q->when($assessment->category != 'competency_evaluation',
+                fn($q) => $q->where([
                     $talentField => $talentId,
                     'assessment_id' => $assessment->id
-                ])->with(['media' => function ($q) {
-                    $q->select('id', 'file_url','file_name', 'file_size', 'file_type', 'mediable_type', 'mediable_id');
-                }]),
+                ])
+            )
+        ])->get();
 
-                'result' => fn($q) => $q->when($assessment->category != 'competency_evaluation',
-                    fn($q) => $q->where([
-                        $talentField => $talentId,
-                        'assessment_id' => $assessment->id
-                    ])
-                )
-            ]);
-        }]);
+        // Add the loaded questions to the assessment object
+        $assessment->setRelation('questions', $questions);
 
         return response()->json([
             'status' => true,
