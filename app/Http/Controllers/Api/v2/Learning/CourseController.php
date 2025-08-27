@@ -234,60 +234,86 @@ class CourseController extends Controller
         $user = $request->user();
         $training = CroxxTraining::findOrFail($id);
 
-        $department =( $training->type == 'company') ? $training->department?->job_code : $training->career?->competency;
+        $department = ($training->type == 'company') ? $training->department?->job_code : $training->career?->competency;
 
         $course = [
-            'department' =>  trim($department ?? ''),
+            'department' => trim($department ?? ''),
             'title' => $training->title,
             'level' => $training->experience_level,
         ];
 
-        $lessons = LessonSetup::where('department', $course['department'])
-            ->where('level', $course['level'])
-            ->where('language',$training->language)
+        $lessons = LessonSetup::where('department',strtolower($course['department']))
+            ->where('level', strtolower($course['level']))
+            ->where('language', $training->language)
             ->inRandomOrder()
-            ->limit(9)
+            ->limit(12)
             ->get();
+
+        \Log::info('Selected lessons count: ' . $lessons->count());
 
         // If less than 10 lessons exist, generate more lessons using OpenAI
         if ($lessons->count() < 10) {
-            $generatedLessons = $this->croxxAI->curateCourseLessons($course, $training->language);
+            try {
+                $generatedLessons = $this->croxxAI->curateCourseLessons($course, $training->language);
 
-            // info('Generated lessons: ', $generatedLessons);
+                foreach ($generatedLessons as $lesson) {
+                    try {
+                        // Validate required fields
+                        if (empty($lesson['title']) || empty($lesson['content'])) {
+                            \Log::warning('Skipping lesson with missing title or content', $lesson);
+                            continue;
+                        }
 
-            foreach ($generatedLessons as $lesson) {
-                try {
-                    LessonSetup::create([
-                        'department' => $course['department'],
-                        'level' => strtolower($lesson['level']),
-                        'alias' => Str::slug($lesson['title']),
-                        'title' => $lesson['title'],
-                        'description' => $lesson['content'],
-                        'keywords' => json_encode($lesson['keywords']),  // Convert keywords array to JSON
-                        'generated_id' => $user->id,
-                        'language' => $$training->language
-                    ]);
-                } catch (\Exception $e) {
-                    // \Log::error('Error saving generated lesson: ' . $e->getMessage());
+                        $createdLesson = LessonSetup::create([
+                            'department' => strtolower($course['department']),
+                            'level' => strtolower($lesson['level']),
+                            'alias' => Str::slug($lesson['title']),
+                            'title' => $lesson['title'],
+                            'description' => $lesson['content'],
+                            'keywords' => json_encode($lesson['keywords'] ?? []),  // Handle missing keywords
+                            'generated_id' => $user->id,
+                            'language' => $training->language  // FIXED: Removed double dollar sign
+                        ]);
+
+                    } catch (\Exception $e) {
+                        \Log::error('Error saving individual lesson', [
+                            'error' => $e->getMessage(),
+                            'lesson_data' => $lesson,
+                            'line' => $e->getLine(),
+                            'file' => $e->getFile()
+                        ]);
+                    }
                 }
+
+            } catch (\Exception $e) {
+                \Log::error('Error generating lessons with CroxxAI', [
+                    'error' => $e->getMessage(),
+                    'course_data' => $course,
+                    'training_id' => $training->id,
+                    'line' => $e->getLine(),
+                    'file' => $e->getFile()
+                ]);
             }
 
             // Retrieve again with the updated pool
             $lessons = LessonSetup::where('department', $course['department'])
-                // ->where('alias', Str::slug($course['title']))
                 ->where('level', $course['level'])
+                ->where('language', $training->language)
                 ->inRandomOrder()
                 ->limit(12)
                 ->get();
         }
 
-        // Randomly pick 6 lessons from the available pool
-        $selectedLessons = $lessons->random(min(5, $lessons->count()));
-
-        // info('Selected lessons count: ' . $selectedLessons->count());
+        \Log::info('Retrieved lessons for training', [
+            'training_id' => $training->id,
+            'department' => $course['department'],
+            'level' => $course['level'],
+            'language' => $training->language,
+            'lessons_count' => $lessons->count()
+        ]);
 
         return $this->successResponse(
-            $selectedLessons,
+            $lessons,
             'services.training.lessons_retrieved',
             [],
             200

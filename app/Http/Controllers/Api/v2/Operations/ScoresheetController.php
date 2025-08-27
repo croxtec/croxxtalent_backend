@@ -249,7 +249,6 @@ class ScoresheetController extends Controller
 
         $assessment->load(['questions' => function ($query) use ($assessment, $talentField, $talentId) {
             $query->with([
-                
                 'response' => fn($q) => $q->where([
                     $talentField => $talentId,
                     'assessment_id' => $assessment->id

@@ -14,6 +14,7 @@ class LessonSetup extends Model
         'level',
         'alias',
         'title',
+        'language',
         'description',
         'keywords',
         'generated_id'

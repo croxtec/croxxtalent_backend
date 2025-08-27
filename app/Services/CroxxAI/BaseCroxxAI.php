@@ -98,6 +98,7 @@ abstract class BaseCroxxAI
 
     /**
      * Extract and decode JSON content from API response
+     * Handles various response formats including markdown code blocks
      *
      * @param array $response
      * @return array
@@ -106,13 +107,49 @@ abstract class BaseCroxxAI
     protected function extractJsonContent(array $response): array
     {
         $rawContent = $response['choices'][0]['message']['content'];
+        
+        // First, try to parse as direct JSON
         $decodedContent = json_decode($rawContent, true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new Exception('Error parsing JSON content: ' . json_last_error_msg());
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decodedContent)) {
+            return $decodedContent;
         }
+        
+        // Handle markdown code blocks
+        $cleanContent = $this->extractJsonFromMarkdown($rawContent);
+        $decodedContent = json_decode($cleanContent, true);
+        
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decodedContent)) {
+            return $decodedContent;
+        }
+        
+        throw new Exception('Error parsing JSON content: ' . json_last_error_msg());
+    }
 
-        return $decodedContent;
+    /**
+     * Extract JSON from markdown code blocks or other formatting
+     *
+     * @param string $content
+     * @return string
+     */
+    protected function extractJsonFromMarkdown(string $content): string
+    {
+        // Remove markdown code blocks
+        $content = preg_replace('/```json\s*/', '', $content);
+        $content = preg_replace('/```\s*/', '', $content);
+        
+        // Remove any text before the first [ or {
+        if (preg_match('/^.*?(\[|\{)/s', $content, $matches)) {
+            $startPos = strpos($content, $matches[1]);
+            $content = substr($content, $startPos);
+        }
+        
+        // Remove any text after the last ] or }
+        $lastBracket = max(strrpos($content, ']'), strrpos($content, '}'));
+        if ($lastBracket !== false) {
+            $content = substr($content, 0, $lastBracket + 1);
+        }
+        
+        return trim($content);
     }
 
     /**
