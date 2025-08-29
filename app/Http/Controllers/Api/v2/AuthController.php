@@ -364,6 +364,7 @@ class AuthController extends Controller
                 'data' => $user
             ], 200);
         }
+        
         return response()->json([
             'status' => false,
             'message' => 'Unauthorized.'
