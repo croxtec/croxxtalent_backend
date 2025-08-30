@@ -149,7 +149,7 @@ class CourseController extends Controller
             $training = CroxxTraining::where('code', $id)->where('employer_id', $employerId)->firstOrFail();
         }
 
-        $training->load(['department', 'assessment');
+        $training->load(['department', 'assessment']);
         $training->assessment?->questions;
 
         return response()->json([
