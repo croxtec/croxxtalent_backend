@@ -12,6 +12,8 @@ use App\Models\Assessment\CroxxAssessment;
 use App\Models\Assessment\AssignedEmployee;
 use App\Models\Employee;
 use App\Models\Supervisor;
+use App\Models\Campaign;
+use App\Models\Training\CroxxTraining;
 // use App\Traits\ApiResponseTrait;
 use App\Services\MediaService;
 use Illuminate\Support\Facades\Log;
@@ -59,8 +61,27 @@ class EvaluationAssessmentController extends Controller
             // Create assessment
             $assessment = CroxxAssessment::create($validatedData);
 
-            if ($validatedData['type'] == 'supervisor' || $validatedData['type'] == 'company') {
+            if ($validatedData['type'] === 'supervisor' || $validatedData['type'] === 'company') {
                 $assessment->competencies()->attach($competency_ids);
+            }
+
+            // 
+            if($validatedData['type'] === 'company_training'){
+               $training = CroxxTraining::where('id', $validatedData['training_id'])
+                                ->where('user_id', $employerId)->firstOrFail();
+                if($training){ 
+                    $training->assessment_id = $assessment->id;
+                    $training->save();
+                }
+            }
+
+            if($validatedData['type'] === 'company_campaign'){
+               $campaign = Campaign::where('id', $validatedData['campaign_id'])
+                                ->where('user_id', $employerId)->firstOrFail();
+                if($campaign){ 
+                    $campaign->assessment_id = $assessment->id;
+                    $campaign->save();
+                }
             }
 
             // Create questions with image handling

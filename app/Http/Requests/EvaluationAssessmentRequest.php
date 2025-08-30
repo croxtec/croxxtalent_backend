@@ -42,7 +42,7 @@ class EvaluationAssessmentRequest extends FormRequest
                 return [];
             case 'POST':
                 return [
-                    'type' => 'required|in:company,supervisor,company_training,vetting,competency_match',
+                    'type' => 'required|in:company,supervisor,company_training,company_campaign,vetting,competency_match',
                     'category' => 'required|in:competency_evaluation',
                     'level' => 'required|in:beginner,intermediate,advance,expert',
                     'name' => 'required|max:100',
@@ -72,6 +72,9 @@ class EvaluationAssessmentRequest extends FormRequest
                     'supervisors' => 'required_if:type,company|array',
                     'employees.*' => 'integer|exists:employees,id',
                     'supervisors.*' => 'nullable|integer|exists:employees,id',
+                    
+                    'training_id' => 'required_if:type,company_training|exists:croxx_trainings,id',
+                    'campaign_id' => 'required_if:type,company_campaign|exists:campaigns,id',
                 ];
             case 'PUT':
             case 'PATCH':

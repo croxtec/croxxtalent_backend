@@ -41,7 +41,7 @@ class LessonController extends Controller
         $archived = $request->input('archived');
 
         $archived = $archived == 'yes' ? true : ($archived == 'no' ? false : null);
-        $training = CroxxTraining::where('code', $tcode)->first();
+        $training = CroxxTraining::where('code', $tcode)->firstOrFail();
 
         $lessons = CroxxLesson::where('training_id', $training->id)
             ->when($user_type == 'employer', function($query) use ($training){
